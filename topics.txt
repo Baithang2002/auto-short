@@ -1,32 +1,35 @@
-# Wonders of the Nature - daily topic rotation
+# Wonders of the Nature - curiosity-optimized daily topic rotation
 # One topic per line. Lines starting with # are ignored.
-# pipeline_daily.py rotates round-robin.
 
-# --- Oceans + water ---
-weird facts about the deep ocean
-strange creatures of the abyss
-how coral reefs survive heat waves
-mysteries of the open ocean
+# --- Deep Sea & Marine ---
+the immortal jellyfish that can live forever
+the zombie fungus that controls insect brains
+the silent animal that shoots super-hot bubbles
+the mimic octopus that can impersonate 15 different creatures
+the shark that can live for over 400 years
+weird facts about the deep ocean abyss
+strange creatures of the mariana trench
 
-# --- Skies + space-as-nature ---
-mind-blowing facts about space
-unusual weather phenomena on Earth
-auroras and the science behind them
-strange clouds and storm formations
+# --- Space & Atmospheric ---
+what happens if you get sucked into a black hole
+why space smells like seared steak and hot metal
+the place where lightning strikes 300 times a year
+the extreme storm that creates a green sky
+mind-blowing facts about our solar system
+strange clouds and storm formations on Earth
 
-# --- Animals + ecosystems ---
-animals with surprising superpowers
-insects that change the world quietly
-how migrating birds find their way
-predators that hunt in unexpected ways
-
-# --- Earth + geology ---
+# --- Earth, Geology & Extreme Environments ---
+the deepest hole on Earth and what they found inside
+the lake of death that turns animals into stone
+the underwater volcano that is creating a new island
+the place on Earth where it constantly rains fish
 geological wonders hidden in plain sight
-how mountains and volcanoes shape life
-strange lakes and rivers around the world
-ancient forests and what they remember
 
-# --- Plants + smaller wonders ---
-plants that behave like animals
-how fungi quietly run the forest
-microscopic life in a single drop of water
+# --- Animals & Plants ---
+the killer plant that eats rats alive
+the micro-animal that can survive the vacuum of space
+the bird that can fly for ten months without landing
+the bizarre plant that bleeds red sap when cut
+the massive underground fungus larger than a blue whale
+what is actually living in a single drop of pond water
+insects that quietly rule our ecosystem

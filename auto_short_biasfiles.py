@@ -134,9 +134,7 @@ RULES:
 - Exactly {n_segments} segments.
 - LENGTH IS NON-NEGOTIABLE. Total narration MUST be {min_total}-{max_total} words.
 - Each segment MUST be {min_segment}-{max_segment} words. Count before submitting.
-- Segment 1 is the HOOK: open with a counterintuitive claim, a specific dollar
-  amount, or a named person who lost a lot of money. No "Imagine..." openers,
-  no greetings, no throat-clearing.
+- Segment 1 is the HOOK: open directly with a counterintuitive claim, a specific dollar amount, or a named person who lost a lot of money. Start immediately in the middle of the action. NEVER open with greetings, rhetorical questions, or throat-clearing clichés like "Have you ever wondered...", "Did you know...", "Imagine...", or "Meet...". Open immediately with a bizarre, counterintuitive, or striking statement.
 - Segments 2-3 set up the bias or story. Name the bias OR the person involved.
 - Middle segments deliver the EVIDENCE: the study finding, the brain-science
   detail, the specific dollar amount lost, the exact mistake.

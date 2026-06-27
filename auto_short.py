@@ -457,7 +457,7 @@ Rules:
 - Do NOT write short fragments like "Auroras dazzle." That is only 2 words. Write full sentences with subject, verb, and a specific detail.
 - A {min_segment}-word target means roughly one full spoken sentence of 12-18 syllables. Aim for the middle of the range, not the floor.
 - Make it a connected mini-story with a hook, setup, escalating facts, a twist, and a satisfying closing line.
-- First segment must be a scroll-stopping hook with a specific tension or mystery.
+- First segment must be a scroll-stopping hook with a specific tension, mystery, or shocking fact. Start directly in the middle of the action. NEVER open with greetings, rhetorical questions, or throat-clearing clichés like "Have you ever wondered...", "Did you know...", "Meet the...", or "Imagine a...". Open immediately with a bizarre, counterintuitive, or striking statement.
 - The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
   "Subscribe to Wonders of the Nature for more."
   "Follow Wonders of the Nature for more like this."
