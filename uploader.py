@@ -717,6 +717,39 @@ def _resolve_metadata(args) -> dict:
 
 def run_uploads(video_path: Path, platforms: list, metadata: dict, *, headless: bool) -> dict:
     results: dict = {}
+    
+    # Determine if we need to initialize Playwright and launch the browser
+    browser_needed = False
+    for p in platforms:
+        p_low = p.lower()
+        if p_low != "youtube":
+            browser_needed = True
+            break
+    else:
+        try:
+            import yt_data_api
+            if not yt_data_api.is_api_available():
+                browser_needed = True
+        except ImportError:
+            browser_needed = True
+
+    if not browser_needed:
+        print("    [i] All uploads can run browserless. Skipping Playwright startup.")
+        for platform in platforms:
+            platform = platform.lower()
+            if platform not in DISPATCH:
+                print(f"[Warning] Unknown platform: {platform}")
+                continue
+            t0 = time.time()
+            try:
+                chosen = _pick_video_for_platform(video_path, platform, metadata)
+                res = DISPATCH[platform](None, chosen, metadata)
+            except Exception as e:
+                res = {"status": "error", "error": repr(e)}
+            res["duration_sec"] = round(time.time() - t0, 1)
+            results[platform] = res
+        return results
+
     with sync_playwright() as p:
         try:
             context = launch_browser(p, headless=headless, viewport={"width": 1280, "height": 720})
@@ -767,7 +800,23 @@ def main():
     video_path = Path(args.upload).resolve()
     if not video_path.exists():
         die(f"Video file not found: {video_path}")
-    if not SESSION_DIR.exists():
+
+    # Check if a browser session is actually needed for the requested platforms/credentials
+    browser_needed = False
+    for p in args.platforms:
+        p_low = p.lower()
+        if p_low != "youtube":
+            browser_needed = True
+            break
+    else:
+        try:
+            import yt_data_api
+            if not yt_data_api.is_api_available():
+                browser_needed = True
+        except ImportError:
+            browser_needed = True
+
+    if browser_needed and not SESSION_DIR.exists():
         die("Browser session not found. Run with --login first.")
 
     # Defense in depth: refuse to upload >=60s videos to YouTube. Past blocks
