@@ -1,0 +1,74 @@
+# The Bias Files - daily topic rotation
+# Each line = one 55-second Shorts video.
+# Lines starting with # are ignored.
+# pipeline_biasfiles_daily.py rotates round-robin through this file.
+#
+# Format: a phrase that names ONE cognitive bias OR ONE real-person money disaster.
+# Keep it concrete. Gemini will turn each line into a script with citations.
+
+# --- LOSS AVERSION ---
+why losing 100 dollars feels worse than winning 200
+the money trap your brain sets every day
+why you can't cancel the gym membership you never use
+
+# --- SUNK COST FALLACY ---
+why smart people throw good money after bad
+the bias that traps you in failing investments
+why you finish the movie you already hate
+
+# --- ENDOWMENT EFFECT ---
+why selling anything feels harder than buying
+why your own stuff is worth more to you than to anyone else
+
+# --- ANCHORING BIAS ---
+how car dealers control the price you pay
+why the first number you see decides your final price
+the bias behind every overpriced menu
+
+# --- CONFIRMATION BIAS ---
+why smart investors keep falling for bad bets
+the bias that destroyed Theranos investors
+
+# --- HYPERBOLIC DISCOUNTING ---
+why your brain hates saving for retirement
+the bias behind every credit card balance
+
+# --- OVERCONFIDENCE BIAS ---
+why eighty percent of day traders lose money
+the bias that bankrupted Long Term Capital Management
+
+# --- AVAILABILITY HEURISTIC ---
+why you fear plane crashes but not car wrecks
+why you bought the stock you saw on the news
+
+# --- MENTAL ACCOUNTING ---
+why your tax refund disappears faster than your salary
+the bias that makes you waste any unexpected money
+
+# --- HERD MENTALITY ---
+why GameStop made millions of people lose everything
+the bias behind every market bubble in history
+
+# --- REGRET AVERSION ---
+why you won't sell that losing stock even when you should
+
+# --- DUNNING-KRUGER ---
+why beginner traders think they are better than they are
+
+# --- GAMBLER'S FALLACY ---
+why you keep doubling down on a losing bet
+
+# --- HOT HAND FALLACY ---
+why you trust hot stocks that always crash
+
+# --- REAL-PERSON MONEY DISASTERS ---
+how Mike Tyson made 400 million dollars and went broke
+how Nicolas Cage spent 150 million dollars in nine years
+how MC Hammer lost 33 million dollars
+how Jack Whittaker lost 315 million from a single lottery ticket
+how Isaac Newton lost a fortune in the South Sea Bubble
+how Adam Neumann burned 47 billion dollars at WeWork
+how Elizabeth Holmes lost investors 9 billion dollars
+how 50 Cent went broke owing 36 million
+how Johnny Depp blew through 650 million dollars
+how the inventor of the Pet Rock died nearly broke

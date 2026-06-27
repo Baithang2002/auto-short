@@ -1,0 +1,32 @@
+# Wonders of the Nature - daily topic rotation
+# One topic per line. Lines starting with # are ignored.
+# pipeline_daily.py rotates round-robin.
+
+# --- Oceans + water ---
+weird facts about the deep ocean
+strange creatures of the abyss
+how coral reefs survive heat waves
+mysteries of the open ocean
+
+# --- Skies + space-as-nature ---
+mind-blowing facts about space
+unusual weather phenomena on Earth
+auroras and the science behind them
+strange clouds and storm formations
+
+# --- Animals + ecosystems ---
+animals with surprising superpowers
+insects that change the world quietly
+how migrating birds find their way
+predators that hunt in unexpected ways
+
+# --- Earth + geology ---
+geological wonders hidden in plain sight
+how mountains and volcanoes shape life
+strange lakes and rivers around the world
+ancient forests and what they remember
+
+# --- Plants + smaller wonders ---
+plants that behave like animals
+how fungi quietly run the forest
+microscopic life in a single drop of water

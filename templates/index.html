@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video Review &middot; {{ tab|capitalize }} ({{ counts[tab] }})</title>
+<style>
+  :root {
+    --bg:#0f1115; --card:#171a21; --line:#2a2f3a; --muted:#8b93a7;
+    --text:#e7eaf2; --accent:#7c9cff; --ok:#3ddc97; --warn:#ffb454; --err:#ff6b6b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+         color:var(--text); background:var(--bg); }
+  header { padding:16px 24px; border-bottom:1px solid var(--line);
+           display:flex; align-items:center; gap:16px; position:sticky; top:0; background:var(--bg); z-index:5; }
+  header h1 { margin:0; font-size:18px; font-weight:600; }
+  nav a { display:inline-block; padding:6px 12px; margin-right:6px; border-radius:8px;
+          color:var(--muted); text-decoration:none; font-size:13px; }
+  nav a.active { color:var(--text); background:var(--card); }
+  main { max-width:1100px; margin:24px auto; padding:0 24px; display:grid; gap:24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px;
+          padding:20px; display:grid; grid-template-columns:300px 1fr; gap:24px; }
+  video { width:100%; border-radius:10px; background:#000; }
+  .meta-id { color:var(--muted); font-size:12px; word-break:break-all; }
+  label { display:block; font-size:12px; color:var(--muted); margin-top:10px; margin-bottom:4px; }
+  input[type=text], input[type=datetime-local], textarea {
+    width:100%; padding:8px 10px; background:#10131a; color:var(--text);
+    border:1px solid var(--line); border-radius:8px; font:inherit; font-size:13px;
+  }
+  textarea { resize:vertical; min-height:60px; }
+  .row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .row label { margin-top:0; }
+  .actions { margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
+  button { padding:9px 16px; border:0; border-radius:8px; font:inherit; font-weight:600;
+           cursor:pointer; font-size:13px; }
+  .approve { background:var(--ok); color:#0a1c14; }
+  .reject  { background:var(--err); color:#2a0a0a; }
+  .empty { text-align:center; padding:60px 20px; color:var(--muted); }
+  .flash { padding:10px 14px; border-radius:8px; margin-bottom:16px; }
+  .flash.ok  { background:rgba(61,220,151,0.15); color:var(--ok); }
+  .flash.err { background:rgba(255,107,107,0.15); color:var(--err); }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px;
+          background:#222836; color:var(--muted); margin-left:6px; }
+  details { margin-top:10px; }
+  summary { cursor:pointer; color:var(--muted); font-size:12px; }
+  .script { margin:8px 0 0; padding-left:18px; color:var(--muted); font-size:12px; }
+  .schedule-line { display:flex; align-items:center; gap:8px; }
+  .schedule-line .platform { width:90px; color:var(--muted); font-size:12px; }
+  h3 { margin:0 0 4px; font-size:16px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Video Review</h1>
+  <nav>
+    {% for t in ['pending','approved','rejected','uploaded'] %}
+      <a href="{{ url_for('index', tab=t) }}" class="{{ 'active' if tab==t else '' }}">
+        {{ t|capitalize }} <span class="pill">{{ counts[t] }}</span>
+      </a>
+    {% endfor %}
+  </nav>
+</header>
+
+<main>
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+    {% for cat, m in msgs %}
+      <div class="flash {{ cat }}">{{ m }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% if not items %}
+    <div class="empty">
+      Nothing in <strong>{{ tab }}</strong>.<br>
+      {% if tab == 'pending' %}Run <code>python auto_short.py "your topic"</code> to generate one.{% endif %}
+    </div>
+  {% endif %}
+
+  {% for v in items %}
+  <div class="card">
+    <div>
+      <video controls preload="metadata"
+             src="{{ url_for('video_file', stage=tab, video_id=v.id, filename=v.video_file or 'video.mp4') }}"></video>
+      <div style="margin-top:10px">
+        <div class="meta-id">{{ v.id }}</div>
+        <div style="color:var(--muted); font-size:12px; margin-top:4px">
+          niche: {{ v.niche }} &middot; {{ v.duration_sec }}s &middot; {{ v.created_at|fmt_dt }}
+        </div>
+        {% if v.segments %}
+        <details>
+          <summary>script ({{ v.segments|length }} segments)</summary>
+          <ol class="script">
+            {% for s in v.segments %}<li>{{ s.narration }}</li>{% endfor %}
+          </ol>
+        </details>
+        {% endif %}
+      </div>
+    </div>
+
+    <div>
+      {% if tab == 'pending' %}
+      <form method="post" action="{{ url_for('approve', video_id=v.id) }}">
+        <label>Title</label>
+        <input type="text" name="title" value="{{ v.title or '' }}">
+
+        <label>Description (YouTube / Facebook)</label>
+        <textarea name="description">{{ v.description or '' }}</textarea>
+
+        <label>Instagram caption</label>
+        <textarea name="instagram_caption">{{ v.instagram_caption or '' }}</textarea>
+
+        <label>Hashtags (space-separated)</label>
+        <input type="text" name="hashtags" value="{{ v.hashtags|join_tags }}">
+
+        <label style="margin-top:18px">Schedule (leave a platform blank to skip it)</label>
+        {% for p in platforms %}
+        <div class="schedule-line" style="margin-bottom:6px">
+          <span class="platform">{{ p|capitalize }}</span>
+          <input type="datetime-local" name="schedule_{{p}}" value="{{ default_when }}">
+        </div>
+        {% endfor %}
+
+        <div class="actions">
+          <button class="approve" type="submit">Approve &amp; schedule</button>
+        </div>
+      </form>
+
+      <form method="post" action="{{ url_for('reject', video_id=v.id) }}" style="margin-top:18px">
+        <label>Reject reason (optional)</label>
+        <input type="text" name="reason" placeholder="boring hook, bad b-roll, ...">
+        <div class="actions"><button class="reject" type="submit">Reject</button></div>
+      </form>
+
+      {% else %}
+      <h3>{{ v.title }}</h3>
+      <div style="color:var(--muted); font-size:12px; margin-bottom:8px">
+        status: {{ v.status }}
+        {% if v.approved_at %} &middot; approved {{ v.approved_at|fmt_dt }}{% endif %}
+        {% if v.rejected_at %} &middot; rejected {{ v.rejected_at|fmt_dt }}{% endif %}
+        {% if v.uploaded_at %} &middot; uploaded {{ v.uploaded_at|fmt_dt }}{% endif %}
+      </div>
+
+      {% if v.description %}<p style="color:var(--muted); font-size:13px">{{ v.description }}</p>{% endif %}
+
+      {% if v.schedule %}
+        <label>Schedule</label>
+        {% for p, when in v.schedule.items() %}
+          {% if when %}
+          <div class="schedule-line">
+            <span class="platform">{{ p|capitalize }}</span>
+            <span>{{ when|fmt_dt }}
+              {% set res = (v.upload_results or {}).get(p) %}
+              {% if res %}
+                &mdash; <span style="color: {% if res.status=='ok' %}var(--ok){% else %}var(--err){% endif %}">
+                  {{ res.status }}{% if res.url %} ({{ res.url }}){% endif %}
+                </span>
+              {% endif %}
+            </span>
+          </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      {% if v.reject_reason %}
+        <p style="color:var(--err); font-size:12px; margin-top:8px">Reason: {{ v.reject_reason }}</p>
+      {% endif %}
+
+      {% if v.hashtags %}
+        <div style="color:var(--muted); font-size:12px; margin-top:8px">{{ v.hashtags|join_tags }}</div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</main>
+</body>
+</html>
