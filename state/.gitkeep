@@ -1,0 +1,5 @@
+This directory persists rotation state across GitHub Actions runs.
+- daily_state.json: round-robin index for topics.txt
+- daily_runs.log: history of scheduled runs
+- used_videos.json: per-clip dedup state (Pexels/Pixabay/NASA IDs)
+The CI workflow copies these into output/ at start and commits updates back at end.

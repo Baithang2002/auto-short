@@ -437,6 +437,23 @@ def _yt_swap_audio_post_upload(page, video_url: str, mood: Optional[str]) -> dic
 def upload_youtube(context, video_path: Path, title: str, description: str, tags: str = "",
                    music_mood: Optional[str] = None) -> dict:
     print("[YouTube] upload...")
+
+    # Prefer the Data API path when credentials are configured. This is the
+    # path GitHub Actions / cloud runs always take - no browser involved.
+    # Local manual runs use this too if YT_REFRESH_TOKEN is in .env.
+    try:
+        import yt_data_api
+        if yt_data_api.is_api_available():
+            print("    [i] Using YouTube Data API (no browser)")
+            tag_list = [t.strip() for t in (tags or "").split(",") if t.strip()] if tags else []
+            return yt_data_api.upload_youtube_via_api(
+                video_path, title, description, tag_list,
+                privacy="public", made_for_kids=False,
+            )
+        print("    [i] No YT_REFRESH_TOKEN configured; falling back to browser upload.")
+    except ImportError:
+        print("    [i] yt_data_api module not available; falling back to browser upload.")
+
     page = context.new_page()
     try:
         try:
@@ -792,7 +809,9 @@ def main():
         status = res.get("status")
         if status == "ok":
             extra = ""
-            if res.get("audio_swap") == "ok":
+            if res.get("uploader") == "data_api":
+                extra = "  [via Data API]"
+            elif res.get("audio_swap") == "ok":
                 extra = f"  [+audio: {res.get('query','?')}]"
             elif res.get("audio_swap") == "error":
                 extra = "  [+audio: FAILED]"
