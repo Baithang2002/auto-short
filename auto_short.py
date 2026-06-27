@@ -57,7 +57,7 @@ from PIL import Image, ImageDraw, ImageFont
 # CONFIG  — tweak these freely
 # ----------------------------------------------------------------------------
 DEFAULT_NICHE        = "mind-blowing facts about space"
-VOICE                = "en-US-AndrewNeural"   # try en-US-AriaNeural, en-GB-RyanNeural, etc.
+VOICE                = os.environ.get("EDGE_TTS_VOICE", "en-US-AndrewNeural")   # try en-US-AriaNeural, en-GB-RyanNeural, etc.
 GEMINI_MODEL         = "gemini-2.5-flash"
 TARGET_DURATION      = 60                     # target video length in seconds (use --duration to override)
 AVG_SEGMENT_DURATION = 6.5                    # estimated seconds per narration/story beat
