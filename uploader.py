@@ -685,6 +685,11 @@ def _pick_video_for_platform(default_path: Path, platform: str, metadata: dict) 
     full mix with Jamendo music. If video_path_yt isn't in metadata
     (older renders), fall back to the default."""
     if platform == "youtube":
+        # Allow keeping background music for YouTube if YT_MUSIC env var is set
+        if os.environ.get("YT_MUSIC", "").lower() in ("true", "1", "yes"):
+            print("    [i] YT_MUSIC is enabled; using main video (with music) for YouTube.")
+            return default_path
+
         yt_path = metadata.get("video_path_yt")
         if yt_path and Path(yt_path).exists():
             print(f"    [i] Using YT-safe (no music) variant: {Path(yt_path).name}")

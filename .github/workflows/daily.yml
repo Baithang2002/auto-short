@@ -72,6 +72,7 @@ jobs:
           YT_CLIENT_ID:        ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET:    ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN:    ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_MUSIC:            "true"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
