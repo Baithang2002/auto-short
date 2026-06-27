@@ -154,9 +154,8 @@ RULES:
   empty wallets, abandoned gym, magnifying glass on numbers.
   AVOID abstract searches like "decision", "psychology", "mindset", "wisdom" —
   Pexels won't return what you want. Use literal visuals.
-- Each "broll_queries" list = exactly 3: one specific close-up/action, one
-  environment/establishing shot, one safe generic fallback like
-  "money cash" or "stock chart" or "fmri brain".
+- STRICT ALIGNMENT: The "broll" search term and "broll_queries" list for a segment MUST directly match the subject, person, object, or action described in that segment's "narration". If you talk about a wallet or a specific person, the broll and queries must search specifically for that object or context. Never suggest unrelated scenery or generic placeholders.
+- Each "broll_queries" list = exactly 3 concrete, simple Pexels-friendly searches: one specific close-up/action matching the narration, one environment/establishing shot, and one safe generic fallback matching the EXACT subject of the narration (e.g. "wallet" or "cash" or "stock chart", not a generic "finance").
 - Choose "music_mood" to match the tone — usually "mysterious", "dramatic",
   or "urgent" for this channel. Avoid "warm" or "inspiring".
 - 10-15 lowercase hashtags. Do NOT include #shorts (appended automatically).

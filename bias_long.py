@@ -473,6 +473,7 @@ Generate exactly 18 to 22 sequential scenes. Include:
 - At least 1 Matplotlib chart (loss_gain, comparison, or bar).
 - Visual variety: mix stock_video (primary) with title_cards, text_cards, citation_cards, and charts.
 - Sound effects at transition moments.
+- STRICT ALIGNMENT: The "stock_search" keywords for a scene MUST directly match the key subject, person, object, or action described in that scene's "voice" narration. If you discuss a coin flip, the search term must be coin flip. If you discuss a capuchin monkey, the search term must be monkey. Never use unrelated visuals or broad abstract concepts. Keep each search query simple, concrete, and Pexels-friendly.
 """
     print("[1/5] generating long-form script structure with Gemini...")
     raw = auto_short.generate_script_raw(prompt)
