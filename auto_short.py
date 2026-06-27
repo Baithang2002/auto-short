@@ -468,8 +468,9 @@ Rules:
 - Narration is plain spoken English, no emojis, no hashtags, no stage directions.
 - "broll" must be something Pexels stock video would actually have
   (e.g. "ocean waves", "city night", "galaxy stars") - concrete nouns, not abstractions.
-- Each "broll_queries" list must have exactly 3 concrete Pexels-friendly searches:
-  1 specific close-up/action, 1 environment/establishing shot, 1 safe generic fallback.
+- STRICT ALIGNMENT: The "broll" search term and "broll_queries" list for a segment MUST directly match the subject, animal, object, or action described in that segment's "narration". If you talk about a lioness, the broll and queries must be specifically about a lioness. Never suggest a different animal or unrelated scenery.
+- Each "broll_queries" list must have exactly 3 concrete, simple Pexels-friendly searches:
+  1 specific close-up/action matching the narration (e.g. "lioness stalking"), 1 environment/establishing shot (e.g. "savannah grass"), and 1 safe 1-2 word generic fallback of the EXACT subject of the narration (e.g. "lion", not "nature documentary" or "nature").
   Avoid abstract words like innovation, wisdom, mystery, or existence as visual searches.
 - 10-15 lowercase hashtags, each prefixed with #, no spaces inside a tag.
   Do NOT include "#shorts" in the list - it is appended automatically.
@@ -1405,9 +1406,21 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
     # 5. Last-resort generic Pexels search using the niche/fallback term.
     # This is the "broad nature shot" safety net so scheduled runs don't die.
     print(f"    [!] No specific footage found for segment {idx+1} ('{keyword}'); trying broad niche search.")
-    broad_terms = [fallback] if fallback else []
-    # Add a few generic "always returns something" terms aligned with the niche
-    broad_terms += ["nature documentary", "underwater nature", "wildlife close up"]
+    broad_terms = []
+    low = (keyword + " " + narration).lower()
+    if any(w in low for w in ("deep sea", "ocean", "sea", "marine", "underwater", "aquatic",
+                              "coral", "fish", "shark", "whale", "dolphin", "octopus",
+                              "squid", "jellyfish", "turtle", "seal", "ray", "eel",
+                              "crab", "lobster", "shrimp", "plankton", "water", "river", "lake")):
+        broad_terms += ["underwater nature", "sea life close up", "ocean reef"]
+    elif any(w in low for w in ("space", "galaxy", "universe", "astronomy", "planet",
+                                "star", "nebula", "cosmos", "solar", "nasa", "orbit", "astronaut")):
+        broad_terms += ["outer space", "galaxy stars", "nebula space"]
+    else:
+        broad_terms += ["wildlife close up", "animals in wild", "nature documentary"]
+        
+    if fallback:
+        broad_terms.insert(0, fallback)
     broad_out = fetch_pexels_video(broad_terms, idx, used_set, target_duration=target_duration)
     if broad_out:
         print(f"    [Pexels broad] Using generic '{fallback}' / nature clip as fallback.")
