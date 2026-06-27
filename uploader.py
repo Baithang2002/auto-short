@@ -44,9 +44,14 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-from playwright.sync_api import (
-    sync_playwright, Error as PWError, TimeoutError as PWTimeout,
-)
+try:
+    from playwright.sync_api import (
+        sync_playwright, Error as PWError, TimeoutError as PWTimeout,
+    )
+except ImportError:
+    sync_playwright = None
+    class PWError(Exception): pass
+    class PWTimeout(Exception): pass
 
 SCRIPT_DIR    = Path(__file__).parent.resolve()
 SESSION_DIR   = SCRIPT_DIR / "browser_session"
@@ -749,6 +754,9 @@ def run_uploads(video_path: Path, platforms: list, metadata: dict, *, headless: 
             res["duration_sec"] = round(time.time() - t0, 1)
             results[platform] = res
         return results
+
+    if sync_playwright is None:
+        die("Playwright is required for browser-based uploads, but the 'playwright' package is not installed.")
 
     with sync_playwright() as p:
         try:
