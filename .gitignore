@@ -1,6 +1,10 @@
 # Environment variables (API keys, secrets)
 .env
 
+# YouTube OAuth client + refresh token (NEVER commit)
+oauth_client.json
+.youtube_credentials.json
+
 # Python cache
 __pycache__/
 *.pyc

@@ -1,0 +1,14 @@
+# Core script + render
+edge-tts>=6.1
+google-genai>=0.3
+requests>=2.31
+Pillow>=10.0
+
+# YouTube Data API (replaces browser upload for cloud runs)
+google-auth>=2.20
+google-auth-oauthlib>=1.0
+google-auth-httplib2>=0.2
+google-api-python-client>=2.100
+
+# Optional: OpenAI script fallback (used only when Gemini + SambaNova + Groq all fail)
+openai>=1.10
