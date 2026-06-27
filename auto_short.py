@@ -2045,13 +2045,13 @@ def add_background_music(video_path, duration, mood, music_path=None, music_volu
         "-stream_loop", "-1",
         "-i", str(selected_music),
         "-filter_complex",
-        f"[0:a]pan=stereo|c0=c0|c1=c0[voice];"
+        f"[0:a]pan=stereo|c0=c0|c1=c0,asplit[voice1][voice2];"
         f"[1:a]volume={music_volume},afade=t=in:st=0:d=1.5,"
         f"afade=t=out:st={fade_start:.3f}:d={fade_dur:.3f},"
         f"aformat=channel_layouts=stereo[musicraw];"
-        f"[musicraw][voice]sidechaincompress=threshold=0.035:ratio=3.5:"
+        f"[musicraw][voice1]sidechaincompress=threshold=0.035:ratio=3.5:"
         f"attack=35:release=550[ducked];"
-        f"[voice][ducked]amix=inputs=2:duration=first:dropout_transition=2:"
+        f"[voice2][ducked]amix=inputs=2:duration=first:dropout_transition=2:"
         f"normalize=0,loudnorm=I=-16:TP=-1.5:LRA=11,alimiter=limit=0.95[a]",
         "-map", "0:v:0",
         "-map", "[a]",
