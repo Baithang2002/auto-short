@@ -2,8 +2,10 @@ name: Daily Shorts Publish
 
 on:
   schedule:
-    # 12:30 UTC = 18:00 IST. Cron is UTC in GitHub Actions.
-    - cron: '30 12 * * *'
+    # Cron is UTC. GitHub Actions on free tier sometimes skips :00/:30 minute
+    # slots during high load. :17 and :47 are notoriously more reliable.
+    - cron: '17 12 * * *'    # primary  - 17:47 IST (12:17 UTC)
+    - cron: '47 12 * * *'    # backup   - 18:17 IST (12:47 UTC) - runs only if primary missed (guarded in pipeline_daily.py)
   workflow_dispatch:       # also allow manual trigger from the Actions tab
     inputs:
       topic:

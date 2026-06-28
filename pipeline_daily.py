@@ -69,7 +69,26 @@ def append_log(line: str) -> None:
         f.write(line + "\n")
 
 
+def already_posted_today() -> bool:
+    """True if daily_runs.log shows a successful (exit=0) entry for today's date.
+    Used so a backup cron doesn't double-post when the primary cron already ran."""
+    if not RUN_LOG.exists():
+        return False
+    today = dt.datetime.now().strftime("%Y-%m-%d")
+    try:
+        for line in RUN_LOG.read_text(encoding="utf-8").splitlines():
+            if line.startswith(today) and "exit=0" in line:
+                return True
+    except OSError:
+        return False
+    return False
+
+
 def main():
+    if already_posted_today():
+        print(f"[daily] A successful post already happened today. Skipping (backup cron).")
+        sys.exit(0)
+
     topics = load_topics()
     idx, topic = pick_next(topics)
     started = dt.datetime.now()
