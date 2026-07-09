@@ -8,9 +8,10 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ProviderDefaults:
     gemini_models: tuple[str, ...] = (
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
         "gemini-2.5-flash",
         "gemini-2.5-flash-lite",
-        "gemini-2.0-flash",
     )
     groq_models: tuple[str, ...] = (
         "llama-3.3-70b-versatile",
@@ -26,7 +27,7 @@ class ProviderDefaults:
         "Meta-Llama-3.1-70B-Instruct",
         "Qwen2.5-72B-Instruct",
     )
-    gemini_image_model: str = "gemini-2.5-flash"
+    gemini_image_model: str = "gemini-3.5-flash"
     edge_tts_voice: str = "en-US-AndrewNeural"
     speechify_voice_id: str = "george"
     elevenlabs_model: str = "eleven_multilingual_v2"
