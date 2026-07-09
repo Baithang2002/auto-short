@@ -16,10 +16,14 @@ on:
 permissions:
   contents: write          # needed to commit daily_state.json back after each run
 
+concurrency:
+  group: daily-shorts-publish
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 90
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -46,8 +50,8 @@ jobs:
 
       - name: Restore rotation state from previous run
         run: |
-          # state/ is tracked in the repo; output/ is gitignored. Seed the
-          # gitignored output/ files from state/ so the rotation continues.
+          # state/ is the tracked source of truth. Seed output/ only for
+          # compatibility with artifacts and older local tooling.
           mkdir -p output
           [ -f state/daily_state.json ] && cp state/daily_state.json output/daily_state.json || true
           [ -f state/daily_runs.log ]   && cp state/daily_runs.log   output/daily_runs.log   || true
@@ -56,6 +60,7 @@ jobs:
           ls -la output/daily_state.json output/daily_runs.log used_videos.json 2>/dev/null || true
 
       - name: Render + upload daily video
+        timeout-minutes: 75
         env:
           # Script providers
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
@@ -86,13 +91,14 @@ jobs:
       - name: Persist rotation state back to repo
         if: always()
         run: |
-          # The rotation index lives in output/daily_state.json (gitignored).
-          # Force-add it so tomorrow's run uses the next topic.
+          # pipeline_daily.py writes state/ directly before rendering. Keep
+          # output/ as a fallback for older runs, then commit the tracked state
+          # even if render/upload failed or timed out.
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p state
-          [ -f output/daily_state.json ] && cp output/daily_state.json state/daily_state.json
-          [ -f output/daily_runs.log ]   && cp output/daily_runs.log   state/daily_runs.log
+          [ -f state/daily_state.json ] || { [ -f output/daily_state.json ] && cp output/daily_state.json state/daily_state.json; }
+          [ -f state/daily_runs.log ]   || { [ -f output/daily_runs.log ]   && cp output/daily_runs.log   state/daily_runs.log; }
           [ -f used_videos.json ]        && cp used_videos.json        state/used_videos.json
           git add state/ || true
           if git diff --staged --quiet; then

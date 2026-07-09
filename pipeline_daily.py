@@ -3,12 +3,12 @@ pipeline_daily.py - the entry point a scheduler should call.
 
 What it does:
   1. Reads topics.txt (one topic per line, # for comments).
-  2. Round-robin picks the next topic via a tiny state file (output/daily_state.json).
+  2. Round-robin picks the next topic via a tiny tracked state file (state/daily_state.json).
   3. Runs pipeline.py with that topic.
-  4. Appends a one-line note to output/daily_runs.log with timestamp + topic + exit code.
+  4. Appends a one-line note to state/daily_runs.log with timestamp + topic + exit code.
   5. On Stage 2 failure (any platform), the position still advances - tomorrow gets
      a fresh topic instead of retrying the same one indefinitely. Failures are
-     visible in output/upload_log.json and output/daily_runs.log.
+     visible in output/upload_log.json and state/daily_runs.log.
 
 Why a wrapper instead of putting this in pipeline.py: scheduling shouldn't
 share state with the manual orchestrator. You can still run pipeline.py by
@@ -16,6 +16,7 @@ hand with any topic - daily_state.json only tracks the scheduled rotation.
 """
 from __future__ import annotations
 
+import ast
 import datetime as dt
 import json
 import subprocess
@@ -24,9 +25,12 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 TOPICS     = SCRIPT_DIR / "topics.txt"
+STATE_DIR  = SCRIPT_DIR / "state"
 OUT_DIR    = SCRIPT_DIR / "output"
-STATE      = OUT_DIR / "daily_state.json"
-RUN_LOG    = OUT_DIR / "daily_runs.log"
+STATE      = STATE_DIR / "daily_state.json"
+RUN_LOG    = STATE_DIR / "daily_runs.log"
+OUTPUT_STATE = OUT_DIR / "daily_state.json"
+OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
 
 
 def load_topics() -> list:
@@ -43,7 +47,30 @@ def load_topics() -> list:
     return lines
 
 
+def successful_topics() -> set[str]:
+    """Topics with a tracked successful daily run."""
+    if not RUN_LOG.exists():
+        return set()
+    seen: set[str] = set()
+    try:
+        lines = RUN_LOG.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return seen
+    for line in lines:
+        if "exit=0" not in line or "topic=" not in line:
+            continue
+        try:
+            raw_topic = line.split("topic=", 1)[1].split("  exit=", 1)[0].strip()
+            topic = ast.literal_eval(raw_topic)
+        except (SyntaxError, ValueError, IndexError):
+            continue
+        if isinstance(topic, str):
+            seen.add(topic)
+    return seen
+
+
 def pick_next(topics: list) -> tuple:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     idx = 0
     if STATE.exists():
@@ -52,20 +79,34 @@ def pick_next(topics: list) -> tuple:
         except Exception:
             idx = 0
     idx = idx % len(topics)
-    topic = topics[idx]
+    original_idx = idx
+    already_successful = successful_topics()
+    for _ in range(len(topics)):
+        topic = topics[idx]
+        if topic not in already_successful:
+            break
+        idx = (idx + 1) % len(topics)
+    else:
+        idx = original_idx
+        topic = topics[idx]
     new_idx = (idx + 1) % len(topics)
-    STATE.write_text(json.dumps({
+    state_text = json.dumps({
         "next_index":   new_idx,
         "last_index":   idx,
         "last_topic":   topic,
         "last_picked":  dt.datetime.now().isoformat(timespec="seconds"),
-    }, indent=2), encoding="utf-8")
+    }, indent=2)
+    STATE.write_text(state_text, encoding="utf-8")
+    OUTPUT_STATE.write_text(state_text, encoding="utf-8")
     return idx, topic
 
 
 def append_log(line: str) -> None:
+    STATE_DIR.mkdir(parents=True, exist_ok=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     with RUN_LOG.open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    with OUTPUT_RUN_LOG.open("a", encoding="utf-8") as f:
         f.write(line + "\n")
 
 
