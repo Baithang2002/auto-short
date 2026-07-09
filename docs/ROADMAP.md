@@ -27,6 +27,12 @@ The layered architecture is defined and its foundational milestones are complete
 | PR #1 | Foundation Layer — cross-cutting utilities | v0.1.0 |
 | PR #2 | Storage Abstraction — artifact persistence + metadata | v0.1.0 |
 | PR #3 | Provider & Configuration Layer — fallback chains + `.env` loader | v0.1.0 |
+| PR #4 | Domain Integration — typed models wired into legacy stages | v0.2.0 |
+| PR #5 | Timeline Builder — Timeline IR emitted before rendering | v0.3.0 |
+| PR #6 | Renderer Contract — Timeline-based renderer interface + FFmpeg implementation | v0.3.0 |
+| PR #7 | Intelligent Media Selection — deterministic B-roll candidate scoring before Timeline construction | v0.4.0 |
+| PR #8 | Content Intelligence & Source Planning — capability-driven query/source planning before media selection | v0.5.0 |
+| PR #9 | Provider Expansion / Registry Formalization — scene-type routing and optional provider registration | v0.6.0 |
 | Documentation baseline | VISION · ENGINEERING_GUIDE · ARCHITECTURE · CHANGELOG · ROADMAP | v0.1.0 |
 | Serverless YouTube uploads | YouTube Data API path + OAuth refresh flow | v0.1.0 |
 | Daily automation | GitHub Actions schedule with off-peak cron + dedup guard | v0.1.0 |
@@ -36,9 +42,12 @@ The layered architecture is defined and its foundational milestones are complete
 - ✅ Foundation
 - ✅ Storage
 - ✅ Providers
-- 🚧 Domain Integration
-- 📋 Timeline Builder
-- 📋 Renderer (new contract)
+- ✅ Domain Integration
+- ✅ Timeline Builder
+- ✅ Renderer (new contract)
+- ✅ Media Selection
+- ✅ Source Planning
+- ✅ Provider Expansion
 - 🚧 Pipeline (orchestrator + stages)
 - 🚧 Interface (CLIs, workflows)
 
@@ -46,9 +55,9 @@ The layered architecture is defined and its foundational milestones are complete
 
 ## Current Focus
 
-**PR #4 — Domain Integration.** Typed domain models (`Script`, `VoiceTrack`, `MediaAsset`, `Timeline`, `MasteredVideo`, `PublishResult`) are wired into pipeline stages, replacing dictionary-of-strings passing between the legacy modules. The change is additive: legacy call sites continue to work while new call sites consume typed inputs.
+**PR #10 — Render Profiles.** Provider expansion is now behind the capability registry. The next boundary is moving Shorts format behavior into declarative render profiles without changing output behavior.
 
-This unblocks PR #5 (Timeline Builder) and PR #6 (Renderer contract), which cannot land cleanly while pipeline stages exchange untyped dictionaries.
+This depends on PR #6 and should not change provider, storage, upload, queue, or metadata behavior.
 
 ---
 
@@ -56,46 +65,18 @@ This unblocks PR #5 (Timeline Builder) and PR #6 (Renderer contract), which cann
 
 Ordered by dependency, not by date. Each milestone is a coherent boundary, not a single feature.
 
-### PR #4 — Domain Integration
+### PR #10 — Render Profiles
 
-- **Objective.** Introduce typed models for artifacts crossing stage boundaries.
-- **Expected outcome.** Pipeline stages consume and produce typed objects; legacy dictionary passing is confined to storage serialization.
-- **Dependencies.** None. Foundation and Storage milestones are complete.
-- **Success criteria.** All new stage signatures use typed models. Existing behavior unchanged. Contract tests exist for every model boundary.
-
-### PR #5 — Timeline Builder
-
-- **Objective.** Introduce the explicit `Timeline` intermediate representation defined in ADR-003.
-- **Expected outcome.** Timeline construction becomes a pure function of `(Script, VoiceTrack, MediaAsset, RenderProfile)`. The renderer consumes a `Timeline` instead of walking segments imperatively.
-- **Dependencies.** PR #4 (typed models).
-- **Success criteria.** Every timeline satisfies the invariants documented in `ARCHITECTURE.md § Timeline Architecture`. Rendered output is byte-identical (or waveform-identical, per ADR-003) to the legacy renderer for equivalent inputs.
-
-### PR #6 — Renderer Contract
-
-- **Objective.** Formalize the `Renderer` interface and refactor the ffmpeg-based implementation to conform to it.
-- **Expected outcome.** Alternative renderers (GPU-accelerated, cloud-based) can be added without changes to the pipeline layer.
-- **Dependencies.** PR #5 (Timeline as input).
-- **Success criteria.** The renderer is a pure function: same `Timeline` in, deterministic bytes out. Sub-stages (segment build, concat, caption burn, music mix, master, trim, variant) are individually inspectable.
-
-### PR #7 — Render Profiles
-
-- **Objective.** Extract format-specific configuration from hard-coded constants into declarative render profiles (ADR-006).
+- **Objective.** Expand the initial renderer profiles into declarative format profiles (ADR-006).
 - **Expected outcome.** Adding a new format (educational horizontal, long-form documentary, podcast video) requires only a new profile — no code changes to pipeline, renderer, or domain layers.
 - **Dependencies.** PR #6 (renderer consumes profile settings).
 - **Success criteria.** All current Shorts behavior is expressed as `shorts_vertical.yaml`. A second profile (`educational_horizontal.yaml`) is added as proof-of-concept and can render an example video without changes elsewhere.
 
-### PR #8 — Provider Registry Formalization
-
-- **Objective.** Replace inline provider branch logic with the registry-based selection described in ADR-002 and ADR-005.
-- **Expected outcome.** Adding a new provider requires implementing an interface and calling `registry.register(...)` — no changes elsewhere.
-- **Dependencies.** PR #4 (typed result types on provider methods).
-- **Success criteria.** Every provider passes a contract test suite. Preference lists are configuration, not code.
-
-### PR #9 — Pipeline Orchestrator with Resume Points
+### PR #11 — Pipeline Orchestrator with Resume Points
 
 - **Objective.** Introduce the resume-from-stage capability promised in `VISION.md` and `ARCHITECTURE.md § Resume Points`.
 - **Expected outcome.** A failed pipeline run can be resumed from the last successful stage using persisted artifact IDs.
-- **Dependencies.** PR #4 (typed models with content addresses), PR #5 (timeline as an inspectable artifact), PR #7 (profiles as data).
+- **Dependencies.** PR #4 (typed models with content addresses), PR #5 (timeline as an inspectable artifact), PR #10 (profiles as data).
 - **Success criteria.** `--from-stage <name>` and `--only-stage <name>` flags work as documented. A failed publish stage does not require re-rendering.
 
 ---
@@ -104,14 +85,14 @@ Ordered by dependency, not by date. Each milestone is a coherent boundary, not a
 
 Work beyond the next milestones is grouped into phases. Each phase is a coherent product step, not a sprint.
 
-**Phase 1 — Shorts Platform** *(current, PRs #1 – #3 shipped)*
+**Phase 1 — Shorts Platform** *(current, PRs #1 – #8 shipped)*
 The vertical Shorts pipeline works reliably end-to-end, unattended, on a daily schedule. Layered architecture is defined and its foundations are in place.
 
-**Phase 2 — Timeline Engine** *(next, PRs #4 – #7)*
-Typed domain models, explicit timeline representation, formal renderer contract, declarative render profiles. Format extensibility becomes a configuration exercise, not a development one.
+**Phase 2 — Timeline Engine** *(PRs #4 – #7 complete)*
+Typed domain models, explicit timeline representation, formal renderer contract, and deterministic pre-timeline media selection.
 
-**Phase 3 — AI Intelligence** *(PRs #8 – #10 range)*
-Provider registry formalization, quality-driven provider ranking based on measured output, feedback-informed prompt tuning, content quality scoring before publish.
+**Phase 3 — Production Scaling** *(PRs #9 – #11 range)*
+Provider expansion, declarative render profiles, resumable orchestration, quality-driven provider ranking based on measured output, feedback-informed prompt tuning, content quality scoring before publish.
 
 **Phase 4 — Long-form Production**
 Long-form documentary and podcast formats folded into the render-profile mechanism (retires the parallel `bias_long.py` variant per ADR-012). Longer-duration content-safety enforcement, chapter markers, structured show-notes.
@@ -130,12 +111,13 @@ Approximate semver progression. Milestone descriptions replace dates.
 | v0.1.0 | Initial Production Baseline. Daily Shorts publishing works. Foundation, Storage, and Providers established. Documentation baseline shipped. |
 | v0.2.0 | Domain Integration complete (PR #4). Typed models used across all stage boundaries. |
 | v0.3.0 | Timeline Builder + new Renderer contract (PRs #5 – #6). Renderer is a pure function. |
-| v0.4.0 | Render Profiles introduced (PR #7). Multiple formats supported declaratively. |
-| v0.5.0 | Provider Registry Formalization (PR #8). Providers register themselves; preferences are configuration. |
-| v0.6.0 | Resumable Pipeline Orchestrator (PR #9). Any stage can restart from persisted upstream artifacts. |
-| v0.7.0 | Long-form profile integrated. Parallel `bias_long.py` variant retired. |
-| v0.8.0 | Multi-channel deployment. Per-channel configuration and analytics. |
-| v0.9.0 | Analytics feedback loop. Topic selection informed by measured audience data. |
+| v0.4.0 | Intelligent Media Selection complete (PR #7). B-roll candidates are scored deterministically before Timeline construction. |
+| v0.5.0 | Content Intelligence & Source Planning complete (PR #8). Scenes route by visual capability before media selection. |
+| v0.6.0 | Provider Expansion / Registry Formalization (PR #9). Providers register capabilities; preferences are configuration. |
+| v0.7.0 | Render Profiles introduced (PR #10). Multiple formats supported declaratively. |
+| v0.8.0 | Resumable Pipeline Orchestrator (PR #11). Any stage can restart from persisted upstream artifacts. |
+| v0.9.0 | Multi-channel deployment. Per-channel configuration and analytics. |
+| v0.10.0 | Analytics feedback loop. Topic selection informed by measured audience data. |
 | v1.0.0 | Production-ready platform. Full backward compatibility guarantee begins. All Era II success criteria met. |
 
 Versions between v0.1.0 and v1.0.0 may release non-consecutively as scope shifts. Skipped versions are recorded in `CHANGELOG.md` with the reason.

@@ -48,24 +48,65 @@ import random
 import re
 import time
 import uuid
+import hashlib
 import datetime as dt
 from pathlib import Path
 from difflib import SequenceMatcher
 from PIL import Image, ImageDraw, ImageFont
 
+SCRIPT_DIR = Path(__file__).parent
+SRC_DIR = SCRIPT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from autovideo.config import AppConfig, DEFAULTS, ProviderRegistry, Settings
+from autovideo.domain import (
+    MediaAsset,
+    MediaSource,
+    Script,
+    TimelineBuildOptions,
+    UploadMetadata,
+    VoiceTrack,
+    build_timeline,
+)
+from autovideo.intelligence import build_topic_metadata
+from autovideo.media import (
+    MediaSelectionResult,
+    QueryPlanner,
+    SceneImportance,
+    SearchStrategy,
+    SourcePlanner,
+    build_visual_intent,
+    candidate_from_local_path,
+    candidate_from_nasa_item,
+    candidate_from_pexels_video,
+    candidate_from_pixabay_hit,
+    candidate_from_remote_item,
+    default_provider_capability_registry,
+    select_best_candidate,
+)
+from autovideo.music import MusicPlanner
+from autovideo.providers.factory import build_music_registry
+from autovideo.providers.llm import CallableLLMProvider
+from autovideo.providers.voice import CallableVoiceProvider, ElevenLabsVoiceProvider, VoiceRequest
+from autovideo.render import FfmpegRenderServices, FfmpegTimelineRenderer, render_profile_for
+from autovideo.storage import ArtifactStore, FilesystemQueue
+
 # ----------------------------------------------------------------------------
 # CONFIG  — tweak these freely
 # ----------------------------------------------------------------------------
-DEFAULT_NICHE        = "mind-blowing facts about space"
-VOICE                = os.environ.get("EDGE_TTS_VOICE", "en-US-AndrewNeural")   # try en-US-AriaNeural, en-GB-RyanNeural, etc.
-GEMINI_MODEL         = "gemini-2.5-flash"
-TARGET_DURATION      = 60                     # target video length in seconds (use --duration to override)
-AVG_SEGMENT_DURATION = 6.5                    # estimated seconds per narration/story beat
-SHORTS_MIN_DURATION  = 50                     # preferred default lower bound for YouTube Shorts
-SHORTS_MAX_DURATION  = 58                     # hard ceiling: ≥60s triggers YT Content ID (Adrev). 2s safety margin to absorb encoding drift.
-WIDTH, HEIGHT        = 1080, 1920             # vertical (Reels / Shorts / FB)
-FPS                  = 30
-SCRIPT_DIR           = Path(__file__).parent
+DEFAULT_NICHE        = DEFAULTS.channel.default_niche
+VOICE                = os.environ.get("EDGE_TTS_VOICE", DEFAULTS.providers.edge_tts_voice)   # try en-US-AriaNeural, en-GB-RyanNeural, etc.
+GEMINI_MODEL         = DEFAULTS.providers.gemini_models[0]
+TARGET_DURATION      = DEFAULTS.render.target_duration_sec                     # target video length in seconds (use --duration to override)
+AVG_SEGMENT_DURATION = DEFAULTS.render.avg_segment_duration_sec                    # estimated seconds per narration/story beat
+SHORTS_SCENE_TARGET_DURATION = 5.0
+SHORTS_PREFERRED_NARRATION_TEMPO = 1.06
+SHORTS_TRANSITION_DURATION = 0.22
+SHORTS_MIN_DURATION  = DEFAULTS.render.shorts_min_duration_sec                     # preferred default lower bound for YouTube Shorts
+SHORTS_MAX_DURATION  = DEFAULTS.render.shorts_max_duration_sec                     # hard ceiling: >=60s triggers YT Content ID (Adrev). 2s safety margin to absorb encoding drift.
+WIDTH, HEIGHT        = DEFAULTS.render.width, DEFAULTS.render.height             # vertical (Reels / Shorts / FB)
+FPS                  = DEFAULTS.render.fps
 OUT_DIR              = SCRIPT_DIR / "output"
 PENDING_DIR          = SCRIPT_DIR / "videos" / "pending"   # review queue input
 PERSISTENT_USED_PATH = SCRIPT_DIR / "used_videos.json"     # cross-run clip dedup
@@ -75,8 +116,10 @@ VIDEO_EXTENSIONS     = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 IMAGE_EXTENSIONS     = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
 AUDIO_EXTENSIONS     = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 MEDIA_EXTENSIONS     = VIDEO_EXTENSIONS | IMAGE_EXTENSIONS
-DEFAULT_MUSIC_VOLUME = 0.38                    # background bed under narration
+DEFAULT_MUSIC_VOLUME = DEFAULTS.render.default_music_volume                    # background bed under narration
 _GEMINI_CLIENT = None
+_MEDIA_SELECTION_DIAGNOSTICS = {}
+_MEDIA_PLANNING_DIAGNOSTICS = {}
 
 
 def _get_gemini_client():
@@ -118,6 +161,7 @@ if env_path.exists():
             os.environ[k.strip()] = v.strip()
 
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY")
+GEMINI_IMAGE_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "").strip()
 PEXELS_API_KEY  = os.environ.get("PEXELS_API_KEY")
 OPENAI_API_KEY  = os.environ.get("OPENAI_API_KEY")
 GROQ_API_KEY    = os.environ.get("GROQ_API_KEY")
@@ -126,8 +170,19 @@ SPEECHIFY_VOICE_ID = os.environ.get("SPEECHIFY_VOICE_ID", "george")
 JAMENDO_CLIENT_ID  = os.environ.get("JAMENDO_CLIENT_ID")
 PIXABAY_API_KEY    = os.environ.get("PIXABAY_API_KEY")
 SAMBANOVA_API_KEY  = os.environ.get("SAMBANOVA_API_KEY")
+MIXKIT_API_URL     = os.environ.get("MIXKIT_API_URL", "").strip()
+COVERR_API_URL     = os.environ.get("COVERR_API_URL", "").strip()
+VIDEVO_API_KEY     = os.environ.get("VIDEVO_API_KEY", "").strip()
+VIDEVO_API_URL     = os.environ.get("VIDEVO_API_URL", "").strip()
+NOAA_API_URL       = os.environ.get("NOAA_API_URL", "").strip()
+ESA_API_URL        = os.environ.get("ESA_API_URL", "").strip()
+ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "0").lower() not in {"0", "false", "no"}
 # Channel name used in end card and SEO metadata
-CHANNEL_NAME       = "Wonders of the Nature"  # overridden by auto_short_biasfiles.py
+APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
+APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
+CHANNEL_NAME       = APP_CONFIG.channel_name  # overridden by auto_short_biasfiles.py
+# Music tunables come from the validated configuration layer (env-overridable).
+DEFAULT_MUSIC_VOLUME = APP_CONFIG.music.volume
 # NASA Image and Video Library has no auth requirement for read access.
 
 # Keywords that route to NASA (in addition to Pexels/Pixabay) - if any of these
@@ -180,13 +235,12 @@ def count_words(text):
 def narration_targets(target_duration, n_segments):
     """Return word-count targets that usually land TTS output near target_duration.
 
-    TTS reads at roughly 2.5-3 words/sec on neural voices. For a 60s target
-    that's ~150-180 words total. Multipliers below 2.0 produce 25-35s videos
-    (proved: 1.6 gave a 25.7s video). The hard cap trim handles overshoots.
+    TTS reads at roughly 2.5-3 words/sec on neural voices. Shorts need enough
+    words to avoid slow retiming, but each sentence still needs to be punchy.
     """
-    min_total = max(n_segments * 12, round(target_duration * 2.0))
-    max_total = max(min_total + 12, round(target_duration * 2.4))
-    min_segment = max(10, min(16, min_total // max(n_segments, 1)))
+    min_total = max(n_segments * 10, round(target_duration * 2.25))
+    max_total = max(min_total + 14, round(target_duration * 2.55))
+    min_segment = max(8, min(13, min_total // max(n_segments, 1)))
     max_segment = max(min_segment + 4, round(max_total / max(n_segments, 1)) + 2)
     return min_total, max_total, min_segment, max_segment
 
@@ -271,30 +325,12 @@ def check_deps():
 # Provider chain: every entry is tried in order; first success wins.
 # Multiple Gemini models so a single throttled model doesn't kill the run.
 # Multiple Groq models so a single deprecated model doesn't kill the run.
-GEMINI_MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",   # smaller/cheaper, often available when 2.5-flash is 503
-    "gemini-2.0-flash",
-    # gemini-1.5-flash deprecated as of late 2025; removed.
-]
-GROQ_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-70b-versatile",
-    "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
-]
-OPENAI_MODELS = ["gpt-4o-mini", "gpt-4o"]
+GEMINI_MODELS = list(DEFAULTS.providers.gemini_models)
+GROQ_MODELS = list(DEFAULTS.providers.groq_models)
+OPENAI_MODELS = list(DEFAULTS.providers.openai_models)
 # SambaNova Cloud models (https://cloud.sambanova.ai). OpenAI-compatible API.
 # Ordered by JSON-following reliability + capability. First success wins.
-SAMBANOVA_MODELS = [
-    # Largest first - more obedient to length instructions, less likely to write
-    # 9-word fragments when asked for 15-22 word narrations.
-    "Meta-Llama-3.1-405B-Instruct",
-    "DeepSeek-R1-Distill-Llama-70B",
-    "Meta-Llama-3.3-70B-Instruct",
-    "Meta-Llama-3.1-70B-Instruct",
-    "Qwen2.5-72B-Instruct",
-]
+SAMBANOVA_MODELS = list(DEFAULTS.providers.sambanova_models)
 
 
 def _try_gemini(prompt):
@@ -394,33 +430,46 @@ def _try_openai(prompt):
     return None, last_err
 
 
+def _llm_provider_registry() -> ProviderRegistry:
+    registry = ProviderRegistry()
+    priorities = {name: idx for idx, name in enumerate(APP_CONFIG.provider_priority["llm"])}
+    providers = {
+        "gemini": CallableLLMProvider("gemini", _try_gemini, models=tuple(GEMINI_MODELS)),
+        "sambanova": CallableLLMProvider("sambanova", _try_sambanova, models=tuple(SAMBANOVA_MODELS)),
+        "groq": CallableLLMProvider("groq", _try_groq, models=tuple(GROQ_MODELS)),
+        "openai": CallableLLMProvider("openai", _try_openai, models=tuple(OPENAI_MODELS)),
+    }
+    for name, provider in providers.items():
+        registry.register(
+            "llm",
+            name,
+            provider,
+            priority=priorities.get(name, 100),
+            enabled=APP_CONFIG.feature_flags["allow_external_api_calls"],
+            profiles=(APP_CONFIG.render_profile.name,),
+            features=("script_json",),
+        )
+    return registry
+
+
 def generate_script_raw(prompt):
-    """Try Gemini (multiple models) -> Groq (multiple models) -> OpenAI (multiple models).
+    """Try configured LLM providers in fallback order.
     The first non-None response wins."""
-    errors = {}
-
-    raw, err = _try_gemini(prompt)
-    if raw: return raw
-    errors["gemini"] = err
-
-    raw, err = _try_sambanova(prompt)
-    if raw: return raw
-    errors["sambanova"] = err
-
-    raw, err = _try_groq(prompt)
-    if raw: return raw
-    errors["groq"] = err
-
-    raw, err = _try_openai(prompt)
-    if raw: return raw
-    errors["openai"] = err
-
-    summary = "; ".join(f"{k}={str(v)[:80]}" for k, v in errors.items() if v)
-    raise RuntimeError(
-        "All script providers failed across all model variants. "
-        f"Errors: {summary}. "
-        "Wait a few minutes for Gemini, or use --reuse-script with last_script.json."
-    )
+    registry = _llm_provider_registry()
+    try:
+        result = registry.execute(
+            "llm",
+            lambda provider: provider.generate_text(prompt).value,
+            profile=APP_CONFIG.render_profile.name,
+            feature="script_json",
+        )
+        return result
+    except Exception as e:
+        raise RuntimeError(
+            "All script providers failed across all model variants. "
+            f"Errors: {str(e)[:240]}. "
+            "Wait a few minutes for Gemini, or use --reuse-script with last_script.json."
+        ) from e
 
 
 def parse_script_json(raw):
@@ -433,8 +482,16 @@ def parse_script_json(raw):
 def generate_script(niche, n_segments, target_duration):
     min_total, max_total, min_segment, max_segment = narration_targets(target_duration, n_segments)
     prompt = f"""
-You are scripting a fast-paced vertical short video about: "{niche}".
+You are scripting a high-retention YouTube Short about: "{niche}".
 Target finished length: about {target_duration} seconds.
+
+Style target:
+- Sounds like a sharp creator talking to one person, not a textbook.
+- Short sentences. One idea per sentence. No Wikipedia introductions.
+- Every line should create curiosity, reveal a concrete visual fact, or move the story forward.
+- Use simple spoken words. Avoid formal phrases like "highly adaptable", "diverse habitats", "evolved strategies", or "provide shelter".
+- Build one clear story: problem -> hidden mechanism -> visible proof -> surprising consequence -> closing payoff.
+- Avoid generic hype like "will blow your mind", "amazing facts", "truly bizarre", or "you won't believe".
 
 Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
 {{
@@ -444,20 +501,27 @@ Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
   "music_mood": "one of: mysterious, inspiring, dramatic, warm, curious, urgent",
   "hashtags": ["#tag1", "#tag2", "..."],
   "segments": [
-    {{"narration": "one or two spoken sentences, {min_segment}-{max_segment} words, concrete and story-driven",
-      "broll": "2-3 word stock-footage search term, very visual and literal",
-      "broll_queries": ["specific visual search phrase", "backup visual search phrase", "wide establishing search phrase"]}}
+    {{"narration": "one or two spoken sentences, {min_segment}-{max_segment} words, conversational and visual",
+      "broll": "3-5 word stock-footage search term with subject + action",
+      "broll_queries": ["subject action close up", "subject in environment wide shot", "subject detail shot", "safe exact-subject fallback"]}}
   ]
 }}
 
 Rules:
 - Exactly {n_segments} segments.
 - LENGTH IS NON-NEGOTIABLE. Total narration MUST be {min_total}-{max_total} words across all segments. Below {min_total} the video is too short and gets rejected.
-- EACH segment narration MUST be at least {min_segment} words and at most {max_segment} words. Count the words before submitting. If any segment is under {min_segment} words, expand it with a concrete detail until it fits.
+- EACH segment narration MUST be at least {min_segment} words and at most {max_segment} words, except the first hook may be 8-12 words if it is stronger that way.
 - Do NOT write short fragments like "Auroras dazzle." That is only 2 words. Write full sentences with subject, verb, and a specific detail.
-- A {min_segment}-word target means roughly one full spoken sentence of 12-18 syllables. Aim for the middle of the range, not the floor.
+- Use one short sentence when possible. Use two short sentences only when it improves momentum.
 - Make it a connected mini-story with a hook, setup, escalating facts, a twist, and a satisfying closing line.
-- First segment must be a scroll-stopping hook with a specific tension, mystery, or shocking fact. Start directly in the middle of the action. NEVER open with greetings, rhetorical questions, or throat-clearing clichés like "Have you ever wondered...", "Did you know...", "Meet the...", or "Imagine a...". Open immediately with a bizarre, counterintuitive, or striking statement.
+- First segment is the first 3-5 seconds and must be the strongest line. Use a curiosity hook like:
+  "This tiny animal survives temperatures colder than your freezer."
+  "Scientists still can't believe this survival trick works."
+  "This animal has a winter trick almost no one notices."
+  Do not copy these exactly unless they fit the topic.
+- NEVER open with generic educational narration, greetings, rhetorical questions, "Did you know", "Meet the", "In this video", or the topic name followed by "are/have/can".
+- NEVER open with broad hype like "These facts will blow your mind" or "Space is truly bizarre".
+- Open on a concrete problem, danger, mystery, or surprising mechanism that the rest of the video proves.
 - The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
   "Subscribe to Wonders of the Nature for more."
   "Follow Wonders of the Nature for more like this."
@@ -469,9 +533,15 @@ Rules:
 - "broll" must be something Pexels stock video would actually have
   (e.g. "ocean waves", "city night", "galaxy stars") - concrete nouns, not abstractions.
 - STRICT ALIGNMENT: The "broll" search term and "broll_queries" list for a segment MUST directly match the subject, animal, object, or action described in that segment's "narration". If you talk about a lioness, the broll and queries must be specifically about a lioness. Never suggest a different animal or unrelated scenery.
-- Each "broll_queries" list must have exactly 3 concrete, simple Pexels-friendly searches:
-  1 specific close-up/action matching the narration (e.g. "lioness stalking"), 1 environment/establishing shot (e.g. "savannah grass"), and 1 safe 1-2 word generic fallback of the EXACT subject of the narration (e.g. "lion", not "nature documentary" or "nature").
+- Each "broll_queries" list must have exactly 4 concrete visual searches:
+  1 close-up/action matching the narration (e.g. "lioness stalking close up"),
+  1 environment/wide shot (e.g. "lioness in savannah grass wide shot"),
+  1 detail shot when useful (e.g. "lioness eyes close up"),
+  and 1 safe exact-subject fallback (e.g. "lioness", not "nature documentary" or "nature").
+  For space or astronomy topics, include real-object NASA-friendly terms where useful (e.g. "aurora borealis timelapse", "earth magnetosphere", "saturn atmosphere").
+  For ocean-science topics, include ocean-current and water-motion terms (e.g. "ocean current aerial", "underwater ocean flow", "waves moving ocean").
   Avoid abstract words like innovation, wisdom, mystery, or existence as visual searches.
+- For every segment, vary the shot type from the previous segment when possible: close-up, action, wide, detail, tracking shot.
 - 10-15 lowercase hashtags, each prefixed with #, no spaces inside a tag.
   Do NOT include "#shorts" in the list - it is appended automatically.
 """
@@ -549,48 +619,24 @@ Previous JSON:
         broll = str(seg.get("broll", "")).strip()
         if broll and broll not in queries:
             queries.insert(0, broll)
-        while len(queries) < 3:
+        while len(queries) < 4:
             queries.append(broll or niche)
-        seg["broll_queries"] = queries[:3]
-    tags = data.get("hashtags") or []
-    if isinstance(tags, str):
-        tags = [t for t in re.split(r"[\s,]+", tags) if t.startswith("#")]
-    # Evergreen high-volume hashtags for nature/educational Shorts. These are
-    # consistently high-search-volume (millions of views weekly), so every video
-    # gets a baseline of reach even if Gemini's topic tags are obscure. We add
-    # them BETWEEN #shorts and Gemini's tags so the topic-specific ones still
-    # appear in the top-15 cap.
-    EVERGREEN_TAGS = [
-        "#shorts",
-        "#nature",
-        "#facts",
-        "#didyouknow",
-        "#viralshorts",
-        "#science",
-        "#amazingfacts",
-        "#mindblown",
-        "#earth",
-        "#wildlife",
-        "#animals",
-        "#space",
-        "#ocean",
-        "#history",
-        "#education",
-        "#learnontiktok",
-        "#dailyfacts",
-        "#interesting",
-        "#knowledge",
-        "#trivia",
-    ]
-    # Topic-specific extras (Gemini's) come AFTER evergreen so unique angle survives
-    tags = EVERGREEN_TAGS + [t for t in tags if t.lower() not in {x.lower() for x in EVERGREEN_TAGS}]
-    seen, deduped = set(), []
-    for t in tags:
-        tl = t.lower()
-        if tl not in seen:
-            seen.add(tl); deduped.append(tl)
-    data["hashtags"] = deduped[:15]
+        seg["broll_queries"] = queries[:4]
     data["niche"] = niche
+    topic_metadata = build_topic_metadata(
+        video_topic=niche,
+        title=data.get("title", niche),
+        description=data.get("description", ""),
+        instagram_caption=data.get("instagram_caption", ""),
+        segments=data.get("segments", []),
+        existing_hashtags=data.get("hashtags") or (),
+    )
+    data["title"] = topic_metadata.title
+    data["description"] = topic_metadata.description
+    data["instagram_caption"] = topic_metadata.instagram_caption
+    data["hashtags"] = list(topic_metadata.hashtags)
+    data = Script.from_legacy_dict(data, niche=niche).to_legacy_dict()
+    segs = data["segments"]
 
     # Save script to cache for potential reuse (e.g. rate limit bypass)
     try:
@@ -608,17 +654,17 @@ Previous JSON:
 # ----------------------------------------------------------------------------
 # Step 2: voiceover per segment (Speechify with Edge-TTS fallback)
 # ----------------------------------------------------------------------------
-async def _tts(text, out_path):
+async def _tts(text, out_path, voice_id=None):
     import edge_tts
-    await edge_tts.Communicate(text, VOICE).save(str(out_path))
+    await edge_tts.Communicate(text, voice_id or VOICE).save(str(out_path))
 
 
-async def _tts_with_retry_async(text, out_path, tries=3):
+async def _tts_with_retry_async(text, out_path, tries=3, voice_id=None):
     import edge_tts
     last_err = None
     for attempt in range(1, tries + 1):
         try:
-            await _tts(text, out_path)
+            await _tts(text, out_path, voice_id=voice_id)
             return
         except edge_tts.exceptions.NoAudioReceived as e:
             last_err = e
@@ -664,38 +710,97 @@ def make_voice_speechify(text, voice_id, out_path):
 _SPEECHIFY_DEAD = False
 
 
-def _edge_tts_with_retry(text, out_path, tries=3):
-    asyncio.run(_tts_with_retry_async(text, out_path, tries=tries))
+def _edge_tts_with_retry(text, out_path, tries=3, voice_id=None):
+    asyncio.run(_tts_with_retry_async(text, out_path, tries=tries, voice_id=voice_id))
+
+
+def _synthesize_edge_tts(text, out_path, voice_id):
+    _edge_tts_with_retry(text, out_path, tries=APP_CONFIG.retry_attempts, voice_id=voice_id or APP_CONFIG.edge_tts_voice)
+
+
+def _synthesize_speechify(text, out_path, voice_id):
+    global _SPEECHIFY_DEAD
+    try:
+        make_voice_speechify(text, voice_id or SPEECHIFY_VOICE_ID, out_path)
+    except Exception as e:
+        err_str = str(e)
+        if "401" in err_str or "402" in err_str or "Unauthorized" in err_str:
+            _SPEECHIFY_DEAD = True
+        raise
+
+
+def _voice_provider_registry() -> ProviderRegistry:
+    registry = ProviderRegistry()
+    priorities = {name: idx for idx, name in enumerate(APP_CONFIG.provider_priority["voice"])}
+    profile = APP_CONFIG.render_profile.name
+
+    registry.register(
+        "voice",
+        "elevenlabs",
+        ElevenLabsVoiceProvider(
+            api_key=APP_CONFIG.api_keys["elevenlabs"],
+            voice_id=APP_CONFIG.elevenlabs_voice_id,
+            model=APP_CONFIG.elevenlabs_model,
+            timeout_sec=APP_CONFIG.download_timeout_sec,
+        ),
+        priority=priorities.get("elevenlabs", 100),
+        enabled=bool("elevenlabs" in priorities and APP_CONFIG.api_keys["elevenlabs"].strip() and APP_CONFIG.elevenlabs_voice_id.strip()),
+        profiles=(profile,),
+        features=("whole_narration", "chapter_narration", "scene_narration"),
+    )
+    registry.register(
+        "voice",
+        "edge_tts",
+        CallableVoiceProvider("edge_tts", _synthesize_edge_tts, default_voice_id=APP_CONFIG.edge_tts_voice),
+        priority=priorities.get("edge_tts", 100),
+        enabled="edge_tts" in priorities,
+        profiles=(profile,),
+        features=("whole_narration", "chapter_narration", "scene_narration"),
+    )
+    registry.register(
+        "voice",
+        "speechify",
+        CallableVoiceProvider("speechify", _synthesize_speechify, enabled=not _SPEECHIFY_DEAD, default_voice_id=SPEECHIFY_VOICE_ID),
+        priority=priorities.get("speechify", 100),
+        enabled=bool("speechify" in priorities and not _SPEECHIFY_DEAD and SPEECHIFY_API_KEY and SPEECHIFY_API_KEY.strip()),
+        profiles=(profile,),
+        features=("whole_narration", "chapter_narration", "scene_narration"),
+    )
+    return registry
+
+
+def _make_voice_track(text, idx):
+    out_path = OUT_DIR / f"voice_{idx}.mp3"
+    registry = _voice_provider_registry()
+    provider_names = registry.provider_names("voice", profile=APP_CONFIG.render_profile.name)
+    display_name = provider_names[0] if provider_names else "voice"
+    label = "Edge-TTS" if display_name == "edge_tts" else display_name
+    print(f"    [{label}] Generating voiceover for segment {idx+1}...")
+    try:
+        result = registry.execute(
+            "voice",
+            lambda provider: provider.synthesize(
+                VoiceRequest(text=text, output_path=out_path, scene_id=str(idx))
+            ),
+            profile=APP_CONFIG.render_profile.name,
+            feature="scene_narration",
+        )
+    except Exception as e:
+        raise RuntimeError(f"All voice providers failed: {e}") from e
+
+    result_path = result.value
+    return VoiceTrack(
+        audio_path=result_path,
+        duration_sec=media_duration(result_path),
+        provider=result.provider,
+        scene_id=str(idx),
+        metadata=dict(result.metadata or {}),
+    )
 
 
 def make_voice(text, idx):
-    global _SPEECHIFY_DEAD
-    out_path = OUT_DIR / f"voice_{idx}.mp3"
-
-    use_speechify = (
-        not _SPEECHIFY_DEAD
-        and SPEECHIFY_API_KEY
-        and SPEECHIFY_API_KEY.strip()
-    )
-
-    if not _SPEECHIFY_DEAD:
-        print(f"    [Edge-TTS] Generating voiceover for segment {idx+1}...")
-    try:
-        _edge_tts_with_retry(text, out_path)
-    except Exception as e:
-        if use_speechify:
-            print(f"    [Edge-TTS] failed ({e}). Falling back to Speechify...")
-            try:
-                make_voice_speechify(text, SPEECHIFY_VOICE_ID, out_path)
-            except Exception as e2:
-                err_str = str(e2)
-                if "401" in err_str or "402" in err_str or "Unauthorized" in err_str:
-                    _SPEECHIFY_DEAD = True
-                raise RuntimeError(f"Both Edge-TTS and Speechify failed: {e2}")
-        else:
-            raise
-
-    return out_path, media_duration(out_path)
+    track = _make_voice_track(text, idx)
+    return track.audio_path, track.duration_sec
 
 
 def atempo_chain(tempo):
@@ -731,14 +836,11 @@ def normalize_voice_timing(voice_items, target_duration):
     total = sum(item["duration"] for item in voice_items)
     desired = min(max(target_duration, SHORTS_MIN_DURATION), SHORTS_MAX_DURATION)
 
-    if SHORTS_MIN_DURATION <= total <= SHORTS_MAX_DURATION:
-        return voice_items
-
     if total < SHORTS_MIN_DURATION:
         raw_tempo = total / desired
-        # Avoid making speech unnaturally slow. The richer script prompt should
-        # do most of the work; this only corrects normal TTS variance.
-        tempo = max(0.82, raw_tempo)
+        # Avoid dragging the voice. The richer script should provide duration;
+        # retiming only corrects normal TTS variance.
+        tempo = max(0.90, raw_tempo)
         action = "slowing"
     else:
         raw_tempo = total / desired
@@ -748,11 +850,25 @@ def normalize_voice_timing(voice_items, target_duration):
         tempo = min(1.30, raw_tempo)
         action = "speeding up"
 
-    print(f"[i] Voiceover is {total:.1f}s; {action} narration slightly for a ~{desired:.0f}s Short.")
+    if SHORTS_MIN_DURATION <= total <= SHORTS_MAX_DURATION:
+        transition_allowance = max(0, len(voice_items) - 1) * SHORTS_TRANSITION_DURATION
+        minimum_voice_total = SHORTS_MIN_DURATION + transition_allowance + 0.5
+        tempo = min(SHORTS_PREFERRED_NARRATION_TEMPO, total / minimum_voice_total)
+        if tempo <= 1.005:
+            return voice_items
+        desired = total / tempo
+        action = "speeding up"
+
+    effective_target = total / tempo if tempo else desired
+    print(f"[i] Voiceover is {total:.1f}s; {action} narration slightly for a ~{effective_target:.0f}s Short.")
     adjusted = []
     for item in voice_items:
         path, duration = retime_voice(item["voice"], item["idx"], tempo)
-        adjusted.append({**item, "voice": path, "duration": duration})
+        adjusted_item = {**item, "voice": path, "duration": duration}
+        voice_track = item.get("voice_track")
+        if isinstance(voice_track, VoiceTrack):
+            adjusted_item["voice_track"] = voice_track.with_retimed_audio(path, duration)
+        adjusted.append(adjusted_item)
 
     adjusted_total = sum(item["duration"] for item in adjusted)
     if not (SHORTS_MIN_DURATION <= adjusted_total <= SHORTS_MAX_DURATION):
@@ -764,13 +880,8 @@ def make_all_voices(segments, target_duration):
     voice_items = []
     print("[2/5] Generating voiceovers...")
     for idx, seg in enumerate(segments):
-        voice_path, dur = make_voice(seg["narration"], idx)
-        voice_items.append({
-            "idx": idx,
-            "segment": seg,
-            "voice": voice_path,
-            "duration": dur
-        })
+        voice_track = _make_voice_track(seg["narration"], idx)
+        voice_items.append(voice_track.to_legacy_item(index=idx, segment=seg))
     return normalize_voice_timing(voice_items, target_duration)
 
 
@@ -968,7 +1079,7 @@ def build_split_screen(image_a, image_b, duration, idx):
 
 
 def is_gemini_image_available():
-    return bool(GEMINI_API_KEY)
+    return bool(GEMINI_API_KEY and GEMINI_IMAGE_MODEL)
 
 
 def generate_gemini_image(prompt, idx):
@@ -986,7 +1097,7 @@ def generate_gemini_image(prompt, idx):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=GEMINI_IMAGE_MODEL,
             contents=[
                 f"Generate a {orientation} image of {prompt}, documentary cinematography style, vibrant colors, photorealistic, high quality"
             ],
@@ -1009,15 +1120,68 @@ def generate_gemini_image(prompt, idx):
         return None
 
 
+def _append_unique_query(queries, query):
+    q = str(query or "").strip()
+    if q and q.lower() not in {seen.lower() for seen in queries}:
+        queries.append(q)
+
+
+def _visual_environment_hint(text):
+    low = text.lower()
+    if any(w in low for w in ("arctic", "snow", "ice", "tundra", "winter", "polar")):
+        return "snowy arctic"
+    if any(w in low for w in ("ocean", "sea", "underwater", "reef", "marine")):
+        return "underwater"
+    if any(w in low for w in ("forest", "jungle", "tree", "rainforest")):
+        return "forest"
+    if any(w in low for w in ("desert", "sand", "dune")):
+        return "desert"
+    if any(w in low for w in ("mountain", "cliff", "rocky")):
+        return "mountain"
+    if any(w in low for w in ("space", "galaxy", "planet", "star", "nebula")):
+        return "space"
+    return ""
+
+
 def broll_query_list(seg, fallback):
     queries = []
     raw_queries = seg.get("broll_queries") or []
     if isinstance(raw_queries, str):
         raw_queries = [raw_queries]
-    for q in [seg.get("broll"), *raw_queries, fallback, "cinematic documentary"]:
-        q = str(q or "").strip()
-        if q and q.lower() not in {seen.lower() for seen in queries}:
-            queries.append(q)
+
+    base = str(seg.get("broll") or fallback or "").strip()
+    narration = str(seg.get("narration") or "")
+    environment = _visual_environment_hint(f"{base} {narration} {fallback}")
+    visual_context = f"{base} {' '.join(str(q) for q in raw_queries)} {narration} {fallback}".lower()
+
+    if "arctic landscape" in visual_context or "arctic wilderness" in visual_context:
+        _append_unique_query(queries, "arctic tundra snow landscape")
+        _append_unique_query(queries, "snowy arctic wilderness")
+
+    if "arctic fox" in visual_context:
+        if base and "arctic fox" in base.lower():
+            _append_unique_query(queries, f"wild {base}")
+        if any(w in visual_context for w in ("close", "fur", "hair")):
+            _append_unique_query(queries, "wild arctic fox close up")
+        if any(w in visual_context for w in ("hunt", "pounc", "prey", "eat", "leap")):
+            _append_unique_query(queries, "arctic fox hunting in snow")
+        if "den" in visual_context:
+            _append_unique_query(queries, "arctic fox den snow")
+        if any(w in visual_context for w in ("paw", "footpad", "feet")):
+            _append_unique_query(queries, "arctic fox paws snow")
+        _append_unique_query(queries, "wild arctic fox in snow")
+
+    for query in [base, *raw_queries]:
+        _append_unique_query(queries, query)
+
+    if base:
+        _append_unique_query(queries, f"{base} close up")
+        if environment and environment not in base.lower():
+            _append_unique_query(queries, f"{base} in {environment}")
+        _append_unique_query(queries, f"{base} wide shot")
+
+    if fallback:
+        _append_unique_query(queries, fallback)
     return queries
 
 
@@ -1096,6 +1260,22 @@ def pexels_video_score(video, target_duration):
     return score
 
 
+def pexels_relevance_score(video, query, narration=""):
+    source_text = f"{video.get('url', '')} {video.get('user', {}).get('name', '')}".lower().replace("-", " ")
+    context = f"{query} {narration}".lower()
+    score = 0.0
+    if "arctic fox" in context:
+        if "fox" in source_text:
+            score += 2.0
+        else:
+            score -= 0.75
+        if any(w in source_text for w in ("arctic", "snow", "winter", "polar")):
+            score += 1.0
+        if any(bad in source_text for bad in ("dog", "husky", "bird", "zoo", "cage", "enclosure", "human", "person")):
+            score -= 5.0
+    return score
+
+
 def best_pexels_file(video):
     files = sorted(
         video.get("video_files", []),
@@ -1109,15 +1289,25 @@ def best_pexels_file(video):
     return files[0] if files else None
 
 
-def _download_to(url, out_path, timeout=120):
+def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
     """Stream a URL to a file. Returns True on success."""
     import requests
     try:
-        with requests.get(url, stream=True, timeout=timeout) as r:
+        started = time.monotonic()
+        total = 0
+        with requests.get(url, stream=True, timeout=(10, min(timeout, 30))) as r:
             r.raise_for_status()
             with open(out_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1 << 16):
-                    f.write(chunk)
+                    if chunk:
+                        total += len(chunk)
+                        if total > max_bytes:
+                            raise RuntimeError(f"download exceeded {max_bytes // (1024 * 1024)} MB limit")
+                        if time.monotonic() - started > timeout:
+                            raise RuntimeError(f"download exceeded {timeout}s time limit")
+                        f.write(chunk)
+        if not out_path.exists() or out_path.stat().st_size <= 0:
+            raise RuntimeError("download produced an empty file")
         return True
     except Exception as e:
         print(f"    [download] failed for {url[:80]}...: {e}")
@@ -1140,16 +1330,172 @@ def _qualify_query(q, fallback=""):
                                "coral", "fish", "shark", "whale", "dolphin", "octopus",
                                "squid", "jellyfish", "turtle", "seal", "ray", "eel",
                                "crab", "lobster", "shrimp", "plankton")):
-        qualifiers = ["underwater", "ocean", "animal"]
+        if any(w in low for w in ("fish", "shark", "whale", "dolphin", "octopus",
+                                  "squid", "jellyfish", "turtle", "seal", "ray", "eel",
+                                  "crab", "lobster", "shrimp", "plankton", "marine life")):
+            qualifiers = ["underwater", "ocean", "animal"]
+        else:
+            qualifiers = ["ocean", "water", "motion"]
     elif any(w in low for w in ("space", "galaxy", "universe", "astronomy", "planet",
-                                 "star", "nebula", "cosmos", "solar", "nasa")):
+                                 "star", "nebula", "cosmos", "cosmic", "solar", "nasa",
+                                 "aurora", "magnetic", "atmosphere")):
         qualifiers = ["space", "astronomy"]
     elif any(w in low for w in ("dinosaur", "prehistoric", "fossil", "jurassic",
                                  "cretaceous", "triceratops", "raptor")):
         qualifiers = ["dinosaur", "prehistoric"]
+    elif (
+        any(w in low for w in ("arctic", "polar", "snow", "ice", "tundra", "winter"))
+        and any(w in low for w in ("landscape", "wilderness", "mountain", "glacier", "scenery"))
+    ):
+        qualifiers = ["snow"]
+    elif any(w in low for w in ("arctic", "polar", "snow", "ice", "tundra", "winter")):
+        qualifiers = ["wildlife", "snow"]
+    elif any(w in low for w in ("fox", "wolf", "bear", "lion", "tiger", "bird", "eagle",
+                                 "animal", "wildlife", "predator", "prey")):
+        qualifiers = ["wildlife"]
     q_low = q.lower()
     extra = " ".join(w for w in qualifiers if w not in q_low)
     return f"{q} {extra}".strip() if extra else q
+
+
+def _scene_importance_for_index(idx, narration=""):
+    low = str(narration or "").lower()
+    if any(word in low for word in ("subscribe", "follow", "like for", "comment")):
+        return SceneImportance.CTA.value
+    if idx == 0:
+        return SceneImportance.HOOK.value
+    if idx == 1:
+        return SceneImportance.MAIN_REVEAL.value
+    return SceneImportance.SUPPORTING.value
+
+
+def _minimum_score_for_intent(intent):
+    return {
+        SceneImportance.HOOK: 6.0,
+        SceneImportance.MAIN_REVEAL: 5.0,
+        SceneImportance.SUPPORTING: 1.5,
+        SceneImportance.TRANSITION: 1.0,
+        SceneImportance.CTA: 1.0,
+    }.get(getattr(intent, "scene_importance", SceneImportance.SUPPORTING), 1.5)
+
+
+def _selection_intent(queries, fallback="", narration="", idx=None):
+    return build_visual_intent(
+        {
+            "narration": narration,
+            "broll": queries[0] if queries else fallback,
+            "broll_queries": queries,
+            "scene_importance": _scene_importance_for_index(idx, narration) if idx is not None else "",
+        },
+        fallback,
+    )
+
+
+def _remember_media_selection(idx, result):
+    if isinstance(result, MediaSelectionResult):
+        metadata = result.to_metadata()
+        if idx in _MEDIA_PLANNING_DIAGNOSTICS:
+            planning = _MEDIA_PLANNING_DIAGNOSTICS[idx]
+            query_plan = planning.get("query_plan", {})
+            provider_plan = next(
+                (
+                    plan
+                    for plan in planning.get("search_strategy", [])
+                    if plan.get("provider") == result.provider
+                ),
+                {},
+            )
+            metadata["scene_type"] = query_plan.get("scene_type", metadata.get("scene_type", ""))
+            metadata["capability"] = next(
+                iter(provider_plan.get("matched_capabilities", [])),
+                metadata.get("capability", ""),
+            )
+            if "selection" in metadata:
+                metadata["selection"]["scene_type"] = metadata["scene_type"]
+                metadata["selection"]["capability"] = metadata["capability"]
+            metadata.update(planning)
+        _MEDIA_SELECTION_DIAGNOSTICS[idx] = metadata
+
+
+def _build_search_strategy(queries, fallback, narration, local_media=None, idx=None):
+    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    registry = default_provider_capability_registry(
+        local_enabled=bool(local_media),
+        pexels_enabled=bool(PEXELS_API_KEY),
+        pixabay_enabled=bool(PIXABAY_API_KEY and "your_pixabay" not in PIXABAY_API_KEY),
+        nasa_enabled=True,
+        gemini_image_enabled=is_gemini_image_available(),
+        mixkit_enabled=bool(MIXKIT_API_URL),
+        coverr_enabled=bool(COVERR_API_URL),
+        videvo_enabled=bool(VIDEVO_API_URL and VIDEVO_API_KEY),
+        wikimedia_enabled=ENABLE_WIKIMEDIA_COMMONS,
+        noaa_enabled=bool(NOAA_API_URL),
+        esa_enabled=bool(ESA_API_URL),
+    )
+    query_plan = QueryPlanner().plan(intent)
+    return SourcePlanner(registry).plan(query_plan)
+
+
+def _remember_media_planning(idx, strategy):
+    if isinstance(strategy, SearchStrategy):
+        _MEDIA_PLANNING_DIAGNOSTICS[idx] = strategy.diagnostics
+
+
+def _select_candidate_for_provider(
+    provider_name,
+    idx,
+    candidates,
+    *,
+    intent,
+    used_set,
+    target_duration,
+    minimum_score=1.0,
+):
+    effective_minimum = max(float(minimum_score), _minimum_score_for_intent(intent))
+    result = select_best_candidate(
+        intent,
+        candidates,
+        used_provider_ids=set(used_set or []),
+        target_duration_sec=target_duration,
+        output_width=WIDTH,
+        output_height=HEIGHT,
+        minimum_score=effective_minimum,
+    )
+    _remember_media_selection(idx, result)
+    if result.selected_candidate:
+        cand = result.selected_candidate
+        print(
+            f"    [{provider_name}] Selected {cand.provider_id} "
+            f"score={result.score.score:.2f} confidence={result.confidence} "
+            f"portrait={result.to_metadata().get('portrait_score')} "
+            f"relevance={result.to_metadata().get('relevance_score')}"
+        )
+        return cand
+    if result.candidate_count:
+        print(f"    [{provider_name}] No candidate passed scoring ({result.candidate_count} checked).")
+    return None
+
+
+def _select_local_media(queries, fallback, narration, local_media, idx, used_set, target_duration, threshold=0.5):
+    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidates = [
+        candidate_from_local_path(path, queries[0] if queries else fallback)
+        for path in local_media
+    ]
+    cand = _select_candidate_for_provider(
+        "Local",
+        idx,
+        candidates,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=max(0.5, min(9.0, float(threshold) * 8.0)),
+    )
+    if not cand or not cand.local_path:
+        return None
+    used_set.add(str(cand.local_path))
+    used_set.add(cand.dedup_key)
+    return cand.local_path
 
 
 def fetch_pexels_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
@@ -1176,27 +1522,30 @@ def fetch_pexels_video(queries, idx, used_set, target_duration=5.0, fallback="",
             print(f"    [Pexels] search failed for {q!r}: {e}")
             return []
 
-    # Only try the specific queries passed in. Do NOT append generic fallbacks.
-    # Qualify each query with context keywords to avoid literal-but-wrong matches
-    # (e.g. "vampire squid" matching a vampire cosplay).
+    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
     for q in queries:
         enriched = _qualify_query(q, fallback)
         videos = search(enriched)
-        candidates = [v for v in videos if f"pexels:{v.get('id')}" not in used_set]
-        if not candidates:
-            continue
-        candidates.sort(key=lambda v: pexels_video_score(v, target_duration), reverse=True)
-        video = candidates[0]
-        used_set.add(f"pexels:{video.get('id')}")
-        pexel_file = best_pexels_file(video)
-        if pexel_file is None:
-            continue
-        link = pexel_file["link"]
-        out_path = OUT_DIR / f"broll_{idx}.mp4"
-        label = enriched if enriched != q else q
-        print(f"    [Pexels] Query: {label!r}  video_id={video.get('id')}")
-        if _download_to(link, out_path):
-            return out_path
+        for video in videos:
+            candidate = candidate_from_pexels_video(video, enriched)
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "Pexels",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    print(f"    [Pexels] Query: {candidate.query!r}  video_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
     return None
 
 
@@ -1258,24 +1607,30 @@ def fetch_pixabay_video(queries, idx, used_set, target_duration=5.0, fallback=""
         dur_score = 1.0 if dur >= target_duration else dur / max(target_duration, 1)
         return (best_dim / 1000.0) + dur_score, best
 
+    intent = _selection_intent(queries, fallback=fallback, narration="", idx=idx)
+    candidate_pool = []
     for q in queries:
         enriched = _qualify_query(q, fallback)
         hits = search(enriched)
-        candidates = [h for h in hits if f"pixabay:{h.get('id')}" not in used_set]
-        if not candidates:
-            continue
-        # Score and pick best
-        scored = [(score(h)[0], score(h)[1], h) for h in candidates]
+        scored = [(score(h)[0], score(h)[1], h) for h in hits]
         scored = [(s, rd, h) for s, rd, h in scored if rd is not None]
-        if not scored:
-            continue
-        scored.sort(key=lambda x: x[0], reverse=True)
-        s, rendition, hit = scored[0]
-        used_set.add(f"pixabay:{hit.get('id')}")
-        out_path = OUT_DIR / f"broll_{idx}.mp4"
-        print(f"    [Pixabay] Query: {q!r}  hit_id={hit.get('id')}  {rendition.get('width')}x{rendition.get('height')}")
-        if _download_to(rendition["url"], out_path):
-            return out_path
+        for _score, rendition, hit in scored:
+            candidate_pool.append(candidate_from_pixabay_hit(hit, rendition, enriched))
+    candidate = _select_candidate_for_provider(
+        "Pixabay",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    print(f"    [Pixabay] Query: {candidate.query!r}  hit_id={candidate.provider_id}  {candidate.width}x{candidate.height}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
     return None
 
 
@@ -1317,21 +1672,329 @@ def fetch_nasa_video(queries, idx, used_set, target_duration=5.0):
             print(f"    [NASA] asset lookup failed: {e}")
             return None
 
+    intent = _selection_intent(queries, fallback=queries[0] if queries else "", narration="", idx=idx)
+    candidate_pool = []
     for q in queries:
         items = search(q)
         for item in items[:5]:
             data = (item.get("data") or [{}])[0]
             nasa_id = data.get("nasa_id")
-            if not nasa_id or f"nasa:{nasa_id}" in used_set:
+            if not nasa_id:
                 continue
             url = get_asset_url(nasa_id)
             if not url:
                 continue
-            used_set.add(f"nasa:{nasa_id}")
-            out_path = OUT_DIR / f"broll_{idx}.mp4"
-            print(f"    [NASA] Query: {q!r}  nasa_id={nasa_id}")
-            if _download_to(url, out_path, timeout=180):
-                return out_path
+            candidate_pool.append(candidate_from_nasa_item(item, url, q))
+    candidate = _select_candidate_for_provider(
+        "NASA",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.0,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    print(f"    [NASA] Query: {candidate.query!r}  nasa_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path, timeout=60, max_bytes=120 * 1024 * 1024):
+        return out_path
+    return None
+
+
+def _json_items(payload):
+    """Return the first list-like item collection from common provider JSON shapes."""
+
+    if isinstance(payload, list):
+        return payload
+    if not isinstance(payload, dict):
+        return []
+    for key in ("items", "results", "videos", "data", "media", "hits"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return value
+    collection = payload.get("collection")
+    if isinstance(collection, dict) and isinstance(collection.get("items"), list):
+        return collection["items"]
+    return []
+
+
+def _remote_item_from_provider(provider, item, query):
+    """Map common stock-provider JSON fields into the normalized candidate shape."""
+
+    if not isinstance(item, dict):
+        return None
+    source = item.get("source") if isinstance(item.get("source"), dict) else {}
+    video_files = item.get("video_files") if isinstance(item.get("video_files"), list) else []
+    best_file = None
+    if video_files:
+        best_file = max(
+            video_files,
+            key=lambda file_data: int(file_data.get("height") or file_data.get("width") or 0),
+        )
+    download_url = (
+        item.get("download_url")
+        or item.get("downloadUrl")
+        or item.get("video_url")
+        or item.get("videoUrl")
+        or item.get("url")
+        or item.get("src")
+        or source.get("url")
+        or (best_file or {}).get("link")
+    )
+    if not download_url:
+        return None
+    return {
+        "provider_asset_id": item.get("id") or item.get("uuid") or item.get("slug") or download_url,
+        "title": item.get("title") or item.get("name") or item.get("slug") or "",
+        "description": item.get("description") or item.get("tags") or "",
+        "source_url": item.get("source_url") or item.get("page_url") or item.get("html_url") or item.get("url") or "",
+        "download_url": download_url,
+        "duration_sec": item.get("duration") or item.get("duration_sec"),
+        "width": item.get("width") or (best_file or {}).get("width"),
+        "height": item.get("height") or (best_file or {}).get("height"),
+        "license": item.get("license") or item.get("license_name") or provider,
+        "attribution": item.get("attribution") or item.get("author") or item.get("user") or provider,
+        "capability": item.get("capability", ""),
+    }
+
+
+def _fetch_json_stock_provider(
+    provider,
+    endpoint,
+    queries,
+    idx,
+    used_set,
+    *,
+    target_duration=5.0,
+    fallback="",
+    narration="",
+    headers=None,
+    params_extra=None,
+    license_name="",
+):
+    """Fetch a provider whose configured endpoint returns JSON media candidates."""
+
+    import requests
+
+    if not endpoint:
+        return None
+    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = requests.get(
+                endpoint,
+                headers=headers or {},
+                params={"q": enriched, "query": enriched, **(params_extra or {})},
+                timeout=30,
+            )
+            response.raise_for_status()
+            items = _json_items(response.json())
+        except Exception as e:
+            print(f"    [{provider.title()}] search failed for {enriched!r}: {e}")
+            continue
+        for item in items:
+            normalized = _remote_item_from_provider(provider, item, enriched)
+            if normalized:
+                normalized["license"] = normalized.get("license") or license_name
+                candidate = candidate_from_remote_item(provider, normalized, enriched)
+                if candidate:
+                    candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        provider.title(),
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}{'.jpg' if candidate.is_image else '.mp4'}"
+    print(f"    [{provider.title()}] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
+    return None
+
+
+def fetch_mixkit_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Fetch Mixkit results from a configured JSON endpoint.
+
+    Mixkit does not expose a stable public API here, so production use is
+    intentionally opt-in via MIXKIT_API_URL.
+    """
+
+    return _fetch_json_stock_provider(
+        "mixkit",
+        MIXKIT_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="Mixkit License",
+    )
+
+
+def fetch_coverr_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Fetch Coverr results from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "coverr",
+        COVERR_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="Coverr License",
+    )
+
+
+def fetch_videvo_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Fetch Videvo results from a configured JSON endpoint and API key."""
+
+    if not (VIDEVO_API_URL and VIDEVO_API_KEY):
+        return None
+    return _fetch_json_stock_provider(
+        "videvo",
+        VIDEVO_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        headers={"Authorization": f"Bearer {VIDEVO_API_KEY}"},
+        license_name="Videvo license varies by clip",
+    )
+
+
+def fetch_noaa_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Fetch NOAA scientific media from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "noaa",
+        NOAA_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="NOAA public domain / usage varies",
+    )
+
+
+def fetch_esa_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Fetch ESA media from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "esa",
+        ESA_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="ESA media usage guidelines",
+    )
+
+
+def _wikimedia_candidate_from_page(page, query):
+    """Normalize a Wikimedia Commons page result into a media candidate."""
+
+    title = str(page.get("title") or "")
+    imageinfo = (page.get("imageinfo") or [{}])[0]
+    mime = str(imageinfo.get("mime") or "")
+    url = str(imageinfo.get("url") or "")
+    if not title or not url or not (mime.startswith("video/") or mime.startswith("image/")):
+        return None
+    ext = imageinfo.get("extmetadata") or {}
+
+    def ext_value(name):
+        value = ext.get(name) or {}
+        return str(value.get("value") or "")
+
+    return candidate_from_remote_item(
+        "wikimedia",
+        {
+            "provider_asset_id": title.replace("File:", ""),
+            "title": title.replace("File:", ""),
+            "description": ext_value("ImageDescription"),
+            "source_url": imageinfo.get("descriptionurl") or url,
+            "download_url": url,
+            "width": imageinfo.get("width"),
+            "height": imageinfo.get("height"),
+            "license": ext_value("LicenseShortName") or ext_value("UsageTerms"),
+            "attribution": ext_value("Artist") or ext_value("Credit"),
+            "is_image": mime.startswith("image/"),
+            "capability": "history_images" if mime.startswith("image/") else "history_video",
+        },
+        query,
+    )
+
+
+def fetch_wikimedia_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+    """Search Wikimedia Commons for historical, educational, or diagram media."""
+
+    import requests
+
+    if not ENABLE_WIKIMEDIA_COMMONS:
+        return None
+    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
+    session = requests.Session()
+    for q in queries:
+        try:
+            search_response = session.get(
+                "https://commons.wikimedia.org/w/api.php",
+                params={
+                    "action": "query",
+                    "format": "json",
+                    "generator": "search",
+                    "gsrnamespace": 6,
+                    "gsrsearch": q,
+                    "gsrlimit": 8,
+                    "prop": "imageinfo",
+                    "iiprop": "url|mime|size|extmetadata",
+                },
+                timeout=30,
+            )
+            search_response.raise_for_status()
+            pages = (search_response.json().get("query", {}) or {}).get("pages", {}) or {}
+        except Exception as e:
+            print(f"    [Wikimedia] search failed for {q!r}: {e}")
+            continue
+        for page in pages.values():
+            candidate = _wikimedia_candidate_from_page(page, q)
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "Wikimedia",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.5,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    suffix = ".jpg" if candidate.is_image else ".mp4"
+    out_path = OUT_DIR / f"broll_{idx}{suffix}"
+    print(f"    [Wikimedia] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path, timeout=60, max_bytes=120 * 1024 * 1024):
+        return out_path
     return None
 
 
@@ -1365,11 +2028,21 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         queries = [queries]
     queries = [q for q in queries if q]
     keyword = queries[0] if queries else fallback
+    strategy = _build_search_strategy(queries, fallback, narration, local_media=local_media, idx=idx)
+    _remember_media_planning(idx, strategy)
 
     # 1. Local media
     if local_media:
-        match = smart_match_media(keyword, narration, local_media, idx, used_set,
-                                  hybrid=hybrid, threshold=threshold)
+        match = _select_local_media(
+            queries,
+            fallback,
+            narration,
+            local_media,
+            idx,
+            used_set,
+            target_duration,
+            threshold=threshold,
+        )
         if match:
             print(f"    [Local] Using: {match.name}")
             return match
@@ -1380,17 +2053,127 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
     if dalle:
         dalle_img = generate_gemini_image(keyword, idx)
         if dalle_img:
+            _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                "selection": {
+                    "query": keyword,
+                    "provider": "gemini_image",
+                    "provider_id": Path(dalle_img).name,
+                    "score": None,
+                    "confidence": "fallback",
+                    "warnings": ["explicit image fallback"],
+                    "rejection_reasons": [],
+                    "candidate_count": 0,
+                    "score_breakdown": {},
+                }
+            }
             return dalle_img
         print(f"    [Gemini Image] failed; falling through to stock sources.")
 
-    # 3. Stock sources: Pexels (best portrait library) - Pixabay - NASA (space only).
-    #    Persistent used_set across runs prevents clip repetition between videos.
-    for source, fetcher in [
-        ("pexels", lambda: fetch_pexels_video(queries, idx, used_set, target_duration=target_duration, fallback=fallback, narration=narration)),
-        ("pixabay", lambda: fetch_pixabay_video(queries, idx, used_set, target_duration=target_duration, fallback=fallback)),
-    ] + ([("nasa", lambda: fetch_nasa_video(queries, idx, used_set, target_duration=target_duration))]
-         if any(needs_nasa(q) for q in queries) else []):
-        out = fetcher()
+    # 3. Remote sources are ordered by required visual capabilities, not by
+    # hard-coded topic branches. Existing wrappers still own provider I/O.
+    for plan in strategy.provider_plans:
+        source = plan.provider_id
+        plan_queries = list(plan.queries) or queries
+        if plan.score <= 0:
+            continue
+        if source == "local":
+            continue
+        if source == "pexels":
+            out = fetch_pexels_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "pixabay":
+            out = fetch_pixabay_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+            )
+        elif source == "mixkit":
+            out = fetch_mixkit_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "coverr":
+            out = fetch_coverr_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "videvo":
+            out = fetch_videvo_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "wikimedia":
+            out = fetch_wikimedia_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "noaa":
+            out = fetch_noaa_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "nasa":
+            out = fetch_nasa_video(plan_queries, idx, used_set, target_duration=target_duration)
+        elif source == "esa":
+            out = fetch_esa_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+            )
+        elif source == "gemini_image":
+            if not is_gemini_image_available():
+                continue
+            print(f"    [Gemini Image] Strategy fallback for '{keyword}'...")
+            out = generate_gemini_image(plan_queries[0] if plan_queries else keyword, idx)
+            if out:
+                _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                    **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                    "selection": {
+                        "query": plan_queries[0] if plan_queries else keyword,
+                        "provider": "gemini_image",
+                        "provider_id": Path(out).name,
+                        "score": None,
+                        "confidence": "fallback",
+                        "warnings": ["strategy image fallback"],
+                        "rejection_reasons": [],
+                        "candidate_count": 0,
+                        "score_breakdown": {},
+                    },
+                }
+        else:
+            continue
         if out:
             _save_persistent_used(used_set)
             return out
@@ -1400,8 +2183,49 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         print(f"    [Gemini Image] Stock footage exhausted; generating image for '{keyword}'...")
         gemini_img = generate_gemini_image(keyword, idx)
         if gemini_img:
+            _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                "selection": {
+                    "query": keyword,
+                    "provider": "gemini_image",
+                    "provider_id": Path(gemini_img).name,
+                    "score": None,
+                    "confidence": "fallback",
+                    "warnings": ["stock footage exhausted"],
+                    "rejection_reasons": [],
+                    "candidate_count": 0,
+                    "score_breakdown": {},
+                }
+            }
             _save_persistent_used(used_set)
             return gemini_img
+
+    if _needs_qr_explainer_fallback(keyword, narration, fallback):
+        print(f"    [QR fallback] Creating local explainer image for '{keyword}'...")
+        qr_img = _generate_qr_explainer_image(keyword, idx)
+        _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+            "selection": {
+                "query": keyword,
+                "provider": "gemini_image",
+                "provider_id": Path(qr_img).name,
+                "score": None,
+                "confidence": "fallback",
+                "confidence_level": "LOW",
+                "portrait_score": 10.0,
+                "relevance_score": 7.0,
+                "scene_importance": _scene_importance_for_index(idx, narration),
+                "selection_reason": "local QR explainer fallback after stock footage failed",
+                "rejection_reason": "",
+                "fallback_level": "local_explainer",
+                "warnings": ["stock footage exhausted", "local QR explainer fallback"],
+                "rejection_reasons": [],
+                "candidate_count": 0,
+                "score_breakdown": {},
+            },
+        }
+        _save_persistent_used(used_set)
+        return qr_img
 
     # 5. Last-resort generic Pexels search using the niche/fallback term.
     # This is the "broad nature shot" safety net so scheduled runs don't die.
@@ -1414,16 +2238,35 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                               "crab", "lobster", "shrimp", "plankton", "water", "river", "lake")):
         broad_terms += ["underwater nature", "sea life close up", "ocean reef"]
     elif any(w in low for w in ("space", "galaxy", "universe", "astronomy", "planet",
-                                "star", "nebula", "cosmos", "solar", "nasa", "orbit", "astronaut")):
+                                "star", "nebula", "cosmos", "cosmic", "solar", "nasa",
+                                "orbit", "astronaut", "aurora", "northern lights",
+                                "magnetic", "atmosphere", "particles")):
         broad_terms += ["outer space", "galaxy stars", "nebula space"]
     else:
         broad_terms += ["wildlife close up", "animals in wild", "nature documentary"]
         
     if fallback:
         broad_terms.insert(0, fallback)
-    broad_out = fetch_pexels_video(broad_terms, idx, used_set, target_duration=target_duration)
+    broad_out = fetch_pexels_video(
+        broad_terms,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+    )
     if broad_out:
         print(f"    [Pexels broad] Using generic '{fallback}' / nature clip as fallback.")
+        _MEDIA_SELECTION_DIAGNOSTICS.setdefault(idx, {"selection": {}})
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"].setdefault("warnings", [])
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["warnings"].append("broad fallback used")
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["confidence"] = "low"
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["confidence_level"] = "LOW"
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["fallback_level"] = "broad"
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"].setdefault(
+            "selection_reason",
+            "last-resort broad fallback after specific providers failed",
+        )
         _save_persistent_used(used_set)
         return broad_out
 
@@ -1452,6 +2295,82 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
 # ----------------------------------------------------------------------------
 # Step 4: build one segment clip (B-roll cropped to vertical + its voiceover)
 # ----------------------------------------------------------------------------
+def _needs_qr_explainer_fallback(keyword, narration="", fallback=""):
+    text = " ".join(str(part or "").lower() for part in (keyword, narration, fallback))
+    return "qr" in text or "quick response" in text
+
+
+def _generate_qr_explainer_image(keyword, idx):
+    """Create a portrait-safe QR explainer card when stock/image providers fail."""
+    out_path = OUT_DIR / f"qr_explainer_{idx}.png"
+    OUT_DIR.mkdir(exist_ok=True)
+    img = Image.new("RGB", (WIDTH, HEIGHT), "#101418")
+    draw = ImageDraw.Draw(img)
+    try:
+        title_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 72)
+        label_font = ImageFont.truetype("C:/Windows/Fonts/arialbd.ttf", 42)
+        small_font = ImageFont.truetype("C:/Windows/Fonts/arial.ttf", 34)
+    except (OSError, IOError):
+        title_font = ImageFont.load_default()
+        label_font = title_font
+        small_font = title_font
+
+    title = "QR CODE"
+    title_width = draw.textlength(title, font=title_font)
+    draw.text(((WIDTH - title_width) / 2, 150), title, fill="#FFFFFF", font=title_font)
+    subtitle = str(keyword or "how qr codes work").replace("-", " ").title()[:42]
+    subtitle_width = draw.textlength(subtitle, font=small_font)
+    draw.text(((WIDTH - subtitle_width) / 2, 245), subtitle, fill="#A7E8FF", font=small_font)
+
+    grid_size = min(int(WIDTH * 0.72), 780)
+    cell = grid_size // 21
+    grid_size = cell * 21
+    left = (WIDTH - grid_size) // 2
+    top = int(HEIGHT * 0.28)
+    draw.rounded_rectangle(
+        [left - 28, top - 28, left + grid_size + 28, top + grid_size + 28],
+        radius=28,
+        fill="#F8FBFF",
+    )
+
+    def finder(cx, cy):
+        draw.rectangle([cx, cy, cx + cell * 6, cy + cell * 6], fill="#111111")
+        draw.rectangle([cx + cell, cy + cell, cx + cell * 5, cy + cell * 5], fill="#F8FBFF")
+        draw.rectangle([cx + cell * 2, cy + cell * 2, cx + cell * 4, cy + cell * 4], fill="#111111")
+
+    finder(left + cell, top + cell)
+    finder(left + grid_size - cell * 7, top + cell)
+    finder(left + cell, top + grid_size - cell * 7)
+
+    seed = hashlib.sha1(str(keyword or idx).encode("utf-8")).digest()
+    for y in range(21):
+        for x in range(21):
+            in_finder = (
+                (x <= 7 and y <= 7)
+                or (x >= 14 and y <= 7)
+                or (x <= 7 and y >= 14)
+            )
+            if in_finder:
+                continue
+            value = seed[(x + y * 21) % len(seed)]
+            if (value + x * 3 + y * 5) % 4 in {0, 1}:
+                x0 = left + x * cell
+                y0 = top + y * cell
+                draw.rectangle([x0, y0, x0 + cell - 2, y0 + cell - 2], fill="#111111")
+
+    labels = [
+        ("Finder patterns", left + 35, top + grid_size + 70),
+        ("Timing grid", left + 35, top + grid_size + 125),
+        ("Data + error correction", left + 35, top + grid_size + 180),
+    ]
+    for text, x, y in labels:
+        draw.rounded_rectangle([x, y + 8, x + 22, y + 30], radius=4, fill="#A7E8FF")
+        draw.text((x + 42, y), text, fill="#FFFFFF", font=label_font)
+
+    img.save(out_path)
+    return out_path
+
+
 def _video_is_landscape(path):
     """Quick ffprobe check — returns True if the video frame is wider than tall."""
     try:
@@ -1464,6 +2383,46 @@ def _video_is_landscape(path):
         return len(parts) == 2 and int(parts[0]) > int(parts[1])
     except (subprocess.CalledProcessError, OSError, ValueError):
         return False
+
+
+def _clip_start_offset(path, idx, segment_duration):
+    try:
+        source_duration = media_duration(path)
+    except (OSError, subprocess.CalledProcessError, ValueError):
+        return 0.0
+    room = source_duration - segment_duration - 0.5
+    if room <= 1.0:
+        return 0.0
+    return min(room, (idx * 2.3) % room)
+
+
+def _media_asset_from_path(path, *, source=MediaSource.UNKNOWN, idx=0, metadata=None):
+    local_path = Path(path)
+    duration = None
+    if not is_image(local_path):
+        try:
+            duration = media_duration(local_path)
+        except (OSError, subprocess.CalledProcessError, ValueError):
+            duration = None
+    return MediaAsset(
+        local_path=local_path,
+        source=source,
+        source_id=f"{source.value}:{local_path.name}:{idx}",
+        duration_sec=duration,
+        is_image=is_image(local_path),
+        metadata=dict(metadata or {}),
+    )
+
+
+def _media_source_from_selection(metadata):
+    provider = ((metadata or {}).get("selection") or {}).get("provider")
+    return {
+        "local": MediaSource.LOCAL,
+        "pexels": MediaSource.PEXELS,
+        "pixabay": MediaSource.PIXABAY,
+        "nasa": MediaSource.NASA,
+        "gemini_image": MediaSource.GEMINI_IMAGE,
+    }.get(provider, MediaSource.UNKNOWN)
 
 
 def build_segment(idx, broll, voice, duration, compare_pair=None):
@@ -1506,15 +2465,20 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
         vf = (
             f"[0:v]split[orig][blur];"
             f"[blur]scale={WIDTH}:{HEIGHT},boxblur=20:5[bg];"
-            f"[orig]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=fit[fg];"
+            f"[orig]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=decrease[fg];"
             f"[bg][fg]overlay=(WIDTH-overlay_w)/2:(HEIGHT-overlay_h)/2,setsar=1,fps={FPS}[vout]"
         )
     else:
         vf = (f"[0:v]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
               f"crop={WIDTH}:{HEIGHT},setsar=1,fps={FPS}[vout]")
-    run_ff([
+    input_args = ["-stream_loop", "-1"]
+    start_offset = _clip_start_offset(broll, idx, duration)
+    if start_offset > 0:
+        input_args.extend(["-ss", f"{start_offset:.3f}"])
+    input_args.extend(["-i", str(broll)])
+    command = [
         "ffmpeg", "-y",
-        "-stream_loop", "-1", "-i", str(broll),
+        *input_args,
         "-i", str(voice),
         "-t", f"{duration:.3f}",
         "-filter_complex", vf,
@@ -1523,7 +2487,20 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
         "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
         "-shortest",
         str(out_path),
-    ])
+    ]
+    try:
+        run_ff(command)
+    except RuntimeError:
+        if not is_landscape:
+            raise
+        print(f"    [Render] Landscape blur fit failed for {Path(broll).name}; retrying crop fill.")
+        fallback_vf = (
+            f"[0:v]scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=increase,"
+            f"crop={WIDTH}:{HEIGHT},setsar=1,fps={FPS}[vout]"
+        )
+        fallback_command = list(command)
+        fallback_command[fallback_command.index("-filter_complex") + 1] = fallback_vf
+        run_ff(fallback_command)
     return out_path
 
 
@@ -1672,7 +2649,7 @@ def concat_segments(seg_paths):
 
     # Crossfade between every segment: xfade (video) + acrossfade (audio).
     # Both produce the same overlapping output length, so they stay in sync.
-    fade_dur = 0.35  # 350ms smooth transition
+    fade_dur = SHORTS_TRANSITION_DURATION  # short transition keeps Shorts pacing snappy
     durations = []
     for p in seg_paths:
         try:
@@ -2016,41 +2993,85 @@ def generate_music_bed(duration, mood):
     return out_path
 
 
-def add_background_music(video_path, duration, mood, music_path=None, music_volume=DEFAULT_MUSIC_VOLUME):
+_MUSIC_PLANNER = None
+
+
+def _get_music_planner():
+    """Build the music planner lazily from the validated configuration layer.
+
+    Provider order, credentials, retries, timeouts, and the license policy all
+    come from APP_CONFIG.music — no provider names are hard-coded here.
+    """
+    global _MUSIC_PLANNER
+    if _MUSIC_PLANNER is None:
+        registry = build_music_registry(APP_CONFIG, generated_synthesizer=generate_music_bed)
+        _MUSIC_PLANNER = MusicPlanner(registry, APP_CONFIG.music)
+    return _MUSIC_PLANNER
+
+
+def add_background_music(
+    video_path,
+    duration,
+    mood,
+    music_path=None,
+    music_volume=DEFAULT_MUSIC_VOLUME,
+    selection_key="",
+):
     if music_volume <= 0:
         final_path = OUT_DIR / "final.mp4"
         shutil.copyfile(video_path, final_path)
         return final_path, None
 
-    # Music source priority (each falls through to the next on failure):
-    #   1. explicit --music PATH from CLI
-    #   2. local music/ folder match by mood keyword in filename  ← best; populate from Pixabay/Mixkit
-    #   3. Pixabay API (if PIXABAY_API_KEY set) — Content ID-free
-    #   4. synthesised chord pad — 100% safe, listenable but synthetic
-    # Jamendo is intentionally disabled: CC licensing does not prevent Content ID
-    # registration (e.g. Adrev/DistroKid), which blocks monetised Shorts ≥60s.
+    # Music selection:
+    #   1. explicit --music PATH from CLI always wins (operator override)
+    #   2. MusicPlanner walks the configured provider chain
+    #      (default: jamendo -> pixabay -> mixkit -> generated -> silence),
+    #      validating every candidate's license before it may be mixed.
     selected_music = Path(music_path).expanduser() if music_path else None
     if selected_music and not selected_music.exists():
         die(f"Music file not found: {selected_music}")
 
-    if not selected_music:
-        selected_music = pick_music_track(mood)
-        if selected_music:
-            print(f"[i] Using local music: {selected_music.name}")
-
-    if not selected_music:
-        selected_music = fetch_pixabay_music(mood, min_duration=max(20, int(duration * 0.7)))
-
     generated = False
     if not selected_music:
-        selected_music = generate_music_bed(duration, mood)
-        generated = True
-        print(f"[i] No real track found; generated a synth {mood or 'mysterious'} ambient bed.")
-    else:
+        selection = _get_music_planner().select(
+            mood,
+            float(duration),
+            selection_key=str(selection_key or ""),
+        )
+        try:
+            (OUT_DIR / "music_selection.json").write_text(
+                json.dumps(selection.to_dict(), indent=2), encoding="utf-8"
+            )
+        except OSError:
+            pass
+        for attempt in selection.attempts:
+            if attempt.outcome != "selected":
+                print(f"    [Music] {attempt.provider}: {attempt.outcome} ({attempt.detail})")
+        track = selection.track
+        if track.is_silence:
+            print("[i] No usable music from any provider; rendering without background music.")
+            final_path = OUT_DIR / "final.mp4"
+            shutil.copyfile(video_path, final_path)
+            return final_path, None
+        selected_music = Path(track.local_path)
+        generated = track.provider == "generated"
+        if generated:
+            print(f"[i] No real track found; generated a synth {mood or 'mysterious'} ambient bed.")
+        else:
+            print(
+                f"[i] Music: {track.title!r} via {track.provider} "
+                f"(license: {track.license.license or 'unknown'}, verified: {track.license.verified})"
+            )
+
+    if not generated:
         print(f"[i] Mixing background music: {selected_music.name}")
 
     final_path = OUT_DIR / "final.mp4"
-    fade_dur = min(3.0, max(0.5, duration / 8))
+    fade_in_sec = max(0.0, APP_CONFIG.music.fade_in_ms / 1000.0)
+    if APP_CONFIG.music.fade_out_ms > 0:
+        fade_dur = APP_CONFIG.music.fade_out_ms / 1000.0
+    else:
+        fade_dur = min(3.0, max(0.5, duration / 8))
     fade_start = max(0, duration - fade_dur)
     run_ff([
         "ffmpeg", "-y",
@@ -2059,7 +3080,7 @@ def add_background_music(video_path, duration, mood, music_path=None, music_volu
         "-i", str(selected_music),
         "-filter_complex",
         f"[0:a]pan=stereo|c0=c0|c1=c0,asplit[voice1][voice2];"
-        f"[1:a]volume={music_volume},afade=t=in:st=0:d=1.5,"
+        f"[1:a]volume={music_volume},afade=t=in:st=0:d={fade_in_sec:.3f},"
         f"afade=t=out:st={fade_start:.3f}:d={fade_dur:.3f},"
         f"aformat=channel_layouts=stereo[musicraw];"
         f"[musicraw][voice1]sidechaincompress=threshold=0.035:ratio=3.5:"
@@ -2203,7 +3224,7 @@ def main():
     if landscape:
         WIDTH, HEIGHT = 1920, 1080
 
-    n_segments = max(3, round(duration / AVG_SEGMENT_DURATION))
+    n_segments = max(3, round(duration / SHORTS_SCENE_TARGET_DURATION))
 
     OUT_DIR.mkdir(exist_ok=True)
     PENDING_DIR.mkdir(parents=True, exist_ok=True)
@@ -2237,6 +3258,7 @@ def main():
         try:
             script = json.loads(cache_path.read_text(encoding="utf-8"))
             script["segments"] = script.get("segments", [])[:n_segments]
+            script = Script.from_legacy_dict(script, niche=niche).to_legacy_dict()
             fatal, _soft = script_quality_notes(script, n_segments, duration)
             if duration >= SHORTS_MIN_DURATION and fatal:
                 die(
@@ -2253,9 +3275,15 @@ def main():
         print("[1/5] Writing script with Gemini...")
         script = generate_script(niche, n_segments, duration)
 
-    title    = script.get("title", niche)
-    hashtags_pre = script.get("hashtags") or ["#shorts"]
-    title = _enrich_title(title, niche, hashtags_pre)
+    topic_metadata = build_topic_metadata(
+        video_topic=niche,
+        title=script.get("title", niche),
+        description=script.get("description", ""),
+        instagram_caption=script.get("instagram_caption", ""),
+        segments=script.get("segments", []),
+        existing_hashtags=script.get("hashtags") or (),
+    )
+    title = topic_metadata.title
     segments = script["segments"]
 
     # Interactive b-roll review: let user customize queries before any API calls
@@ -2267,11 +3295,10 @@ def main():
     voice_items = make_all_voices(segments, duration)
 
     used_set = set()
-    seg_paths, meta = [], []
+    media_assets = []
     for item in voice_items:
         idx = item["idx"]
         seg = item["segment"]
-        voice = item["voice"]
         dur = item["duration"]
 
         if compare_mode:
@@ -2280,8 +3307,25 @@ def main():
             media_a = local_media[a_idx]
             media_b = local_media[b_idx]
             print(f"[3/5] Segment {idx+1}: split-screen [{media_a.name}] vs [{media_b.name}]...")
-            print(f"[4/5] Segment {idx+1}: assembling ({dur:.1f}s)...")
-            seg_paths.append(build_segment(idx, None, voice, dur, compare_pair=(media_a, media_b)))
+            media_assets.append(_media_asset_from_path(
+                media_a,
+                source=MediaSource.LOCAL,
+                idx=idx,
+                metadata={
+                    "compare_pair": [str(media_a), str(media_b)],
+                    "selection": {
+                        "query": "compare_mode",
+                        "provider": "local",
+                        "provider_id": str(media_a.resolve()),
+                        "score": None,
+                        "confidence": "manual",
+                        "warnings": ["compare mode"],
+                        "rejection_reasons": [],
+                        "candidate_count": len(local_media),
+                        "score_breakdown": {},
+                    },
+                },
+            ))
         else:
             # Check for user override from interactive review
             override = broll_overrides.get(idx)
@@ -2289,15 +3333,47 @@ def main():
                 if "clip_path" in override:
                     print(f"[3/5] Segment {idx+1}: using user-supplied clip...")
                     clip = Path(override["clip_path"]).expanduser().resolve()
-                    seg_paths.append(build_segment(idx, clip, voice, dur))
-                    meta.append((seg["narration"], dur))
+                    media_assets.append(_media_asset_from_path(
+                        clip,
+                        source=MediaSource.LOCAL,
+                        idx=idx,
+                        metadata={
+                            "selection": {
+                                "query": "manual_override",
+                                "provider": "local",
+                                "provider_id": str(clip),
+                                "score": None,
+                                "confidence": "manual",
+                                "warnings": ["manual clip override"],
+                                "rejection_reasons": [],
+                                "candidate_count": 1,
+                                "score_breakdown": {},
+                            }
+                        },
+                    ))
                     continue
                 elif "skip" in override:
                     print(f"[3/5] Segment {idx+1}: user skipped stock; using Gemini image...")
                     broll = generate_gemini_image(seg.get("broll") or niche, idx)
                     if broll:
-                        seg_paths.append(build_segment(idx, broll, voice, dur))
-                        meta.append((seg["narration"], dur))
+                        media_assets.append(_media_asset_from_path(
+                            broll,
+                            source=MediaSource.GEMINI_IMAGE,
+                            idx=idx,
+                            metadata={
+                                "selection": {
+                                    "query": seg.get("broll") or niche,
+                                    "provider": "gemini_image",
+                                    "provider_id": Path(broll).name,
+                                    "score": None,
+                                    "confidence": "fallback",
+                                    "warnings": ["user skipped stock"],
+                                    "rejection_reasons": [],
+                                    "candidate_count": 0,
+                                    "score_breakdown": {},
+                                }
+                            },
+                        ))
                         continue
                     print(f"    [Gemini Image] failed; falling through to stock sources.")
                     queries = broll_query_list(seg, niche)
@@ -2313,137 +3389,105 @@ def main():
                                local_media=local_media, narration=seg["narration"],
                                used_set=used_set, hybrid=hybrid, threshold=threshold, dalle=dalle,
                                target_duration=dur, no_interactive=no_interactive)
-            print(f"[4/5] Segment {idx+1}: assembling ({dur:.1f}s)...")
-            seg_paths.append(build_segment(idx, broll, voice, dur))
+            selection_metadata = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
+            media_assets.append(_media_asset_from_path(
+                broll,
+                source=_media_source_from_selection(selection_metadata),
+                idx=idx,
+                metadata=selection_metadata,
+            ))
 
-        meta.append((seg["narration"], dur))
-
-    print("[5/5] Stitching + burning captions...")
-
-    # End card removed - verbal CTA in segment 9 carries the call to action,
-    # and static fade-to-logo endings hurt Shorts retention.
-
-    # Concatenate segments FIRST so we can measure actual combined duration,
-    # then build ASS captions synced to that duration. Fixes the "captions
-    # extend past video end" bug caused by ffmpeg concat variance.
-    concat_segments(seg_paths)
-    combined_path = OUT_DIR / "combined.mp4"
-    try:
-        combined_dur = media_duration(combined_path)
-    except (OSError, subprocess.CalledProcessError):
-        combined_dur = sum(d for _, d in meta)
-
-    # Trim combined to max duration BEFORE building captions so the last
-    # caption doesn't get cut off by the post-caption hard cap trim.
-    if combined_dur > SHORTS_MAX_DURATION:
-        print(f"[!] Combined video is {combined_dur:.1f}s - trimming to {SHORTS_MAX_DURATION}s before captions.")
-        trimmed = OUT_DIR / "combined_trimmed.mp4"
-        run_ff([
-            "ffmpeg", "-y", "-i", str(combined_path),
-            "-t", f"{SHORTS_MAX_DURATION:.3f}",
-            "-c", "copy",
-            str(trimmed),
-        ])
-        trimmed.replace(combined_path)
-        combined_dur = SHORTS_MAX_DURATION
-
-    build_ass(meta, video_duration=combined_dur)
-    captioned = burn_captions()
-
-    try:
-        captioned_duration = media_duration(captioned)
-    except (OSError, subprocess.CalledProcessError):
-        captioned_duration = sum(d for _, d in meta)
-
-    final, music_used = add_background_music(
-        captioned,
-        captioned_duration,
-        script.get("music_mood"),
-        music_path=music_path,
+    script_model = Script.from_legacy_dict(script, niche=niche)
+    voice_tracks = [
+        item.get("voice_track") or VoiceTrack(
+            audio_path=Path(item["voice"]),
+            duration_sec=float(item["duration"]),
+            scene_id=str(item["idx"]),
+        )
+        for item in voice_items
+    ]
+    timeline_metadata = UploadMetadata.from_legacy_dict({
+        "id": "draft",
+        "title": title,
+        "video_path": str(OUT_DIR / "final.mp4"),
+        "niche": niche,
+        "segments": script.get("segments", []),
+        "orientation": "landscape" if landscape else "portrait",
+        "status": "draft",
+    })
+    timeline = build_timeline(
+        script=script_model,
+        voice_tracks=voice_tracks,
+        media_assets=media_assets,
+        upload_metadata=timeline_metadata,
+        options=TimelineBuildOptions(
+            width=WIDTH,
+            height=HEIGHT,
+            fps=FPS,
+            format_profile="shorts_landscape" if landscape else "shorts_vertical",
+            transition_duration_sec=SHORTS_TRANSITION_DURATION,
+            check_asset_files=True,
+        ),
+    )
+    timeline.metadata["requested_music_path"] = str(music_path) if music_path else ""
+    timeline.metadata["requested_music_volume"] = music_volume
+    timeline.metadata["music_selection_key"] = f"{title}|{niche}"
+    timeline.write_json(OUT_DIR / "timeline.json")
+    render_profile = render_profile_for(
+        APP_CONFIG.render_profile.name,
+        width=WIDTH,
+        height=HEIGHT,
+        fps=FPS,
+        shorts_max_duration_sec=SHORTS_MAX_DURATION,
+        transition_duration_sec=SHORTS_TRANSITION_DURATION,
         music_volume=music_volume,
     )
+    renderer = FfmpegTimelineRenderer(
+        out_dir=OUT_DIR,
+        profile=render_profile,
+        services=FfmpegRenderServices(
+            build_segment=build_segment,
+            concat_segments=concat_segments,
+            media_duration=media_duration,
+            build_ass=build_ass,
+            burn_captions=burn_captions,
+            add_background_music=add_background_music,
+            run_ff=run_ff,
+            move_file=shutil.move,
+        ),
+    )
+    render_result = renderer.render(timeline)
+    mastered_video = render_result.mastered_video
+    final = render_result.final_path
+    final_yt_safe = render_result.youtube_safe_path
+    total = render_result.final_duration_sec
+    music_used = render_result.music_path
 
-    try:
-        total = media_duration(final)
-    except (OSError, subprocess.CalledProcessError):
-        total = captioned_duration
-
-    # YouTube-safe variant: just the captioned video (voice + visuals, NO
-    # background music). This avoids Adrev/Content ID claims on YouTube while
-    # IG/FB still get the richer Jamendo mix on final.mp4. The YT uploader
-    # will add YT Audio Library music post-upload via the Shorts editor.
-    final_yt_safe = OUT_DIR / "final_yt_safe.mp4"
-    print(f"[i] Producing YT-safe variant (no music) -> {final_yt_safe.name}")
-    run_ff([
-        "ffmpeg", "-y", "-i", str(captioned),
-        "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
-        "-movflags", "+faststart",
-        str(final_yt_safe),
-    ])
-
-    # HARD CAP: trim both versions to <SHORTS_MAX_DURATION (58s) so neither
-    # gets the >=60s YouTube Content ID treatment.
-    def _trim_if_long(path):
-        try:
-            dur = media_duration(path)
-        except (OSError, subprocess.CalledProcessError):
-            return None
-        if dur <= SHORTS_MAX_DURATION:
-            return dur
-        print(f"[!] {path.name} is {dur:.1f}s - exceeds {SHORTS_MAX_DURATION}s; trimming.")
-        trimmed = path.with_name(path.stem + "_trimmed.mp4")
-        run_ff([
-            "ffmpeg", "-y", "-i", str(path),
-            "-t", f"{SHORTS_MAX_DURATION:.3f}",
-            "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
-            "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
-            "-movflags", "+faststart",
-            str(trimmed),
-        ])
-        shutil.move(str(trimmed), str(path))
-        try:
-            return media_duration(path)
-        except (OSError, subprocess.CalledProcessError):
-            return SHORTS_MAX_DURATION
-
-    new_total = _trim_if_long(final)
-    if new_total is not None:
-        total = new_total
-    _trim_if_long(final_yt_safe)
-    try:
-        yt_total = media_duration(final_yt_safe)
-    except (OSError, subprocess.CalledProcessError):
-        yt_total = total
-    print(f"    Shorts-safe durations: IG/FB={total:.1f}s  YT={yt_total:.1f}s")
-
-    hashtags = script.get("hashtags") or ["#shorts"]
+    hashtags = list(topic_metadata.hashtags)
     hashtag_str = " ".join(hashtags)
     youtube_title = title
     if "#shorts" not in youtube_title.lower():
         candidate = f"{title} #shorts"
         if len(candidate) <= 100:
             youtube_title = candidate
-    description_base = script.get("description") or title
+    description_base = topic_metadata.description or title
     # YouTube SEO: ensure primary keyword (title) appears in first ~150 chars
     if title.lower() not in description_base[:150].lower():
         description_base = f"{title}\n\n{description_base}"
     youtube_description = f"{description_base}\n\n{hashtag_str}"
     facebook_description = youtube_description
-    instagram_caption = script.get("instagram_caption") or title
+    instagram_caption = topic_metadata.instagram_caption or title
     instagram_caption = f"{instagram_caption}\n\n{hashtag_str}"
 
     # YouTube tags for search (hashtags without the #, comma-separated)
-    youtube_tags = ",".join(t.lstrip("#").replace(" ", "") for t in hashtags if t != "#shorts")
+    youtube_tags = topic_metadata.youtube_tags
 
     # --- Queue output: copy final video into videos/pending/<id>/ ----
     video_id = f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}-{slugify(title)}-{uuid.uuid4().hex[:6]}"
-    pending_folder = PENDING_DIR / video_id
-    pending_folder.mkdir(parents=True, exist_ok=True)
+    artifact_store = ArtifactStore(SCRIPT_DIR)
+    pending_folder = artifact_store.queue_item_path("pending", video_id)
     pending_video = pending_folder / "video.mp4"
     pending_video_yt = pending_folder / "video_yt_safe.mp4"
-    shutil.copy2(str(final), str(pending_video))
-    shutil.copy2(str(final_yt_safe), str(pending_video_yt))
 
     metadata = {
         "id": video_id,
@@ -2459,7 +3503,7 @@ def main():
         "music_mood": script.get("music_mood"),
         "music_path": str(music_used) if music_used else None,
         "music_volume": music_volume,
-        "duration_sec": round(total, 2),
+        "duration_sec": round(mastered_video.duration_sec, 2),
         "video_file": "video.mp4",
         "video_file_yt": "video_yt_safe.mp4",
         "video_path": str(pending_video.resolve()),
@@ -2468,8 +3512,15 @@ def main():
         "status": "pending",
         "created_at": dt.datetime.now().isoformat(timespec="seconds"),
     }
-    (pending_folder / "metadata.json").write_text(
-        json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8"
+    UploadMetadata.from_legacy_dict(metadata)
+    queue = FilesystemQueue(artifact_store.queue_root())
+    queue.create_pending(
+        video_id,
+        metadata,
+        artifacts={
+            "video.mp4": final,
+            "video_yt_safe.mp4": final_yt_safe,
+        },
     )
     meta_path = OUT_DIR / "upload_metadata.json"
     meta_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")

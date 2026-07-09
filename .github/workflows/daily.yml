@@ -68,12 +68,19 @@ jobs:
           OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
           SAMBANOVA_API_KEY:   ${{ secrets.SAMBANOVA_API_KEY }}
 
+          # Voice providers (ElevenLabs > Edge-TTS > Speechify; falls back
+          # automatically when a secret is absent)
+          ELEVENLABS_API_KEY:  ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          SPEECHIFY_API_KEY:   ${{ secrets.SPEECHIFY_API_KEY }}
+
           # Stock sources
           PEXELS_API_KEY:      ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:     ${{ secrets.PIXABAY_API_KEY }}
 
-          # Music
+          # Music (chain: jamendo -> pixabay -> mixkit -> generated -> silence)
           JAMENDO_CLIENT_ID:   ${{ secrets.JAMENDO_CLIENT_ID }}
+          DEFAULT_NICHE:       "hidden science behind nature, Earth, animals, oceans, weather, and space"
 
           # YouTube Data API (replaces browser upload)
           YT_CLIENT_ID:        ${{ secrets.YT_CLIENT_ID }}

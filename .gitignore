@@ -29,3 +29,8 @@ browser_session_test/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Local validation artifacts and samples
+validation/
+voice_samples/
+.claude/

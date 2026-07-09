@@ -12,6 +12,27 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 
 Work in progress. Once released, entries here move to a versioned section.
 
+### Added — music subsystem refactor (internal infrastructure milestone)
+
+- **License-aware `MusicTrackProvider` contract** (`src/autovideo/providers/music/base.py`) with structured `MusicTrack` / `MusicLicense` metadata (provider, provider_track_id, title, artist, duration, license, commercial_use, attribution_required, verified, source_url) and `MusicCapability` declarations. Implements ADR-002/ADR-005 for the music capability.
+- **Concrete music providers**: `JamendoMusicProvider` (CC catalog, commercial filter, license from `license_ccurl`), `PixabayMusicProvider` (Content-ID-free, attribution-free), `MixkitMusicProvider` (curated direct-download catalog — no scraping), `GeneratedMusicProvider` (injected synthesizer), and `SilenceMusicProvider` (terminal emergency fallback). All deterministic picks; transports injectable for tests.
+- **`build_music_registry` factory** (`src/autovideo/providers/factory.py`) mirroring the voice registry: order, enablement, and credentials come entirely from configuration; silence is always registered last.
+- **`MusicPlanner` + `MusicSelectionResult`** (`src/autovideo/music/planning.py`) walking the registry chain with per-provider retries, license validation before rendering, and guaranteed degradation to silence — rendering never stops because a music provider failed. Selection diagnostics persist to `output/music_selection.json`.
+- **License validation** (`src/autovideo/music/licensing.py`): `LicensePolicy` / `validate_license` driven by `AUTO_VIDEO_REQUIRE_COMMERCIAL_LICENSE` and `AUTO_VIDEO_ALLOW_ATTRIBUTION`.
+- **Validated `MusicConfig`** (`src/autovideo/config/music.py`) on `AppConfig.music`: provider order, retries, timeout, volume, fades, min/max duration, generated-music toggle, license policy. Invalid values fail at load time with errors naming the variable; missing values receive safe defaults; loading is deterministic. Implements ADR-011 for the music domain.
+- **`.env.example`** documenting every recognized variable with defaults.
+- **41 new unit tests** covering provider registration, fallback, license validation, config loading/overrides/validation, metadata generation, and the generated/silence fallbacks. All external providers mocked; no network calls.
+
+### Changed
+
+- Default music fallback chain is now `jamendo → pixabay → mixkit → generated → silence` (was `local folder → pixabay → generated`), configurable via `AUTO_VIDEO_MUSIC_PROVIDER_ORDER`. Explicit `--music PATH` still overrides everything.
+- Default voice provider priority is now `elevenlabs → edge_tts → speechify` in the development and production profiles (ElevenLabs is skipped automatically when `ELEVENLABS_API_KEY`/`ELEVENLABS_VOICE_ID` are absent).
+- Music fade-in/fade-out are configurable (`AUTO_VIDEO_MUSIC_FADE_IN_MS`, `AUTO_VIDEO_MUSIC_FADE_OUT_MS`); defaults preserve the previous behavior (1.5 s in, duration-scaled out).
+
+### Deprecated
+
+- Automatic music selection from the local `music/` folder. The `local` name in a music provider order is accepted but skipped with a `DeprecationWarning`; use `--music PATH` for operator-supplied tracks. Legacy helpers (`pick_music_track`, `fetch_pixabay_music`, `fetch_jamendo_track`) remain in `auto_short.py` for compatibility but are no longer called by the pipeline.
+
 ### Documentation
 
 - `docs/VISION.md` — mission, roadmap eras, design philosophy, project principles.

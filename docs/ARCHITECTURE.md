@@ -15,9 +15,12 @@ The table below tracks the maturity of each architectural component. Contributor
 | Foundation | ✅ Implemented | Cross-cutting utilities in place |
 | Storage | ✅ Implemented | Artifact persistence + metadata |
 | Providers | ✅ Implemented | Provider abstraction + configuration |
-| Domain Integration | 🚧 In Progress | Typed models and business rules being wired into stages |
-| Timeline Builder | 📋 Planned | Explicit timeline IR not yet emitted or consumed |
-| Renderer (new contract) | 📋 Planned | Current renderer walks segments imperatively |
+| Domain Integration | ✅ Implemented | Typed models and business rules wired into legacy stages |
+| Timeline Builder | ✅ Implemented | Timeline IR emitted and bridged to the legacy renderer |
+| Renderer (new contract) | ✅ Implemented | Timeline-based renderer interface with FFmpeg implementation |
+| Media Selection | ✅ Implemented | Deterministic B-roll candidate scoring before Timeline construction |
+| Source Planning | ✅ Implemented | Capability-driven query and provider strategy before media selection |
+| Provider Expansion | ✅ Implemented | Scene-type routing and optional stock/archive/science provider registration |
 | Pipeline (orchestrator + stages) | 🚧 In Progress | Legacy monolithic `main()` still authoritative |
 | Interface (CLIs, workflows) | 🚧 In Progress | Legacy entry points at repo root, new location planned |
 | Long-form profile | 📋 Deferred | `bias_long.py` continues as a parallel variant |
@@ -277,6 +280,8 @@ The output of the media stage. One `MediaAsset` per segment:
 | `dimensions` | tuple[int, int] | Width × height |
 | `is_image` | bool | True if a still (needs Ken-Burns treatment) |
 | `attribution` | dict | Rights-holder metadata for CC licensed content |
+
+Media selection is implemented as a deterministic pre-timeline boundary in `src/autovideo/media/`. Source planning first converts `VisualIntent` into `SceneType`, `QueryPlan`, `CapabilityRequirement`, and `SearchStrategy` objects so provider routing is based on required visual capability instead of a fixed provider order. The selector then normalizes provider results into `StockCandidate`, assigns deterministic `CandidateScore` values, and returns a `MediaSelectionResult`. Only the winning candidate is downloaded. Planning and selection diagnostics are stored inside `MediaAsset.metadata` and are intentionally not copied into upload metadata or queue metadata.
 
 ### Timeline
 
@@ -616,8 +621,9 @@ The end-to-end data flow for one video looks like this:
      Timeline stage           Domain-only. No provider calls.
         │                     Persists: Timeline
         ▼
-     Music stage              ─→ Providers.music (Local → Jamendo → Synth)
-        │                     Persists: MusicTrack (optional)
+     Music stage              ─→ Providers.music (Jamendo → Pixabay → Mixkit → Generated → Silence)
+        │                     License-validated; order is configuration
+        │                     Persists: MusicTrack (optional) + music_selection.json
         ▼
      Render stage             ─→ Renderer (ffmpeg)
         │                     Persists: MasteredVideo
@@ -708,7 +714,7 @@ Add `platform/providers/stock/<name>.py` implementing `StockMediaProvider`. The 
 
 ### New music provider
 
-Add `platform/providers/music/<name>.py` implementing `MusicProvider`. Local libraries (files in the operator's `music/` folder) are already exposed via the `local_library` provider — a new remote source (Epidemic Sound, Soundstripe, etc.) is a separate module.
+Add `src/autovideo/providers/music/<name>.py` implementing the `MusicTrackProvider` contract (`fetch_track(query) -> MusicTrack` with structured `MusicLicense` metadata and declared `MusicCapability` values), register it in `build_music_registry`, and add its name to the supported set in `autovideo.config.music`. Provider order is configuration (`AUTO_VIDEO_MUSIC_PROVIDER_ORDER`); the `MusicPlanner` validates every candidate's license before rendering and degrades to silence when all providers fail. No planner or business-logic changes are needed for a new source (Epidemic Sound, Soundstripe, etc.).
 
 ### New image provider
 
@@ -789,7 +795,7 @@ The status field means:
 
 **Alternatives considered.** Direct imperative construction (current state, rejected for future work because of the extensibility problems above). MoviePy-style scene graphs (rejected because they couple the timeline representation to a specific renderer; the timeline should outlast any single renderer).
 
-**Status.** Future. Current renderer walks segments directly. Timeline representation is defined in domain models but not yet emitted or consumed by the renderer.
+**Status.** Active for new code. Timeline representation is emitted by the legacy Shorts pipeline and passed into the renderer contract. The FFmpeg implementation still uses legacy render helpers internally for backward compatibility.
 
 ---
 
@@ -825,7 +831,7 @@ The status field means:
 
 **Alternatives considered.** Per-format subclasses of a `Renderer` base class (rejected — inheritance couples format to renderer implementation; profiles are more flexible). Global constants toggled by flags (rejected — this is what the current codebase does, and it does not scale).
 
-**Status.** Future. Current codebase has hard-coded Shorts constants; profiles will be introduced during the domain-layer migration.
+**Status.** Active in initial form. Renderer profiles exist for development, production, and testing while preserving current Shorts defaults. Fully declarative format profiles remain scheduled for the next migration step.
 
 ---
 
