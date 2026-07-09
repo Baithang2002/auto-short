@@ -12,11 +12,11 @@ __pycache__/
 *.pyd
 
 # Generated output
-output/
-videos/
-music/
-input_clips/
-assets/
+/output/
+/videos/
+/music/
+/input_clips/
+/assets/
 
 # Browser session data
 browser_session/
@@ -31,6 +31,6 @@ Thumbs.db
 .DS_Store
 
 # Local validation artifacts and samples
-validation/
-voice_samples/
+/validation/
+/voice_samples/
 .claude/
