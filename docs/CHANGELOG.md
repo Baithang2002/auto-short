@@ -12,34 +12,201 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 
 Work in progress. Once released, entries here move to a versioned section.
 
-### Added — music subsystem refactor (internal infrastructure milestone)
+---
 
-- **License-aware `MusicTrackProvider` contract** (`src/autovideo/providers/music/base.py`) with structured `MusicTrack` / `MusicLicense` metadata (provider, provider_track_id, title, artist, duration, license, commercial_use, attribution_required, verified, source_url) and `MusicCapability` declarations. Implements ADR-002/ADR-005 for the music capability.
-- **Concrete music providers**: `JamendoMusicProvider` (CC catalog, commercial filter, license from `license_ccurl`), `PixabayMusicProvider` (Content-ID-free, attribution-free), `MixkitMusicProvider` (curated direct-download catalog — no scraping), `GeneratedMusicProvider` (injected synthesizer), and `SilenceMusicProvider` (terminal emergency fallback). All deterministic picks; transports injectable for tests.
-- **`build_music_registry` factory** (`src/autovideo/providers/factory.py`) mirroring the voice registry: order, enablement, and credentials come entirely from configuration; silence is always registered last.
-- **`MusicPlanner` + `MusicSelectionResult`** (`src/autovideo/music/planning.py`) walking the registry chain with per-provider retries, license validation before rendering, and guaranteed degradation to silence — rendering never stops because a music provider failed. Selection diagnostics persist to `output/music_selection.json`.
-- **License validation** (`src/autovideo/music/licensing.py`): `LicensePolicy` / `validate_license` driven by `AUTO_VIDEO_REQUIRE_COMMERCIAL_LICENSE` and `AUTO_VIDEO_ALLOW_ATTRIBUTION`.
-- **Validated `MusicConfig`** (`src/autovideo/config/music.py`) on `AppConfig.music`: provider order, retries, timeout, volume, fades, min/max duration, generated-music toggle, license policy. Invalid values fail at load time with errors naming the variable; missing values receive safe defaults; loading is deterministic. Implements ADR-011 for the music domain.
-- **`.env.example`** documenting every recognized variable with defaults.
-- **41 new unit tests** covering provider registration, fallback, license validation, config loading/overrides/validation, metadata generation, and the generated/silence fallbacks. All external providers mocked; no network calls.
+## [0.6.3] — Media Acceptance & Domain Safety (backfilled 2026-07-10)
+
+**Milestone: PR #9.6 — Media Acceptance & Domain Safety.** Media selection now requires independent evidence gates before accepting a candidate. Wrong-domain matches are rejected explicitly rather than selected on other merits.
+
+### Added
+
+- Independent evidence gates for candidate acceptance. A candidate must pass subject-match, environment-match, and shot-type-match gates independently — passing one strongly does not compensate for failing another.
+- Confidence tier derived from visual-relevance evidence rather than provider-quality score alone.
+- Canonical `VisualIntent` shared across providers so per-provider adapters agree on what the scene requires.
+- Wrong-domain rejection. Candidates from a mismatched domain (aquarium footage for a desert-wildlife scene, indoor stock for a weather scene) are rejected explicitly.
+- Domain-safe local-explainer fallback when no candidate satisfies the gates.
+- Per-candidate rejection reasons in provider diagnostics.
+
+### Changed
+
+- Universal wildlife fallback removed. A scene requesting technical or human-subject visuals no longer receives a wildlife filler as a last resort. The local-explainer fallback runs instead.
+
+### Compatibility
+
+- Scenes that previously matched high-confidence candidates continue to match. Scenes that previously accepted low-confidence or wrong-domain candidates may now fall through to the local-explainer.
+
+---
+
+## [0.6.2] — Metadata Quality Improvement (backfilled 2026-07-10)
+
+**Metadata Quality Improvement.** Deterministic topic classification replaces the channel-niche default in upload metadata. Title, description, and hashtag generation reflect the actual topic of each video.
+
+### Added
+
+- `TopicCategory` enum covering 17 high-level categories under `src/autovideo/intelligence/topic_metadata.py`, with a `TopicClassification` producing primary and optional secondary categories from a video topic string.
+- `TopicMetadata` container carrying classification, generated title, description, Instagram caption, hashtags, and keyword list.
+- Deterministic classification — the same topic string always yields the same classification.
+
+### Changed
+
+- Upload metadata (title, description, hashtags, keywords) now uses the detected topic category rather than the channel-niche default.
+
+### Compatibility
+
+- `upload_metadata.json` schema is unchanged. Only the values inside change for a given topic.
+
+---
+
+## [0.6.1] — Portrait Safety & Visual Relevance Guardrails (backfilled 2026-07-10)
+
+**Milestone: PR #9.5 — Portrait Safety & Visual Relevance Guardrails.** Selection scoring gains explicit portrait-safety and visual-relevance criteria. Confidence thresholds tighten; generic stock footage is penalized.
+
+### Added
+
+- Portrait-first media selection. Candidates are scored by orientation fit for the target output aspect ratio before other criteria apply. Landscape and ultra-wide sources are eligible only when portrait-safe alternatives are absent.
+- Portrait-safety scoring ensuring the visual subject remains centered when a landscape source is cropped to portrait.
+- Visual-relevance scoring comparing candidate content against declared scene intent (subject, environment, shot type). Domain-mismatched candidates are penalized regardless of other quality metrics.
+- Scene-importance weighting. Hook and turn scenes require higher confidence than filler scenes before selection is accepted.
+- Portrait-safety verdicts and relevance-gate rejection reasons added to selection diagnostics.
+
+### Changed
+
+- Confidence thresholds tightened. A scene falls through to the next provider or the local-explainer fallback rather than accepting a low-confidence match.
+- Generic stock footage penalized in scoring. Queries matching generic patterns score below queries with specific subjects.
+
+### Compatibility
+
+- Scenes that previously selected high-confidence portrait footage continue to select the same footage. Scenes that previously accepted landscape or low-confidence footage may now select a portrait-safe alternative or fall through.
+
+---
+
+## [0.6.0] — Provider Expansion & Registry Formalization (backfilled 2026-07-10)
+
+**Milestone: PR #9 — Provider Expansion & Visual Source Intelligence.** Formalizes the capability registry and expands the stock-media provider set. Scene routing becomes capability-declared rather than order-based.
+
+### Added
+
+- `SceneType` classification driving per-scene provider selection based on visual character (wildlife, weather, technical, urban, and so on).
+- Capability registry entries for Mixkit, Coverr, Videvo, Wikimedia Commons, NOAA, and ESA stock providers, joining Pexels, Pixabay, and NASA. Each provider declares which scene types it can serve.
+- Per-scene provider diagnostics: which providers were consulted, which returned results, which was selected, and why.
+- Capability-aware routing at scene-selection time. A `SceneType.WEATHER` scene prefers NOAA and ESA; a `SceneType.WILDLIFE` scene prefers Pexels and Pixabay.
+
+### Changed
+
+- Per-scene provider order is derived from capability declarations rather than a global preference list. The historical order (`pexels → pixabay → nasa`) is preserved as the default for scenes with no specific capability requirement.
+
+### Compatibility
+
+- Default routing for previously-supported scene types reproduces the historical provider order. Newly added providers activate only for scene types they declare.
+
+---
+
+## [0.5.1] — Music Subsystem Refactor (backfilled 2026-07-10)
+
+**Music Subsystem Refactor.** Provider-agnostic music architecture behind a license-aware provider contract. Fallback is guaranteed to reach silence — rendering never stops because a music provider failed.
+
+### Added
+
+- Typed `MusicTrackProvider` contract with structured track and license metadata, and per-provider capability declarations.
+- Concrete music providers: Jamendo, Pixabay Music, Mixkit, Generated (synthesizer), and Silence (terminal fallback). All deterministic; transports injectable for tests.
+- `MusicPlanner` walking a configured registry chain with per-provider retries and license validation before rendering. Selection diagnostics persist to `output/music_selection.json`.
+- License validation (`AUTO_VIDEO_REQUIRE_COMMERCIAL_LICENSE`, `AUTO_VIDEO_ALLOW_ATTRIBUTION`) enforced before a track can be selected.
+- Validated `MusicConfig` on `AppConfig.music` covering provider order, retries, timeout, volume, fades, duration bounds, and license policy. Invalid values fail at load time with errors naming the variable.
 
 ### Changed
 
 - Default music fallback chain is now `jamendo → pixabay → mixkit → generated → silence` (was `local folder → pixabay → generated`), configurable via `AUTO_VIDEO_MUSIC_PROVIDER_ORDER`. Explicit `--music PATH` still overrides everything.
-- Default voice provider priority is now `elevenlabs → edge_tts → speechify` in the development and production profiles (ElevenLabs is skipped automatically when `ELEVENLABS_API_KEY`/`ELEVENLABS_VOICE_ID` are absent).
-- Music fade-in/fade-out are configurable (`AUTO_VIDEO_MUSIC_FADE_IN_MS`, `AUTO_VIDEO_MUSIC_FADE_OUT_MS`); defaults preserve the previous behavior (1.5 s in, duration-scaled out).
+- Default voice provider priority is now `elevenlabs → edge_tts → speechify` in development and production profiles. ElevenLabs is skipped automatically when credentials are absent.
+- Music fade-in / fade-out are configurable (`AUTO_VIDEO_MUSIC_FADE_IN_MS`, `AUTO_VIDEO_MUSIC_FADE_OUT_MS`); defaults preserve previous behavior.
 
 ### Deprecated
 
-- Automatic music selection from the local `music/` folder. The `local` name in a music provider order is accepted but skipped with a `DeprecationWarning`; use `--music PATH` for operator-supplied tracks. Legacy helpers (`pick_music_track`, `fetch_pixabay_music`, `fetch_jamendo_track`) remain in `auto_short.py` for compatibility but are no longer called by the pipeline.
+- Automatic music selection from the local `music/` folder. The `local` name in a music provider order is accepted but skipped with a `DeprecationWarning`. Use `--music PATH` for operator-supplied tracks.
 
-### Documentation
+### Compatibility
 
-- `docs/VISION.md` — mission, roadmap eras, design philosophy, project principles.
-- `docs/ENGINEERING_GUIDE.md` — coding standards, architecture principles, provider/storage/configuration rules, testing strategy, performance philosophy, AI contributor guidelines, definition of done.
-- `docs/ARCHITECTURE.md` — package structure, domain models, provider layer, storage layer, timeline architecture, rendering architecture, migration strategy, extension points, and 12 Architectural Decision Records.
-- `docs/CHANGELOG.md` — this file.
-- `docs/ROADMAP.md` — pending.
+- Explicit `--music PATH` remains the primary operator override. Legacy helpers (`pick_music_track`, `fetch_pixabay_music`, `fetch_jamendo_track`) remain in `auto_short.py` for compatibility but are no longer called by the pipeline.
+
+---
+
+## [0.5.0] — Content Intelligence & Source Planning (backfilled 2026-07-10)
+
+**Milestone: PR #8 — Content Intelligence & Source Planning.** Adds the planning stage between script generation and media selection. Scenes route to providers by declared capability rather than by fixed provider order.
+
+### Added
+
+- Planning stage translating `Script → VisualIntent → QueryPlan → CapabilityRequirements → ProviderCapabilityRanking → SearchStrategy`. Each stage is a pure function of the previous.
+- Provider capability declarations. Each provider states which visual capabilities it can serve; scene requirements are matched against declarations at planning time.
+- Capability-aware routing replacing the previous fixed provider order for stock media. Providers that cannot serve a scene are skipped for that scene, not for the run.
+
+### Changed
+
+- Media selection consumes a `SearchStrategy` rather than a plain query string. The strategy carries the ordered provider list, per-provider query variants, and per-provider capability tags.
+
+### Compatibility
+
+- No user-visible behavior change. Default capability declarations reproduce the previous provider order for scenes with no declared special requirement.
+
+---
+
+## [0.4.0] — Intelligent Media Selection (backfilled 2026-07-10)
+
+**Milestone: PR #7 — Intelligent Media Selection.** Introduces deterministic per-scene candidate scoring. Only the winning candidate is downloaded; scoring diagnostics are persisted for review.
+
+### Added
+
+- Typed intent / candidate / score / result model for per-scene media selection under `src/autovideo/media/selection.py`. Same inputs produce the same selection.
+- Deterministic scoring across subject match, duration fit, orientation, resolution, and quality-gate criteria.
+- Download-winner-only fetch behavior. Candidates are compared from lightweight metadata; only the winning candidate's video file is downloaded.
+- Structured selection diagnostics attached to `MediaAsset.metadata`: score breakdown, warnings, rejection reasons, candidate count, confidence tier.
+
+### Changed
+
+- Per-scene stock media flow now runs candidate scoring before download. Legacy download-then-score-then-discard behavior is retired.
+
+### Compatibility
+
+- No user-visible behavior change. Scoring defaults reproduce the historical selection heuristics.
+
+---
+
+## [0.3.0] — Timeline Builder + Renderer Contract (backfilled 2026-07-10)
+
+**Milestones: PR #5 — Timeline Builder** and **PR #6 — Renderer Contract.** Introduces the Timeline intermediate representation and the Renderer interface. The FFmpeg renderer consumes a `Timeline`; existing rendering behavior is preserved via a legacy adapter that translates timelines into the historical call shape.
+
+### Added
+
+- Timeline as the canonical intermediate representation between planning and rendering. Builder produces timelines from typed inputs; a validator enforces ordering, duration, and caption-alignment invariants. Timeline architecture documented in `docs/ARCHITECTURE.md`.
+- `Renderer` protocol and `FfmpegTimelineRenderer` implementation in `src/autovideo/render/`. The renderer accepts a `Timeline` and returns a `RenderResult`.
+- Legacy renderer adapter translating timelines into the argument shape the historical rendering functions expect.
+- Environment-keyed `RenderProfile` carrying width, height, fps, duration ceiling, codec, and mastering parameters. Selectable via `AUTO_VIDEO_RENDER_PROFILE`, `RENDER_PROFILE`, or `ENVIRONMENT` environment variables.
+
+### Changed
+
+- The `auto_short.py` main flow instantiates `FfmpegTimelineRenderer` and passes a `Timeline`. Historical rendering functions remain in place as injected services.
+
+### Compatibility
+
+- No user-visible behavior change. Renderer output is byte-equivalent for equivalent inputs.
+
+---
+
+## [0.2.0] — Domain Integration (backfilled 2026-07-10)
+
+**Milestone: PR #4 — Domain Integration.** Introduces the typed domain layer under `src/autovideo/domain/`. Pipeline stages consume typed models where they cross layer boundaries; legacy dictionary passing continues to work behind conversion helpers.
+
+### Added
+
+- Typed domain models spanning script, voice, media, timeline, mastering, publishing, and metadata. Frozen dataclasses with enum types and construction-time invariant checks. Model catalog documented in `docs/ARCHITECTURE.md § Domain Layer`.
+- Legacy conversion helpers (`from_legacy_dict()` / `to_legacy_dict()`) on the exchange types, preserving the historical JSON shape.
+
+### Changed
+
+- Layer boundaries in `auto_short.py` are crossed with typed models rather than dictionaries. Conversion happens at the edges of the touched stages.
+
+### Compatibility
+
+- No user-visible behavior change. Legacy dict inputs and outputs remain accepted at every touched call site. Output files are unchanged.
 
 ---
 
