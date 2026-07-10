@@ -42,6 +42,17 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertIn("snow", intent.environment_terms)
         self.assertEqual(intent.shot_type, "close")
 
+    def test_visual_intent_uses_broll_when_query_list_is_missing(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Earth's magnetic field redirects solar particles.",
+                "broll": "earth magnetic field diagram",
+            },
+            "How the Northern Lights Are Created",
+        )
+
+        self.assertEqual(intent.queries, ("earth magnetic field diagram",))
+
     def test_candidate_normalization_preserves_provider_metadata(self) -> None:
         pexels = candidate_from_pexels_video(
             {
@@ -446,6 +457,165 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertEqual(result.selected_candidate.provider, "pixabay")
         self.assertTrue(any("below minimum" in warning for warning in result.warnings))
 
+    def test_weather_scene_rejects_animal_clip_and_uses_weather_provider(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "A lightning bolt forms inside a thunderstorm cloud.",
+                "broll": "lightning storm clouds",
+                "scene_importance": SceneImportance.HOOK.value,
+            },
+            "How Lightning Is Created",
+        )
+        animal = StockCandidate(
+            provider="pexels",
+            provider_id="animal",
+            query="lightning storm clouds",
+            title="wild animal walking through nature",
+            duration_sec=8,
+            width=1080,
+            height=1920,
+        )
+        weather = StockCandidate(
+            provider="pixabay",
+            provider_id="storm",
+            query="lightning storm clouds",
+            title="lightning thunderstorm clouds in night sky",
+            duration_sec=8,
+            width=1080,
+            height=1920,
+        )
+
+        result = select_first_available_provider(
+            intent,
+            [("pexels", [animal]), ("pixabay", [weather])],
+            minimum_score=auto_short._minimum_score_for_intent(intent),
+        )
+
+        self.assertEqual(result.selected_candidate.provider_id, "storm")
+        self.assertTrue(any("wrong-domain" in reason for _, reasons in result.rejected for reason in reasons))
+
+    def test_portrait_quality_cannot_inflate_weak_relevance_confidence(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "This satellite map reveals the global ocean current.",
+                "broll": "ocean current satellite map",
+            },
+            "The Science Behind Earth's Strongest Ocean Currents",
+        )
+        generic_ocean = StockCandidate(
+            provider="pexels",
+            provider_id="portrait-waves",
+            query="ocean current satellite map",
+            title="portrait beach waves and sunset",
+            duration_sec=8,
+            width=1080,
+            height=1920,
+        )
+
+        result = select_best_candidate(intent, [generic_ocean], minimum_score=0)
+
+        self.assertIsNone(result.selected_candidate)
+        self.assertEqual(result.confidence, "rejected")
+        self.assertFalse(result.score.quality_gate_passed)
+        self.assertIn("no explanatory evidence", " ".join(result.score.rejection_reasons))
+
+    def test_requested_diagram_rejects_generic_earth_footage(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Earth's magnetic field redirects the solar wind.",
+                "broll": "earth magnetic field diagram",
+            },
+            "How the Northern Lights Are Created",
+        )
+        generic_earth = StockCandidate(
+            provider="nasa",
+            provider_id="earth-view",
+            query="earth magnetic field diagram",
+            title="Earth seen from space",
+            description="Blue planet rotating in orbit",
+            duration_sec=8,
+            width=1920,
+            height=1080,
+        )
+
+        result = select_best_candidate(intent, [generic_earth], minimum_score=0)
+
+        self.assertIsNone(result.selected_candidate)
+        self.assertIn(
+            "requested explanatory format not proven: diagram",
+            result.score.rejection_reasons,
+        )
+
+    def test_solar_storm_scene_uses_astronomy_domain(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "A solar storm sends particles toward Earth.",
+                "broll": "bright sun solar flare",
+            },
+            "How the Northern Lights Are Created",
+        )
+        candidate = StockCandidate(
+            provider="nasa",
+            provider_id="solar-flare",
+            query="bright sun solar flare",
+            title="solar flare erupts from the sun",
+            duration_sec=8,
+            width=1920,
+            height=1080,
+        )
+
+        metadata = select_best_candidate(intent, [candidate], minimum_score=0).to_metadata()
+
+        self.assertEqual(metadata["visual_domain"], "astronomy")
+
+    def test_astronomy_rejects_human_lab_clip_despite_gas_evidence(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Oxygen and nitrogen atoms collide high in the atmosphere.",
+                "broll": "colorful gas particles colliding",
+            },
+            "How the Northern Lights Are Created",
+        )
+        lab_clip = StockCandidate(
+            provider="nasa",
+            provider_id="gas-lab",
+            query="colorful gas particles colliding",
+            title="scientist person holding a gas experiment in a laboratory",
+            duration_sec=8,
+            width=1080,
+            height=1920,
+        )
+
+        result = select_best_candidate(intent, [lab_clip], minimum_score=0)
+
+        self.assertIsNone(result.selected_candidate)
+        self.assertIn("wrong-domain content for astronomy", result.score.rejection_reasons)
+
+    def test_selection_diagnostics_include_independent_quality_gate(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Roman aqueducts carried water across valleys.",
+                "broll": "roman aqueduct ruins",
+            },
+            "How Roman Aqueducts Changed Civilization",
+        )
+        candidate = StockCandidate(
+            provider="wikimedia",
+            provider_id="roman-aqueduct",
+            query="roman aqueduct ruins",
+            title="ancient Roman aqueduct ruins",
+            duration_sec=8,
+            width=1080,
+            height=1920,
+        )
+
+        metadata = select_best_candidate(intent, [candidate], minimum_score=0).to_metadata()
+
+        self.assertTrue(metadata["quality_gate_passed"])
+        self.assertEqual(metadata["visual_domain"], "history")
+        self.assertGreater(metadata["evidence_score"], 0)
+        self.assertIn("accepted", metadata["acceptance_reason"])
+
     def test_provider_order_is_preserved_when_later_provider_scores_higher(self) -> None:
         intent = build_visual_intent(
             {"narration": "Arctic fox walks in snow.", "broll": "arctic fox walking"},
@@ -624,6 +794,67 @@ class MediaSelectionTests(unittest.TestCase):
                     self.assertEqual(img.size, (auto_short.WIDTH, auto_short.HEIGHT))
         finally:
             auto_short.OUT_DIR = old_out_dir
+
+    def test_local_explainer_fallback_is_portrait_safe(self) -> None:
+        old_out_dir = auto_short.OUT_DIR
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                auto_short.OUT_DIR = Path(tmp)
+                path = auto_short._generate_local_explainer_image(
+                    "glowing solar particles animation",
+                    1,
+                )
+
+                self.assertTrue(path.exists())
+                with Image.open(path) as image:
+                    self.assertEqual(image.size, (auto_short.WIDTH, auto_short.HEIGHT))
+        finally:
+            auto_short.OUT_DIR = old_out_dir
+
+    def test_fetch_broll_uses_local_explainer_after_provider_rejections(self) -> None:
+        old_out_dir = auto_short.OUT_DIR
+        old_pexels = auto_short.PEXELS_API_KEY
+        auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                auto_short.OUT_DIR = Path(tmp)
+                auto_short.PEXELS_API_KEY = "test-key"
+                provider_mocks = {
+                    name: Mock(return_value=None)
+                    for name in (
+                        "fetch_pexels_video",
+                        "fetch_pixabay_video",
+                        "fetch_nasa_video",
+                        "fetch_mixkit_video",
+                        "fetch_coverr_video",
+                        "fetch_videvo_video",
+                        "fetch_wikimedia_media",
+                        "fetch_noaa_media",
+                        "fetch_esa_media",
+                    )
+                }
+                with patch.multiple(auto_short, **provider_mocks), patch.object(
+                    auto_short,
+                    "is_gemini_image_available",
+                    return_value=False,
+                ), patch.object(auto_short, "_save_persistent_used"):
+                    path = auto_short.fetch_broll(
+                        ["earth magnetic field diagram"],
+                        2,
+                        fallback="How the Northern Lights Are Created",
+                        narration="Earth's magnetic field redirects solar particles.",
+                        used_set=set(),
+                        no_interactive=True,
+                    )
+
+                self.assertTrue(path.exists())
+                self.assertEqual(
+                    auto_short._MEDIA_SELECTION_DIAGNOSTICS[2]["selection"]["fallback_level"],
+                    "local_explainer",
+                )
+        finally:
+            auto_short.OUT_DIR = old_out_dir
+            auto_short.PEXELS_API_KEY = old_pexels
 
     def test_wikimedia_candidate_normalization_from_page(self) -> None:
         candidate = auto_short._wikimedia_candidate_from_page(

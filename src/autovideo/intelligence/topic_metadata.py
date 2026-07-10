@@ -81,7 +81,8 @@ _CATEGORY_TERMS: dict[TopicCategory, set[str]] = {
     },
     TopicCategory.EARTH_SCIENCE: {
         "earth", "atmosphere", "magnetic", "magnetosphere", "geology", "planet", "climate",
-        "weather", "ocean", "currents", "aurora", "northern", "lights",
+        "weather", "ocean", "currents", "aurora", "northern", "lights", "lightning",
+        "thunder", "thunderstorm",
     },
     TopicCategory.SPACE: {
         "space", "saturn", "mars", "jupiter", "venus", "planet", "planets", "solar",
@@ -91,7 +92,10 @@ _CATEGORY_TERMS: dict[TopicCategory, set[str]] = {
         "astronomy", "planet", "planets", "saturn", "mars", "jupiter", "venus", "stars",
         "galaxy", "nebula", "cosmos", "orbit", "solar",
     },
-    TopicCategory.WEATHER: {"weather", "storm", "hurricane", "cloud", "rain", "wind", "aurora"},
+    TopicCategory.WEATHER: {
+        "weather", "storm", "thunderstorm", "thunder", "lightning", "hurricane", "cloud",
+        "clouds", "rain", "wind", "monsoon", "cyclone", "aurora",
+    },
     TopicCategory.CLIMATE: {"climate", "temperature", "warming", "ice", "glacier", "carbon"},
     TopicCategory.PSYCHOLOGY: {
         "brain", "memory", "memories", "psychology", "embarrassing", "emotion", "mind",
@@ -166,6 +170,7 @@ _ALLOWED_SECONDARY: dict[TopicCategory, set[TopicCategory]] = {
         TopicCategory.WEATHER,
         TopicCategory.CLIMATE,
     },
+    TopicCategory.WEATHER: {TopicCategory.EARTH_SCIENCE, TopicCategory.PHYSICS, TopicCategory.CLIMATE},
 }
 
 
@@ -255,6 +260,9 @@ def _apply_category_boosts(
         boosted[TopicCategory.EARTH_SCIENCE] = boosted.get(TopicCategory.EARTH_SCIENCE, 0) + 3
     if "ocean" in tokens and ("current" in tokens or "currents" in tokens):
         boosted[TopicCategory.OCEAN_SCIENCE] = boosted.get(TopicCategory.OCEAN_SCIENCE, 0) + 5
+        boosted[TopicCategory.EARTH_SCIENCE] = boosted.get(TopicCategory.EARTH_SCIENCE, 0) + 2
+    if tokens & {"lightning", "thunder", "thunderstorm", "storm"}:
+        boosted[TopicCategory.WEATHER] = boosted.get(TopicCategory.WEATHER, 0) + 5
         boosted[TopicCategory.EARTH_SCIENCE] = boosted.get(TopicCategory.EARTH_SCIENCE, 0) + 2
     if "roman" in tokens or "aqueduct" in tokens or "aqueducts" in tokens:
         boosted[TopicCategory.HISTORY] = boosted.get(TopicCategory.HISTORY, 0) + 5

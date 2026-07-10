@@ -26,6 +26,13 @@ class TopicClassificationTests(unittest.TestCase):
         self.assertEqual(result.primary, TopicCategory.OCEAN_SCIENCE)
         self.assertIn(TopicCategory.EARTH_SCIENCE, result.secondary)
 
+    def test_lightning_classifies_as_weather_not_wildlife(self) -> None:
+        result = classify_topic("How Lightning Is Created Inside Storm Clouds")
+
+        self.assertEqual(result.primary, TopicCategory.WEATHER)
+        self.assertIn(TopicCategory.EARTH_SCIENCE, result.secondary)
+        self.assertNotIn(TopicCategory.WILDLIFE, result.all_categories)
+
     def test_roman_aqueducts_classify_as_history_and_engineering(self) -> None:
         result = classify_topic("How Roman Aqueducts Changed Civilization")
 

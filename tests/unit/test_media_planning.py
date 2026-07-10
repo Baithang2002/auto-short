@@ -61,6 +61,7 @@ class MediaPlanningTests(unittest.TestCase):
             ("Ocean currents move heat across the planet.", "ocean current aerial", SceneType.OCEAN),
             ("Satellites show ocean temperature data.", "satellite ocean current data", SceneType.SATELLITE),
             ("Solar particles create auroras in the atmosphere.", "aurora borealis", SceneType.ASTRONOMY),
+            ("Lightning forms inside a thunderstorm cloud.", "lightning storm clouds", SceneType.WEATHER),
             ("Roman aqueducts carried water into cities.", "roman aqueduct ruins", SceneType.HISTORY),
             ("QR codes store data in tiny squares.", "qr code scan", SceneType.TECHNOLOGY),
             ("A diagram shows how memory loops work.", "brain memory diagram", SceneType.DIAGRAM),
@@ -357,6 +358,31 @@ class MediaPlanningTests(unittest.TestCase):
         pexels.assert_called_once()
         nasa.assert_not_called()
 
+    def test_fetch_broll_passes_same_canonical_intent_to_provider(self) -> None:
+        old_pexels = auto_short.PEXELS_API_KEY
+        auto_short.PEXELS_API_KEY = "pexels"
+        try:
+            with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
+                auto_short,
+                "fetch_pexels_video",
+                return_value=Path("pexels.mp4"),
+            ) as pexels:
+                auto_short.fetch_broll(
+                    ["ocean current satellite map"],
+                    2,
+                    fallback="The Science Behind Earth's Strongest Ocean Currents",
+                    narration="A satellite map reveals the current's full path.",
+                    used_set=set(),
+                    no_interactive=True,
+                )
+        finally:
+            auto_short.PEXELS_API_KEY = old_pexels
+
+        intent = pexels.call_args.kwargs["intent"]
+        self.assertIn("satellite map", " ".join(intent.queries))
+        self.assertIn("full path", intent.narration)
+        self.assertEqual(intent.topic, "The Science Behind Earth's Strongest Ocean Currents")
+
     def test_planning_diagnostics_merge_with_selection_metadata(self) -> None:
         auto_short._MEDIA_PLANNING_DIAGNOSTICS.clear()
         auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
@@ -387,6 +413,8 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertIn("selection", metadata)
         self.assertIn("query_plan", metadata)
         self.assertIn("search_strategy", metadata)
+        self.assertEqual(len(metadata["selection_attempts"]), 1)
+        self.assertTrue(metadata["selection_attempts"][0]["accepted"])
 
 
 if __name__ == "__main__":

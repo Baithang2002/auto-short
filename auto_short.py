@@ -54,6 +54,8 @@ from pathlib import Path
 from difflib import SequenceMatcher
 from PIL import Image, ImageDraw, ImageFont
 
+from text_cards import create_text_card
+
 SCRIPT_DIR = Path(__file__).parent
 SRC_DIR = SCRIPT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
@@ -1340,6 +1342,9 @@ def _qualify_query(q, fallback=""):
                                  "star", "nebula", "cosmos", "cosmic", "solar", "nasa",
                                  "aurora", "magnetic", "atmosphere")):
         qualifiers = ["space", "astronomy"]
+    elif any(w in low for w in ("lightning", "thunder", "thunderstorm", "storm", "weather",
+                                 "cloud", "rain", "monsoon", "cyclone", "hurricane")):
+        qualifiers = ["storm", "sky"]
     elif any(w in low for w in ("dinosaur", "prehistoric", "fossil", "jurassic",
                                  "cretaceous", "triceratops", "raptor")):
         qualifiers = ["dinosaur", "prehistoric"]
@@ -1356,6 +1361,42 @@ def _qualify_query(q, fallback=""):
     q_low = q.lower()
     extra = " ".join(w for w in qualifiers if w not in q_low)
     return f"{q} {extra}".strip() if extra else q
+
+
+def _broad_fallback_terms(keyword, narration="", fallback=""):
+    """Return last-resort search terms without crossing into the wrong domain."""
+
+    low = (keyword + " " + narration).lower()
+    broad_terms = []
+    if any(w in low for w in ("lightning", "thunder", "thunderstorm", "storm", "weather",
+                              "cloud", "rain", "monsoon", "cyclone", "hurricane")):
+        broad_terms += ["lightning storm sky", "thunderstorm clouds", "storm clouds lightning"]
+    elif any(w in low for w in ("deep sea", "ocean", "sea", "marine", "underwater", "aquatic",
+                                "coral", "fish", "shark", "whale", "dolphin", "octopus",
+                                "squid", "jellyfish", "turtle", "seal", "ray", "eel",
+                                "crab", "lobster", "shrimp", "plankton", "water", "river", "lake")):
+        broad_terms += ["underwater nature", "sea life close up", "ocean reef"]
+    elif any(w in low for w in ("space", "galaxy", "universe", "astronomy", "planet",
+                                "star", "nebula", "cosmos", "cosmic", "solar", "nasa",
+                                "orbit", "astronaut", "aurora", "northern lights",
+                                "magnetic", "atmosphere", "particles")):
+        broad_terms += ["outer space", "galaxy stars", "nebula space"]
+    elif any(w in low for w in ("roman", "ancient", "history", "aqueduct", "empire",
+                                "archaeology", "ruins", "civilization")):
+        broad_terms += ["ancient history ruins", "historical architecture", "archaeology site"]
+    elif any(w in low for w in ("qr", "technology", "computer", "phone", "robot", "chip",
+                                "screen", "digital", "code")):
+        broad_terms += ["technology close up", "digital device detail", "computer technology"]
+    elif any(w in low for w in ("fox", "wolf", "bear", "lion", "tiger", "bird", "eagle",
+                                "animal", "wildlife", "predator", "prey")):
+        broad_terms += ["wildlife close up", "animals in wild", "nature documentary"]
+    else:
+        subject = " ".join(str(keyword or fallback).replace("-", " ").split())
+        broad_terms += [subject, f"{subject} documentary", f"{subject} close up"]
+
+    if fallback:
+        broad_terms.insert(0, fallback)
+    return broad_terms
 
 
 def _scene_importance_for_index(idx, narration=""):
@@ -1391,9 +1432,26 @@ def _selection_intent(queries, fallback="", narration="", idx=None):
     )
 
 
-def _remember_media_selection(idx, result):
+def _remember_media_selection(idx, result, provider_name=""):
     if isinstance(result, MediaSelectionResult):
+        previous = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
+        attempts = list(previous.get("selection_attempts", []))
+        rejected_provider = ""
+        if result.rejected:
+            rejected_provider = str(result.rejected[0][0]).split(":", 1)[0]
+        attempts.append({
+            "provider": result.provider or rejected_provider or str(provider_name).lower(),
+            "accepted": bool(result.selected_candidate),
+            "confidence": result.confidence,
+            "candidate_count": result.candidate_count,
+            "warnings": list(result.warnings),
+            "rejected": [
+                {"candidate": candidate_id, "reasons": list(reasons)}
+                for candidate_id, reasons in result.rejected
+            ],
+        })
         metadata = result.to_metadata()
+        metadata["selection_attempts"] = attempts
         if idx in _MEDIA_PLANNING_DIAGNOSTICS:
             planning = _MEDIA_PLANNING_DIAGNOSTICS[idx]
             query_plan = planning.get("query_plan", {})
@@ -1417,8 +1475,8 @@ def _remember_media_selection(idx, result):
         _MEDIA_SELECTION_DIAGNOSTICS[idx] = metadata
 
 
-def _build_search_strategy(queries, fallback, narration, local_media=None, idx=None):
-    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+def _build_search_strategy(queries, fallback, narration, local_media=None, idx=None, intent=None):
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     registry = default_provider_capability_registry(
         local_enabled=bool(local_media),
         pexels_enabled=bool(PEXELS_API_KEY),
@@ -1461,7 +1519,7 @@ def _select_candidate_for_provider(
         output_height=HEIGHT,
         minimum_score=effective_minimum,
     )
-    _remember_media_selection(idx, result)
+    _remember_media_selection(idx, result, provider_name)
     if result.selected_candidate:
         cand = result.selected_candidate
         print(
@@ -1476,8 +1534,11 @@ def _select_candidate_for_provider(
     return None
 
 
-def _select_local_media(queries, fallback, narration, local_media, idx, used_set, target_duration, threshold=0.5):
-    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+def _select_local_media(
+    queries, fallback, narration, local_media, idx, used_set, target_duration,
+    threshold=0.5, intent=None,
+):
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidates = [
         candidate_from_local_path(path, queries[0] if queries else fallback)
         for path in local_media
@@ -1498,7 +1559,9 @@ def _select_local_media(queries, fallback, narration, local_media, idx, used_set
     return cand.local_path
 
 
-def fetch_pexels_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_pexels_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Search Pexels for a portrait video matching any of the queries.
     Returns Path to the downloaded mp4, or None."""
     import requests
@@ -1522,7 +1585,7 @@ def fetch_pexels_video(queries, idx, used_set, target_duration=5.0, fallback="",
             print(f"    [Pexels] search failed for {q!r}: {e}")
             return []
 
-    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate_pool = []
     for q in queries:
         enriched = _qualify_query(q, fallback)
@@ -1549,7 +1612,9 @@ def fetch_pexels_video(queries, idx, used_set, target_duration=5.0, fallback="",
     return None
 
 
-def fetch_pixabay_video(queries, idx, used_set, target_duration=5.0, fallback=""):
+def fetch_pixabay_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Search Pixabay for a vertical video. Returns Path or None.
 
     Pixabay's video API mirrors their image API. Free key from
@@ -1607,7 +1672,7 @@ def fetch_pixabay_video(queries, idx, used_set, target_duration=5.0, fallback=""
         dur_score = 1.0 if dur >= target_duration else dur / max(target_duration, 1)
         return (best_dim / 1000.0) + dur_score, best
 
-    intent = _selection_intent(queries, fallback=fallback, narration="", idx=idx)
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate_pool = []
     for q in queries:
         enriched = _qualify_query(q, fallback)
@@ -1634,7 +1699,9 @@ def fetch_pixabay_video(queries, idx, used_set, target_duration=5.0, fallback=""
     return None
 
 
-def fetch_nasa_video(queries, idx, used_set, target_duration=5.0):
+def fetch_nasa_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Search the NASA Image and Video Library for a video clip.
     Returns Path or None. No API key required.
 
@@ -1672,7 +1739,12 @@ def fetch_nasa_video(queries, idx, used_set, target_duration=5.0):
             print(f"    [NASA] asset lookup failed: {e}")
             return None
 
-    intent = _selection_intent(queries, fallback=queries[0] if queries else "", narration="", idx=idx)
+    intent = intent or _selection_intent(
+        queries,
+        fallback=fallback or (queries[0] if queries else ""),
+        narration=narration,
+        idx=idx,
+    )
     candidate_pool = []
     for q in queries:
         items = search(q)
@@ -1774,6 +1846,7 @@ def _fetch_json_stock_provider(
     headers=None,
     params_extra=None,
     license_name="",
+    intent=None,
 ):
     """Fetch a provider whose configured endpoint returns JSON media candidates."""
 
@@ -1781,7 +1854,7 @@ def _fetch_json_stock_provider(
 
     if not endpoint:
         return None
-    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate_pool = []
     for q in queries:
         enriched = _qualify_query(q, fallback)
@@ -1822,7 +1895,9 @@ def _fetch_json_stock_provider(
     return None
 
 
-def fetch_mixkit_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_mixkit_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Fetch Mixkit results from a configured JSON endpoint.
 
     Mixkit does not expose a stable public API here, so production use is
@@ -1839,10 +1914,13 @@ def fetch_mixkit_video(queries, idx, used_set, target_duration=5.0, fallback="",
         fallback=fallback,
         narration=narration,
         license_name="Mixkit License",
+        intent=intent,
     )
 
 
-def fetch_coverr_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_coverr_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Fetch Coverr results from a configured JSON endpoint."""
 
     return _fetch_json_stock_provider(
@@ -1855,10 +1933,13 @@ def fetch_coverr_video(queries, idx, used_set, target_duration=5.0, fallback="",
         fallback=fallback,
         narration=narration,
         license_name="Coverr License",
+        intent=intent,
     )
 
 
-def fetch_videvo_video(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_videvo_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Fetch Videvo results from a configured JSON endpoint and API key."""
 
     if not (VIDEVO_API_URL and VIDEVO_API_KEY):
@@ -1874,10 +1955,13 @@ def fetch_videvo_video(queries, idx, used_set, target_duration=5.0, fallback="",
         narration=narration,
         headers={"Authorization": f"Bearer {VIDEVO_API_KEY}"},
         license_name="Videvo license varies by clip",
+        intent=intent,
     )
 
 
-def fetch_noaa_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_noaa_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Fetch NOAA scientific media from a configured JSON endpoint."""
 
     return _fetch_json_stock_provider(
@@ -1890,10 +1974,13 @@ def fetch_noaa_media(queries, idx, used_set, target_duration=5.0, fallback="", n
         fallback=fallback,
         narration=narration,
         license_name="NOAA public domain / usage varies",
+        intent=intent,
     )
 
 
-def fetch_esa_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_esa_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Fetch ESA media from a configured JSON endpoint."""
 
     return _fetch_json_stock_provider(
@@ -1906,6 +1993,7 @@ def fetch_esa_media(queries, idx, used_set, target_duration=5.0, fallback="", na
         fallback=fallback,
         narration=narration,
         license_name="ESA media usage guidelines",
+        intent=intent,
     )
 
 
@@ -1943,14 +2031,16 @@ def _wikimedia_candidate_from_page(page, query):
     )
 
 
-def fetch_wikimedia_media(queries, idx, used_set, target_duration=5.0, fallback="", narration=""):
+def fetch_wikimedia_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
     """Search Wikimedia Commons for historical, educational, or diagram media."""
 
     import requests
 
     if not ENABLE_WIKIMEDIA_COMMONS:
         return None
-    intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate_pool = []
     session = requests.Session()
     for q in queries:
@@ -2028,7 +2118,15 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         queries = [queries]
     queries = [q for q in queries if q]
     keyword = queries[0] if queries else fallback
-    strategy = _build_search_strategy(queries, fallback, narration, local_media=local_media, idx=idx)
+    canonical_intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    strategy = _build_search_strategy(
+        queries,
+        fallback,
+        narration,
+        local_media=local_media,
+        idx=idx,
+        intent=canonical_intent,
+    )
     _remember_media_planning(idx, strategy)
 
     # 1. Local media
@@ -2042,6 +2140,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
             used_set,
             target_duration,
             threshold=threshold,
+            intent=canonical_intent,
         )
         if match:
             print(f"    [Local] Using: {match.name}")
@@ -2054,6 +2153,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         dalle_img = generate_gemini_image(keyword, idx)
         if dalle_img:
             _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
                 **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
                 "selection": {
                     "query": keyword,
@@ -2087,6 +2187,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "pixabay":
             out = fetch_pixabay_video(
@@ -2095,6 +2196,8 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 used_set,
                 target_duration=target_duration,
                 fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
             )
         elif source == "mixkit":
             out = fetch_mixkit_video(
@@ -2104,6 +2207,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "coverr":
             out = fetch_coverr_video(
@@ -2113,6 +2217,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "videvo":
             out = fetch_videvo_video(
@@ -2122,6 +2227,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "wikimedia":
             out = fetch_wikimedia_media(
@@ -2131,6 +2237,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "noaa":
             out = fetch_noaa_media(
@@ -2140,9 +2247,18 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "nasa":
-            out = fetch_nasa_video(plan_queries, idx, used_set, target_duration=target_duration)
+            out = fetch_nasa_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
         elif source == "esa":
             out = fetch_esa_media(
                 plan_queries,
@@ -2151,6 +2267,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 target_duration=target_duration,
                 fallback=fallback,
                 narration=narration,
+                intent=canonical_intent,
             )
         elif source == "gemini_image":
             if not is_gemini_image_available():
@@ -2159,6 +2276,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
             out = generate_gemini_image(plan_queries[0] if plan_queries else keyword, idx)
             if out:
                 _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                    **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
                     **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
                     "selection": {
                         "query": plan_queries[0] if plan_queries else keyword,
@@ -2184,6 +2302,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         gemini_img = generate_gemini_image(keyword, idx)
         if gemini_img:
             _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
                 **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
                 "selection": {
                     "query": keyword,
@@ -2204,6 +2323,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         print(f"    [QR fallback] Creating local explainer image for '{keyword}'...")
         qr_img = _generate_qr_explainer_image(keyword, idx)
         _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+            **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
             **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
             "selection": {
                 "query": keyword,
@@ -2227,26 +2347,48 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         _save_persistent_used(used_set)
         return qr_img
 
+    # A deterministic explainer card is safer than unrelated stock when every
+    # source fails the relevance gate. Image scenes receive the existing slow
+    # zoom treatment during segment rendering, so unattended runs still finish.
+    try:
+        explainer_img = _generate_local_explainer_image(keyword, idx)
+    except (OSError, ValueError) as exc:
+        print(f"    [Local explainer] failed for '{keyword}': {exc}")
+    else:
+        planning = _MEDIA_PLANNING_DIAGNOSTICS.get(idx, {})
+        scene_type = (planning.get("query_plan") or {}).get("scene_type", "")
+        _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+            **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+            **planning,
+            "selection": {
+                "query": keyword,
+                "provider": "local",
+                "provider_id": Path(explainer_img).name,
+                "score": None,
+                "confidence": "fallback",
+                "confidence_level": "MEDIUM",
+                "portrait_score": 10.0,
+                "relevance_score": 7.0,
+                "evidence_score": 10.0,
+                "visual_domain": scene_type,
+                "quality_gate_passed": True,
+                "scene_importance": _scene_importance_for_index(idx, narration),
+                "selection_reason": "domain-safe local explainer after provider rejection",
+                "rejection_reason": "",
+                "fallback_level": "local_explainer",
+                "warnings": ["stock providers failed relevance gate", "local explainer fallback"],
+                "rejection_reasons": [],
+                "candidate_count": 0,
+                "score_breakdown": {},
+            },
+        }
+        _save_persistent_used(used_set)
+        return explainer_img
+
     # 5. Last-resort generic Pexels search using the niche/fallback term.
     # This is the "broad nature shot" safety net so scheduled runs don't die.
     print(f"    [!] No specific footage found for segment {idx+1} ('{keyword}'); trying broad niche search.")
-    broad_terms = []
-    low = (keyword + " " + narration).lower()
-    if any(w in low for w in ("deep sea", "ocean", "sea", "marine", "underwater", "aquatic",
-                              "coral", "fish", "shark", "whale", "dolphin", "octopus",
-                              "squid", "jellyfish", "turtle", "seal", "ray", "eel",
-                              "crab", "lobster", "shrimp", "plankton", "water", "river", "lake")):
-        broad_terms += ["underwater nature", "sea life close up", "ocean reef"]
-    elif any(w in low for w in ("space", "galaxy", "universe", "astronomy", "planet",
-                                "star", "nebula", "cosmos", "cosmic", "solar", "nasa",
-                                "orbit", "astronaut", "aurora", "northern lights",
-                                "magnetic", "atmosphere", "particles")):
-        broad_terms += ["outer space", "galaxy stars", "nebula space"]
-    else:
-        broad_terms += ["wildlife close up", "animals in wild", "nature documentary"]
-        
-    if fallback:
-        broad_terms.insert(0, fallback)
+    broad_terms = _broad_fallback_terms(keyword, narration, fallback)
     broad_out = fetch_pexels_video(
         broad_terms,
         idx,
@@ -2254,9 +2396,10 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         target_duration=target_duration,
         fallback=fallback,
         narration=narration,
+        intent=canonical_intent,
     )
     if broad_out:
-        print(f"    [Pexels broad] Using generic '{fallback}' / nature clip as fallback.")
+        print(f"    [Pexels broad] Using domain-safe broad clip for '{fallback}'.")
         _MEDIA_SELECTION_DIAGNOSTICS.setdefault(idx, {"selection": {}})
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"].setdefault("warnings", [])
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["warnings"].append("broad fallback used")
@@ -2298,6 +2441,22 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
 def _needs_qr_explainer_fallback(keyword, narration="", fallback=""):
     text = " ".join(str(part or "").lower() for part in (keyword, narration, fallback))
     return "qr" in text or "quick response" in text
+
+
+def _generate_local_explainer_image(keyword, idx):
+    """Create a portrait-safe text visual when no stock candidate is trustworthy."""
+
+    cleaned = " ".join(str(keyword or "Visual explanation").replace("-", " ").split())
+    display_text = cleaned[:90].title()
+    return create_text_card(
+        display_text,
+        OUT_DIR / f"local_explainer_{idx}.png",
+        width=WIDTH,
+        height=HEIGHT,
+        font_size=78,
+        text_color="#FFFFFF",
+        bg_color="#101820",
+    )
 
 
 def _generate_qr_explainer_image(keyword, idx):

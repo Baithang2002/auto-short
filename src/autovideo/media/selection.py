@@ -170,6 +170,145 @@ _QR_VISUAL_TERMS = {
     "qrcode",
     "quickresponse",
 }
+_EXPLANATORY_EVIDENCE_TERMS = {
+    "animation",
+    "chart",
+    "data",
+    "diagram",
+    "earth",
+    "graphic",
+    "infographic",
+    "map",
+    "satellite",
+    "visualization",
+}
+_WEATHER_EVIDENCE_TERMS = {
+    "cloud",
+    "clouds",
+    "cyclone",
+    "hurricane",
+    "lightning",
+    "monsoon",
+    "rain",
+    "storm",
+    "thunder",
+    "thunderstorm",
+    "weather",
+}
+_ASTRONOMY_EVIDENCE_TERMS = {
+    "atmosphere",
+    "astronomy",
+    "aurora",
+    "borealis",
+    "cosmos",
+    "earth",
+    "galaxy",
+    "magnetic",
+    "magnetosphere",
+    "nebula",
+    "orbit",
+    "particles",
+    "planet",
+    "solar",
+    "space",
+    "star",
+    "stars",
+    "sun",
+}
+_ASTRONOMY_INTENT_TERMS = (
+    _ASTRONOMY_EVIDENCE_TERMS
+    | {
+        "cosmic",
+        "jupiter",
+        "lights",
+        "mars",
+        "northern",
+        "saturn",
+        "universe",
+        "venus",
+    }
+) - {"atmosphere", "earth", "particles"}
+_OCEAN_EVIDENCE_TERMS = {
+    "atlantic",
+    "circulation",
+    "current",
+    "currents",
+    "gyre",
+    "marine",
+    "ocean",
+    "sea",
+    "stream",
+    "tide",
+    "underwater",
+    "water",
+    "waves",
+}
+_OCEAN_INTENT_TERMS = _OCEAN_EVIDENCE_TERMS - {"sea", "stream", "water", "waves"}
+_HISTORY_EVIDENCE_TERMS = {
+    "ancient",
+    "aqueduct",
+    "aqueducts",
+    "archaeology",
+    "archive",
+    "civilization",
+    "empire",
+    "historic",
+    "history",
+    "rome",
+    "roman",
+    "ruins",
+}
+_TECHNOLOGY_EVIDENCE_TERMS = {
+    "chip",
+    "code",
+    "computer",
+    "data",
+    "device",
+    "phone",
+    "robot",
+    "scan",
+    "screen",
+    "technology",
+}
+_WILDLIFE_EVIDENCE_TERMS = {
+    "animal",
+    "animals",
+    "bear",
+    "bird",
+    "dolphin",
+    "eagle",
+    "fish",
+    "fox",
+    "lion",
+    "octopus",
+    "shark",
+    "tiger",
+    "turtle",
+    "whale",
+    "wildlife",
+    "wolf",
+}
+_ANIMAL_CONTENT_TERMS = _WILDLIFE_EVIDENCE_TERMS | {
+    "cat",
+    "dog",
+    "husky",
+    "pet",
+    "pets",
+    "zoo",
+}
+_QUALITY_GATE_GENERIC_INTENT_TERMS = _STOPWORDS | _GENERIC_TERMS | {
+    "behind",
+    "created",
+    "fact",
+    "facts",
+    "how",
+    "made",
+    "science",
+    "today",
+    "video",
+    "why",
+    "world",
+}
 _BAD_TERMS = {
     "human": -4.0,
     "person": -4.0,
@@ -274,12 +413,33 @@ class CandidateScore:
     rejection_reasons: tuple[str, ...] = ()
 
     @property
+    def quality_gate_passed(self) -> bool:
+        """Return whether independent relevance and evidence checks passed."""
+
+        return bool(self.breakdown.get("_quality_gate_passed_value", True))
+
+    @property
+    def relevance_score(self) -> float:
+        """Return normalized visual relevance independent of aggregate score."""
+
+        value = self.breakdown.get("relevance_score", 0.0)
+        return float(value) if isinstance(value, (int, float)) else 0.0
+
+    @property
     def confidence(self) -> str:
-        if self.score >= 9.0:
+        if not self.quality_gate_passed:
+            return "rejected"
+        if "relevance_score" not in self.breakdown:
+            if self.score >= 9.0:
+                return "high"
+            if self.score >= 5.0:
+                return "medium"
+            return "low" if self.score >= 1.0 else "rejected"
+        if self.relevance_score >= 8.0:
             return "high"
-        if self.score >= 5.0:
+        if self.relevance_score >= 6.0:
             return "medium"
-        if self.score >= 1.0:
+        if self.relevance_score > 0:
             return "low"
         return "rejected"
 
@@ -332,6 +492,10 @@ class MediaSelectionResult:
             "selected_query": self.query_used,
             "portrait_score": _score_value(self.score, "portrait_score"),
             "relevance_score": _score_value(self.score, "relevance_score"),
+            "evidence_score": _score_value(self.score, "evidence_score"),
+            "visual_domain": _score_text(self.score, "visual_domain"),
+            "quality_gate_passed": bool(self.score and self.score.quality_gate_passed),
+            "acceptance_reason": _score_text(self.score, "acceptance_reason"),
             "scene_importance": _score_text(self.score, "scene_importance"),
             "selection_reason": _score_text(self.score, "selection_reason"),
             "rejection_reason": _score_text(self.score, "rejection_reason"),
@@ -350,6 +514,10 @@ class MediaSelectionResult:
                 "confidence_level": self.confidence.upper(),
                 "portrait_score": _score_value(self.score, "portrait_score"),
                 "relevance_score": _score_value(self.score, "relevance_score"),
+                "evidence_score": _score_value(self.score, "evidence_score"),
+                "visual_domain": _score_text(self.score, "visual_domain"),
+                "quality_gate_passed": bool(self.score and self.score.quality_gate_passed),
+                "acceptance_reason": _score_text(self.score, "acceptance_reason"),
                 "scene_importance": _score_text(self.score, "scene_importance"),
                 "selection_reason": _score_text(self.score, "selection_reason"),
                 "rejection_reason": _score_text(self.score, "rejection_reason"),
@@ -369,7 +537,7 @@ def build_visual_intent(segment: Mapping[str, Any] | Any, topic: str) -> VisualI
     broll = _segment_value(segment, "broll")
     raw_queries = _segment_value(segment, "broll_queries")
     if isinstance(raw_queries, str):
-        queries = (raw_queries,)
+        queries = (raw_queries,) if raw_queries.strip() else ()
     elif raw_queries:
         queries = tuple(str(query) for query in raw_queries if str(query).strip())
     else:
@@ -574,10 +742,47 @@ def select_best_candidate(
         )
         for candidate in candidates
     ]
-    scored.sort(key=lambda item: (item[1].score, item[0].provider_id), reverse=True)
-    selected, score = scored[0]
+    scored.sort(
+        key=lambda item: (
+            item[1].quality_gate_passed,
+            item[1].score,
+            item[1].relevance_score,
+            item[0].provider_id,
+        ),
+        reverse=True,
+    )
+    eligible = [
+        item
+        for item in scored
+        if item[1].quality_gate_passed and item[1].score >= minimum_score
+    ]
+    _, diagnostic_score = scored[0]
+    if not eligible:
+        warnings = []
+        if diagnostic_score.score < minimum_score:
+            warnings.append(
+                f"best score {diagnostic_score.score:.2f} below minimum {minimum_score:.2f}"
+            )
+        if not diagnostic_score.quality_gate_passed:
+            warnings.append(
+                "quality gate rejected best candidate: "
+                + _score_text(diagnostic_score, "acceptance_reason")
+            )
+        rejected = tuple(
+            (candidate.dedup_key, candidate_score.rejection_reasons)
+            for candidate, candidate_score in scored[:8]
+        )
+        return MediaSelectionResult(
+            None,
+            diagnostic_score,
+            len(candidates),
+            tuple(warnings or ["no candidate passed quality gate"]),
+            rejected,
+        )
+
+    selected, score = eligible[0]
     selected, score, portrait_warning = _prefer_portrait_safe_alternative(
-        scored,
+        eligible,
         selected,
         score,
         minimum_score=minimum_score,
@@ -592,9 +797,6 @@ def select_best_candidate(
     warnings: list[str] = []
     if portrait_warning:
         warnings.append(portrait_warning)
-    if score.score < minimum_score:
-        warnings.append(f"best score {score.score:.2f} below minimum {minimum_score:.2f}")
-        return MediaSelectionResult(None, score, len(candidates), tuple(warnings), rejected)
     if score.confidence == "low":
         warnings.append("low confidence media match")
     return MediaSelectionResult(selected, score, len(candidates), tuple(warnings), rejected)
@@ -654,7 +856,7 @@ def score_candidate(
     text = candidate.searchable_text
     content_text = _candidate_content_text(candidate)
     proof_text = content_text if _requires_specific_visual(intent) else text
-    breakdown: dict[str, float] = {}
+    breakdown: dict[str, Any] = {}
     explanation: list[str] = []
     rejection_reasons: list[str] = []
 
@@ -732,6 +934,21 @@ def score_candidate(
     if _requires_qr_visual(intent) and not _has_qr_evidence(candidate):
         score -= 8.0
         rejection_reasons.append("qr code not proven in provider metadata")
+    gate_passed, domain, evidence_score, threshold, gate_reasons = _quality_gate(
+        intent,
+        candidate,
+        relevance_score,
+    )
+    rejection_reasons.extend(gate_reasons)
+    breakdown["evidence_score"] = evidence_score
+    breakdown["_visual_domain_value"] = domain
+    breakdown["_quality_gate_passed_value"] = gate_passed
+    breakdown["_relevance_threshold_value"] = threshold
+    breakdown["_acceptance_reason_value"] = (
+        "accepted: domain evidence and relevance threshold passed"
+        if gate_passed
+        else "; ".join(gate_reasons)
+    )
     breakdown["_scene_importance_value"] = intent.scene_importance.value
     breakdown["_selection_reason_value"] = _selection_reason(explanation, rejection_reasons)
     breakdown["_rejection_reason_value"] = "; ".join(dict.fromkeys(rejection_reasons))
@@ -980,6 +1197,108 @@ def _visual_relevance_score(
     return round(max(0.0, min(10.0, score)), 3)
 
 
+def _quality_gate(
+    intent: VisualIntent,
+    candidate: StockCandidate,
+    relevance_score: float,
+) -> tuple[bool, str, float, float, tuple[str, ...]]:
+    """Apply independent domain-evidence and relevance acceptance rules."""
+
+    domain, evidence_terms = _visual_domain(intent)
+    candidate_tokens = set(_tokens(_candidate_content_text(candidate)))
+    intent_tokens = set(_tokens(_intent_text(intent)))
+    matched_evidence = candidate_tokens & evidence_terms
+    specific_intent_terms = (
+        set(intent.keywords) | set(intent.action_terms) | set(intent.environment_terms)
+    ) - _QUALITY_GATE_GENERIC_INTENT_TERMS
+    matched_intent = candidate_tokens & specific_intent_terms
+    if domain == "qr_code" and _has_qr_evidence(candidate):
+        matched_evidence = {"qr"}
+    evidence_score = min(10.0, len(matched_evidence | matched_intent) * 2.0)
+    threshold = _minimum_relevance(intent, domain)
+    reasons: list[str] = []
+
+    if relevance_score < threshold:
+        reasons.append(
+            f"relevance {relevance_score:.2f} below {threshold:.2f} for {domain}"
+        )
+
+    requires_evidence = domain not in {"general", "wildlife"}
+    if requires_evidence and not (matched_evidence or matched_intent):
+        reasons.append(f"no {domain} evidence in provider metadata")
+
+    requested_format = intent_tokens & {
+        "animation",
+        "chart",
+        "diagram",
+        "infographic",
+        "map",
+        "satellite",
+        "visualization",
+    }
+    if domain == "explanatory" and requested_format and not (candidate_tokens & requested_format):
+        formats = ", ".join(sorted(requested_format))
+        reasons.append(f"requested explanatory format not proven: {formats}")
+
+    wrong_domain = candidate_tokens & (_ANIMAL_CONTENT_TERMS | _GENERIC_PEOPLE_TERMS)
+    requested_people_or_animals = intent_tokens & (_ANIMAL_CONTENT_TERMS | _GENERIC_PEOPLE_TERMS)
+    if domain in {"astronomy", "explanatory", "technology", "weather"}:
+        if wrong_domain and not requested_people_or_animals:
+            reasons.append(f"wrong-domain content for {domain}")
+    if domain == "ocean_science" and candidate_tokens & _ANIMAL_CONTENT_TERMS:
+        if not (intent_tokens & _ANIMAL_CONTENT_TERMS):
+            reasons.append("marine-animal footage does not explain ocean mechanism")
+    if domain == "wildlife" and not matched_evidence:
+        reasons.append("wildlife subject not proven in provider metadata")
+    if domain == "qr_code" and not _has_qr_evidence(candidate):
+        reasons.append("qr code evidence required")
+
+    dedup_value = candidate.dedup_key
+    if not dedup_value or not candidate.provider_id:
+        reasons.append("candidate has no stable provider identity")
+
+    return not reasons, domain, evidence_score, threshold, tuple(dict.fromkeys(reasons))
+
+
+def _visual_domain(intent: VisualIntent) -> tuple[str, set[str]]:
+    tokens = set(_tokens(_intent_text(intent)))
+    if _requires_qr_visual(intent):
+        return "qr_code", _QR_VISUAL_TERMS
+    if tokens & {"diagram", "infographic", "chart", "map", "satellite", "visualization"}:
+        return "explanatory", _EXPLANATORY_EVIDENCE_TERMS
+    if tokens & _HISTORY_EVIDENCE_TERMS:
+        return "history", _HISTORY_EVIDENCE_TERMS
+    if tokens & _ASTRONOMY_INTENT_TERMS:
+        return "astronomy", _ASTRONOMY_EVIDENCE_TERMS
+    if tokens & _WEATHER_EVIDENCE_TERMS:
+        return "weather", _WEATHER_EVIDENCE_TERMS
+    if tokens & _OCEAN_INTENT_TERMS:
+        return "ocean_science", _OCEAN_EVIDENCE_TERMS
+    if tokens & _TECHNOLOGY_EVIDENCE_TERMS:
+        return "technology", _TECHNOLOGY_EVIDENCE_TERMS
+    if tokens & _WILDLIFE_EVIDENCE_TERMS:
+        return "wildlife", _WILDLIFE_EVIDENCE_TERMS
+    return "general", set()
+
+
+def _minimum_relevance(intent: VisualIntent, domain: str) -> float:
+    specific = domain != "general"
+    if intent.scene_importance in {SceneImportance.HOOK, SceneImportance.MAIN_REVEAL}:
+        return 6.25 if specific else 5.5
+    if intent.scene_importance == SceneImportance.SUPPORTING:
+        return 5.25 if specific else 4.0
+    return 4.5 if specific else 3.5
+
+
+def _intent_text(intent: VisualIntent) -> str:
+    return " ".join([
+        intent.topic,
+        intent.narration,
+        intent.primary_subject,
+        " ".join(intent.queries),
+    ])
+
+
 def _candidate_content_text(candidate: StockCandidate) -> str:
     values = [
         candidate.provider,
@@ -995,12 +1314,7 @@ def _candidate_content_text(candidate: StockCandidate) -> str:
 
 
 def _requires_qr_visual(intent: VisualIntent) -> bool:
-    tokens = set(_tokens(" ".join([
-        intent.topic,
-        intent.narration,
-        intent.primary_subject,
-        " ".join(intent.queries),
-    ])))
+    tokens = set(_tokens(_intent_text(intent)))
     return "qr" in tokens or {"quick", "response", "code"} <= tokens
 
 
@@ -1010,12 +1324,7 @@ def _has_qr_evidence(candidate: StockCandidate) -> bool:
 
 
 def _requires_specific_visual(intent: VisualIntent) -> bool:
-    text = _normalize_text(" ".join([
-        intent.topic,
-        intent.narration,
-        intent.primary_subject,
-        " ".join(intent.queries),
-    ]))
+    text = _normalize_text(_intent_text(intent))
     tokens = set(_tokens(text))
     return bool(tokens & _SPECIFIC_VISUAL_TERMS)
 

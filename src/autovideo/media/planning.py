@@ -451,7 +451,21 @@ OCEAN_TERMS = {
     "ocean", "current", "currents", "sea", "marine", "underwater", "atlantic", "pacific",
     "gulf", "stream", "waves", "tide", "water",
 }
-WEATHER_TERMS = {"weather", "storm", "hurricane", "cloud", "atmosphere", "climate"}
+WEATHER_TERMS = {
+    "weather",
+    "storm",
+    "thunderstorm",
+    "thunder",
+    "lightning",
+    "hurricane",
+    "cloud",
+    "clouds",
+    "rain",
+    "monsoon",
+    "cyclone",
+    "atmosphere",
+    "climate",
+}
 WILDLIFE_TERMS = {
     "animal", "wildlife", "fox", "bear", "wolf", "lion", "tiger", "bird", "eagle", "whale",
     "dolphin", "shark", "octopus", "fish", "turtle",

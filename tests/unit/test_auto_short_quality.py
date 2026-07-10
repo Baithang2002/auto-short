@@ -38,6 +38,34 @@ class AutoShortQualityTests(unittest.TestCase):
         self.assertIn("snow", qualified)
         self.assertNotIn("wildlife", qualified)
 
+    def test_lightning_query_qualification_uses_weather_terms(self) -> None:
+        qualified = auto_short._qualify_query("lightning strike over city", "weather science")
+
+        self.assertIn("storm", qualified)
+        self.assertIn("sky", qualified)
+        self.assertNotIn("wildlife", qualified)
+
+    def test_lightning_broad_fallback_does_not_use_animal_terms(self) -> None:
+        terms = auto_short._broad_fallback_terms(
+            "lightning strike",
+            "A lightning bolt forms inside a thunderstorm cloud.",
+        )
+
+        self.assertIn("lightning storm sky", terms)
+        self.assertNotIn("wildlife close up", terms)
+        self.assertNotIn("animals in wild", terms)
+        self.assertNotIn("nature documentary", terms)
+
+    def test_unknown_topic_broad_fallback_does_not_default_to_wildlife(self) -> None:
+        terms = auto_short._broad_fallback_terms(
+            "how glass is manufactured",
+            "Molten material cools into a transparent sheet.",
+            "How Glass Is Made",
+        )
+
+        self.assertIn("how glass is manufactured", terms)
+        self.assertFalse(any("wildlife" in term or "animals" in term for term in terms))
+
     def test_pexels_relevance_penalizes_wrong_arctic_fox_matches(self) -> None:
         good = {"url": "https://www.pexels.com/video/arctic-fox-running-in-snow-123/"}
         bad = {"url": "https://www.pexels.com/video/husky-dog-inside-zoo-cage-456/"}
