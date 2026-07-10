@@ -2,7 +2,7 @@
 
 **Status:** approved 2026-07-10. Implementation may begin.
 **Ship target:** v0.7.0
-**Scope discipline:** additive refactor only. Preserve Shorts behavior byte-for-byte.
+**Scope discipline:** additive refactor only. Preserve Shorts behavior (functionally identical output).
 
 ---
 
@@ -78,7 +78,7 @@ class FormatProfile:
 | `narration_words_per_sec_max` | `2.55` | inline in `narration_targets:244` |
 | `narration_words_per_segment_min` | `10` | inline in `narration_targets:243` |
 
-Because every value on this profile matches the currently-live constant, byte-for-byte Shorts output is guaranteed by-construction.
+Because every value on this profile matches the currently-live constant, functionally identical Shorts output is guaranteed by-construction.
 
 **Ownership decision:** `transition_duration_sec` is canonical on `FormatProfile`. Environment `RenderProfile` keeps its `transition_duration_sec` field for interface compatibility; the value at instantiation comes from the FormatProfile.
 
@@ -255,12 +255,12 @@ Since `_FORMAT_PROFILE.scene_target_duration_sec == SHORTS_SCENE_TARGET_DURATION
 
 ## 5. Backward-Compatibility Guarantee
 
-Two independent guarantees make Shorts byte-identical:
+Two independent guarantees make Shorts output functionally identical:
 
 1. **Numeric equivalence.** Every field on the `shorts_vertical` FormatProfile matches the currently-live module constant. `SHORTS_MAX_DURATION` is still `58`, `SHORTS_SCENE_TARGET_DURATION` is still `5.0`, and so on.
 2. **Aliasing preservation.** The module constants at `auto_short.py:105-109` continue to exist and continue to be exported. External code that imports `SHORTS_MAX_DURATION` from `auto_short` still gets the same value.
 
-If a Shorts output differs from pre-PR output byte-for-byte, that is a regression bug and blocks merge.
+If a Shorts output differs from pre-PR output in a way that affects viewer-visible behavior (duration, pacing, narration timing, visible frame content), that is a regression bug and blocks merge. Bit-level differences in encoded artifacts are expected and acceptable — ffmpeg encoding is not fully deterministic across environments.
 
 ---
 
@@ -329,22 +329,23 @@ Goes into `[Unreleased]` on the implementation commit; moves to `[0.7.0]` on rel
 
 ### Compatibility
 
-- Shorts output is byte-identical. Every numeric value on the `shorts_vertical` profile matches its former inline constant.
+- Shorts output is functionally identical. Every numeric value on the `shorts_vertical` profile matches its former inline constant.
 - Module-level constant names remain exported for external consumers.
 - No CLI or environment-variable changes. No new format is selectable.
 ```
 
 ---
 
-## 10. Follow-up PRs unblocked by this one
+## 10. What This PR Enables (Without Committing To It)
 
-This plan intentionally leaves work for later. When PR #10 ships:
+The `FormatProfile` abstraction lives entirely at the application layer (`auto_short.py` and the new `src/autovideo/format/` package). It is intentionally *not* threaded through Timeline, Renderer, or any deeper layer. If a future feature demonstrates a real need for deeper integration, that need can be evaluated on its own terms — but nothing in this PR requires or presupposes further work.
 
-- A subsequent PR can register a `long_form_documentary` FormatProfile in `registry.py` without touching consumers.
-- A subsequent PR can add a `--format` CLI flag that calls `get_format_profile(args.format)` instead of `get_default_format_profile()`.
-- A subsequent PR can wire the renderer to receive the FormatProfile alongside the environment RenderProfile, decoupling `shorts_max_duration_sec` on the render side.
+Two small, purely-additive follow-ups are conceivable without touching Timeline or Renderer, and both remain out of scope for PR #10:
 
-None of these follow-ups are part of PR #10.
+- Registering a new profile in `registry.py` (e.g., a second Shorts variant with different narration tempo bounds) requires no consumer changes.
+- Adding a `--format` CLI flag that calls `get_format_profile(args.format)` instead of `get_default_format_profile()` would be a one-line change at the entry point.
+
+Neither is planned. Both are noted only to describe the shape of the abstraction, not as a roadmap.
 
 ---
 

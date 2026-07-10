@@ -92,6 +92,7 @@ from autovideo.providers.factory import build_music_registry
 from autovideo.providers.llm import CallableLLMProvider
 from autovideo.providers.voice import CallableVoiceProvider, ElevenLabsVoiceProvider, VoiceRequest
 from autovideo.render import FfmpegRenderServices, FfmpegTimelineRenderer, render_profile_for
+from autovideo.format import FormatProfile, get_default_format_profile
 from autovideo.storage import ArtifactStore, FilesystemQueue
 
 # ----------------------------------------------------------------------------
@@ -100,13 +101,19 @@ from autovideo.storage import ArtifactStore, FilesystemQueue
 DEFAULT_NICHE        = DEFAULTS.channel.default_niche
 VOICE                = os.environ.get("EDGE_TTS_VOICE", DEFAULTS.providers.edge_tts_voice)   # try en-US-AriaNeural, en-GB-RyanNeural, etc.
 GEMINI_MODEL         = DEFAULTS.providers.gemini_models[0]
-TARGET_DURATION      = DEFAULTS.render.target_duration_sec                     # target video length in seconds (use --duration to override)
+# Format-shaped configuration is owned by the FormatProfile abstraction.
+# The module-level constants below remain for backward compatibility with
+# any external code that imports them from this module; their values are
+# derived from the default profile so there is a single source of truth.
+_FORMAT_PROFILE: FormatProfile = get_default_format_profile()
+
+TARGET_DURATION      = _FORMAT_PROFILE.target_duration_sec                     # target video length in seconds (use --duration to override)
 AVG_SEGMENT_DURATION = DEFAULTS.render.avg_segment_duration_sec                    # estimated seconds per narration/story beat
-SHORTS_SCENE_TARGET_DURATION = 5.0
-SHORTS_PREFERRED_NARRATION_TEMPO = 1.06
-SHORTS_TRANSITION_DURATION = 0.22
-SHORTS_MIN_DURATION  = DEFAULTS.render.shorts_min_duration_sec                     # preferred default lower bound for YouTube Shorts
-SHORTS_MAX_DURATION  = DEFAULTS.render.shorts_max_duration_sec                     # hard ceiling: >=60s triggers YT Content ID (Adrev). 2s safety margin to absorb encoding drift.
+SHORTS_SCENE_TARGET_DURATION = _FORMAT_PROFILE.scene_target_duration_sec
+SHORTS_PREFERRED_NARRATION_TEMPO = _FORMAT_PROFILE.preferred_narration_tempo
+SHORTS_TRANSITION_DURATION = _FORMAT_PROFILE.transition_duration_sec
+SHORTS_MIN_DURATION  = _FORMAT_PROFILE.min_duration_sec                     # preferred default lower bound for YouTube Shorts
+SHORTS_MAX_DURATION  = _FORMAT_PROFILE.max_duration_sec                     # hard ceiling: >=60s triggers YT Content ID (Adrev). 2s safety margin to absorb encoding drift.
 WIDTH, HEIGHT        = DEFAULTS.render.width, DEFAULTS.render.height             # vertical (Reels / Shorts / FB)
 FPS                  = DEFAULTS.render.fps
 OUT_DIR              = SCRIPT_DIR / "output"
@@ -234,14 +241,23 @@ def count_words(text):
     return len(re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?", text or ""))
 
 
-def narration_targets(target_duration, n_segments):
+def narration_targets(target_duration, n_segments, profile: FormatProfile = _FORMAT_PROFILE):
     """Return word-count targets that usually land TTS output near target_duration.
 
     TTS reads at roughly 2.5-3 words/sec on neural voices. Shorts need enough
     words to avoid slow retiming, but each sentence still needs to be punchy.
+
+    Word-rate bounds come from the ``FormatProfile`` so a future long-form
+    profile can widen them without touching this function.
     """
-    min_total = max(n_segments * 10, round(target_duration * 2.25))
-    max_total = max(min_total + 14, round(target_duration * 2.55))
+    min_total = max(
+        n_segments * profile.narration_words_per_segment_min,
+        round(target_duration * profile.narration_words_per_sec_min),
+    )
+    max_total = max(
+        min_total + 14,
+        round(target_duration * profile.narration_words_per_sec_max),
+    )
     min_segment = max(8, min(13, min_total // max(n_segments, 1)))
     max_segment = max(min_segment + 4, round(max_total / max(n_segments, 1)) + 2)
     return min_total, max_total, min_segment, max_segment
@@ -830,32 +846,38 @@ def retime_voice(voice_path, idx, tempo):
     return out_path, media_duration(out_path)
 
 
-def normalize_voice_timing(voice_items, target_duration):
-    """Keep default Shorts runs inside 50-60s without making the narration sound odd."""
-    if target_duration < SHORTS_MIN_DURATION:
+def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
+    """Keep default Shorts runs inside the format profile's duration window
+    without making the narration sound odd.
+
+    Duration bounds, retime tempo bounds, and the preferred narration tempo
+    come from the ``FormatProfile`` so a future long-form profile can widen
+    them without touching this function.
+    """
+    if target_duration < profile.min_duration_sec:
         return voice_items
 
     total = sum(item["duration"] for item in voice_items)
-    desired = min(max(target_duration, SHORTS_MIN_DURATION), SHORTS_MAX_DURATION)
+    desired = min(max(target_duration, profile.min_duration_sec), profile.max_duration_sec)
 
-    if total < SHORTS_MIN_DURATION:
+    if total < profile.min_duration_sec:
         raw_tempo = total / desired
         # Avoid dragging the voice. The richer script should provide duration;
         # retiming only corrects normal TTS variance.
-        tempo = max(0.90, raw_tempo)
+        tempo = max(profile.narration_min_retime_tempo, raw_tempo)
         action = "slowing"
     else:
         raw_tempo = total / desired
-        # Anything above 1.30x sounds chipmunky on phone speakers and tanks
-        # retention. Better to ship a 62s video and let the hard-cap trim
-        # take the last 2 seconds than to rush the whole narration.
-        tempo = min(1.30, raw_tempo)
+        # Anything above the max retime tempo sounds chipmunky on phone speakers
+        # and tanks retention. Better to ship a slightly-long video and let the
+        # hard-cap trim take the tail than to rush the whole narration.
+        tempo = min(profile.narration_max_retime_tempo, raw_tempo)
         action = "speeding up"
 
-    if SHORTS_MIN_DURATION <= total <= SHORTS_MAX_DURATION:
-        transition_allowance = max(0, len(voice_items) - 1) * SHORTS_TRANSITION_DURATION
-        minimum_voice_total = SHORTS_MIN_DURATION + transition_allowance + 0.5
-        tempo = min(SHORTS_PREFERRED_NARRATION_TEMPO, total / minimum_voice_total)
+    if profile.min_duration_sec <= total <= profile.max_duration_sec:
+        transition_allowance = max(0, len(voice_items) - 1) * profile.transition_duration_sec
+        minimum_voice_total = profile.min_duration_sec + transition_allowance + 0.5
+        tempo = min(profile.preferred_narration_tempo, total / minimum_voice_total)
         if tempo <= 1.005:
             return voice_items
         desired = total / tempo
@@ -873,18 +895,18 @@ def normalize_voice_timing(voice_items, target_duration):
         adjusted.append(adjusted_item)
 
     adjusted_total = sum(item["duration"] for item in adjusted)
-    if not (SHORTS_MIN_DURATION <= adjusted_total <= SHORTS_MAX_DURATION):
+    if not (profile.min_duration_sec <= adjusted_total <= profile.max_duration_sec):
         print(f"    [Warning] Voice timing is still {adjusted_total:.1f}s after safe retiming.")
     return adjusted
 
 
-def make_all_voices(segments, target_duration):
+def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
     voice_items = []
     print("[2/5] Generating voiceovers...")
     for idx, seg in enumerate(segments):
         voice_track = _make_voice_track(seg["narration"], idx)
         voice_items.append(voice_track.to_legacy_item(index=idx, segment=seg))
-    return normalize_voice_timing(voice_items, target_duration)
+    return normalize_voice_timing(voice_items, target_duration, profile)
 
 
 
@@ -3383,7 +3405,7 @@ def main():
     if landscape:
         WIDTH, HEIGHT = 1920, 1080
 
-    n_segments = max(3, round(duration / SHORTS_SCENE_TARGET_DURATION))
+    n_segments = max(3, round(duration / _FORMAT_PROFILE.scene_target_duration_sec))
 
     OUT_DIR.mkdir(exist_ok=True)
     PENDING_DIR.mkdir(parents=True, exist_ok=True)

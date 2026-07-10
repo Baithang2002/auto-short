@@ -187,7 +187,7 @@ Work in progress. Once released, entries here move to a versioned section.
 
 ### Compatibility
 
-- No user-visible behavior change. Renderer output is byte-equivalent for equivalent inputs.
+- No user-visible behavior change. Renderer produces functionally identical output for equivalent inputs.
 
 ---
 
