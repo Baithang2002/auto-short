@@ -78,6 +78,8 @@ from autovideo.media import (
     SceneImportance,
     SearchStrategy,
     SourcePlanner,
+    ShotPlan,
+    VisualDirector,
     build_visual_intent,
     candidate_from_local_path,
     candidate_from_nasa_item,
@@ -91,6 +93,14 @@ from autovideo.music import MusicPlanner
 from autovideo.providers.factory import build_music_registry
 from autovideo.providers.llm import CallableLLMProvider
 from autovideo.providers.voice import CallableVoiceProvider, ElevenLabsVoiceProvider, VoiceRequest
+from autovideo.pipeline import (
+    PipelineContext,
+    PipelineOrchestrator,
+    PipelineStage,
+    PipelineStateStore,
+    StageRecord,
+    StageResult,
+)
 from autovideo.render import FfmpegRenderServices, FfmpegTimelineRenderer, render_profile_for
 from autovideo.format import FormatProfile, get_default_format_profile
 from autovideo.storage import ArtifactStore, FilesystemQueue
@@ -129,6 +139,7 @@ DEFAULT_MUSIC_VOLUME = DEFAULTS.render.default_music_volume                    #
 _GEMINI_CLIENT = None
 _MEDIA_SELECTION_DIAGNOSTICS = {}
 _MEDIA_PLANNING_DIAGNOSTICS = {}
+_WIKIMEDIA_SEARCH_CACHE = {}
 
 
 def _get_gemini_client():
@@ -183,9 +194,21 @@ MIXKIT_API_URL     = os.environ.get("MIXKIT_API_URL", "").strip()
 COVERR_API_URL     = os.environ.get("COVERR_API_URL", "").strip()
 VIDEVO_API_KEY     = os.environ.get("VIDEVO_API_KEY", "").strip()
 VIDEVO_API_URL     = os.environ.get("VIDEVO_API_URL", "").strip()
+ARCHIVE_PROVIDERS_ENABLED = os.environ.get("ENABLE_ARCHIVE_PROVIDERS", "1").lower() not in {"0", "false", "no"}
 NOAA_API_URL       = os.environ.get("NOAA_API_URL", "").strip()
 ESA_API_URL        = os.environ.get("ESA_API_URL", "").strip()
-ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "0").lower() not in {"0", "false", "no"}
+USGS_API_URL       = os.environ.get("USGS_API_URL", "").strip()
+SMITHSONIAN_API_URL = os.environ.get("SMITHSONIAN_API_URL", "").strip()
+SMITHSONIAN_API_KEY = os.environ.get("SMITHSONIAN_API_KEY", "").strip()
+INTERNET_ARCHIVE_ENABLED = os.environ.get("INTERNET_ARCHIVE_ENABLED", "0").lower() not in {"0", "false", "no", ""}
+NPS_API_URL        = os.environ.get("NPS_API_URL", "").strip()
+USFWS_API_URL      = os.environ.get("USFWS_API_URL", "").strip()
+LOC_API_URL        = os.environ.get("LOC_API_URL", "https://www.loc.gov/photos/").strip()
+EUROPEANA_API_URL  = os.environ.get("EUROPEANA_API_URL", "").strip()
+EUROPEANA_API_KEY  = os.environ.get("EUROPEANA_API_KEY", "").strip()
+FLICKR_COMMONS_API_URL = os.environ.get("FLICKR_COMMONS_API_URL", "").strip()
+FLICKR_API_KEY     = os.environ.get("FLICKR_API_KEY", "").strip()
+ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "1" if ARCHIVE_PROVIDERS_ENABLED else "0").lower() not in {"0", "false", "no"}
 # Channel name used in end card and SEO metadata
 APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
 APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
@@ -1319,7 +1342,12 @@ def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
     try:
         started = time.monotonic()
         total = 0
-        with requests.get(url, stream=True, timeout=(10, min(timeout, 30))) as r:
+        with requests.get(
+            url,
+            stream=True,
+            timeout=(10, min(timeout, 30)),
+            headers={"User-Agent": "auto-short/1.0 educational video generator"},
+        ) as r:
             r.raise_for_status()
             with open(out_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1 << 16):
@@ -1509,8 +1537,16 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
         coverr_enabled=bool(COVERR_API_URL),
         videvo_enabled=bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         wikimedia_enabled=ENABLE_WIKIMEDIA_COMMONS,
-        noaa_enabled=bool(NOAA_API_URL),
-        esa_enabled=bool(ESA_API_URL),
+        noaa_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(NOAA_API_URL),
+        esa_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(ESA_API_URL),
+        usgs_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(USGS_API_URL),
+        smithsonian_enabled=bool(SMITHSONIAN_API_URL and SMITHSONIAN_API_KEY),
+        nps_enabled=bool(NPS_API_URL),
+        usfws_enabled=bool(USFWS_API_URL),
+        loc_enabled=ARCHIVE_PROVIDERS_ENABLED and bool(LOC_API_URL),
+        europeana_enabled=bool(EUROPEANA_API_URL and EUROPEANA_API_KEY),
+        flickr_commons_enabled=bool(FLICKR_COMMONS_API_URL and FLICKR_API_KEY),
+        internet_archive_enabled=INTERNET_ARCHIVE_ENABLED,
     )
     query_plan = QueryPlanner().plan(intent)
     return SourcePlanner(registry).plan(query_plan)
@@ -1518,7 +1554,10 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
 
 def _remember_media_planning(idx, strategy):
     if isinstance(strategy, SearchStrategy):
-        _MEDIA_PLANNING_DIAGNOSTICS[idx] = strategy.diagnostics
+        _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+            **strategy.diagnostics,
+        }
 
 
 def _select_candidate_for_provider(
@@ -1724,7 +1763,7 @@ def fetch_pixabay_video(
 def fetch_nasa_video(
     queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
 ):
-    """Search the NASA Image and Video Library for a video clip.
+    """Search the NASA Image and Video Library for a video clip or still image.
     Returns Path or None. No API key required.
 
     Docs: https://images.nasa.gov/docs/images.nasa.gov_api_docs.pdf
@@ -1735,7 +1774,7 @@ def fetch_nasa_video(
         try:
             r = requests.get(
                 "https://images-api.nasa.gov/search",
-                params={"q": q, "media_type": "video"},
+                params={"q": q, "media_type": "video,image"},
                 timeout=30,
             )
             r.raise_for_status()
@@ -1744,7 +1783,7 @@ def fetch_nasa_video(
             print(f"    [NASA] search failed for {q!r}: {e}")
             return []
 
-    def get_asset_url(nasa_id):
+    def get_asset_url(nasa_id, media_type="video"):
         # Each item exposes an asset manifest at /asset/<id>
         try:
             r = requests.get(f"https://images-api.nasa.gov/asset/{nasa_id}", timeout=30)
@@ -1752,14 +1791,23 @@ def fetch_nasa_video(
             items = (r.json().get("collection", {}) or {}).get("items", []) or []
             # NASA returns multiple renditions: ~mobile, ~medium, ~large, ~orig.
             # Prefer "medium" or "small" mp4 (avoid huge "~orig" downloads).
-            mp4s = [it["href"] for it in items if it.get("href", "").endswith(".mp4")]
-            if not mp4s:
-                return None
-            preferred = next((u for u in mp4s if "~medium" in u or "~small" in u), None)
-            return preferred or mp4s[0]
+            if media_type == "video":
+                mp4s = [it["href"] for it in items if it.get("href", "").lower().endswith(".mp4")]
+                if mp4s:
+                    preferred = next((u for u in mp4s if "~medium" in u or "~small" in u), None)
+                    return preferred or mp4s[0], False
+            image_urls = [
+                it["href"]
+                for it in items
+                if it.get("href", "").lower().split("?", 1)[0].endswith((".jpg", ".jpeg", ".png"))
+            ]
+            if not image_urls:
+                return None, False
+            preferred = next((u for u in image_urls if "~large" in u or "~medium" in u), None)
+            return preferred or image_urls[0], True
         except Exception as e:
             print(f"    [NASA] asset lookup failed: {e}")
-            return None
+            return None, False
 
     intent = intent or _selection_intent(
         queries,
@@ -1775,10 +1823,10 @@ def fetch_nasa_video(
             nasa_id = data.get("nasa_id")
             if not nasa_id:
                 continue
-            url = get_asset_url(nasa_id)
+            url, is_image = get_asset_url(nasa_id, data.get("media_type") or "video")
             if not url:
                 continue
-            candidate_pool.append(candidate_from_nasa_item(item, url, q))
+            candidate_pool.append(candidate_from_nasa_item(item, url, q, is_image=is_image))
     candidate = _select_candidate_for_provider(
         "NASA",
         idx,
@@ -1791,7 +1839,7 @@ def fetch_nasa_video(
     if not candidate:
         return None
     used_set.add(candidate.dedup_key)
-    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    out_path = OUT_DIR / f"broll_{idx}{'.jpg' if candidate.is_image else '.mp4'}"
     print(f"    [NASA] Query: {candidate.query!r}  nasa_id={candidate.provider_id}")
     if _download_to(candidate.download_url, out_path, timeout=60, max_bytes=120 * 1024 * 1024):
         return out_path
@@ -1840,6 +1888,9 @@ def _remote_item_from_provider(provider, item, query):
     )
     if not download_url:
         return None
+    media_type = str(item.get("media_type") or item.get("type") or item.get("mime") or "").lower()
+    url_path = str(download_url).lower().split("?", 1)[0]
+    is_image = bool(item.get("is_image")) or media_type.startswith("image") or url_path.endswith((".jpg", ".jpeg", ".png", ".webp"))
     return {
         "provider_asset_id": item.get("id") or item.get("uuid") or item.get("slug") or download_url,
         "title": item.get("title") or item.get("name") or item.get("slug") or "",
@@ -1852,6 +1903,7 @@ def _remote_item_from_provider(provider, item, query):
         "license": item.get("license") or item.get("license_name") or provider,
         "attribution": item.get("attribution") or item.get("author") or item.get("user") or provider,
         "capability": item.get("capability", ""),
+        "is_image": is_image,
     }
 
 
@@ -2019,6 +2071,553 @@ def fetch_esa_media(
     )
 
 
+def fetch_usgs_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Fetch USGS scientific/geology media from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "usgs",
+        USGS_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="USGS public domain / usage varies",
+        intent=intent,
+    )
+
+
+def _smithsonian_candidate_from_row(row, query):
+    """Normalize one Smithsonian Open Access row into an image candidate.
+
+    Real response shape (verified 2026-07-11):
+      row.content.descriptiveNonRepeating.online_media.media[].resources[]
+    Only rows with usable online media are returned; text-only records are skipped.
+    """
+    if not isinstance(row, dict):
+        return None
+    dnr = row.get("content", {}).get("descriptiveNonRepeating", {}) or {}
+    online = dnr.get("online_media")
+    if not isinstance(online, dict):
+        return None
+    media_items = online.get("media") or []
+    if not media_items:
+        return None
+    for media in media_items:
+        if not isinstance(media, dict):
+            continue
+        access = ((media.get("usage") or {}).get("access") or "").upper()
+        if access and access not in {"CC0", "PUBLIC DOMAIN"}:
+            continue
+        # Prefer the "High-resolution JPEG" resource; fall back to first .jpg.
+        resources = media.get("resources") or []
+        picked = None
+        for res in resources:
+            if not isinstance(res, dict):
+                continue
+            label = (res.get("label") or "").lower()
+            url = res.get("url") or ""
+            if not url:
+                continue
+            if "high-resolution" in label and url.lower().endswith((".jpg", ".jpeg", ".png")):
+                picked = res
+                break
+        if not picked:
+            for res in resources:
+                if isinstance(res, dict) and str(res.get("url", "")).lower().endswith((".jpg", ".jpeg", ".png")):
+                    picked = res
+                    break
+        if not picked:
+            # Content URL is the delivery service; may resolve to an image.
+            content_url = media.get("content")
+            if content_url:
+                picked = {"url": content_url}
+        if not picked:
+            continue
+        width = picked.get("width")
+        height = picked.get("height")
+        title = (dnr.get("title") or {}).get("content") or row.get("title") or ""
+        return candidate_from_remote_item(
+            "smithsonian",
+            {
+                "provider_asset_id": row.get("id") or row.get("url") or picked.get("url"),
+                "title": title,
+                "description": media.get("extDescrAccessibility") or media.get("altTextAccessibility") or "",
+                "source_url": dnr.get("record_link") or row.get("url", ""),
+                "download_url": picked["url"],
+                "license": "CC0" if access == "CC0" else "Smithsonian Open Access / rights vary",
+                "attribution": dnr.get("data_source") or "Smithsonian",
+                "is_image": True,
+                "capability": "commons_media",
+                "width": int(width) if isinstance(width, (int, str)) and str(width).isdigit() else None,
+                "height": int(height) if isinstance(height, (int, str)) and str(height).isdigit() else None,
+            },
+            query,
+        )
+    return None
+
+
+def fetch_smithsonian_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Search the Smithsonian Open Access API for CC0 images.
+
+    Docs: https://edan.si.edu/openaccess/apidocs/
+    Endpoint: https://api.si.edu/openaccess/api/v1.0/search
+    Auth: api_key query parameter (api.data.gov key).
+    """
+    import requests
+
+    if not (SMITHSONIAN_API_URL and SMITHSONIAN_API_KEY):
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
+    session = requests.Session()
+    for q in queries:
+        try:
+            response = session.get(
+                SMITHSONIAN_API_URL,
+                params={"q": q, "rows": 20, "api_key": SMITHSONIAN_API_KEY},
+                timeout=30,
+            )
+            response.raise_for_status()
+            rows = (response.json().get("response") or {}).get("rows") or []
+        except Exception as e:
+            print(f"    [Smithsonian] search failed for {q!r}: {e}")
+            continue
+        for row in rows[:12]:
+            candidate = _smithsonian_candidate_from_row(row, q)
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "Smithsonian",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.5,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.jpg"
+    print(f"    [Smithsonian] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
+    return None
+
+
+def fetch_nps_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Fetch National Park Service media from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "nps",
+        NPS_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="National Park Service public domain / usage varies",
+        intent=intent,
+    )
+
+
+def fetch_usfws_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Fetch US Fish & Wildlife Service media from a configured JSON endpoint."""
+
+    return _fetch_json_stock_provider(
+        "usfws",
+        USFWS_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        license_name="USFWS public domain / usage varies",
+        intent=intent,
+    )
+
+
+def _europeana_candidate_from_item(item, query):
+    """Normalize one Europeana item into an image candidate.
+
+    Real response shape (verified 2026-07-11):
+      item.edmIsShownBy[0]  - direct URL to the primary image
+      item.edmPreview[0]    - thumbnail through Europeana thumbnail service
+      item.rights[0]        - license URL (CC-BY, CC0, PDM, etc.)
+      item.title[0]         - display title
+      item.dataProvider[0]  - originating institution
+      item.type             - "IMAGE" / "SOUND" / "TEXT" / "VIDEO"
+    """
+    if not isinstance(item, dict):
+        return None
+    if (item.get("type") or "").upper() != "IMAGE":
+        return None
+    shown_by = item.get("edmIsShownBy") or []
+    preview = item.get("edmPreview") or []
+    download_url = ""
+    if isinstance(shown_by, list) and shown_by:
+        download_url = str(shown_by[0])
+    if not download_url and isinstance(preview, list) and preview:
+        download_url = str(preview[0])
+    if not download_url:
+        return None
+    if not download_url.lower().split("?", 1)[0].endswith((".jpg", ".jpeg", ".png", ".webp")):
+        # Some providers return a service URL that resolves to an image
+        # (Wellcome IIIF, Rijksmuseum). We accept it and let the downloader
+        # follow redirects; the file extension will be added at save time.
+        pass
+    title_list = item.get("title") or []
+    rights_list = item.get("rights") or []
+    provider_list = item.get("dataProvider") or []
+    return candidate_from_remote_item(
+        "europeana",
+        {
+            "provider_asset_id": item.get("id") or item.get("guid") or download_url,
+            "title": (title_list[0] if isinstance(title_list, list) and title_list else "") or "",
+            "description": " ".join(item.get("dcDescription", []) if isinstance(item.get("dcDescription"), list) else []),
+            "source_url": item.get("guid") or (item.get("edmIsShownAt") or [""])[0] or "",
+            "download_url": download_url,
+            "license": (rights_list[0] if isinstance(rights_list, list) and rights_list else "Europeana rights vary by item") or "",
+            "attribution": (provider_list[0] if isinstance(provider_list, list) and provider_list else "Europeana") or "",
+            "is_image": True,
+            "capability": "commons_media",
+        },
+        query,
+    )
+
+
+def fetch_europeana_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Search Europeana for open-licensed images.
+
+    Docs: https://pro.europeana.eu/page/apis
+    Endpoint: https://api.europeana.eu/record/v2/search.json
+    Auth: wskey query parameter.
+    Filters: media=true, reusability=open (CC0 / CC-BY / PDM only).
+    """
+    import requests
+
+    if not (EUROPEANA_API_URL and EUROPEANA_API_KEY):
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
+    session = requests.Session()
+    for q in queries:
+        try:
+            response = session.get(
+                EUROPEANA_API_URL,
+                params={
+                    "wskey": EUROPEANA_API_KEY,
+                    "query": q,
+                    "rows": 20,
+                    "media": "true",
+                    "reusability": "open",
+                    "type": "IMAGE",
+                },
+                timeout=30,
+            )
+            response.raise_for_status()
+            items = response.json().get("items") or []
+        except Exception as e:
+            print(f"    [Europeana] search failed for {q!r}: {e}")
+            continue
+        for item in items[:12]:
+            candidate = _europeana_candidate_from_item(item, q)
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "Europeana",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.5,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.jpg"
+    print(f"    [Europeana] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
+    return None
+
+
+def _internet_archive_download_url(identifier, file_entry):
+    """Build a direct download URL from an Internet Archive file entry."""
+    name = file_entry.get("name") or ""
+    if not name:
+        return ""
+    return f"https://archive.org/download/{identifier}/{name}"
+
+
+def _internet_archive_pick_video_file(files):
+    """Pick the best downloadable video file from an IA metadata files list.
+
+    Priority: h.264 derivative mp4 (small, fast) > original HD mov > any mp4.
+    """
+    if not isinstance(files, list):
+        return None
+    # h.264 derivative mp4 (usually 854x480, ~5-10 MB per minute)
+    for f in files:
+        if not isinstance(f, dict):
+            continue
+        if f.get("format") == "h.264" and f.get("name", "").endswith(".mp4"):
+            return f
+    # Any other mp4
+    for f in files:
+        if isinstance(f, dict) and f.get("name", "").endswith(".mp4"):
+            return f
+    # Fall back to original .mov if present (larger)
+    for f in files:
+        if isinstance(f, dict) and f.get("name", "").endswith(".mov") and f.get("source") == "original":
+            return f
+    return None
+
+
+def _internet_archive_pick_image_file(files):
+    """Pick the best downloadable image file from an IA metadata files list."""
+    if not isinstance(files, list):
+        return None
+    # Prefer original jpg/png over derivative thumbnails.
+    for f in files:
+        if not isinstance(f, dict):
+            continue
+        name = f.get("name", "")
+        if name.endswith((".jpg", ".jpeg", ".png")) and f.get("source") == "original":
+            return f
+    for f in files:
+        if isinstance(f, dict) and f.get("name", "").endswith((".jpg", ".jpeg", ".png")):
+            return f
+    return None
+
+
+def fetch_internet_archive_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Search Internet Archive advanced-search then fetch downloadable media.
+
+    Docs: https://archive.org/developers/index-apis.html
+    Search: https://archive.org/advancedsearch.php (no auth)
+    Metadata: https://archive.org/metadata/{identifier}
+    Download: https://archive.org/download/{identifier}/{filename}
+    """
+    import requests
+
+    if not INTERNET_ARCHIVE_ENABLED:
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    session = requests.Session()
+    candidate_pool = []
+    for q in queries:
+        # Search movies first (video is preferred over images for B-roll).
+        search_query = f'title:({q}) AND mediatype:(movies)'
+        try:
+            search_resp = session.get(
+                "https://archive.org/advancedsearch.php",
+                params={
+                    "q": search_query,
+                    "fl[]": ["identifier", "title", "mediatype", "licenseurl", "creator", "description"],
+                    "rows": 8,
+                    "output": "json",
+                },
+                timeout=30,
+            )
+            search_resp.raise_for_status()
+            docs = (search_resp.json().get("response") or {}).get("docs") or []
+        except Exception as e:
+            print(f"    [Internet Archive] search failed for {q!r}: {e}")
+            continue
+        for doc in docs[:5]:
+            identifier = doc.get("identifier")
+            if not identifier:
+                continue
+            # Skip YouTube mirror uploads — those files are frequently unavailable.
+            if identifier.startswith("youtube-") or identifier.startswith("youtube--"):
+                continue
+            try:
+                meta_resp = session.get(
+                    f"https://archive.org/metadata/{identifier}",
+                    timeout=30,
+                )
+                meta_resp.raise_for_status()
+                meta = meta_resp.json()
+            except Exception as e:
+                print(f"    [Internet Archive] metadata failed for {identifier!r}: {e}")
+                continue
+            files = meta.get("files") or []
+            video_file = _internet_archive_pick_video_file(files)
+            picked, is_image = (video_file, False) if video_file else (_internet_archive_pick_image_file(files), True)
+            if not picked:
+                continue
+            download_url = _internet_archive_download_url(identifier, picked)
+            if not download_url:
+                continue
+            duration = None
+            if not is_image:
+                length = picked.get("length")
+                if isinstance(length, str):
+                    try:
+                        duration = float(length)
+                    except (TypeError, ValueError):
+                        duration = None
+            candidate = candidate_from_remote_item(
+                "internet_archive",
+                {
+                    "provider_asset_id": identifier,
+                    "title": doc.get("title") or (meta.get("metadata") or {}).get("title") or identifier,
+                    "description": doc.get("description") or "",
+                    "source_url": f"https://archive.org/details/{identifier}",
+                    "download_url": download_url,
+                    "license": doc.get("licenseurl") or (meta.get("metadata") or {}).get("licenseurl") or "Internet Archive rights vary by item",
+                    "attribution": doc.get("creator") or (meta.get("metadata") or {}).get("creator") or "Internet Archive",
+                    "is_image": is_image,
+                    "capability": "archive_footage" if not is_image else "history_images",
+                    "duration": duration,
+                    "width": int(picked.get("width")) if str(picked.get("width", "")).isdigit() else None,
+                    "height": int(picked.get("height")) if str(picked.get("height", "")).isdigit() else None,
+                },
+                q,
+            )
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "Internet Archive",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.5,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    ext = ".jpg" if candidate.is_image else ".mp4"
+    out_path = OUT_DIR / f"broll_{idx}{ext}"
+    print(f"    [Internet Archive] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path):
+        return out_path
+    return None
+
+
+def fetch_flickr_commons_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Fetch Flickr Commons media from a configured endpoint and API key."""
+
+    if not (FLICKR_COMMONS_API_URL and FLICKR_API_KEY):
+        return None
+    return _fetch_json_stock_provider(
+        "flickr_commons",
+        FLICKR_COMMONS_API_URL,
+        queries,
+        idx,
+        used_set,
+        target_duration=target_duration,
+        fallback=fallback,
+        narration=narration,
+        params_extra={"api_key": FLICKR_API_KEY, "license": "4,5,6,7,8,9,10"},
+        license_name="Flickr Commons license varies by item",
+        intent=intent,
+    )
+
+
+def _loc_candidate_from_result(result, query):
+    """Normalize one Library of Congress search result into an image candidate."""
+
+    if not isinstance(result, dict):
+        return None
+    image_urls = result.get("image_url") or result.get("image_urls") or []
+    if isinstance(image_urls, str):
+        image_urls = [image_urls]
+    image_urls = [
+        str(url)
+        for url in image_urls
+        if str(url).lower().split("?", 1)[0].endswith((".jpg", ".jpeg", ".png", ".webp"))
+    ]
+    if not image_urls:
+        return None
+    # The LOC API commonly orders thumbnails before larger derivatives.
+    download_url = image_urls[-1]
+    return candidate_from_remote_item(
+        "loc",
+        {
+            "provider_asset_id": result.get("id") or result.get("number") or result.get("url") or download_url,
+            "title": result.get("title") or "",
+            "description": result.get("description") or result.get("subject") or "",
+            "source_url": result.get("url") or result.get("item", {}).get("url") or "",
+            "download_url": download_url,
+            "license": result.get("rights") or "Library of Congress rights vary by item",
+            "attribution": "Library of Congress",
+            "is_image": True,
+            "capability": "history_images",
+        },
+        query,
+    )
+
+
+def fetch_library_of_congress_media(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Search Library of Congress JSON search for archive images."""
+
+    import requests
+
+    if not (ARCHIVE_PROVIDERS_ENABLED and LOC_API_URL):
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate_pool = []
+    session = requests.Session()
+    for q in queries:
+        try:
+            response = session.get(
+                LOC_API_URL,
+                params={"fo": "json", "q": q, "c": 20},
+                timeout=30,
+            )
+            response.raise_for_status()
+            results = response.json().get("results", []) or []
+        except Exception as e:
+            print(f"    [LOC] search failed for {q!r}: {e}")
+            continue
+        for result in results[:12]:
+            candidate = _loc_candidate_from_result(result, q)
+            if candidate:
+                candidate_pool.append(candidate)
+    candidate = _select_candidate_for_provider(
+        "LOC",
+        idx,
+        candidate_pool,
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+        minimum_score=0.5,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.jpg"
+    print(f"    [LOC] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path, timeout=60, max_bytes=80 * 1024 * 1024):
+        return out_path
+    return None
+
+
 def _wikimedia_candidate_from_page(page, query):
     """Normalize a Wikimedia Commons page result into a media candidate."""
 
@@ -2065,24 +2664,32 @@ def fetch_wikimedia_media(
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate_pool = []
     session = requests.Session()
+    session.headers.update({"User-Agent": "auto-short/1.0 educational video generator"})
     for q in queries:
+        cache_key = " ".join(str(q).lower().split())
+        if cache_key in _WIKIMEDIA_SEARCH_CACHE:
+            pages = _WIKIMEDIA_SEARCH_CACHE[cache_key]
+        else:
+            pages = None
         try:
-            search_response = session.get(
-                "https://commons.wikimedia.org/w/api.php",
-                params={
-                    "action": "query",
-                    "format": "json",
-                    "generator": "search",
-                    "gsrnamespace": 6,
-                    "gsrsearch": q,
-                    "gsrlimit": 8,
-                    "prop": "imageinfo",
-                    "iiprop": "url|mime|size|extmetadata",
-                },
-                timeout=30,
-            )
-            search_response.raise_for_status()
-            pages = (search_response.json().get("query", {}) or {}).get("pages", {}) or {}
+            if pages is None:
+                search_response = session.get(
+                    "https://commons.wikimedia.org/w/api.php",
+                    params={
+                        "action": "query",
+                        "format": "json",
+                        "generator": "search",
+                        "gsrnamespace": 6,
+                        "gsrsearch": q,
+                        "gsrlimit": 8,
+                        "prop": "imageinfo",
+                        "iiprop": "url|mime|size|extmetadata",
+                    },
+                    timeout=30,
+                )
+                search_response.raise_for_status()
+                pages = (search_response.json().get("query", {}) or {}).get("pages", {}) or {}
+                _WIKIMEDIA_SEARCH_CACHE[cache_key] = pages
         except Exception as e:
             print(f"    [Wikimedia] search failed for {q!r}: {e}")
             continue
@@ -2271,8 +2878,88 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 narration=narration,
                 intent=canonical_intent,
             )
+        elif source == "usgs":
+            out = fetch_usgs_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "usfws":
+            out = fetch_usfws_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "loc":
+            out = fetch_library_of_congress_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "smithsonian":
+            out = fetch_smithsonian_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "nps":
+            out = fetch_nps_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
         elif source == "nasa":
             out = fetch_nasa_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "europeana":
+            out = fetch_europeana_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "flickr_commons":
+            out = fetch_flickr_commons_media(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+        elif source == "internet_archive":
+            out = fetch_internet_archive_media(
                 plan_queries,
                 idx,
                 used_set,
@@ -3431,280 +4118,610 @@ def main():
 
     print(f"\n=== Building a ~{duration}s {'landscape' if landscape else 'vertical'} video about: {niche} ({n_segments} segments) ===\n")
 
-    if reuse_script:
+    def write_manifest(path: Path, payload: dict) -> Path:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+        return path
+
+    def read_manifest(path: Path) -> dict:
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def set_script_context(ctx: PipelineContext, script_payload: dict) -> None:
+        topic_meta = build_topic_metadata(
+            video_topic=niche,
+            title=script_payload.get("title", niche),
+            description=script_payload.get("description", ""),
+            instagram_caption=script_payload.get("instagram_caption", ""),
+            segments=script_payload.get("segments", []),
+            existing_hashtags=script_payload.get("hashtags") or (),
+        )
+        ctx.values["script"] = script_payload
+        ctx.values["topic_metadata"] = topic_meta
+        ctx.values["title"] = topic_meta.title
+        ctx.values["segments"] = script_payload["segments"]
+
+    def load_cached_script(*, announce: bool) -> dict:
         cache_path = OUT_DIR / "last_script.json"
         if not cache_path.exists():
             die("No cached script found in output/last_script.json. Run without --reuse-script first.")
-        print(f"[i] Reusing cached script from output/last_script.json...")
+        if announce:
+            print(f"[i] Reusing cached script from output/last_script.json...")
         try:
-            script = json.loads(cache_path.read_text(encoding="utf-8"))
-            script["segments"] = script.get("segments", [])[:n_segments]
-            script = Script.from_legacy_dict(script, niche=niche).to_legacy_dict()
-            fatal, _soft = script_quality_notes(script, n_segments, duration)
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+            cached["segments"] = cached.get("segments", [])[:n_segments]
+            cached = Script.from_legacy_dict(cached, niche=niche).to_legacy_dict()
+            fatal, _soft = script_quality_notes(cached, n_segments, duration)
             if duration >= SHORTS_MIN_DURATION and fatal:
                 die(
                     "Cached script is too short for a 50-60s video. "
                     "Run without --reuse-script so a fuller story can be generated. "
                     f"First issue: {fatal[0]}"
                 )
-            print(f"[+] Title: {script.get('title', niche)}")
-            for i, s in enumerate(script["segments"]):
-                print(f"    {i+1}. {s['narration']}   [b-roll: {s['broll']}]")
+            if announce:
+                print(f"[+] Title: {cached.get('title', niche)}")
+                for i, s in enumerate(cached["segments"]):
+                    print(f"    {i+1}. {s['narration']}   [b-roll: {s['broll']}]")
+            return cached
         except Exception as e:
             die(f"Failed to load cached script: {e}")
-    else:
-        print("[1/5] Writing script with Gemini...")
-        script = generate_script(niche, n_segments, duration)
 
-    topic_metadata = build_topic_metadata(
-        video_topic=niche,
-        title=script.get("title", niche),
-        description=script.get("description", ""),
-        instagram_caption=script.get("instagram_caption", ""),
-        segments=script.get("segments", []),
-        existing_hashtags=script.get("hashtags") or (),
-    )
-    title = topic_metadata.title
-    segments = script["segments"]
+    def voice_manifest_from_items(items: list[dict]) -> dict:
+        return {
+            "items": [
+                {
+                    "idx": int(item["idx"]),
+                    "segment": item["segment"],
+                    "voice": str(item["voice"]),
+                    "duration": float(item["duration"]),
+                    "voice_track": (
+                        item["voice_track"].to_dict()
+                        if item.get("voice_track")
+                        else VoiceTrack(
+                            audio_path=Path(item["voice"]),
+                            duration_sec=float(item["duration"]),
+                            scene_id=str(item["idx"]),
+                        ).to_dict()
+                    ),
+                }
+                for item in items
+            ]
+        }
 
-    # Interactive b-roll review: let user customize queries before any API calls
-    broll_overrides = {}
-    if review_broll:
-        raw = interactive_broll_review(segments, niche)
-        broll_overrides = {int(k): v for k, v in raw.items()}
+    def voice_items_from_manifest(payload: dict) -> list[dict]:
+        items = []
+        for raw in payload.get("items", []):
+            voice_track = VoiceTrack.from_dict(dict(raw["voice_track"]))
+            items.append({
+                "idx": int(raw["idx"]),
+                "segment": raw["segment"],
+                "voice": Path(raw["voice"]),
+                "duration": float(raw["duration"]),
+                "voice_track": voice_track,
+            })
+        return items
 
-    voice_items = make_all_voices(segments, duration)
+    def validate_paths(paths: list[str]) -> bool:
+        return all(Path(path).exists() for path in paths)
 
-    used_set = set()
-    media_assets = []
-    for item in voice_items:
-        idx = item["idx"]
-        seg = item["segment"]
-        dur = item["duration"]
+    def stage_topic_selection(ctx: PipelineContext) -> StageResult:
+        payload = {
+            "topic": niche,
+            "duration": duration,
+            "segments": n_segments,
+            "orientation": "landscape" if landscape else "portrait",
+            "compare_mode": compare_mode,
+            "hybrid": hybrid,
+            "threshold": threshold,
+            "dalle": dalle,
+            "review_broll": review_broll,
+            "no_interactive": no_interactive,
+        }
+        path = write_manifest(OUT_DIR / "pipeline_topic.json", payload)
+        ctx.values["topic_stage"] = payload
+        return StageResult(outputs={"topic_manifest": str(path)})
 
-        if compare_mode:
-            a_idx = (idx * 2) % len(local_media)
-            b_idx = (idx * 2 + 1) % len(local_media)
-            media_a = local_media[a_idx]
-            media_b = local_media[b_idx]
-            print(f"[3/5] Segment {idx+1}: split-screen [{media_a.name}] vs [{media_b.name}]...")
-            media_assets.append(_media_asset_from_path(
-                media_a,
-                source=MediaSource.LOCAL,
-                idx=idx,
-                metadata={
-                    "compare_pair": [str(media_a), str(media_b)],
-                    "selection": {
-                        "query": "compare_mode",
-                        "provider": "local",
-                        "provider_id": str(media_a.resolve()),
-                        "score": None,
-                        "confidence": "manual",
-                        "warnings": ["compare mode"],
-                        "rejection_reasons": [],
-                        "candidate_count": len(local_media),
-                        "score_breakdown": {},
-                    },
-                },
-            ))
+    def load_topic_selection(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["topic_stage"] = read_manifest(Path(record.outputs["topic_manifest"]))
+
+    def stage_script_generation(ctx: PipelineContext) -> StageResult:
+        if reuse_script:
+            script_payload = load_cached_script(announce=True)
         else:
-            # Check for user override from interactive review
-            override = broll_overrides.get(idx)
-            if override:
-                if "clip_path" in override:
-                    print(f"[3/5] Segment {idx+1}: using user-supplied clip...")
-                    clip = Path(override["clip_path"]).expanduser().resolve()
-                    media_assets.append(_media_asset_from_path(
-                        clip,
-                        source=MediaSource.LOCAL,
-                        idx=idx,
-                        metadata={
-                            "selection": {
-                                "query": "manual_override",
-                                "provider": "local",
-                                "provider_id": str(clip),
-                                "score": None,
-                                "confidence": "manual",
-                                "warnings": ["manual clip override"],
-                                "rejection_reasons": [],
-                                "candidate_count": 1,
-                                "score_breakdown": {},
-                            }
+            print("[1/5] Writing script with Gemini...")
+            script_payload = generate_script(niche, n_segments, duration)
+        set_script_context(ctx, script_payload)
+        return StageResult(outputs={"script_path": str(OUT_DIR / "last_script.json")})
+
+    def load_script_generation(ctx: PipelineContext, _record: StageRecord) -> None:
+        script_payload = load_cached_script(announce=False)
+        set_script_context(ctx, script_payload)
+
+    def stage_media_planning(ctx: PipelineContext) -> StageResult:
+        overrides = {}
+        if review_broll:
+            raw = interactive_broll_review(ctx.values["segments"], niche)
+            overrides = {int(k): v for k, v in raw.items()}
+        shot_plan = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+        shot_plan_path = shot_plan.write_json(OUT_DIR / "shot_plan.json")
+        ctx.values["broll_overrides"] = overrides
+        ctx.values["shot_plan"] = shot_plan
+        path = write_manifest(
+            OUT_DIR / "media_planning_manifest.json",
+            {
+                "broll_overrides": {str(k): v for k, v in overrides.items()},
+                "shot_plan": str(shot_plan_path),
+            },
+        )
+        return StageResult(outputs={
+            "media_planning_manifest": str(path),
+            "shot_plan": str(shot_plan_path),
+        })
+
+    def load_media_planning(ctx: PipelineContext, record: StageRecord) -> None:
+        payload = read_manifest(Path(record.outputs["media_planning_manifest"]))
+        ctx.values["broll_overrides"] = {
+            int(k): v for k, v in payload.get("broll_overrides", {}).items()
+        }
+        shot_plan_path = Path(payload.get("shot_plan") or record.outputs.get("shot_plan", ""))
+        if shot_plan_path.exists():
+            ctx.values["shot_plan"] = ShotPlan.from_dict(read_manifest(shot_plan_path))
+        else:
+            ctx.values["shot_plan"] = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+
+    def stage_voice_generation(ctx: PipelineContext) -> StageResult:
+        voice_items = make_all_voices(ctx.values["segments"], duration)
+        ctx.values["voice_items"] = voice_items
+        manifest = voice_manifest_from_items(voice_items)
+        path = write_manifest(OUT_DIR / "voice_manifest.json", manifest)
+        return StageResult(outputs={
+            "voice_manifest": str(path),
+            "voice_files": [str(item["voice"]) for item in voice_items],
+        })
+
+    def load_voice_generation(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["voice_items"] = voice_items_from_manifest(
+            read_manifest(Path(record.outputs["voice_manifest"]))
+        )
+
+    def validate_voice_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return (
+            Path(record.outputs.get("voice_manifest", "")).exists()
+            and validate_paths(record.outputs.get("voice_files", []))
+        )
+
+    def stage_media_selection(ctx: PipelineContext) -> StageResult:
+        used_set = set()
+        media_assets = []
+        broll_overrides = ctx.values.get("broll_overrides", {})
+        shot_plan = ctx.values.get("shot_plan")
+        for item in ctx.values["voice_items"]:
+            idx = item["idx"]
+            seg = item["segment"]
+            dur = item["duration"]
+            shot_intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
+
+            if compare_mode:
+                a_idx = (idx * 2) % len(local_media)
+                b_idx = (idx * 2 + 1) % len(local_media)
+                media_a = local_media[a_idx]
+                media_b = local_media[b_idx]
+                print(f"[3/5] Segment {idx+1}: split-screen [{media_a.name}] vs [{media_b.name}]...")
+                media_assets.append(_media_asset_from_path(
+                    media_a,
+                    source=MediaSource.LOCAL,
+                    idx=idx,
+                    metadata={
+                        "compare_pair": [str(media_a), str(media_b)],
+                        "selection": {
+                            "query": "compare_mode",
+                            "provider": "local",
+                            "provider_id": str(media_a.resolve()),
+                            "score": None,
+                            "confidence": "manual",
+                            "warnings": ["compare mode"],
+                            "rejection_reasons": [],
+                            "candidate_count": len(local_media),
+                            "score_breakdown": {},
                         },
-                    ))
-                    continue
-                elif "skip" in override:
-                    print(f"[3/5] Segment {idx+1}: user skipped stock; using Gemini image...")
-                    broll = generate_gemini_image(seg.get("broll") or niche, idx)
-                    if broll:
+                    },
+                ))
+            else:
+                override = broll_overrides.get(idx)
+                if override:
+                    if "clip_path" in override:
+                        print(f"[3/5] Segment {idx+1}: using user-supplied clip...")
+                        clip = Path(override["clip_path"]).expanduser().resolve()
                         media_assets.append(_media_asset_from_path(
-                            broll,
-                            source=MediaSource.GEMINI_IMAGE,
+                            clip,
+                            source=MediaSource.LOCAL,
                             idx=idx,
                             metadata={
                                 "selection": {
-                                    "query": seg.get("broll") or niche,
-                                    "provider": "gemini_image",
-                                    "provider_id": Path(broll).name,
+                                    "query": "manual_override",
+                                    "provider": "local",
+                                    "provider_id": str(clip),
                                     "score": None,
-                                    "confidence": "fallback",
-                                    "warnings": ["user skipped stock"],
+                                    "confidence": "manual",
+                                    "warnings": ["manual clip override"],
                                     "rejection_reasons": [],
-                                    "candidate_count": 0,
+                                    "candidate_count": 1,
                                     "score_breakdown": {},
                                 }
                             },
                         ))
                         continue
-                    print(f"    [Gemini Image] failed; falling through to stock sources.")
-                    queries = broll_query_list(seg, niche)
-                elif "queries" in override:
-                    queries = override["queries"]
+                    elif "skip" in override:
+                        print(f"[3/5] Segment {idx+1}: user skipped stock; using Gemini image...")
+                        broll = generate_gemini_image(seg.get("broll") or niche, idx)
+                        if broll:
+                            media_assets.append(_media_asset_from_path(
+                                broll,
+                                source=MediaSource.GEMINI_IMAGE,
+                                idx=idx,
+                                metadata={
+                                    "selection": {
+                                        "query": seg.get("broll") or niche,
+                                        "provider": "gemini_image",
+                                        "provider_id": Path(broll).name,
+                                        "score": None,
+                                        "confidence": "fallback",
+                                        "warnings": ["user skipped stock"],
+                                        "rejection_reasons": [],
+                                        "candidate_count": 0,
+                                        "score_breakdown": {},
+                                    }
+                                },
+                            ))
+                            continue
+                        print(f"    [Gemini Image] failed; falling through to stock sources.")
+                        queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
+                    elif "queries" in override:
+                        queries = override["queries"]
+                    else:
+                        queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
                 else:
+                    queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
+                if not queries:
                     queries = broll_query_list(seg, niche)
-            else:
-                queries = broll_query_list(seg, niche)
+                if shot_intent:
+                    _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+                        **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                        "shot_plan": {
+                            "domain_id": shot_plan.domain_id,
+                            "visual_identity": list(shot_plan.visual_identity),
+                            "style_rules": shot_plan.style_rules.to_dict(),
+                            "query_budget": shot_plan.query_budget,
+                        },
+                        "shot_intent": shot_intent.to_dict(),
+                    }
 
-            print(f"[3/5] Segment {idx+1}: fetching B-roll '{queries[0]}'...")
-            broll = fetch_broll(queries, idx, fallback=niche,
-                               local_media=local_media, narration=seg["narration"],
-                               used_set=used_set, hybrid=hybrid, threshold=threshold, dalle=dalle,
-                               target_duration=dur, no_interactive=no_interactive)
-            selection_metadata = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
-            media_assets.append(_media_asset_from_path(
-                broll,
-                source=_media_source_from_selection(selection_metadata),
-                idx=idx,
-                metadata=selection_metadata,
-            ))
-
-    script_model = Script.from_legacy_dict(script, niche=niche)
-    voice_tracks = [
-        item.get("voice_track") or VoiceTrack(
-            audio_path=Path(item["voice"]),
-            duration_sec=float(item["duration"]),
-            scene_id=str(item["idx"]),
+                print(f"[3/5] Segment {idx+1}: fetching B-roll '{queries[0]}'...")
+                broll = fetch_broll(queries, idx, fallback=niche,
+                                   local_media=local_media, narration=seg["narration"],
+                                   used_set=used_set, hybrid=hybrid, threshold=threshold, dalle=dalle,
+                                   target_duration=dur, no_interactive=no_interactive)
+                selection_metadata = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
+                media_assets.append(_media_asset_from_path(
+                    broll,
+                    source=_media_source_from_selection(selection_metadata),
+                    idx=idx,
+                    metadata=selection_metadata,
+                ))
+        ctx.values["media_assets"] = media_assets
+        path = write_manifest(
+            OUT_DIR / "media_manifest.json",
+            {"assets": [asset.to_dict() for asset in media_assets]},
         )
-        for item in voice_items
-    ]
-    timeline_metadata = UploadMetadata.from_legacy_dict({
-        "id": "draft",
-        "title": title,
-        "video_path": str(OUT_DIR / "final.mp4"),
-        "niche": niche,
-        "segments": script.get("segments", []),
-        "orientation": "landscape" if landscape else "portrait",
-        "status": "draft",
-    })
-    timeline = build_timeline(
-        script=script_model,
-        voice_tracks=voice_tracks,
-        media_assets=media_assets,
-        upload_metadata=timeline_metadata,
-        options=TimelineBuildOptions(
+        return StageResult(outputs={
+            "media_manifest": str(path),
+            "media_files": [str(asset.local_path) for asset in media_assets],
+        })
+
+    def load_media_selection(ctx: PipelineContext, record: StageRecord) -> None:
+        payload = read_manifest(Path(record.outputs["media_manifest"]))
+        ctx.values["media_assets"] = [
+            MediaAsset.from_dict(asset) for asset in payload.get("assets", [])
+        ]
+
+    def validate_media_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return (
+            Path(record.outputs.get("media_manifest", "")).exists()
+            and validate_paths(record.outputs.get("media_files", []))
+        )
+
+    def stage_music(ctx: PipelineContext) -> StageResult:
+        topic_meta = ctx.values["topic_metadata"]
+        payload = {
+            "requested_music_path": str(music_path) if music_path else "",
+            "requested_music_volume": music_volume,
+            "music_selection_key": f"{topic_meta.title}|{niche}",
+            "music_mood": ctx.values["script"].get("music_mood"),
+        }
+        ctx.values["music_plan"] = payload
+        path = write_manifest(OUT_DIR / "music_manifest.json", payload)
+        return StageResult(outputs={"music_manifest": str(path)})
+
+    def load_music(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["music_plan"] = read_manifest(Path(record.outputs["music_manifest"]))
+
+    def stage_timeline(ctx: PipelineContext) -> StageResult:
+        script_payload = ctx.values["script"]
+        title = ctx.values["title"]
+        script_model = Script.from_legacy_dict(script_payload, niche=niche)
+        voice_tracks = [
+            item.get("voice_track") or VoiceTrack(
+                audio_path=Path(item["voice"]),
+                duration_sec=float(item["duration"]),
+                scene_id=str(item["idx"]),
+            )
+            for item in ctx.values["voice_items"]
+        ]
+        timeline_metadata = UploadMetadata.from_legacy_dict({
+            "id": "draft",
+            "title": title,
+            "video_path": str(OUT_DIR / "final.mp4"),
+            "niche": niche,
+            "segments": script_payload.get("segments", []),
+            "orientation": "landscape" if landscape else "portrait",
+            "status": "draft",
+        })
+        timeline = build_timeline(
+            script=script_model,
+            voice_tracks=voice_tracks,
+            media_assets=ctx.values["media_assets"],
+            upload_metadata=timeline_metadata,
+            options=TimelineBuildOptions(
+                width=WIDTH,
+                height=HEIGHT,
+                fps=FPS,
+                format_profile="shorts_landscape" if landscape else "shorts_vertical",
+                transition_duration_sec=SHORTS_TRANSITION_DURATION,
+                check_asset_files=True,
+            ),
+        )
+        timeline.metadata.update(ctx.values["music_plan"])
+        timeline.write_json(OUT_DIR / "timeline.json")
+        ctx.values["timeline"] = timeline
+        return StageResult(outputs={"timeline": str(OUT_DIR / "timeline.json")})
+
+    def load_timeline(ctx: PipelineContext, record: StageRecord) -> None:
+        from autovideo.domain import Timeline
+        ctx.values["timeline"] = Timeline.from_json(
+            Path(record.outputs["timeline"]).read_text(encoding="utf-8")
+        )
+
+    def stage_rendering(ctx: PipelineContext) -> StageResult:
+        render_profile = render_profile_for(
+            APP_CONFIG.render_profile.name,
             width=WIDTH,
             height=HEIGHT,
             fps=FPS,
-            format_profile="shorts_landscape" if landscape else "shorts_vertical",
+            shorts_max_duration_sec=SHORTS_MAX_DURATION,
             transition_duration_sec=SHORTS_TRANSITION_DURATION,
-            check_asset_files=True,
-        ),
-    )
-    timeline.metadata["requested_music_path"] = str(music_path) if music_path else ""
-    timeline.metadata["requested_music_volume"] = music_volume
-    timeline.metadata["music_selection_key"] = f"{title}|{niche}"
-    timeline.write_json(OUT_DIR / "timeline.json")
-    render_profile = render_profile_for(
-        APP_CONFIG.render_profile.name,
-        width=WIDTH,
-        height=HEIGHT,
-        fps=FPS,
-        shorts_max_duration_sec=SHORTS_MAX_DURATION,
-        transition_duration_sec=SHORTS_TRANSITION_DURATION,
-        music_volume=music_volume,
-    )
-    renderer = FfmpegTimelineRenderer(
-        out_dir=OUT_DIR,
-        profile=render_profile,
-        services=FfmpegRenderServices(
-            build_segment=build_segment,
-            concat_segments=concat_segments,
-            media_duration=media_duration,
-            build_ass=build_ass,
-            burn_captions=burn_captions,
-            add_background_music=add_background_music,
-            run_ff=run_ff,
-            move_file=shutil.move,
-        ),
-    )
-    render_result = renderer.render(timeline)
-    mastered_video = render_result.mastered_video
-    final = render_result.final_path
-    final_yt_safe = render_result.youtube_safe_path
-    total = render_result.final_duration_sec
-    music_used = render_result.music_path
+            music_volume=music_volume,
+        )
+        renderer = FfmpegTimelineRenderer(
+            out_dir=OUT_DIR,
+            profile=render_profile,
+            services=FfmpegRenderServices(
+                build_segment=build_segment,
+                concat_segments=concat_segments,
+                media_duration=media_duration,
+                build_ass=build_ass,
+                burn_captions=burn_captions,
+                add_background_music=add_background_music,
+                run_ff=run_ff,
+                move_file=shutil.move,
+            ),
+        )
+        render_result = renderer.render(ctx.values["timeline"])
+        payload = {
+            "final_path": str(render_result.final_path),
+            "youtube_safe_path": str(render_result.youtube_safe_path),
+            "captioned_path": str(render_result.captioned_path),
+            "combined_path": str(render_result.combined_path),
+            "final_duration_sec": render_result.final_duration_sec,
+            "youtube_safe_duration_sec": render_result.youtube_safe_duration_sec,
+            "music_path": str(render_result.music_path) if render_result.music_path else None,
+            "segment_paths": [str(path) for path in render_result.segment_paths],
+            "captions_path": str(OUT_DIR / "captions.ass"),
+        }
+        write_manifest(OUT_DIR / "render_manifest.json", payload)
+        ctx.values.update({
+            "final": render_result.final_path,
+            "final_yt_safe": render_result.youtube_safe_path,
+            "total": render_result.final_duration_sec,
+            "music_used": render_result.music_path,
+        })
+        return StageResult(outputs={
+            "render_manifest": str(OUT_DIR / "render_manifest.json"),
+            "final": str(render_result.final_path),
+            "final_yt_safe": str(render_result.youtube_safe_path),
+            "captions": str(OUT_DIR / "captions.ass"),
+        })
 
-    hashtags = list(topic_metadata.hashtags)
-    hashtag_str = " ".join(hashtags)
-    youtube_title = title
-    if "#shorts" not in youtube_title.lower():
-        candidate = f"{title} #shorts"
-        if len(candidate) <= 100:
-            youtube_title = candidate
-    description_base = topic_metadata.description or title
-    # YouTube SEO: ensure primary keyword (title) appears in first ~150 chars
-    if title.lower() not in description_base[:150].lower():
-        description_base = f"{title}\n\n{description_base}"
-    youtube_description = f"{description_base}\n\n{hashtag_str}"
-    facebook_description = youtube_description
-    instagram_caption = topic_metadata.instagram_caption or title
-    instagram_caption = f"{instagram_caption}\n\n{hashtag_str}"
+    def load_rendering(ctx: PipelineContext, record: StageRecord) -> None:
+        payload = read_manifest(Path(record.outputs["render_manifest"]))
+        ctx.values.update({
+            "final": Path(payload["final_path"]),
+            "final_yt_safe": Path(payload["youtube_safe_path"]),
+            "total": float(payload["final_duration_sec"]),
+            "music_used": payload.get("music_path"),
+        })
 
-    # YouTube tags for search (hashtags without the #, comma-separated)
-    youtube_tags = topic_metadata.youtube_tags
+    def validate_render_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return (
+            Path(record.outputs.get("render_manifest", "")).exists()
+            and Path(record.outputs.get("final", "")).exists()
+            and Path(record.outputs.get("final_yt_safe", "")).exists()
+            and Path(record.outputs.get("captions", "")).exists()
+        )
 
-    # --- Queue output: copy final video into videos/pending/<id>/ ----
-    video_id = f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}-{slugify(title)}-{uuid.uuid4().hex[:6]}"
-    artifact_store = ArtifactStore(SCRIPT_DIR)
-    pending_folder = artifact_store.queue_item_path("pending", video_id)
-    pending_video = pending_folder / "video.mp4"
-    pending_video_yt = pending_folder / "video_yt_safe.mp4"
+    def stage_metadata(ctx: PipelineContext) -> StageResult:
+        script_payload = ctx.values["script"]
+        topic_metadata = ctx.values["topic_metadata"]
+        title = ctx.values["title"]
+        hashtags = list(topic_metadata.hashtags)
+        hashtag_str = " ".join(hashtags)
+        youtube_title = title
+        if "#shorts" not in youtube_title.lower():
+            candidate = f"{title} #shorts"
+            if len(candidate) <= 100:
+                youtube_title = candidate
+        description_base = topic_metadata.description or title
+        if title.lower() not in description_base[:150].lower():
+            description_base = f"{title}\n\n{description_base}"
+        youtube_description = f"{description_base}\n\n{hashtag_str}"
+        facebook_description = youtube_description
+        instagram_caption = topic_metadata.instagram_caption or title
+        instagram_caption = f"{instagram_caption}\n\n{hashtag_str}"
+        youtube_tags = topic_metadata.youtube_tags
 
-    metadata = {
-        "id": video_id,
-        "niche": niche,
-        "title": title,
-        "youtube_title": youtube_title,
-        "youtube_description": youtube_description,
-        "facebook_description": facebook_description,
-        "instagram_caption": instagram_caption,
-        "hashtags": hashtags,
-        "youtube_tags": youtube_tags,
-        "segments": script.get("segments", []),
-        "music_mood": script.get("music_mood"),
-        "music_path": str(music_used) if music_used else None,
+        video_id = f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}-{slugify(title)}-{uuid.uuid4().hex[:6]}"
+        artifact_store = ArtifactStore(SCRIPT_DIR)
+        pending_folder = artifact_store.queue_item_path("pending", video_id)
+        pending_video = pending_folder / "video.mp4"
+        pending_video_yt = pending_folder / "video_yt_safe.mp4"
+        metadata = {
+            "id": video_id,
+            "niche": niche,
+            "title": title,
+            "youtube_title": youtube_title,
+            "youtube_description": youtube_description,
+            "facebook_description": facebook_description,
+            "instagram_caption": instagram_caption,
+            "hashtags": hashtags,
+            "youtube_tags": youtube_tags,
+            "segments": script_payload.get("segments", []),
+            "music_mood": script_payload.get("music_mood"),
+            "music_path": str(ctx.values["music_used"]) if ctx.values.get("music_used") else None,
+            "music_volume": music_volume,
+            "duration_sec": round(float(ctx.values["total"]), 2),
+            "video_file": "video.mp4",
+            "video_file_yt": "video_yt_safe.mp4",
+            "video_path": str(pending_video.resolve()),
+            "video_path_yt": str(pending_video_yt.resolve()),
+            "orientation": "landscape" if landscape else "portrait",
+            "status": "pending",
+            "created_at": dt.datetime.now().isoformat(timespec="seconds"),
+        }
+        UploadMetadata.from_legacy_dict(metadata)
+        meta_path = OUT_DIR / "upload_metadata.json"
+        write_manifest(meta_path, metadata)
+        ctx.values.update({
+            "metadata": metadata,
+            "video_id": video_id,
+            "youtube_title": youtube_title,
+            "hashtag_str": hashtag_str,
+            "meta_path": meta_path,
+        })
+        return StageResult(outputs={"metadata": str(meta_path), "video_id": video_id})
+
+    def load_metadata(ctx: PipelineContext, record: StageRecord) -> None:
+        meta_path = Path(record.outputs["metadata"])
+        metadata = read_manifest(meta_path)
+        ctx.values.update({
+            "metadata": metadata,
+            "video_id": metadata["id"],
+            "youtube_title": metadata.get("youtube_title", metadata.get("title", "")),
+            "hashtag_str": " ".join(metadata.get("hashtags", [])),
+            "meta_path": meta_path,
+        })
+
+    def stage_queue_creation(ctx: PipelineContext) -> StageResult:
+        metadata = ctx.values["metadata"]
+        video_id = ctx.values["video_id"]
+        artifact_store = ArtifactStore(SCRIPT_DIR)
+        queue = FilesystemQueue(artifact_store.queue_root())
+        existing = queue.find(video_id)
+        if existing is None:
+            queue.create_pending(
+                video_id,
+                metadata,
+                artifacts={
+                    "video.mp4": ctx.values["final"],
+                    "video_yt_safe.mp4": ctx.values["final_yt_safe"],
+                },
+            )
+        pending_folder = artifact_store.queue_item_path("pending", video_id)
+        payload = {
+            "video_id": video_id,
+            "queue_folder": str(pending_folder),
+            "pending_video": str(pending_folder / "video.mp4"),
+            "pending_video_yt": str(pending_folder / "video_yt_safe.mp4"),
+        }
+        path = write_manifest(OUT_DIR / "queue_manifest.json", payload)
+        ctx.values["queue_folder"] = pending_folder
+        return StageResult(outputs={**payload, "queue_manifest": str(path)})
+
+    def load_queue_creation(ctx: PipelineContext, record: StageRecord) -> None:
+        artifact_store = ArtifactStore(SCRIPT_DIR)
+        queue = FilesystemQueue(artifact_store.queue_root())
+        item = queue.find(record.outputs["video_id"])
+        ctx.values["queue_folder"] = item.folder if item else Path(record.outputs["queue_folder"])
+
+    def validate_queue_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        artifact_store = ArtifactStore(SCRIPT_DIR)
+        queue = FilesystemQueue(artifact_store.queue_root())
+        return queue.find(record.outputs.get("video_id", "")) is not None
+
+    fingerprint_payload = {
+        "topic": niche,
+        "duration": duration,
+        "compare": compare_mode,
+        "hybrid": hybrid,
+        "threshold": threshold,
+        "dalle": dalle,
+        "landscape": landscape,
+        "reuse_script": reuse_script,
+        "music": str(music_path or ""),
         "music_volume": music_volume,
-        "duration_sec": round(mastered_video.duration_sec, 2),
-        "video_file": "video.mp4",
-        "video_file_yt": "video_yt_safe.mp4",
-        "video_path": str(pending_video.resolve()),
-        "video_path_yt": str(pending_video_yt.resolve()),
-        "orientation": "landscape" if landscape else "portrait",
-        "status": "pending",
-        "created_at": dt.datetime.now().isoformat(timespec="seconds"),
+        "review_broll": review_broll,
+        "no_interactive": no_interactive,
+        "width": WIDTH,
+        "height": HEIGHT,
+        "segments": n_segments,
     }
-    UploadMetadata.from_legacy_dict(metadata)
-    queue = FilesystemQueue(artifact_store.queue_root())
-    queue.create_pending(
-        video_id,
-        metadata,
-        artifacts={
-            "video.mp4": final,
-            "video_yt_safe.mp4": final_yt_safe,
-        },
+    fingerprint = hashlib.sha256(
+        json.dumps(fingerprint_payload, sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    context = PipelineContext(
+        root_dir=SCRIPT_DIR,
+        output_dir=OUT_DIR,
+        run_id=uuid.uuid4().hex,
+        fingerprint=fingerprint,
+        topic=niche,
     )
-    meta_path = OUT_DIR / "upload_metadata.json"
-    meta_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False), encoding="utf-8")
+    stages = [
+        PipelineStage("topic_selection", stage_topic_selection, load=load_topic_selection),
+        PipelineStage("script_generation", stage_script_generation, load=load_script_generation),
+        PipelineStage("media_planning", stage_media_planning, load=load_media_planning),
+        PipelineStage("voice_generation", stage_voice_generation, load=load_voice_generation, validate_outputs=validate_voice_outputs),
+        PipelineStage("media_selection", stage_media_selection, load=load_media_selection, validate_outputs=validate_media_outputs),
+        PipelineStage("music", stage_music, load=load_music),
+        PipelineStage("timeline_construction", stage_timeline, load=load_timeline),
+        PipelineStage("rendering", stage_rendering, load=load_rendering, validate_outputs=validate_render_outputs),
+        PipelineStage("metadata", stage_metadata, load=load_metadata),
+        PipelineStage("queue_creation", stage_queue_creation, load=load_queue_creation, validate_outputs=validate_queue_outputs),
+    ]
+    orchestrator = PipelineOrchestrator(
+        stages,
+        PipelineStateStore(OUT_DIR / "pipeline_state.json"),
+    )
+    orchestrator.run(
+        context,
+        resume=True,
+        force=os.environ.get("AUTO_VIDEO_FORCE_RERUN", "").strip() == "1",
+    )
+
+    final = context.values["final"]
+    final_yt_safe = context.values["final_yt_safe"]
+    total = float(context.values["total"])
+    music_used = context.values.get("music_used")
+    video_id = context.values["video_id"]
+    youtube_title = context.values["youtube_title"]
+    hashtag_str = context.values["hashtag_str"]
+    meta_path = context.values["meta_path"]
 
     print(f"\n[OK] Done -> {final}  ({total:.1f}s)")
     print(f"          + {final_yt_safe.name} (YT-safe, no music)")

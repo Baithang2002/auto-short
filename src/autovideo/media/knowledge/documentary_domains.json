@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "domains": [
+    {
+      "id": "octopus_intelligence",
+      "label": "Octopus Intelligence",
+      "trigger_terms": ["octopus", "octopuses", "cephalopod", "tentacle", "camouflage"],
+      "primary_subject": "octopus",
+      "required_entities": ["octopus"],
+      "named_entities": ["common octopus", "mimic octopus", "octopus camouflage", "octopus opening jar"],
+      "visual_identity": ["octopus behavior", "underwater close up", "reef intelligence"],
+      "avoid_terms": ["fish only", "empty ocean", "generic coral", "scuba diver", "aquarium crowd"],
+      "exact_queries": ["octopus close up underwater", "octopus swimming reef", "octopus camouflage", "octopus opening shell"],
+      "mechanism_queries": ["octopus tentacles moving close up", "octopus changing color skin", "octopus squeezing through hole"],
+      "context_queries": ["underwater reef octopus", "octopus hiding in rocks"],
+      "fallback_queries": ["octopus underwater", "cephalopod underwater close up"]
+    },
+    {
+      "id": "roman_aqueducts",
+      "label": "Roman Aqueducts",
+      "trigger_terms": ["roman", "rome", "aqueduct", "aqueducts", "empire", "arches", "water channel"],
+      "primary_subject": "Roman aqueduct",
+      "required_entities": ["aqueduct", "Roman arches"],
+      "named_entities": ["Pont du Gard", "Segovia Aqueduct", "Aqua Claudia", "Roman aqueduct bridge"],
+      "visual_identity": ["Roman water engineering", "stone arches", "ancient infrastructure"],
+      "avoid_terms": ["forest only", "bicycle", "generic river", "modern bridge", "stone texture only"],
+      "exact_queries": ["Roman aqueduct bridge", "Roman aqueduct arches", "Pont du Gard aqueduct", "Segovia Aqueduct"],
+      "mechanism_queries": ["Roman water channel", "ancient gravity water system", "aqueduct water engineering"],
+      "context_queries": ["Roman architecture arches", "ancient Roman engineering"],
+      "fallback_queries": ["ancient aqueduct ruins", "Roman ruins arches"]
+    },
+    {
+      "id": "bee_communication",
+      "label": "Bee Communication",
+      "trigger_terms": ["bee", "bees", "honeybee", "hive", "waggle", "dance"],
+      "primary_subject": "honeybee",
+      "required_entities": ["bee", "hive"],
+      "named_entities": ["waggle dance", "hive entrance", "honeycomb", "worker bees"],
+      "visual_identity": ["hive communication", "bee movement", "honeycomb close up"],
+      "avoid_terms": ["flower only", "garden only", "stage", "presentation", "person talking"],
+      "exact_queries": ["bee waggle dance", "bees communicating in hive", "honeybee hive entrance", "bees on honeycomb"],
+      "mechanism_queries": ["worker bees following dancer", "bee signalling in hive", "honeybee dance close up"],
+      "context_queries": ["busy beehive close up", "honeycomb bees macro"],
+      "fallback_queries": ["honeybee close up", "bees inside hive"]
+    },
+    {
+      "id": "volcanic_land",
+      "label": "Volcanic Land Formation",
+      "trigger_terms": ["volcano", "volcanoes", "lava", "magma", "eruption", "volcanic"],
+      "primary_subject": "volcano",
+      "required_entities": ["volcano", "lava"],
+      "named_entities": ["Kilauea", "Mauna Loa", "Surtsey", "Iceland volcanic eruption", "lava delta"],
+      "visual_identity": ["eruption", "lava flow", "cooling lava creates land"],
+      "avoid_terms": ["scuba diver", "bubbles", "generic ocean", "coastline only", "smoke only"],
+      "exact_queries": ["volcano eruption lava flow", "lava flow close up", "cooling lava creates land", "volcanic island formation"],
+      "mechanism_queries": ["magma chamber diagram", "tectonic plates volcano diagram", "lava entering ocean steam"],
+      "context_queries": ["black lava field", "volcanic rocks steam", "Kilauea lava flow"],
+      "fallback_queries": ["volcano eruption", "lava landscape"]
+    },
+    {
+      "id": "aurora_science",
+      "label": "Aurora Science",
+      "trigger_terms": ["aurora", "northern lights", "solar wind", "magnetosphere", "charged particles"],
+      "primary_subject": "aurora borealis",
+      "required_entities": ["aurora", "Earth atmosphere"],
+      "named_entities": ["aurora borealis", "Earth magnetosphere", "solar wind", "polar lights"],
+      "visual_identity": ["real aurora", "Earth atmosphere", "space weather"],
+      "avoid_terms": ["city nightlife", "concert lights", "abstract lights"],
+      "exact_queries": ["aurora borealis timelapse", "northern lights sky", "aurora over arctic landscape"],
+      "mechanism_queries": ["Earth magnetosphere diagram", "solar wind particles animation", "charged particles atmosphere"],
+      "context_queries": ["Earth atmosphere from space", "polar aurora NASA"],
+      "fallback_queries": ["aurora lights", "green aurora sky"]
+    },
+    {
+      "id": "lightning_weather",
+      "label": "Lightning Weather",
+      "trigger_terms": ["lightning", "thunder", "storm", "plasma", "fulgurite"],
+      "primary_subject": "lightning",
+      "required_entities": ["lightning", "storm"],
+      "named_entities": ["lightning bolt", "thunderstorm", "plasma channel", "fulgurite"],
+      "visual_identity": ["lightning strike", "storm cloud", "electrical plasma"],
+      "avoid_terms": ["generic sun", "snow", "office", "people indoors"],
+      "exact_queries": ["lightning strike sky", "lightning bolt storm", "thunderstorm clouds lightning"],
+      "mechanism_queries": ["electrical arc close up", "plasma channel lightning", "fulgurite sand glass"],
+      "context_queries": ["dark storm clouds", "rain storm lightning"],
+      "fallback_queries": ["storm lightning", "electric spark"]
+    },
+    {
+      "id": "undersea_internet",
+      "label": "Undersea Internet",
+      "trigger_terms": ["undersea cable", "internet cable", "submarine cable", "fiber optic", "global data"],
+      "primary_subject": "undersea internet cable",
+      "required_entities": ["undersea cable", "fiber optic"],
+      "named_entities": ["submarine cable", "fiber optic cable", "cable laying ship", "deep sea cable"],
+      "visual_identity": ["undersea cable", "fiber optics", "ocean engineering"],
+      "avoid_terms": ["generic waves only", "beach travel", "typing only", "office lifestyle"],
+      "exact_queries": ["undersea internet cable", "submarine cable ocean floor", "fiber optic cable close up"],
+      "mechanism_queries": ["cable laying ship", "underwater robot submarine cable", "global internet cable map"],
+      "context_queries": ["deep sea cable engineering", "fiber optic data cables"],
+      "fallback_queries": ["fiber optic cable", "ocean engineering ship"]
+    }
+  ]
+}

@@ -92,6 +92,30 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertIn("esa", {provider.provider_id for provider in registry.all()})
         self.assertIn("astronomy", registry.get("nasa").capabilities)
         self.assertIn("illustrations", registry.get("gemini_image").capabilities)
+        nasa = registry.get("nasa")
+        self.assertIn("image", nasa.media_types)
+        self.assertIn("space", nasa.domains)
+        self.assertGreater(nasa.confidence, 0)
+
+    def test_archive_provider_capability_metadata_registration(self) -> None:
+        registry = default_provider_capability_registry(
+            local_enabled=False,
+            usgs_enabled=True,
+            usfws_enabled=True,
+            loc_enabled=True,
+            smithsonian_enabled=True,
+            nps_enabled=True,
+            europeana_enabled=True,
+            flickr_commons_enabled=True,
+        )
+
+        self.assertIn("geology", registry.get("usgs").domains)
+        self.assertIn("wildlife_images", registry.get("usfws").capabilities)
+        self.assertEqual(registry.get("loc").media_types, ("image",))
+        self.assertIn("history", registry.get("smithsonian").domains)
+        self.assertIn("geology", registry.get("nps").capabilities)
+        self.assertTrue(registry.get("europeana").requires_api_key)
+        self.assertTrue(registry.get("flickr_commons").requires_api_key)
 
     def test_provider_agnostic_ranking_uses_capabilities_not_names(self) -> None:
         registry = ProviderCapabilityRegistry()
@@ -125,7 +149,7 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertLess(order.index("pexels"), order.index("nasa"))
         self.assertLess(order.index("pixabay"), order.index("nasa"))
 
-    def test_wildlife_routes_to_pexels_mixkit_then_pixabay_when_available(self) -> None:
+    def test_wildlife_routes_to_pexels_pixabay_then_mixkit_when_available(self) -> None:
         intent = build_visual_intent(
             {"narration": "The arctic fox pounces through snow.", "broll": "arctic fox pouncing snow"},
             "Arctic Fox Survival Tricks",
@@ -138,8 +162,34 @@ class MediaPlanningTests(unittest.TestCase):
         strategy = SourcePlanner(registry).plan(QueryPlanner().plan(intent))
         order = strategy.provider_order
 
-        self.assertLess(order.index("pexels"), order.index("mixkit"))
-        self.assertLess(order.index("mixkit"), order.index("pixabay"))
+        self.assertLess(order.index("pexels"), order.index("pixabay"))
+        self.assertLess(order.index("pixabay"), order.index("mixkit"))
+
+    def test_wildlife_routes_to_usfws_archive_before_generic_stock_when_enabled(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "Octopuses solve puzzles with flexible arms.", "broll": "octopus underwater close up"},
+            "Why Octopuses Are So Intelligent",
+        )
+        registry = default_provider_capability_registry(
+            local_enabled=False,
+            usfws_enabled=True,
+            gemini_image_enabled=False,
+        )
+        strategy = SourcePlanner(registry).plan(QueryPlanner().plan(intent))
+
+        self.assertEqual(strategy.query_plan.scene_type, SceneType.WILDLIFE)
+        self.assertLess(strategy.provider_order.index("usfws"), strategy.provider_order.index("pexels"))
+
+    def test_octopus_hiding_in_rocks_stays_wildlife_not_geology(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "The octopus hides between rocks to escape predators.", "broll": "octopus hiding in rocks"},
+            "Why Octopuses Are So Intelligent",
+        )
+        query_plan = QueryPlanner().plan(intent)
+
+        self.assertEqual(query_plan.scene_type, SceneType.WILDLIFE)
+        self.assertIn("wildlife nature", query_plan.primary_query)
+        self.assertNotIn("geology earth science archive", query_plan.primary_query)
 
     def test_ocean_routes_to_noaa_before_stock_when_configured(self) -> None:
         intent = build_visual_intent(
@@ -185,6 +235,49 @@ class MediaPlanningTests(unittest.TestCase):
         ).plan(QueryPlanner().plan(intent))
 
         self.assertLess(strategy.provider_order.index("wikimedia"), strategy.provider_order.index("pixabay"))
+
+    def test_history_routes_to_archives_before_stock_when_enabled(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "Roman aqueducts carried water across valleys.", "broll": "roman aqueduct ruins"},
+            "How Roman Aqueducts Changed Civilization",
+        )
+        strategy = SourcePlanner(
+            default_provider_capability_registry(
+                local_enabled=False,
+                gemini_image_enabled=False,
+                wikimedia_enabled=True,
+                loc_enabled=True,
+                smithsonian_enabled=True,
+                europeana_enabled=True,
+            )
+        ).plan(QueryPlanner().plan(intent))
+
+        order = strategy.provider_order
+        self.assertLess(order.index("loc"), order.index("pexels"))
+        self.assertLess(order.index("wikimedia"), order.index("pexels"))
+        self.assertLess(order.index("smithsonian"), order.index("pixabay"))
+
+    def test_volcano_routes_to_usgs_nasa_wikimedia_before_stock(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "Lava cools into basalt and creates brand new land.", "broll": "volcano lava flow"},
+            "How Volcanoes Actually Create New Land",
+        )
+        strategy = SourcePlanner(
+            default_provider_capability_registry(
+                local_enabled=False,
+                gemini_image_enabled=False,
+                wikimedia_enabled=True,
+                usgs_enabled=True,
+                nps_enabled=True,
+            )
+        ).plan(QueryPlanner().plan(intent))
+
+        order = strategy.provider_order
+        self.assertEqual(strategy.query_plan.scene_type, SceneType.VOLCANO)
+        self.assertIn("volcano lava geology archive", strategy.query_plan.primary_query)
+        self.assertLess(order.index("usgs"), order.index("pexels"))
+        self.assertLess(order.index("nasa"), order.index("pexels"))
+        self.assertLess(order.index("wikimedia"), order.index("pixabay"))
 
     def test_technology_routes_to_pexels_coverr_then_videvo(self) -> None:
         intent = build_visual_intent(
@@ -232,6 +325,25 @@ class MediaPlanningTests(unittest.TestCase):
 
         self.assertLess(strategy.provider_order.index("gemini_image"), strategy.provider_order.index("pexels"))
         self.assertIn("diagram", strategy.query_plan.primary_query)
+
+    def test_provider_diagnostics_include_source_coverage_metadata(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "Lava cools into basalt and creates brand new land.", "broll": "volcano lava flow"},
+            "How Volcanoes Actually Create New Land",
+        )
+        strategy = SourcePlanner(
+            default_provider_capability_registry(
+                local_enabled=False,
+                gemini_image_enabled=False,
+                usgs_enabled=True,
+            )
+        ).plan(QueryPlanner().plan(intent))
+
+        usgs_diag = next(item for item in strategy.diagnostics["search_strategy"] if item["provider"] == "usgs")
+        self.assertIn("image", usgs_diag["media_types"])
+        self.assertIn("geology", usgs_diag["domains"])
+        self.assertIn("USGS", usgs_diag["licensing"])
+        self.assertGreater(usgs_diag["provider_confidence"], 0)
 
     def test_ocean_satellite_scene_routes_to_nasa_capability(self) -> None:
         intent = build_visual_intent(
@@ -335,6 +447,22 @@ class MediaPlanningTests(unittest.TestCase):
         try:
             with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
                 auto_short,
+                "fetch_noaa_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_usgs_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_wikimedia_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_library_of_congress_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
                 "fetch_pexels_video",
                 return_value=Path("pexels.mp4"),
             ) as pexels, patch.object(
@@ -363,6 +491,22 @@ class MediaPlanningTests(unittest.TestCase):
         auto_short.PEXELS_API_KEY = "pexels"
         try:
             with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
+                auto_short,
+                "fetch_noaa_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_usgs_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_wikimedia_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_library_of_congress_media",
+                return_value=None,
+            ), patch.object(
                 auto_short,
                 "fetch_pexels_video",
                 return_value=Path("pexels.mp4"),

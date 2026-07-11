@@ -8,8 +8,7 @@ behaves as documented.
 from __future__ import annotations
 
 import dataclasses
-
-import pytest
+import unittest
 
 from autovideo.format import (
     FormatProfile,
@@ -18,10 +17,10 @@ from autovideo.format import (
 )
 
 
-class TestShortsVerticalValues:
+class TestShortsVerticalValues(unittest.TestCase):
     """The shorts_vertical profile must match pre-PR module constants exactly."""
 
-    def setup_method(self) -> None:
+    def setUp(self) -> None:
         self.profile = get_format_profile("shorts_vertical")
 
     def test_name(self) -> None:
@@ -72,18 +71,18 @@ class TestShortsVerticalValues:
         assert self.profile.narration_words_per_segment_min == 10
 
 
-class TestRegistryLookup:
+class TestRegistryLookup(unittest.TestCase):
     def test_get_shorts_vertical_returns_format_profile(self) -> None:
         profile = get_format_profile("shorts_vertical")
         assert isinstance(profile, FormatProfile)
         assert profile.name == "shorts_vertical"
 
     def test_get_unknown_raises_key_error_with_available_names(self) -> None:
-        with pytest.raises(KeyError) as exc_info:
+        with self.assertRaises(KeyError) as exc_info:
             get_format_profile("long_form_documentary")
         # The error message must list registered profile names so a
         # contributor can immediately see what is available.
-        assert "shorts_vertical" in str(exc_info.value)
+        assert "shorts_vertical" in str(exc_info.exception)
 
     def test_get_default_returns_shorts_vertical(self) -> None:
         profile = get_default_format_profile()
@@ -94,10 +93,10 @@ class TestRegistryLookup:
         assert get_default_format_profile() is get_format_profile("shorts_vertical")
 
 
-class TestFormatProfileImmutability:
+class TestFormatProfileImmutability(unittest.TestCase):
     def test_profile_is_frozen(self) -> None:
         profile = get_default_format_profile()
-        with pytest.raises(dataclasses.FrozenInstanceError):
+        with self.assertRaises(dataclasses.FrozenInstanceError):
             profile.max_duration_sec = 999  # type: ignore[misc]
 
     def test_profile_field_types_are_preserved(self) -> None:

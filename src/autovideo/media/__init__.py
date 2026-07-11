@@ -29,6 +29,17 @@ from .selection import (
     select_best_candidate,
     select_first_available_provider,
 )
+from .visual_director import (
+    DocumentaryStyleRules,
+    DomainKnowledge,
+    KnowledgePackStore,
+    QueryTier,
+    ShotIntent,
+    ShotPlan,
+    TieredQueries,
+    VisualDirector,
+    VisualGoal,
+)
 
 __all__ = [
     "CapabilityRequirement",
@@ -45,6 +56,15 @@ __all__ = [
     "SourcePlanner",
     "StockCandidate",
     "VisualIntent",
+    "DocumentaryStyleRules",
+    "DomainKnowledge",
+    "KnowledgePackStore",
+    "QueryTier",
+    "ShotIntent",
+    "ShotPlan",
+    "TieredQueries",
+    "VisualDirector",
+    "VisualGoal",
     "build_visual_intent",
     "classify_scene_type",
     "candidate_from_local_path",

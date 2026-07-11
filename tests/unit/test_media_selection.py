@@ -16,6 +16,7 @@ from autovideo.media import (
     StockCandidate,
     build_visual_intent,
     candidate_from_local_path,
+    candidate_from_nasa_item,
     candidate_from_remote_item,
     candidate_from_pexels_video,
     candidate_from_pixabay_hit,
@@ -99,6 +100,44 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertEqual(candidate.raw_metadata["license"], "CC BY-SA 4.0")
         self.assertEqual(candidate.raw_metadata["attribution"], "Example Creator")
 
+    def test_nasa_candidate_can_normalize_still_images(self) -> None:
+        candidate = candidate_from_nasa_item(
+            {
+                "href": "https://images.nasa.gov/details/PIA123",
+                "data": [
+                    {
+                        "nasa_id": "PIA123",
+                        "title": "Aurora over Earth",
+                        "media_type": "image",
+                    }
+                ],
+            },
+            "https://images-assets.nasa.gov/PIA123/PIA123~large.jpg",
+            "aurora over earth",
+            is_image=True,
+        )
+
+        self.assertTrue(candidate.is_image)
+        self.assertEqual(candidate.provider, "nasa")
+        self.assertEqual(candidate.provider_id, "PIA123")
+        self.assertEqual(candidate.raw_metadata["capability"], "scientific_media")
+
+    def test_remote_provider_item_infers_image_media_type(self) -> None:
+        item = auto_short._remote_item_from_provider(
+            "usgs",
+            {
+                "id": "volcano-1",
+                "title": "Kilauea lava flow",
+                "download_url": "https://example.test/kilauea.jpg?download=1",
+                "media_type": "image/jpeg",
+            },
+            "kilauea lava flow",
+        )
+
+        self.assertTrue(item["is_image"])
+        candidate = candidate_from_remote_item("usgs", item, "kilauea lava flow")
+        self.assertTrue(candidate.is_image)
+
     def test_selection_metadata_includes_normalized_provider_fields(self) -> None:
         intent = build_visual_intent(
             {"narration": "Roman aqueducts carried water across valleys.", "broll": "roman aqueduct ruins"},
@@ -128,6 +167,27 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertEqual(metadata["source_url"], "https://commons.wikimedia.org/wiki/File:Roman_aqueduct.webm")
         self.assertEqual(metadata["license"], "CC BY-SA 4.0")
         self.assertEqual(metadata["attribution"], "Example Creator")
+
+    def test_library_of_congress_candidate_normalization_from_result(self) -> None:
+        candidate = auto_short._loc_candidate_from_result(
+            {
+                "id": "loc-roman-aqueduct",
+                "title": "Roman aqueduct ruins",
+                "url": "https://www.loc.gov/item/example/",
+                "image_url": [
+                    "https://www.loc.gov/thumb.jpg",
+                    "https://www.loc.gov/roman-aqueduct-large.jpg",
+                ],
+                "rights": "No known restrictions",
+            },
+            "roman aqueduct ruins",
+        )
+
+        self.assertIsNotNone(candidate)
+        self.assertEqual(candidate.provider, "loc")
+        self.assertTrue(candidate.is_image)
+        self.assertEqual(candidate.download_url, "https://www.loc.gov/roman-aqueduct-large.jpg")
+        self.assertEqual(candidate.raw_metadata["license"], "No known restrictions")
 
     def test_scoring_rewards_exact_relevance_and_penalizes_wrong_matches(self) -> None:
         intent = build_visual_intent(
@@ -831,6 +891,13 @@ class MediaSelectionTests(unittest.TestCase):
                         "fetch_wikimedia_media",
                         "fetch_noaa_media",
                         "fetch_esa_media",
+                        "fetch_usgs_media",
+                        "fetch_smithsonian_media",
+                        "fetch_nps_media",
+                        "fetch_usfws_media",
+                        "fetch_library_of_congress_media",
+                        "fetch_europeana_media",
+                        "fetch_flickr_commons_media",
                     )
                 }
                 with patch.multiple(auto_short, **provider_mocks), patch.object(

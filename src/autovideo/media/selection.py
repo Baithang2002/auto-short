@@ -647,6 +647,8 @@ def candidate_from_nasa_item(
     item: Mapping[str, Any],
     download_url: str,
     query: str,
+    *,
+    is_image: bool = False,
 ) -> StockCandidate:
     """Normalize a NASA search result and resolved asset URL."""
 
@@ -661,12 +663,14 @@ def candidate_from_nasa_item(
         url=str(item.get("href") or ""),
         download_url=download_url,
         duration_sec=None,
+        is_image=is_image,
         raw_metadata={
             "id": provider_id,
             "title": data.get("title", ""),
             "source_url": item.get("href", ""),
             "license": "NASA media usage guidelines",
             "attribution": "NASA",
+            "capability": "scientific_media",
         },
     )
 
