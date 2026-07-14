@@ -1,5 +1,6 @@
 """Configuration helpers."""
 
+from .audio import ClipAudioConfig, clip_audio_config_from_env
 from .channels import ChannelProfile, RenderProfile, RenderProfileName, default_render_profiles, resolve_render_profile
 from .defaults import DEFAULTS, AppDefaults, ChannelDefaults, ProviderDefaults, RenderDefaults
 from .music import (
@@ -19,6 +20,7 @@ __all__ = [
     "AppDefaults",
     "ChannelDefaults",
     "ChannelProfile",
+    "ClipAudioConfig",
     "DEFAULT_MUSIC_PROVIDER_ORDER",
     "DEFAULTS",
     "MusicConfig",
@@ -35,4 +37,5 @@ __all__ = [
     "music_config_from_settings",
     "parse_provider_order",
     "resolve_render_profile",
+    "clip_audio_config_from_env",
 ]

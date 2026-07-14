@@ -2,6 +2,48 @@
   "version": 1,
   "domains": [
     {
+      "id": "shark_survival",
+      "label": "Shark Survival",
+      "trigger_terms": ["shark", "sharks", "shark tooth", "shark fossil", "prehistoric shark"],
+      "primary_subject": "shark",
+      "required_entities": ["shark", "shark fin", "shark tooth"],
+      "named_entities": ["great white shark", "reef shark", "shark fossil", "shark skeleton", "shark tooth"],
+      "visual_identity": ["real shark", "shark swimming", "shark close up", "shark fin"],
+      "avoid_terms": ["diver only", "scuba diver", "jellyfish", "generic reef", "random fish", "coral only"],
+      "exact_queries": ["shark swimming underwater", "great white shark close up", "reef shark swimming", "shark fin ocean"],
+      "mechanism_queries": ["shark teeth close up", "shark skeleton", "shark fossil", "shark gills close up"],
+      "context_queries": ["shark ocean predator", "shark underwater documentary"],
+      "fallback_queries": ["real shark underwater", "shark close up"]
+    },
+    {
+      "id": "penguin_survival",
+      "label": "Penguin Survival",
+      "trigger_terms": ["penguin", "penguins", "emperor penguin", "antarctica", "penguin huddle"],
+      "primary_subject": "penguin",
+      "required_entities": ["penguin", "emperor penguin", "penguin huddle"],
+      "named_entities": ["emperor penguin", "penguin colony", "penguin huddle", "penguin chick"],
+      "visual_identity": ["real penguin", "penguins on ice", "penguin colony", "penguin huddle"],
+      "avoid_terms": ["archive document", "newspaper", "desert", "hard drive", "wind only", "person"],
+      "exact_queries": ["emperor penguin snow", "penguin colony Antarctica", "penguins huddling", "penguins walking ice"],
+      "mechanism_queries": ["penguin huddle close up", "penguin feathers close up", "emperor penguin chick"],
+      "context_queries": ["Antarctica penguin colony", "penguins in blizzard"],
+      "fallback_queries": ["penguins snow", "emperor penguin close up"]
+    },
+    {
+      "id": "titanic_wreck",
+      "label": "Titanic Wreck",
+      "trigger_terms": ["titanic", "shipwreck", "ocean liner", "iceberg", "rusticles"],
+      "primary_subject": "Titanic",
+      "required_entities": ["Titanic", "shipwreck", "iceberg"],
+      "named_entities": ["RMS Titanic", "Titanic wreck", "Titanic bow", "iceberg", "submersible"],
+      "visual_identity": ["Titanic shipwreck", "archive Titanic photo", "deep sea wreck", "iceberg"],
+      "avoid_terms": ["random boat", "modern cruise", "beach", "people lifestyle", "generic ocean only"],
+      "exact_queries": ["Titanic wreck bow", "RMS Titanic archive photo", "Titanic shipwreck underwater", "Titanic iceberg"],
+      "mechanism_queries": ["Titanic rusticles", "shipwreck corrosion", "deep sea submersible wreck"],
+      "context_queries": ["Titanic artifact ocean floor", "historic ocean liner archive"],
+      "fallback_queries": ["Titanic ship", "shipwreck underwater"]
+    },
+    {
       "id": "octopus_intelligence",
       "label": "Octopus Intelligence",
       "trigger_terms": ["octopus", "octopuses", "cephalopod", "tentacle", "camouflage"],
@@ -74,7 +116,7 @@
     {
       "id": "lightning_weather",
       "label": "Lightning Weather",
-      "trigger_terms": ["lightning", "thunder", "storm", "plasma", "fulgurite"],
+      "trigger_terms": ["lightning", "thunder", "plasma", "fulgurite"],
       "primary_subject": "lightning",
       "required_entities": ["lightning", "storm"],
       "named_entities": ["lightning bolt", "thunderstorm", "plasma channel", "fulgurite"],

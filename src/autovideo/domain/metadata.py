@@ -15,6 +15,7 @@ class UploadMetadata:
     niche: str = ""
     youtube_title: str = ""
     youtube_description: str = ""
+    pinned_comment: str = ""
     facebook_description: str = ""
     instagram_caption: str = ""
     hashtags: list[str] = field(default_factory=list)
@@ -43,7 +44,7 @@ class UploadMetadata:
     def from_legacy_dict(cls, data: dict[str, Any]) -> "UploadMetadata":
         known = {
             "id", "title", "video_path", "niche", "youtube_title",
-            "youtube_description", "facebook_description", "instagram_caption",
+            "youtube_description", "pinned_comment", "facebook_description", "instagram_caption",
             "hashtags", "youtube_tags", "duration_sec", "orientation", "status",
             "video_file", "video_file_yt", "video_path_yt", "music_mood",
             "music_path", "music_volume", "segments",
@@ -62,6 +63,7 @@ class UploadMetadata:
             niche=str(data.get("niche", "")),
             youtube_title=str(data.get("youtube_title", "")),
             youtube_description=str(data.get("youtube_description", "")),
+            pinned_comment=str(data.get("pinned_comment", "")),
             facebook_description=str(data.get("facebook_description", "")),
             instagram_caption=str(data.get("instagram_caption", "")),
             hashtags=list(hashtags),

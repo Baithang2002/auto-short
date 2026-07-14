@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
@@ -18,6 +18,16 @@ class VisualGoal(str, Enum):
     REVEAL = "reveal"
     TRANSITION = "transition"
     EMPHASIZE = "emphasize"
+
+
+class MediaMode(str, Enum):
+    SHOW = "show"
+    PROVE = "prove"
+    EXPLAIN = "explain"
+    COMPARE = "compare"
+    REVEAL = "reveal"
+    TRANSITION = "transition"
+    CTA = "cta"
 
 
 class QueryTier(str, Enum):
@@ -55,6 +65,7 @@ class ShotIntent:
     scene_index: int
     scene_importance: str
     visual_goal: VisualGoal
+    media_mode: MediaMode
     visual_role: str
     primary_subject: str
     required_entities: tuple[str, ...] = ()
@@ -85,6 +96,7 @@ class ShotIntent:
             "scene_index": self.scene_index,
             "scene_importance": self.scene_importance,
             "visual_goal": self.visual_goal.value,
+            "media_mode": self.media_mode.value,
             "visual_role": self.visual_role,
             "primary_subject": self.primary_subject,
             "required_entities": list(self.required_entities),
@@ -106,6 +118,7 @@ class ShotIntent:
             scene_index=int(data["scene_index"]),
             scene_importance=str(data.get("scene_importance", "supporting")),
             visual_goal=VisualGoal(str(data.get("visual_goal", VisualGoal.SHOW.value))),
+            media_mode=_media_mode_from_value(data.get("media_mode", data.get("visual_goal", MediaMode.SHOW.value))),
             visual_role=str(data.get("visual_role", "")),
             primary_subject=str(data.get("primary_subject", "")),
             required_entities=tuple(str(item) for item in data.get("required_entities", [])),
@@ -141,6 +154,11 @@ class DocumentaryStyleRules:
 class ShotPlan:
     topic: str
     domain_id: str
+    primary_subject: str
+    supporting_subjects: tuple[str, ...]
+    subject_persistence_target: float
+    allowed_substitutions: tuple[str, ...]
+    forbidden_substitutions: tuple[str, ...]
     visual_identity: tuple[str, ...]
     required_subjects: tuple[str, ...]
     avoid_terms: tuple[str, ...]
@@ -159,6 +177,11 @@ class ShotPlan:
         return {
             "topic": self.topic,
             "domain_id": self.domain_id,
+            "primary_subject": self.primary_subject,
+            "supporting_subjects": list(self.supporting_subjects),
+            "subject_persistence_target": self.subject_persistence_target,
+            "allowed_substitutions": list(self.allowed_substitutions),
+            "forbidden_substitutions": list(self.forbidden_substitutions),
             "visual_identity": list(self.visual_identity),
             "required_subjects": list(self.required_subjects),
             "avoid_terms": list(self.avoid_terms),
@@ -174,6 +197,11 @@ class ShotPlan:
         return cls(
             topic=str(data.get("topic", "")),
             domain_id=str(data.get("domain_id", "")),
+            primary_subject=str(data.get("primary_subject", "")),
+            supporting_subjects=tuple(str(item) for item in data.get("supporting_subjects", [])),
+            subject_persistence_target=float(data.get("subject_persistence_target", 0.85)),
+            allowed_substitutions=tuple(str(item) for item in data.get("allowed_substitutions", [])),
+            forbidden_substitutions=tuple(str(item) for item in data.get("forbidden_substitutions", [])),
             visual_identity=tuple(str(item) for item in data.get("visual_identity", [])),
             required_subjects=tuple(str(item) for item in data.get("required_subjects", [])),
             avoid_terms=tuple(str(item) for item in data.get("avoid_terms", [])),
@@ -270,19 +298,25 @@ class VisualDirector:
             framing_diversity=("avoid_same_opening_clip", "alternate_wide_and_close", "avoid_adjacent_same_provider_id"),
             visual_rhythm=("hook_exact_subject", "establish_subject", "show_mechanism", "show_proof", "payoff_subject"),
         )
-        intents = tuple(
+        intents = [
             self._intent_for_segment(index, segment, topic, knowledge, len(segments))
             for index, segment in enumerate(segments)
-        )
+        ]
+        intents = self._diversify_adjacent_queries(intents)
         return ShotPlan(
             topic=topic,
             domain_id=knowledge.id if knowledge else "generic",
+            primary_subject=knowledge.primary_subject if knowledge else _clean_query(topic),
+            supporting_subjects=knowledge.named_entities if knowledge else (),
+            subject_persistence_target=0.85,
+            allowed_substitutions=knowledge.required_entities if knowledge else (),
+            forbidden_substitutions=knowledge.avoid_terms if knowledge else ("generic people", "unrelated landscape"),
             visual_identity=knowledge.visual_identity if knowledge else (_clean_query(topic),),
             required_subjects=knowledge.required_entities if knowledge else (_clean_query(topic),),
             avoid_terms=knowledge.avoid_terms if knowledge else ("generic lifestyle", "unrelated people"),
             style_rules=style_rules,
             query_budget=dict(self.query_budget),
-            intents=intents,
+            intents=tuple(intents),
             diagnostics={
                 "planner": "visual_director",
                 "knowledge_pack": self.knowledge_store.path.name,
@@ -321,11 +355,11 @@ class VisualDirector:
         primary_subject = knowledge.primary_subject if knowledge else _clean_query(broll or topic)
         action = _action_phrase(narration, broll)
         scene_importance = _scene_importance(index, narration, total_segments)
-        exact_queries = self._tier_queries(QueryTier.EXACT, knowledge, broll, action, shot_type, raw_queries)
-        entity_queries = self._tier_queries(QueryTier.ENTITY, knowledge, broll, action, shot_type, raw_queries)
-        mechanism_queries = self._tier_queries(QueryTier.MECHANISM, knowledge, broll, action, shot_type, raw_queries)
-        context_queries = self._tier_queries(QueryTier.CONTEXT, knowledge, broll, action, shot_type, raw_queries)
-        fallback_queries = self._tier_queries(QueryTier.FALLBACK, knowledge, broll, action, shot_type, raw_queries)
+        exact_queries = self._tier_queries(QueryTier.EXACT, narration, knowledge, broll, action, shot_type, raw_queries)
+        entity_queries = self._tier_queries(QueryTier.ENTITY, narration, knowledge, broll, action, shot_type, raw_queries)
+        mechanism_queries = self._tier_queries(QueryTier.MECHANISM, narration, knowledge, broll, action, shot_type, raw_queries)
+        context_queries = self._tier_queries(QueryTier.CONTEXT, narration, knowledge, broll, action, shot_type, raw_queries)
+        fallback_queries = self._tier_queries(QueryTier.FALLBACK, narration, knowledge, broll, action, shot_type, raw_queries)
         query_tiers = tuple(
             TieredQueries(tier, tuple(queries[:self.query_budget[tier.value]]), self.query_budget[tier.value])
             for tier, queries in (
@@ -340,6 +374,7 @@ class VisualDirector:
             scene_index=index,
             scene_importance=scene_importance,
             visual_goal=visual_goal,
+            media_mode=_media_mode(visual_goal, scene_importance),
             visual_role=_visual_role(index, visual_goal, total_segments),
             primary_subject=primary_subject,
             required_entities=knowledge.required_entities if knowledge else (primary_subject,),
@@ -360,6 +395,7 @@ class VisualDirector:
     def _tier_queries(
         self,
         tier: QueryTier,
+        narration: str,
         knowledge: DomainKnowledge | None,
         broll: str,
         action: str,
@@ -376,13 +412,18 @@ class VisualDirector:
                 QueryTier.FALLBACK: knowledge.fallback_queries,
             }[tier]
         if tier == QueryTier.EXACT:
+            scene_query = _scene_specific_query(knowledge, narration, broll, action, shot_type)
+            narration_query = _join_terms(_narration_visual_terms(narration), shot_type)
             base = [
-                _join_terms(_subject_query(knowledge, broll), action, shot_type),
+                scene_query,
+                narration_query,
                 _join_terms(_sanitize_query_for_domain(broll, knowledge), shot_type),
                 *[_sanitize_query_for_domain(str(query), knowledge) for query in raw_queries],
             ]
             if knowledge:
-                return _dedupe_queries([*domain_queries, *base])
+                if _weak_scene_query(scene_query, knowledge):
+                    return _dedupe_queries([*domain_queries, *base])
+                return _dedupe_queries([*base, *domain_queries])
             return _dedupe_queries(base)
         if tier == QueryTier.ENTITY and knowledge:
             return _dedupe_queries([
@@ -394,6 +435,20 @@ class VisualDirector:
         if tier == QueryTier.CONTEXT:
             return _dedupe_queries([*domain_queries, _join_terms(broll, "documentary")])
         return _dedupe_queries([*domain_queries, broll])
+
+    def _diversify_adjacent_queries(self, intents: list[ShotIntent]) -> list[ShotIntent]:
+        diversified: list[ShotIntent] = []
+        previous_first = ""
+        for intent in intents:
+            first_query = intent.search_queries[0] if intent.search_queries else ""
+            if first_query and _normalize(first_query) == previous_first:
+                replacement = _first_distinct_query(intent.search_queries, previous_first)
+                if replacement:
+                    intent = _promote_query(intent, replacement)
+                    first_query = intent.search_queries[0] if intent.search_queries else ""
+            previous_first = _normalize(first_query)
+            diversified.append(intent)
+        return diversified
 
 
 def _visual_goal(index: int, narration: str, total_segments: int) -> VisualGoal:
@@ -411,6 +466,39 @@ def _visual_goal(index: int, narration: str, total_segments: int) -> VisualGoal:
     if any(term in text for term in ("massive", "tiny", "secret", "hidden", "wild")):
         return VisualGoal.EMPHASIZE
     return VisualGoal.SHOW
+
+
+def _media_mode(goal: VisualGoal, scene_importance: str) -> MediaMode:
+    if scene_importance == "cta":
+        return MediaMode.CTA
+    if goal == VisualGoal.PROVE:
+        return MediaMode.PROVE
+    if goal == VisualGoal.EXPLAIN:
+        return MediaMode.EXPLAIN
+    if goal == VisualGoal.COMPARE:
+        return MediaMode.COMPARE
+    if goal == VisualGoal.REVEAL:
+        return MediaMode.REVEAL
+    if goal == VisualGoal.TRANSITION:
+        return MediaMode.TRANSITION
+    return MediaMode.SHOW
+
+
+def _media_mode_from_value(value: Any) -> MediaMode:
+    try:
+        return MediaMode(str(value))
+    except ValueError:
+        if str(value) == VisualGoal.PROVE.value:
+            return MediaMode.PROVE
+        if str(value) == VisualGoal.EXPLAIN.value:
+            return MediaMode.EXPLAIN
+        if str(value) == VisualGoal.COMPARE.value:
+            return MediaMode.COMPARE
+        if str(value) == VisualGoal.REVEAL.value:
+            return MediaMode.REVEAL
+        if str(value) == VisualGoal.TRANSITION.value:
+            return MediaMode.TRANSITION
+        return MediaMode.SHOW
 
 
 def _scene_importance(index: int, narration: str, total_segments: int) -> str:
@@ -495,6 +583,74 @@ def _subject_query(knowledge: DomainKnowledge | None, broll: str) -> str:
     return knowledge.primary_subject
 
 
+def _scene_specific_query(
+    knowledge: DomainKnowledge | None,
+    narration: str,
+    broll: str,
+    action: str,
+    shot_type: str,
+) -> str:
+    broll_query = _sanitize_query_for_domain(broll, knowledge)
+    narrative_terms = _narration_visual_terms(narration)
+    broll_is_weak = _weak_scene_query(broll_query, knowledge) or _weak_scene_query(broll, knowledge)
+    if broll_query and not broll_is_weak:
+        return _join_terms(broll_query, shot_type)
+    if knowledge and broll_is_weak:
+        return ""
+    if narrative_terms:
+        return _join_terms(narrative_terms, shot_type)
+    return _join_terms(_subject_query(knowledge, broll), action, shot_type)
+
+
+def _narration_visual_terms(narration: str) -> str:
+    tokens = [
+        token
+        for token in _tokens(narration)
+        if token not in {
+            "a", "an", "and", "are", "as", "at", "be", "but", "by", "for", "from",
+            "had", "has", "have", "in", "into", "is", "it", "its", "like", "of",
+            "on", "or", "our", "so", "that", "the", "their", "then", "this", "to",
+            "was", "were", "with", "without", "would", "you", "your",
+        }
+    ]
+    priority = [
+        "sun", "solar", "wind", "magnetosphere", "charged", "particles", "atmosphere",
+        "earth", "jupiter", "asteroid", "asteroids", "moon", "mars", "planet",
+        "collision", "galaxy", "protoplanetary", "debris",
+    ]
+    selected = [token for token in tokens if token in priority]
+    if not selected:
+        selected = tokens[:4]
+    return _clean_query(" ".join(selected[:5]))
+
+
+def _weak_scene_query(query: str, knowledge: DomainKnowledge | None) -> bool:
+    normalized = _normalize(query)
+    if not normalized:
+        return True
+    weak_terms = {
+        "texture", "detail", "generic", "scenic", "landscape", "coastline", "smoke",
+        "flower", "flowers", "garden", "person", "people", "looking",
+    }
+    tokens = set(normalized.split())
+    meaningful_tokens = tokens - {"a", "an", "and", "in", "of", "on", "the", "to", "with"}
+    if len(meaningful_tokens) <= 1:
+        return True
+    if tokens & weak_terms:
+        if not knowledge:
+            return True
+        required = set(_normalize(" ".join(knowledge.required_entities)).split())
+        if not (tokens & required):
+            return True
+    if knowledge and knowledge.id == "bee_communication" and "flower" in tokens:
+        return True
+    if knowledge and knowledge.id == "roman_aqueducts" and {"stone", "texture"} & tokens and "aqueduct" not in tokens:
+        return True
+    if knowledge and knowledge.id == "volcanic_land" and {"coastline", "ocean", "smoke"} & tokens and not ({"lava", "volcano", "volcanic"} & tokens):
+        return True
+    return False
+
+
 def _sanitize_query_for_domain(query: str, knowledge: DomainKnowledge | None) -> str:
     cleaned = _clean_query(query)
     if not knowledge:
@@ -539,3 +695,26 @@ def _dedupe_queries(queries: list[Any]) -> list[str]:
             seen.add(key)
             ordered.append(cleaned)
     return ordered
+
+
+def _first_distinct_query(queries: tuple[str, ...], previous_key: str) -> str:
+    for query in queries[1:]:
+        if _normalize(query) != previous_key:
+            return query
+    return ""
+
+
+def _promote_query(intent: ShotIntent, query: str) -> ShotIntent:
+    promoted_tiers: list[TieredQueries] = []
+    promoted = False
+    for index, tier in enumerate(intent.query_tiers):
+        queries = [existing for existing in tier.queries if _normalize(existing) != _normalize(query)]
+        if not promoted and index == 0:
+            queries.insert(0, query)
+            promoted = True
+        promoted_tiers.append(replace(tier, queries=tuple(queries)))
+    return replace(
+        intent,
+        query_tiers=tuple(promoted_tiers),
+        diagnostics={**intent.diagnostics, "adjacent_query_diversified": promoted},
+    )

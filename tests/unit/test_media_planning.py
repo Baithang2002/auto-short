@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -414,28 +415,42 @@ class MediaPlanningTests(unittest.TestCase):
         auto_short.PEXELS_API_KEY = "pexels"
         auto_short.PIXABAY_API_KEY = "pixabay"
         try:
-            with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
-                auto_short,
-                "fetch_nasa_video",
-                return_value=Path("nasa.mp4"),
-            ) as nasa, patch.object(
-                auto_short,
-                "fetch_pexels_video",
-                return_value=Path("pexels.mp4"),
-            ) as pexels, patch.object(auto_short, "fetch_pixabay_video", return_value=Path("pixabay.mp4")):
-                out = auto_short.fetch_broll(
-                    ["saturn atmosphere", "planet rings"],
-                    0,
-                    fallback="What Happens If You Fall Into Saturn",
-                    narration="Saturn's atmosphere would crush a falling spacecraft.",
-                    used_set=set(),
-                    no_interactive=True,
-                )
+            with tempfile.TemporaryDirectory() as tmp:
+                nasa_path = Path(tmp) / "nasa.mp4"
+                pexels_path = Path(tmp) / "pexels.mp4"
+                pixabay_path = Path(tmp) / "pixabay.mp4"
+                for path in (nasa_path, pexels_path, pixabay_path):
+                    path.write_bytes(b"video")
+                with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
+                    auto_short,
+                    "_fetch_adaptive_broll",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "_valid_media_path",
+                    side_effect=lambda path: path is not None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_nasa_video",
+                    return_value=nasa_path,
+                ) as nasa, patch.object(
+                    auto_short,
+                    "fetch_pexels_video",
+                    return_value=pexels_path,
+                ) as pexels, patch.object(auto_short, "fetch_pixabay_video", return_value=pixabay_path):
+                    out = auto_short.fetch_broll(
+                        ["saturn atmosphere", "planet rings"],
+                        0,
+                        fallback="What Happens If You Fall Into Saturn",
+                        narration="Saturn's atmosphere would crush a falling spacecraft.",
+                        used_set=set(),
+                        no_interactive=True,
+                    )
         finally:
             auto_short.PEXELS_API_KEY = old_pexels
             auto_short.PIXABAY_API_KEY = old_pixabay
 
-        self.assertEqual(out, Path("nasa.mp4"))
+        self.assertEqual(out, nasa_path)
         nasa.assert_called_once()
         pexels.assert_not_called()
 
@@ -445,44 +460,69 @@ class MediaPlanningTests(unittest.TestCase):
         auto_short.PEXELS_API_KEY = "pexels"
         auto_short.PIXABAY_API_KEY = "pixabay"
         try:
-            with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
-                auto_short,
-                "fetch_noaa_media",
-                return_value=None,
-            ), patch.object(
-                auto_short,
-                "fetch_usgs_media",
-                return_value=None,
-            ), patch.object(
-                auto_short,
-                "fetch_wikimedia_media",
-                return_value=None,
-            ), patch.object(
-                auto_short,
-                "fetch_library_of_congress_media",
-                return_value=None,
-            ), patch.object(
-                auto_short,
-                "fetch_pexels_video",
-                return_value=Path("pexels.mp4"),
-            ) as pexels, patch.object(
-                auto_short,
-                "fetch_nasa_video",
-                return_value=Path("nasa.mp4"),
-            ) as nasa:
-                out = auto_short.fetch_broll(
-                    ["ocean current aerial", "underwater ocean flow"],
-                    1,
-                    fallback="The Science Behind Earth's Strongest Ocean Currents",
-                    narration="Ocean currents move heat across the planet.",
-                    used_set=set(),
-                    no_interactive=True,
-                )
+            with tempfile.TemporaryDirectory() as tmp:
+                pexels_path = Path(tmp) / "pexels.mp4"
+                nasa_path = Path(tmp) / "nasa.mp4"
+                pexels_path.write_bytes(b"video")
+                nasa_path.write_bytes(b"video")
+                with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
+                    auto_short,
+                    "_fetch_adaptive_broll",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "_valid_media_path",
+                    side_effect=lambda path: path is not None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_noaa_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_usgs_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_wikimedia_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_library_of_congress_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_smithsonian_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_europeana_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_internet_archive_media",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
+                    "fetch_pexels_video",
+                    return_value=pexels_path,
+                ) as pexels, patch.object(
+                    auto_short,
+                    "fetch_nasa_video",
+                    return_value=nasa_path,
+                ) as nasa:
+                    out = auto_short.fetch_broll(
+                        ["ocean current aerial", "underwater ocean flow"],
+                        1,
+                        fallback="The Science Behind Earth's Strongest Ocean Currents",
+                        narration="Ocean currents move heat across the planet.",
+                        used_set=set(),
+                        no_interactive=True,
+                    )
         finally:
             auto_short.PEXELS_API_KEY = old_pexels
             auto_short.PIXABAY_API_KEY = old_pixabay
 
-        self.assertEqual(out, Path("pexels.mp4"))
+        self.assertEqual(out, pexels_path)
         pexels.assert_called_once()
         nasa.assert_not_called()
 
@@ -492,6 +532,14 @@ class MediaPlanningTests(unittest.TestCase):
         try:
             with patch.object(auto_short, "is_gemini_image_available", return_value=False), patch.object(
                 auto_short,
+                "_fetch_adaptive_broll",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "_valid_media_path",
+                side_effect=lambda path: path is not None,
+            ), patch.object(
+                auto_short,
                 "fetch_noaa_media",
                 return_value=None,
             ), patch.object(
@@ -505,6 +553,18 @@ class MediaPlanningTests(unittest.TestCase):
             ), patch.object(
                 auto_short,
                 "fetch_library_of_congress_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_smithsonian_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_europeana_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_internet_archive_media",
                 return_value=None,
             ), patch.object(
                 auto_short,

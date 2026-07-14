@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from PIL import Image
@@ -559,6 +560,7 @@ class MediaSelectionTests(unittest.TestCase):
             {
                 "narration": "This satellite map reveals the global ocean current.",
                 "broll": "ocean current satellite map",
+                "media_mode": "explain",
             },
             "The Science Behind Earth's Strongest Ocean Currents",
         )
@@ -584,6 +586,7 @@ class MediaSelectionTests(unittest.TestCase):
             {
                 "narration": "Earth's magnetic field redirects the solar wind.",
                 "broll": "earth magnetic field diagram",
+                "media_mode": "explain",
             },
             "How the Northern Lights Are Created",
         )
@@ -602,6 +605,36 @@ class MediaSelectionTests(unittest.TestCase):
 
         self.assertIsNone(result.selected_candidate)
         self.assertIn(
+            "requested explanatory format not proven: diagram",
+            result.score.rejection_reasons,
+        )
+
+    def test_show_mode_accepts_authentic_subject_media_without_diagram_proof(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Penguins do not freeze because dense feathers trap warm air.",
+                "broll": "penguin feathers close up diagram",
+                "media_mode": "show",
+            },
+            "How Penguins Survive Antarctica",
+        )
+        candidate = StockCandidate(
+            provider="wikimedia",
+            provider_id="penguin-feathers",
+            query="penguin feathers close up diagram",
+            title="King Penguin feathers close up",
+            description="Close-up photograph of penguin plumage",
+            duration_sec=None,
+            width=1080,
+            height=1600,
+            is_image=True,
+        )
+
+        result = select_best_candidate(intent, [candidate], minimum_score=0)
+
+        self.assertIs(result.selected_candidate, candidate)
+        self.assertEqual(result.to_metadata()["media_mode"], "show")
+        self.assertNotIn(
             "requested explanatory format not proven: diagram",
             result.score.rejection_reasons,
         )
@@ -836,6 +869,169 @@ class MediaSelectionTests(unittest.TestCase):
         download.assert_called_once_with("https://cdn/qr.mp4", auto_short.OUT_DIR / "broll_3.mp4")
         self.assertEqual(auto_short._MEDIA_SELECTION_DIAGNOSTICS[3]["selection"]["provider"], "coverr")
 
+    def test_adaptive_retrieval_adds_landscape_exact_subject_candidates(self) -> None:
+        portrait_response = Mock()
+        portrait_response.raise_for_status.return_value = None
+        portrait_response.json.return_value = {
+            "videos": [
+                {
+                    "id": "fish",
+                    "url": "https://pexels.com/video/underwater-fish-1/",
+                    "duration": 8,
+                    "user": {"name": "creator"},
+                    "video_files": [{"link": "https://cdn/fish.mp4", "width": 1080, "height": 1920}],
+                }
+            ]
+        }
+        landscape_response = Mock()
+        landscape_response.raise_for_status.return_value = None
+        landscape_response.json.return_value = {
+            "videos": [
+                {
+                    "id": "octo",
+                    "url": "https://pexels.com/video/octopus-camouflages-in-coral-reef-octo/",
+                    "duration": 9,
+                    "user": {"name": "creator"},
+                    "video_files": [{"link": "https://cdn/octo.mp4", "width": 1920, "height": 1080}],
+                }
+            ]
+        }
+        strategy = SimpleNamespace(
+            provider_plans=(SimpleNamespace(provider_id="pexels", queries=("octopus camouflage",), score=1.0),)
+        )
+        intent = build_visual_intent(
+            {
+                "broll": "octopus camouflage",
+                "broll_queries": ["octopus camouflage"],
+                "primary_subject": "octopus",
+                "supporting_subjects": ["common octopus", "mimic octopus"],
+                "media_mode": "show",
+            },
+            "The Octopus That Becomes Anything Underwater",
+        )
+        old_key = auto_short.PEXELS_API_KEY
+        old_out = auto_short.OUT_DIR
+        old_min = auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES
+        auto_short.PEXELS_API_KEY = "test-key"
+        auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = 5
+        auto_short._ADAPTIVE_SEARCH_DIAGNOSTICS.clear()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                auto_short.OUT_DIR = Path(tmp)
+                with patch("requests.get", side_effect=[portrait_response, landscape_response]), patch.object(
+                    auto_short,
+                    "_download_to",
+                    return_value=True,
+                ) as download:
+                    path = auto_short._fetch_adaptive_broll(
+                        strategy,
+                        idx=4,
+                        fallback="The Octopus That Becomes Anything Underwater",
+                        narration="The octopus disappears into coral.",
+                        used_set=set(),
+                        target_duration=5,
+                        intent=intent,
+                    )
+        finally:
+            auto_short.PEXELS_API_KEY = old_key
+            auto_short.OUT_DIR = old_out
+            auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = old_min
+
+        self.assertEqual(path.name, "broll_4.mp4")
+        download.assert_called_once_with("https://cdn/octo.mp4", path)
+        report = auto_short._ADAPTIVE_SEARCH_DIAGNOSTICS[4]
+        self.assertEqual(report["portrait_candidates_found"], 1)
+        self.assertEqual(report["landscape_candidates_found"], 1)
+        self.assertTrue(report["provider_expansion_triggered"])
+        self.assertEqual(report["final_provider_selected"], "pexels")
+        self.assertEqual(report["selected_provider_id"], "octo")
+
+    def test_adaptive_retrieval_expands_to_pixabay_when_pexels_is_weak(self) -> None:
+        pexels_portrait = Mock()
+        pexels_portrait.raise_for_status.return_value = None
+        pexels_portrait.json.return_value = {
+            "videos": [
+                {
+                    "id": "reef",
+                    "url": "https://pexels.com/video/generic-underwater-reef/",
+                    "duration": 8,
+                    "user": {"name": "creator"},
+                    "video_files": [{"link": "https://cdn/reef.mp4", "width": 1080, "height": 1920}],
+                }
+            ]
+        }
+        pexels_landscape = Mock()
+        pexels_landscape.raise_for_status.return_value = None
+        pexels_landscape.json.return_value = {"videos": []}
+        pixabay_response = Mock()
+        pixabay_response.raise_for_status.return_value = None
+        pixabay_response.json.return_value = {
+            "hits": [
+                {
+                    "id": 152482,
+                    "tags": "octopus, underwater, sea, coconut octopus, ocean, nature, animal",
+                    "duration": 52,
+                    "user": "creator",
+                    "pageURL": "https://pixabay.com/videos/id-152482/",
+                    "videos": {
+                        "medium": {"url": "https://cdn/pixabay-octo.mp4", "width": 1080, "height": 1920}
+                    },
+                }
+            ]
+        }
+        strategy = SimpleNamespace(
+            provider_plans=(
+                SimpleNamespace(provider_id="pexels", queries=("octopus underwater",), score=1.0),
+                SimpleNamespace(provider_id="pixabay", queries=("octopus underwater",), score=1.0),
+            )
+        )
+        intent = build_visual_intent(
+            {
+                "broll": "octopus underwater",
+                "broll_queries": ["octopus underwater"],
+                "primary_subject": "octopus",
+                "supporting_subjects": ["common octopus"],
+                "media_mode": "show",
+            },
+            "The Octopus That Becomes Anything Underwater",
+        )
+        old_pexels = auto_short.PEXELS_API_KEY
+        old_pixabay = auto_short.PIXABAY_API_KEY
+        old_out = auto_short.OUT_DIR
+        old_min = auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES
+        auto_short.PEXELS_API_KEY = "pexels"
+        auto_short.PIXABAY_API_KEY = "pixabay"
+        auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = 1
+        auto_short._ADAPTIVE_SEARCH_DIAGNOSTICS.clear()
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                auto_short.OUT_DIR = Path(tmp)
+                with patch(
+                    "requests.get",
+                    side_effect=[pexels_portrait, pexels_landscape, pixabay_response],
+                ), patch.object(auto_short, "_download_to", return_value=True) as download:
+                    path = auto_short._fetch_adaptive_broll(
+                        strategy,
+                        idx=5,
+                        fallback="The Octopus That Becomes Anything Underwater",
+                        narration="The octopus moves across the sea floor.",
+                        used_set=set(),
+                        target_duration=5,
+                        intent=intent,
+                    )
+        finally:
+            auto_short.PEXELS_API_KEY = old_pexels
+            auto_short.PIXABAY_API_KEY = old_pixabay
+            auto_short.OUT_DIR = old_out
+            auto_short.AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = old_min
+
+        self.assertEqual(path.name, "broll_5.mp4")
+        download.assert_called_once_with("https://cdn/pixabay-octo.mp4", path)
+        report = auto_short._ADAPTIVE_SEARCH_DIAGNOSTICS[5]
+        self.assertTrue(report["provider_expansion_triggered"])
+        self.assertEqual([item["provider"] for item in report["providers_searched"]], ["pexels", "pixabay"])
+        self.assertEqual(report["final_provider_selected"], "pixabay")
+
     def test_qr_explainer_fallback_creates_portrait_image_with_diagnostics(self) -> None:
         old_out_dir = auto_short.OUT_DIR
         auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
@@ -871,7 +1067,7 @@ class MediaSelectionTests(unittest.TestCase):
         finally:
             auto_short.OUT_DIR = old_out_dir
 
-    def test_fetch_broll_uses_local_explainer_after_provider_rejections(self) -> None:
+    def test_fetch_broll_uses_hybrid_composer_after_provider_rejections(self) -> None:
         old_out_dir = auto_short.OUT_DIR
         old_pexels = auto_short.PEXELS_API_KEY
         auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
@@ -898,9 +1094,14 @@ class MediaSelectionTests(unittest.TestCase):
                         "fetch_library_of_congress_media",
                         "fetch_europeana_media",
                         "fetch_flickr_commons_media",
+                        "fetch_internet_archive_media",
                     )
                 }
                 with patch.multiple(auto_short, **provider_mocks), patch.object(
+                    auto_short,
+                    "_fetch_adaptive_broll",
+                    return_value=None,
+                ), patch.object(
                     auto_short,
                     "is_gemini_image_available",
                     return_value=False,
@@ -917,11 +1118,53 @@ class MediaSelectionTests(unittest.TestCase):
                 self.assertTrue(path.exists())
                 self.assertEqual(
                     auto_short._MEDIA_SELECTION_DIAGNOSTICS[2]["selection"]["fallback_level"],
-                    "local_explainer",
+                    "hybrid_composition",
+                )
+                self.assertEqual(
+                    auto_short._MEDIA_SELECTION_DIAGNOSTICS[2]["selection"]["provider"],
+                    "hybrid_composer",
                 )
         finally:
             auto_short.OUT_DIR = old_out_dir
             auto_short.PEXELS_API_KEY = old_pexels
+
+    def test_fetch_broll_skips_missing_provider_path(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            missing = Path(tmp) / "missing.mp4"
+            valid = Path(tmp) / "valid.mp4"
+            valid.write_bytes(b"video")
+            strategy = SimpleNamespace(
+                provider_plans=(
+                    SimpleNamespace(provider_id="pexels", queries=("aurora",), score=1.0),
+                    SimpleNamespace(provider_id="pixabay", queries=("aurora",), score=1.0),
+                )
+            )
+
+            with patch.object(auto_short, "_build_search_strategy", return_value=strategy), patch.object(
+                auto_short,
+                "_fetch_adaptive_broll",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_pexels_video",
+                return_value=missing,
+            ) as pexels, patch.object(
+                auto_short,
+                "fetch_pixabay_video",
+                return_value=valid,
+            ) as pixabay, patch.object(auto_short, "_save_persistent_used"):
+                out = auto_short.fetch_broll(
+                    ["aurora"],
+                    1,
+                    fallback="mind-blowing facts about our solar system",
+                    narration="Earth's magnetism creates auroras.",
+                    used_set=set(),
+                    no_interactive=True,
+                )
+
+        self.assertEqual(out, valid)
+        pexels.assert_called_once()
+        pixabay.assert_called_once()
 
     def test_wikimedia_candidate_normalization_from_page(self) -> None:
         candidate = auto_short._wikimedia_candidate_from_page(
@@ -947,6 +1190,37 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertEqual(candidate.provider, "wikimedia")
         self.assertTrue(candidate.is_image)
         self.assertEqual(candidate.raw_metadata["license"], "CC BY-SA 4.0")
+
+    def test_wikimedia_candidate_rejects_non_raster_archive_formats(self) -> None:
+        for title, mime, url in (
+            ("File:Aqueduct-de-nimes.svg", "image/svg+xml", "https://upload.wikimedia.org/aqueduct.svg"),
+            ("File:Vegetable Mould.djvu", "image/vnd.djvu", "https://upload.wikimedia.org/book.djvu"),
+            ("File:Archive scan.pdf", "application/pdf", "https://upload.wikimedia.org/scan.pdf"),
+        ):
+            with self.subTest(title=title):
+                candidate = auto_short._wikimedia_candidate_from_page(
+                    {
+                        "title": title,
+                        "imageinfo": [
+                            {
+                                "url": url,
+                                "mime": mime,
+                                "width": 1200,
+                                "height": 800,
+                            }
+                        ],
+                    },
+                    "roman aqueduct",
+                )
+
+                self.assertIsNone(candidate)
+
+    def test_valid_media_path_rejects_mislabeled_image_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "broll_1.jpg"
+            path.write_bytes(b"not really a jpeg")
+
+            self.assertFalse(auto_short._valid_media_path(path))
 
 
 if __name__ == "__main__":

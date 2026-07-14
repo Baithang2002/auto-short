@@ -52,7 +52,14 @@ import hashlib
 import datetime as dt
 from pathlib import Path
 from difflib import SequenceMatcher
+from typing import Any
 from PIL import Image, ImageDraw, ImageFont
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
 
 from text_cards import create_text_card
 
@@ -61,6 +68,7 @@ SRC_DIR = SCRIPT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+from autovideo.audio import ClipAudioDecision, build_audio_mix_report, clip_audio_filter
 from autovideo.config import AppConfig, DEFAULTS, ProviderRegistry, Settings
 from autovideo.domain import (
     MediaAsset,
@@ -72,13 +80,17 @@ from autovideo.domain import (
     build_timeline,
 )
 from autovideo.intelligence import build_topic_metadata
+from autovideo.engagement import generate_pinned_comment
 from autovideo.media import (
     MediaSelectionResult,
     QueryPlanner,
     SceneImportance,
     SearchStrategy,
     SourcePlanner,
+    HybridVisualComposer,
     ShotPlan,
+    SubjectContinuityEngine,
+    VisualGrammarEngine,
     VisualDirector,
     build_visual_intent,
     candidate_from_local_path,
@@ -139,6 +151,8 @@ DEFAULT_MUSIC_VOLUME = DEFAULTS.render.default_music_volume                    #
 _GEMINI_CLIENT = None
 _MEDIA_SELECTION_DIAGNOSTICS = {}
 _MEDIA_PLANNING_DIAGNOSTICS = {}
+_ADAPTIVE_SEARCH_DIAGNOSTICS = {}
+_AUDIO_MIX_DECISIONS: list[ClipAudioDecision] = []
 _WIKIMEDIA_SEARCH_CACHE = {}
 
 
@@ -209,6 +223,9 @@ EUROPEANA_API_KEY  = os.environ.get("EUROPEANA_API_KEY", "").strip()
 FLICKR_COMMONS_API_URL = os.environ.get("FLICKR_COMMONS_API_URL", "").strip()
 FLICKR_API_KEY     = os.environ.get("FLICKR_API_KEY", "").strip()
 ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "1" if ARCHIVE_PROVIDERS_ENABLED else "0").lower() not in {"0", "false", "no"}
+AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = int(os.environ.get("AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES", "5") or "5")
+AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION = os.environ.get("AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION", "true").lower() not in {"0", "false", "no"}
+AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE = float(os.environ.get("AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE", "0.75") or "0.75")
 # Channel name used in end card and SEO metadata
 APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
 APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
@@ -951,6 +968,19 @@ def is_image(filepath):
     return Path(filepath).suffix.lower() in IMAGE_EXTENSIONS
 
 
+def _valid_raster_image(filepath):
+    """Return True when Pillow can decode the image as a raster asset."""
+
+    try:
+        with Image.open(filepath) as img:
+            img.verify()
+        with Image.open(filepath) as img:
+            img.load()
+        return True
+    except (OSError, ValueError, Image.DecompressionBombError):
+        return False
+
+
 def get_local_media():
     """Return list of valid local media files (videos + images) from INPUT_DIR."""
     if not INPUT_DIR.exists():
@@ -959,7 +989,10 @@ def get_local_media():
     for f in INPUT_DIR.iterdir():
         ext = f.suffix.lower()
         if ext in IMAGE_EXTENSIONS:
-            valid.append(f)
+            if _valid_raster_image(f):
+                valid.append(f)
+            else:
+                print(f"[Warning] Skipping corrupt/unreadable image: {f.name}")
         elif ext in VIDEO_EXTENSIONS:
             if is_valid_video(f):
                 valid.append(f)
@@ -1336,6 +1369,42 @@ def best_pexels_file(video):
     return files[0] if files else None
 
 
+def _validate_downloaded_media(path):
+    """Verify that the downloaded file's magic bytes are consistent with its extension.
+
+    Raises RuntimeError if the file is clearly not a valid image/video (e.g. a DjVu
+    document, HTML error page, or other non-media content saved with a media extension).
+    """
+    ext = str(path).rsplit(".", 1)[-1].lower() if "." in str(path) else ""
+    try:
+        with open(path, "rb") as f:
+            header = f.read(32)
+    except OSError:
+        return  # Can't read — let downstream handle it
+
+    if len(header) < 8:
+        raise RuntimeError(f"downloaded file too small ({len(header)} bytes)")
+
+    # Known non-media signatures that providers sometimes serve
+    # DjVu files start with AT&TFORM
+    if header[:8] == b"AT&TFORM":
+        raise RuntimeError("downloaded file is DjVu, not a valid image/video")
+    # HTML error pages
+    if header.lstrip()[:5].lower() in (b"<!doc", b"<html", b"<?xml"):
+        raise RuntimeError("downloaded file is HTML/XML, not a valid image/video")
+
+    # For image extensions, verify magic bytes
+    if ext in ("jpg", "jpeg"):
+        if header[:2] != b"\xff\xd8":
+            raise RuntimeError(f"file has .{ext} extension but is not a JPEG (header: {header[:8].hex()})")
+    elif ext == "png":
+        if header[:4] != b"\x89PNG":
+            raise RuntimeError(f"file has .png extension but is not a PNG (header: {header[:8].hex()})")
+    elif ext == "webp":
+        if header[:4] != b"RIFF" or header[8:12] != b"WEBP":
+            raise RuntimeError(f"file has .webp extension but is not a WebP (header: {header[:8].hex()})")
+
+
 def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
     """Stream a URL to a file. Returns True on success."""
     import requests
@@ -1360,6 +1429,8 @@ def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
                         f.write(chunk)
         if not out_path.exists() or out_path.stat().st_size <= 0:
             raise RuntimeError("download produced an empty file")
+        # Validate that downloaded content matches expected file type by magic bytes
+        _validate_downloaded_media(out_path)
         return True
     except Exception as e:
         print(f"    [download] failed for {url[:80]}...: {e}")
@@ -1411,6 +1482,87 @@ def _qualify_query(q, fallback=""):
     q_low = q.lower()
     extra = " ".join(w for w in qualifiers if w not in q_low)
     return f"{q} {extra}".strip() if extra else q
+
+
+def _env_int(name, default):
+    try:
+        return int(os.environ.get(name, str(default)) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_float(name, default):
+    try:
+        return float(os.environ.get(name, str(default)) or default)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_bool(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return str(value).lower() not in {"0", "false", "no"}
+
+
+def _candidate_metadata_text(candidate):
+    values = [
+        candidate.provider,
+        candidate.provider_id,
+        candidate.title,
+        candidate.description,
+        candidate.url,
+        candidate.download_url,
+        str(candidate.local_path or ""),
+    ]
+    raw = candidate.raw_metadata if isinstance(candidate.raw_metadata, dict) else {}
+    values.extend(str(value) for value in raw.values() if isinstance(value, (str, int)))
+    return " ".join(" ".join(str(value or "").lower().split()) for value in values)
+
+
+def _exact_subject_terms(intent):
+    terms = []
+    for value in (intent.primary_subject, *getattr(intent, "supporting_subjects", ())):
+        normalized = " ".join(str(value or "").lower().split())
+        if not normalized:
+            continue
+        if normalized in {"underwater", "ocean", "sea", "water", "reef", "coral", "animal", "wildlife"}:
+            continue
+        terms.append(normalized)
+    return tuple(dict.fromkeys(terms))
+
+
+def _exact_subject_candidate_count(candidates, intent):
+    terms = _exact_subject_terms(intent)
+    if not terms:
+        return 0
+    seen = set()
+    for candidate in candidates:
+        text = _candidate_metadata_text(candidate)
+        if any(term in text for term in terms):
+            seen.add(candidate.dedup_key)
+    return len(seen)
+
+
+def _candidate_has_exact_subject(candidate, intent):
+    text = _candidate_metadata_text(candidate)
+    return any(term in text for term in _exact_subject_terms(intent))
+
+
+def _confidence_value(confidence):
+    return {
+        "high": 0.9,
+        "medium": 0.6,
+        "low": 0.3,
+        "fallback": 0.2,
+        "rejected": 0.0,
+    }.get(str(confidence or "").lower(), 0.0)
+
+
+def _candidate_extension(candidate):
+    if candidate.is_image:
+        return ".jpg"
+    return ".mp4"
 
 
 def _broad_fallback_terms(keyword, narration="", fallback=""):
@@ -1470,13 +1622,27 @@ def _minimum_score_for_intent(intent):
     }.get(getattr(intent, "scene_importance", SceneImportance.SUPPORTING), 1.5)
 
 
-def _selection_intent(queries, fallback="", narration="", idx=None):
+def _selection_intent(queries, fallback="", narration="", idx=None, shot_intent=None):
     return build_visual_intent(
         {
             "narration": narration,
             "broll": queries[0] if queries else fallback,
             "broll_queries": queries,
             "scene_importance": _scene_importance_for_index(idx, narration) if idx is not None else "",
+            "media_mode": getattr(getattr(shot_intent, "media_mode", None), "value", getattr(shot_intent, "media_mode", "")) or "",
+            "primary_subject": getattr(shot_intent, "primary_subject", "") or "",
+            "supporting_subjects": list(getattr(shot_intent, "required_entities", ()) or ()),
+            "subject_persistence_target": (
+                getattr(shot_intent, "diagnostics", {})
+                .get("subject_continuity", {})
+                .get("subject_persistence_target", 0.85)
+            ) if shot_intent else 0.85,
+            "allowed_substitutions": (
+                getattr(shot_intent, "diagnostics", {})
+                .get("subject_continuity", {})
+                .get("allowed_substitutions", [])
+            ) if shot_intent else [],
+            "forbidden_substitutions": list(getattr(shot_intent, "negative_terms", ()) or ()),
         },
         fallback,
     )
@@ -1595,6 +1761,412 @@ def _select_candidate_for_provider(
     return None
 
 
+def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", per_page=10):
+    """Return normalized Pexels candidates without downloading them."""
+
+    import requests
+
+    if not PEXELS_API_KEY:
+        return []
+    headers = {"Authorization": PEXELS_API_KEY}
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = requests.get(
+                "https://api.pexels.com/videos/search",
+                headers=headers,
+                params={
+                    "query": enriched,
+                    "orientation": orientation,
+                    "per_page": per_page,
+                    "size": "medium",
+                },
+                timeout=30,
+            )
+            response.raise_for_status()
+            videos = response.json().get("videos", []) or []
+        except Exception as e:
+            print(f"    [Pexels] search failed for {enriched!r}: {e}")
+            continue
+        for video in videos:
+            candidate = candidate_from_pexels_video(video, enriched)
+            if candidate:
+                candidate_pool.append(candidate)
+    return candidate_pool
+
+
+def _best_pixabay_rendition(hit, *, allow_landscape=False):
+    renditions = (hit.get("videos") or {}).values()
+    best = None
+    best_dim = 0
+    for rd in renditions:
+        w, h = rd.get("width", 0), rd.get("height", 0)
+        if h <= 0 or w <= 0:
+            continue
+        if not allow_landscape and h < w:
+            continue
+        dim = h if h >= w else w
+        if dim > best_dim:
+            best, best_dim = rd, dim
+    return best
+
+
+def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, per_page=20):
+    """Return normalized Pixabay candidates without downloading them."""
+
+    import requests
+
+    if not PIXABAY_API_KEY or "your_pixabay" in PIXABAY_API_KEY:
+        return []
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = requests.get(
+                "https://pixabay.com/api/videos/",
+                params={
+                    "key": PIXABAY_API_KEY,
+                    "q": enriched,
+                    "video_type": "film",
+                    "per_page": per_page,
+                    "safesearch": "true",
+                },
+                timeout=30,
+            )
+            response.raise_for_status()
+            hits = response.json().get("hits", []) or []
+        except Exception as e:
+            print(f"    [Pixabay] search failed for {enriched!r}: {e}")
+            continue
+        for hit in hits:
+            rendition = _best_pixabay_rendition(hit, allow_landscape=allow_landscape)
+            if rendition:
+                candidate_pool.append(candidate_from_pixabay_hit(hit, rendition, enriched))
+    return candidate_pool
+
+
+def _json_stock_candidates(
+    provider,
+    endpoint,
+    queries,
+    *,
+    fallback="",
+    headers=None,
+    params_extra=None,
+    license_name="",
+):
+    """Return normalized configured JSON-provider candidates without downloading."""
+
+    import requests
+
+    if not endpoint:
+        return []
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = requests.get(
+                endpoint,
+                headers=headers or {},
+                params={"q": enriched, "query": enriched, **(params_extra or {})},
+                timeout=30,
+            )
+            response.raise_for_status()
+            items = _json_items(response.json())
+        except Exception as e:
+            print(f"    [{provider.title()}] search failed for {enriched!r}: {e}")
+            continue
+        for item in items:
+            normalized = _remote_item_from_provider(provider, item, enriched)
+            if normalized:
+                normalized["license"] = normalized.get("license") or license_name
+                candidate = candidate_from_remote_item(provider, normalized, enriched)
+                if candidate:
+                    candidate_pool.append(candidate)
+    return candidate_pool
+
+
+def _wikimedia_candidates(queries):
+    """Return Wikimedia candidates without downloading them."""
+
+    import requests
+
+    if not ENABLE_WIKIMEDIA_COMMONS:
+        return []
+    candidate_pool = []
+    session = requests.Session()
+    session.headers.update({"User-Agent": "auto-short/1.0 educational video generator"})
+    for q in queries:
+        cache_key = " ".join(str(q).lower().split())
+        pages = _WIKIMEDIA_SEARCH_CACHE.get(cache_key)
+        try:
+            if pages is None:
+                response = session.get(
+                    "https://commons.wikimedia.org/w/api.php",
+                    params={
+                        "action": "query",
+                        "format": "json",
+                        "generator": "search",
+                        "gsrnamespace": 6,
+                        "gsrsearch": q,
+                        "gsrlimit": 8,
+                        "prop": "imageinfo",
+                        "iiprop": "url|mime|size|extmetadata",
+                    },
+                    timeout=30,
+                )
+                response.raise_for_status()
+                pages = (response.json().get("query", {}) or {}).get("pages", {}) or {}
+                _WIKIMEDIA_SEARCH_CACHE[cache_key] = pages
+        except Exception as e:
+            print(f"    [Wikimedia] search failed for {q!r}: {e}")
+            continue
+        for page in pages.values():
+            candidate = _wikimedia_candidate_from_page(page, q)
+            if candidate:
+                candidate_pool.append(candidate)
+    return candidate_pool
+
+
+def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=False):
+    if provider == "pexels":
+        orientation = "landscape" if landscape else "portrait"
+        return _pexels_video_candidates(queries, fallback, orientation=orientation)
+    if provider == "pixabay":
+        return _pixabay_video_candidates(queries, fallback, allow_landscape=landscape)
+    if provider == "wikimedia":
+        return _wikimedia_candidates(queries)
+    if provider == "mixkit":
+        return _json_stock_candidates(
+            "mixkit",
+            MIXKIT_API_URL,
+            queries,
+            fallback=fallback,
+            license_name="Mixkit License",
+        )
+    if provider == "coverr":
+        return _json_stock_candidates(
+            "coverr",
+            COVERR_API_URL,
+            queries,
+            fallback=fallback,
+            license_name="Coverr License",
+        )
+    if provider == "videvo" and VIDEVO_API_URL and VIDEVO_API_KEY:
+        return _json_stock_candidates(
+            "videvo",
+            VIDEVO_API_URL,
+            queries,
+            fallback=fallback,
+            headers={"Authorization": f"Bearer {VIDEVO_API_KEY}"},
+            license_name="Videvo license varies by clip",
+        )
+    if provider == "noaa":
+        return _json_stock_candidates(
+            "noaa",
+            NOAA_API_URL,
+            queries,
+            fallback=fallback,
+            license_name="NOAA public domain / usage varies",
+        )
+    if provider == "esa":
+        return _json_stock_candidates(
+            "esa",
+            ESA_API_URL,
+            queries,
+            fallback=fallback,
+            license_name="ESA media usage guidelines",
+        )
+    if provider == "usgs":
+        return _json_stock_candidates(
+            "usgs",
+            USGS_API_URL,
+            queries,
+            fallback=fallback,
+            license_name="USGS public domain / usage varies",
+        )
+    return []
+
+
+def _dedupe_candidates(candidates):
+    seen = set()
+    deduped = []
+    for candidate in candidates:
+        key = (candidate.provider, candidate.provider_id, candidate.download_url)
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(candidate)
+    return deduped
+
+
+def _select_adaptive_result(intent, candidates, used_set, target_duration):
+    candidates = _dedupe_candidates(candidates)
+    exact_candidates = [
+        candidate for candidate in candidates if _candidate_has_exact_subject(candidate, intent)
+    ]
+    if exact_candidates:
+        exact_result = select_best_candidate(
+            intent,
+            exact_candidates,
+            used_provider_ids=set(used_set or []),
+            target_duration_sec=target_duration,
+            output_width=WIDTH,
+            output_height=HEIGHT,
+            minimum_score=max(1.0, _minimum_score_for_intent(intent)),
+        )
+        if exact_result.selected_candidate:
+            return exact_result
+    return select_best_candidate(
+        intent,
+        candidates,
+        used_provider_ids=set(used_set or []),
+        target_duration_sec=target_duration,
+        output_width=WIDTH,
+        output_height=HEIGHT,
+        minimum_score=max(1.0, _minimum_score_for_intent(intent)),
+    )
+
+
+def _adaptive_needs_expansion(result, exact_count):
+    if exact_count < AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES:
+        return True
+    return _confidence_value(result.confidence) < AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE
+
+
+def _fetch_adaptive_broll(
+    strategy,
+    *,
+    idx,
+    fallback,
+    narration,
+    used_set,
+    target_duration,
+    intent,
+):
+    """Build an expanded candidate pool before downloading a stock asset."""
+
+    plans = [
+        plan
+        for plan in strategy.provider_plans
+        if getattr(plan, "score", 0) > 0
+        and getattr(plan, "provider_id", "") not in {"local", "gemini_image"}
+    ]
+    if not plans:
+        return None
+
+    candidates = []
+    searched = []
+    report = {
+        "scene_index": idx,
+        "minimum_exact_candidates": AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES,
+        "landscape_expansion_enabled": AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION,
+        "provider_expansion_threshold": AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE,
+        "portrait_candidates_found": 0,
+        "landscape_candidates_found": 0,
+        "exact_subject_candidates": 0,
+        "provider_expansion_triggered": False,
+        "providers_searched": searched,
+        "final_provider_selected": "",
+        "confidence_before_expansion": "rejected",
+        "confidence_after_expansion": "rejected",
+    }
+
+    before_result = None
+    for order, plan in enumerate(plans):
+        provider = plan.provider_id
+        plan_queries = list(plan.queries) or []
+        if provider not in {
+            "pexels",
+            "pixabay",
+            "wikimedia",
+            "mixkit",
+            "coverr",
+            "videvo",
+            "noaa",
+            "esa",
+            "usgs",
+        }:
+            continue
+        portrait_candidates = _adaptive_provider_candidates(
+            provider,
+            plan_queries,
+            fallback,
+            landscape=False,
+        )
+        if provider in {"pexels", "pixabay"}:
+            report["portrait_candidates_found"] += len(portrait_candidates)
+        candidates.extend(portrait_candidates)
+        searched.append(
+            {
+                "provider": provider,
+                "queries": plan_queries,
+                "portrait_candidates": len(portrait_candidates),
+                "landscape_candidates": 0,
+            }
+        )
+
+        current_result = _select_adaptive_result(intent, candidates, used_set, target_duration)
+        current_exact = _exact_subject_candidate_count(candidates, intent)
+        if before_result is None:
+            before_result = current_result
+            report["confidence_before_expansion"] = current_result.confidence
+
+        if (
+            provider in {"pexels", "pixabay"}
+            and AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION
+            and current_exact < AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES
+        ):
+            landscape_candidates = _adaptive_provider_candidates(
+                provider,
+                plan_queries,
+                fallback,
+                landscape=True,
+            )
+            report["landscape_candidates_found"] += len(landscape_candidates)
+            searched[-1]["landscape_candidates"] = len(landscape_candidates)
+            candidates.extend(landscape_candidates)
+            current_result = _select_adaptive_result(intent, candidates, used_set, target_duration)
+            current_exact = _exact_subject_candidate_count(candidates, intent)
+            report["provider_expansion_triggered"] = True
+
+        report["exact_subject_candidates"] = current_exact
+        report["confidence_after_expansion"] = current_result.confidence
+        if not _adaptive_needs_expansion(current_result, current_exact):
+            break
+        if order < len(plans) - 1:
+            report["provider_expansion_triggered"] = True
+
+    if not candidates:
+        _ADAPTIVE_SEARCH_DIAGNOSTICS[idx] = report
+        return None
+
+    result = _select_adaptive_result(intent, candidates, used_set, target_duration)
+    report["exact_subject_candidates"] = _exact_subject_candidate_count(candidates, intent)
+    report["confidence_after_expansion"] = result.confidence
+    if not result.selected_candidate:
+        _ADAPTIVE_SEARCH_DIAGNOSTICS[idx] = report
+        return None
+
+    candidate = result.selected_candidate
+    report["final_provider_selected"] = candidate.provider
+    report["selected_provider_id"] = candidate.provider_id
+    report["selected_query"] = candidate.query
+    _ADAPTIVE_SEARCH_DIAGNOSTICS[idx] = report
+    _remember_media_selection(idx, result, "adaptive")
+
+    out_path = OUT_DIR / f"broll_{idx}{_candidate_extension(candidate)}"
+    print(
+        f"    [Adaptive] Selected {candidate.provider}:{candidate.provider_id} "
+        f"confidence={result.confidence} exact={report['exact_subject_candidates']}"
+    )
+    if _download_to(candidate.download_url, out_path):
+        used_set.add(candidate.dedup_key)
+        return out_path
+    return None
+
+
 def _select_local_media(
     queries, fallback, narration, local_media, idx, used_set, target_duration,
     threshold=0.5, intent=None,
@@ -1625,36 +2197,12 @@ def fetch_pexels_video(
 ):
     """Search Pexels for a portrait video matching any of the queries.
     Returns Path to the downloaded mp4, or None."""
-    import requests
     if not PEXELS_API_KEY:
         return None
 
-    headers = {"Authorization": PEXELS_API_KEY}
-
-    def search(q):
-        orientation = "landscape" if WIDTH > HEIGHT else "portrait"
-        try:
-            r = requests.get(
-                "https://api.pexels.com/videos/search",
-                headers=headers,
-                params={"query": q, "orientation": orientation, "per_page": 10, "size": "medium"},
-                timeout=30,
-            )
-            r.raise_for_status()
-            return r.json().get("videos", []) or []
-        except Exception as e:
-            print(f"    [Pexels] search failed for {q!r}: {e}")
-            return []
-
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
-    candidate_pool = []
-    for q in queries:
-        enriched = _qualify_query(q, fallback)
-        videos = search(enriched)
-        for video in videos:
-            candidate = candidate_from_pexels_video(video, enriched)
-            if candidate:
-                candidate_pool.append(candidate)
+    orientation = "landscape" if WIDTH > HEIGHT else "portrait"
+    candidate_pool = _pexels_video_candidates(queries, fallback, orientation=orientation)
     candidate = _select_candidate_for_provider(
         "Pexels",
         idx,
@@ -1681,67 +2229,15 @@ def fetch_pixabay_video(
     Pixabay's video API mirrors their image API. Free key from
     https://pixabay.com/api/docs/  Free tier: ~100 requests/min, plenty.
     """
-    import requests
     if not PIXABAY_API_KEY or "your_pixabay" in PIXABAY_API_KEY:
         return None
 
-    def search(q):
-        try:
-            r = requests.get(
-                "https://pixabay.com/api/videos/",
-                params={
-                    "key":         PIXABAY_API_KEY,
-                    "q":           q,
-                    "video_type":  "film",
-                    "per_page":    20,
-                    "safesearch":  "true",
-                },
-                timeout=30,
-            )
-            r.raise_for_status()
-            return r.json().get("hits", []) or []
-        except Exception as e:
-            print(f"    [Pixabay] search failed for {q!r}: {e}")
-            return []
-
-    portrait = HEIGHT > WIDTH
-
-    def score(hit):
-        # Pixabay returns multiple renditions per hit under hit["videos"].
-        # Pick the best one for our aspect ratio, score on resolution + duration fit.
-        renditions = (hit.get("videos") or {}).values()
-        if not renditions:
-            return -1, None
-        best = None
-        best_dim = 0
-        for rd in renditions:
-            w, h = rd.get("width", 0), rd.get("height", 0)
-            if portrait:
-                if h <= 0 or h < w:    # skip landscape variants
-                    continue
-                dim = h
-            else:
-                if w <= 0 or w < h:
-                    continue
-                dim = w
-            if dim > best_dim:
-                best, best_dim = rd, dim
-        if not best:
-            return -1, None
-        dur = hit.get("duration", 0) or 0
-        # Higher resolution good, longer than target_duration good, 4x target excessive
-        dur_score = 1.0 if dur >= target_duration else dur / max(target_duration, 1)
-        return (best_dim / 1000.0) + dur_score, best
-
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
-    candidate_pool = []
-    for q in queries:
-        enriched = _qualify_query(q, fallback)
-        hits = search(enriched)
-        scored = [(score(h)[0], score(h)[1], h) for h in hits]
-        scored = [(s, rd, h) for s, rd, h in scored if rd is not None]
-        for _score, rendition, hit in scored:
-            candidate_pool.append(candidate_from_pixabay_hit(hit, rendition, enriched))
+    candidate_pool = _pixabay_video_candidates(
+        queries,
+        fallback,
+        allow_landscape=WIDTH >= HEIGHT,
+    )
     candidate = _select_candidate_for_provider(
         "Pixabay",
         idx,
@@ -1929,28 +2425,15 @@ def _fetch_json_stock_provider(
     if not endpoint:
         return None
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
-    candidate_pool = []
-    for q in queries:
-        enriched = _qualify_query(q, fallback)
-        try:
-            response = requests.get(
-                endpoint,
-                headers=headers or {},
-                params={"q": enriched, "query": enriched, **(params_extra or {})},
-                timeout=30,
-            )
-            response.raise_for_status()
-            items = _json_items(response.json())
-        except Exception as e:
-            print(f"    [{provider.title()}] search failed for {enriched!r}: {e}")
-            continue
-        for item in items:
-            normalized = _remote_item_from_provider(provider, item, enriched)
-            if normalized:
-                normalized["license"] = normalized.get("license") or license_name
-                candidate = candidate_from_remote_item(provider, normalized, enriched)
-                if candidate:
-                    candidate_pool.append(candidate)
+    candidate_pool = _json_stock_candidates(
+        provider,
+        endpoint,
+        queries,
+        fallback=fallback,
+        headers=headers,
+        params_extra=params_extra,
+        license_name=license_name,
+    )
     candidate = _select_candidate_for_provider(
         provider.title(),
         idx,
@@ -2627,6 +3110,9 @@ def _wikimedia_candidate_from_page(page, query):
     url = str(imageinfo.get("url") or "")
     if not title or not url or not (mime.startswith("video/") or mime.startswith("image/")):
         return None
+    media_signature = " ".join([title, mime, url]).lower()
+    if any(token in media_signature for token in ("svg", "djvu", ".djv", ".pdf")):
+        return None
     ext = imageinfo.get("extmetadata") or {}
 
     def ext_value(name):
@@ -2735,9 +3221,41 @@ def _save_persistent_used(s):
         pass
 
 
+def _valid_media_path(path):
+    """Return True only for paths that can safely enter the Timeline."""
+
+    if not path:
+        return False
+    try:
+        media_path = Path(path)
+    except TypeError:
+        return False
+    try:
+        if not media_path.exists() or not media_path.is_file() or media_path.stat().st_size <= 0:
+            return False
+        if is_image(media_path):
+            return _valid_raster_image(media_path)
+        return True
+    except OSError:
+        return False
+
+
+def _dedupe_runtime_queries(queries):
+    seen = set()
+    ordered = []
+    for query in queries:
+        cleaned = " ".join(str(query or "").split())
+        key = cleaned.lower()
+        if cleaned and key not in seen:
+            seen.add(key)
+            ordered.append(cleaned)
+    return ordered
+
+
 def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set=None,
                 hybrid=False, threshold=0.5, dalle=False, target_duration=5.0,
-                no_interactive=False):
+                no_interactive=False, shot_intent=None,
+                visual_grammar_engine=None, visual_grammar_decision=None):
     """Chain b-roll sources: local -> DALL-E (opt) -> Pexels -> Pixabay -> NASA (space).
 
     Uses a persistent cross-video used_set so clips aren't repeated across runs.
@@ -2747,7 +3265,23 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         queries = [queries]
     queries = [q for q in queries if q]
     keyword = queries[0] if queries else fallback
-    canonical_intent = _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    if visual_grammar_engine is None:
+        visual_grammar_engine = VisualGrammarEngine(topic=fallback, total_scenes=max(1, idx + 1))
+    if visual_grammar_decision is None:
+        visual_grammar_decision = visual_grammar_engine.decide(
+            scene_index=idx,
+            narration=narration,
+            queries=tuple(queries),
+            shot_intent=shot_intent,
+        )
+        queries = _dedupe_runtime_queries([*visual_grammar_decision.repaired_queries, *queries])
+    canonical_intent = _selection_intent(
+        queries,
+        fallback=fallback,
+        narration=narration,
+        idx=idx,
+        shot_intent=shot_intent,
+    )
     strategy = _build_search_strategy(
         queries,
         fallback,
@@ -2773,6 +3307,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         )
         if match:
             print(f"    [Local] Using: {match.name}")
+            visual_grammar_engine.register_real_asset(provider="local")
             return match
         elif hybrid or dalle:
             print(f"    [Local] No strong match for '{keyword}' (below threshold).")
@@ -2801,6 +3336,23 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
 
     # 3. Remote sources are ordered by required visual capabilities, not by
     # hard-coded topic branches. Existing wrappers still own provider I/O.
+    adaptive_out = _fetch_adaptive_broll(
+        strategy,
+        idx=idx,
+        fallback=fallback,
+        narration=narration,
+        used_set=used_set,
+        target_duration=target_duration,
+        intent=canonical_intent,
+    )
+    if _valid_media_path(adaptive_out):
+        _save_persistent_used(used_set)
+        selection = (_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}) or {}).get("selection", {})
+        visual_grammar_engine.register_real_asset(provider=selection.get("provider", "adaptive"))
+        return adaptive_out
+    if adaptive_out:
+        print("    [Adaptive] returned an unrenderable media file; trying legacy provider order.")
+
     for plan in strategy.provider_plans:
         source = plan.provider_id
         plan_queries = list(plan.queries) or queries
@@ -3001,11 +3553,55 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 }
         else:
             continue
-        if out:
+        if _valid_media_path(out):
             _save_persistent_used(used_set)
+            visual_grammar_engine.register_real_asset(provider=source)
             return out
+        if out:
+            print(f"    [{source}] returned an unrenderable media file; trying next source.")
 
-    # 4. Auto Gemini Image fallback when stock footage fails (free, no billing)
+    # 4. Hybrid visual composition before plain cards. This keeps the renderer
+    # input unchanged: it still receives one local image path for the segment.
+    try:
+        composition = HybridVisualComposer(width=WIDTH, height=HEIGHT).compose(
+            topic=fallback,
+            narration=narration,
+            queries=queries,
+            output_dir=OUT_DIR,
+            idx=idx,
+            shot_intent=shot_intent,
+            grammar_decision=visual_grammar_decision,
+        )
+    except (OSError, ValueError) as exc:
+        print(f"    [Hybrid composer] failed for '{keyword}': {exc}")
+    else:
+        if _valid_media_path(composition.local_path):
+            allowed, grammar_reason = visual_grammar_engine.allow_composition(
+                visual_grammar_decision,
+                scene_type=composition.plan.scene_type,
+            )
+            if not allowed:
+                print(f"    [Visual grammar] rejected composition: {grammar_reason}")
+                _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+                    **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                    "visual_grammar": visual_grammar_decision.to_dict(),
+                    "visual_grammar_composition_rejected": grammar_reason,
+                }
+            else:
+                visual_grammar_engine.register_composed_asset(scene_type=composition.plan.scene_type)
+                print(
+                    "    [Hybrid composer] "
+                    f"{composition.plan.scene_type} visual for '{keyword}'."
+                )
+                _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                    **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+                    **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                    "selection": composition.metadata,
+                }
+                _save_persistent_used(used_set)
+                return composition.local_path
+
+    # 5. Auto Gemini Image fallback when stock footage fails (free, no billing)
     if is_gemini_image_available():
         print(f"    [Gemini Image] Stock footage exhausted; generating image for '{keyword}'...")
         gemini_img = generate_gemini_image(keyword, idx)
@@ -3025,6 +3621,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                     "score_breakdown": {},
                 }
             }
+            visual_grammar_engine.register_explainer()
             _save_persistent_used(used_set)
             return gemini_img
 
@@ -3053,6 +3650,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 "score_breakdown": {},
             },
         }
+        visual_grammar_engine.register_explainer()
         _save_persistent_used(used_set)
         return qr_img
 
@@ -3091,6 +3689,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 "score_breakdown": {},
             },
         }
+        visual_grammar_engine.register_explainer()
         _save_persistent_used(used_set)
         return explainer_img
 
@@ -3119,8 +3718,12 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
             "selection_reason",
             "last-resort broad fallback after specific providers failed",
         )
-        _save_persistent_used(used_set)
-        return broad_out
+        if _valid_media_path(broad_out):
+            _save_persistent_used(used_set)
+            visual_grammar_engine.register_real_asset(provider="pexels")
+            return broad_out
+        if broad_out:
+            print(f"    [Pexels broad] returned a missing or empty media file; continuing fallback.")
 
     # 6. Interactive fallback (only when no_interactive=False, i.e. attended runs).
     # Scheduled runs MUST pass no_interactive=True so they don't hang on stdin.
@@ -3293,6 +3896,99 @@ def _media_source_from_selection(metadata):
     }.get(provider, MediaSource.UNKNOWN)
 
 
+def _source_has_audio_stream(path) -> bool:
+    if is_image(path):
+        return False
+    try:
+        output = subprocess.check_output([
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "a:0",
+            "-show_entries",
+            "stream=codec_type",
+            "-of",
+            "csv=p=0",
+            str(path),
+        ], text=True, timeout=10).strip()
+        return "audio" in output.lower()
+    except (subprocess.CalledProcessError, OSError, subprocess.TimeoutExpired):
+        return False
+
+
+def _clip_audio_quality_gate(path) -> tuple[bool, str]:
+    """Return whether source ambience is safe enough to mix under narration."""
+    if not APP_CONFIG.clip_audio.use_clip_audio:
+        return False, "disabled"
+    if is_image(path):
+        return False, "still image has no clip audio"
+    if not _source_has_audio_stream(path):
+        return False, "no audio stream"
+    if not APP_CONFIG.clip_audio.noise_gate:
+        return True, "audio stream present; noise gate disabled"
+    try:
+        proc = subprocess.run([
+            "ffmpeg",
+            "-hide_banner",
+            "-v",
+            "info",
+            "-i",
+            str(path),
+            "-map",
+            "0:a:0",
+            "-t",
+            "3",
+            "-af",
+            "volumedetect",
+            "-f",
+            "null",
+            "NUL" if os.name == "nt" else "/dev/null",
+        ], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        return False, f"audio probe failed: {type(exc).__name__}"
+    probe_text = f"{proc.stdout}\n{proc.stderr}"
+    mean_match = re.search(r"mean_volume:\s*(-?\d+(?:\.\d+)?) dB", probe_text)
+    max_match = re.search(r"max_volume:\s*(-?\d+(?:\.\d+)?) dB", probe_text)
+    if proc.returncode != 0:
+        return False, "audio probe failed"
+    mean_volume = float(mean_match.group(1)) if mean_match else None
+    max_volume = float(max_match.group(1)) if max_match else None
+    if mean_volume is not None and mean_volume <= -55.0:
+        return False, "near-silent clip audio"
+    if max_volume is not None and max_volume >= -0.2:
+        return False, "clip audio is clipping"
+    if mean_volume is not None and mean_volume >= -6.0:
+        return False, "clip audio too loud for ambience bed"
+    return True, "audio stream passed quality gate"
+
+
+def _record_clip_audio_decision(*, idx: int, broll, extracted: bool, used: bool, reason: str) -> None:
+    _AUDIO_MIX_DECISIONS.append(ClipAudioDecision(
+        segment_index=idx,
+        source_path=str(Path(broll)),
+        clip_audio_extracted=extracted,
+        clip_audio_used=used,
+        clip_audio_muted=not used,
+        reason=reason,
+        volume=APP_CONFIG.clip_audio.volume if used else 0.0,
+        ducking_applied=bool(used and APP_CONFIG.clip_audio.ducking),
+        fade_ms=APP_CONFIG.clip_audio.fade_ms,
+    ))
+
+
+def _segment_filter_graph(video_filter: str, *, duration: float, use_clip_audio: bool) -> tuple[str, str]:
+    if not use_clip_audio:
+        return video_filter, "1:a:0"
+    audio_graph, audio_label = clip_audio_filter(
+        source_audio_label="[0:a]",
+        voice_audio_label="[1:a]",
+        duration_sec=float(duration),
+        config=APP_CONFIG.clip_audio,
+    )
+    return f"{video_filter};{audio_graph}", audio_label
+
+
 def build_segment(idx, broll, voice, duration, compare_pair=None):
     out_path = OUT_DIR / f"seg_{idx}.mp4"
 
@@ -3310,6 +4006,13 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
             "-shortest",
             str(out_path),
         ])
+        _record_clip_audio_decision(
+            idx=idx,
+            broll=split_clip,
+            extracted=False,
+            used=False,
+            reason="comparison clip audio skipped",
+        )
         return out_path
 
     # Image mode: convert to clip with Ken Burns effect first
@@ -3325,9 +4028,24 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
             "-shortest",
             str(out_path),
         ])
+        _record_clip_audio_decision(
+            idx=idx,
+            broll=broll,
+            extracted=False,
+            used=False,
+            reason="still image has no clip audio",
+        )
         return out_path
 
     # Standard video mode — detect landscape content and use blur-background padding
+    use_clip_audio, clip_audio_reason = _clip_audio_quality_gate(broll)
+    _record_clip_audio_decision(
+        idx=idx,
+        broll=broll,
+        extracted=use_clip_audio,
+        used=use_clip_audio,
+        reason=clip_audio_reason,
+    )
     is_landscape = _video_is_landscape(broll)
     if is_landscape:
         vf = (
@@ -3344,13 +4062,14 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
     if start_offset > 0:
         input_args.extend(["-ss", f"{start_offset:.3f}"])
     input_args.extend(["-i", str(broll)])
+    filter_graph, audio_map = _segment_filter_graph(vf, duration=duration, use_clip_audio=use_clip_audio)
     command = [
         "ffmpeg", "-y",
         *input_args,
         "-i", str(voice),
         "-t", f"{duration:.3f}",
-        "-filter_complex", vf,
-        "-map", "[vout]", "-map", "1:a:0",
+        "-filter_complex", filter_graph,
+        "-map", "[vout]", "-map", audio_map,
         "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
         "-shortest",
@@ -3367,7 +4086,12 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
             f"crop={WIDTH}:{HEIGHT},setsar=1,fps={FPS}[vout]"
         )
         fallback_command = list(command)
-        fallback_command[fallback_command.index("-filter_complex") + 1] = fallback_vf
+        fallback_graph, _ = _segment_filter_graph(
+            fallback_vf,
+            duration=duration,
+            use_clip_audio=use_clip_audio,
+        )
+        fallback_command[fallback_command.index("-filter_complex") + 1] = fallback_graph
         run_ff(fallback_command)
     return out_path
 
@@ -3877,6 +4601,17 @@ def _get_music_planner():
     return _MUSIC_PLANNER
 
 
+def write_audio_mix_report(music_volume: float, voice_volume: float = 1.0) -> Path:
+    report_path = OUT_DIR / "audio_mix_report.json"
+    report = build_audio_mix_report(
+        list(_AUDIO_MIX_DECISIONS),
+        music_volume=float(music_volume or 0.0),
+        voice_volume=float(voice_volume),
+    )
+    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+    return report_path
+
+
 def add_background_music(
     video_path,
     duration,
@@ -3888,6 +4623,7 @@ def add_background_music(
     if music_volume <= 0:
         final_path = OUT_DIR / "final.mp4"
         shutil.copyfile(video_path, final_path)
+        write_audio_mix_report(0.0)
         return final_path, None
 
     # Music selection:
@@ -3920,6 +4656,7 @@ def add_background_music(
             print("[i] No usable music from any provider; rendering without background music.")
             final_path = OUT_DIR / "final.mp4"
             shutil.copyfile(video_path, final_path)
+            write_audio_mix_report(0.0)
             return final_path, None
         selected_music = Path(track.local_path)
         generated = track.provider == "generated"
@@ -3963,6 +4700,7 @@ def add_background_music(
         "-shortest",
         str(final_path),
     ])
+    write_audio_mix_report(music_volume)
     return final_path, str(selected_music.resolve()) if not generated else "generated"
 
 
@@ -4075,6 +4813,7 @@ def main():
     args = parser.parse_args()
 
     check_deps()
+    _AUDIO_MIX_DECISIONS.clear()
     niche = args.topic
     duration = args.duration
     compare_mode = args.compare
@@ -4242,6 +4981,10 @@ def main():
             raw = interactive_broll_review(ctx.values["segments"], niche)
             overrides = {int(k): v for k, v in raw.items()}
         shot_plan = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+        shot_plan = SubjectContinuityEngine().apply(
+            shot_plan,
+            segments=ctx.values["segments"],
+        )
         shot_plan_path = shot_plan.write_json(OUT_DIR / "shot_plan.json")
         ctx.values["broll_overrides"] = overrides
         ctx.values["shot_plan"] = shot_plan
@@ -4266,7 +5009,11 @@ def main():
         if shot_plan_path.exists():
             ctx.values["shot_plan"] = ShotPlan.from_dict(read_manifest(shot_plan_path))
         else:
-            ctx.values["shot_plan"] = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+            shot_plan = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+            ctx.values["shot_plan"] = SubjectContinuityEngine().apply(
+                shot_plan,
+                segments=ctx.values["segments"],
+            )
 
     def stage_voice_generation(ctx: PipelineContext) -> StageResult:
         voice_items = make_all_voices(ctx.values["segments"], duration)
@@ -4294,11 +5041,16 @@ def main():
         media_assets = []
         broll_overrides = ctx.values.get("broll_overrides", {})
         shot_plan = ctx.values.get("shot_plan")
+        visual_grammar_engine = VisualGrammarEngine(
+            topic=niche,
+            total_scenes=len(ctx.values["voice_items"]),
+        )
         for item in ctx.values["voice_items"]:
             idx = item["idx"]
             seg = item["segment"]
             dur = item["duration"]
             shot_intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
+            visual_grammar_decision = None
 
             if compare_mode:
                 a_idx = (idx * 2) % len(local_media)
@@ -4383,23 +5135,69 @@ def main():
                     queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
                 if not queries:
                     queries = broll_query_list(seg, niche)
+                visual_grammar_decision = visual_grammar_engine.decide(
+                    scene_index=idx,
+                    narration=seg["narration"],
+                    queries=tuple(queries),
+                    shot_intent=shot_intent,
+                )
+                queries = _dedupe_runtime_queries([
+                    *visual_grammar_decision.repaired_queries,
+                    *queries,
+                ])
                 if shot_intent:
                     _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
                         **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
                         "shot_plan": {
                             "domain_id": shot_plan.domain_id,
+                            "primary_subject": shot_plan.primary_subject,
+                            "supporting_subjects": list(shot_plan.supporting_subjects),
+                            "subject_persistence_target": shot_plan.subject_persistence_target,
+                            "allowed_substitutions": list(shot_plan.allowed_substitutions),
+                            "forbidden_substitutions": list(shot_plan.forbidden_substitutions),
                             "visual_identity": list(shot_plan.visual_identity),
                             "style_rules": shot_plan.style_rules.to_dict(),
                             "query_budget": shot_plan.query_budget,
                         },
                         "shot_intent": shot_intent.to_dict(),
+                        "visual_grammar": visual_grammar_decision.to_dict(),
                     }
 
                 print(f"[3/5] Segment {idx+1}: fetching B-roll '{queries[0]}'...")
                 broll = fetch_broll(queries, idx, fallback=niche,
                                    local_media=local_media, narration=seg["narration"],
                                    used_set=used_set, hybrid=hybrid, threshold=threshold, dalle=dalle,
-                                   target_duration=dur, no_interactive=no_interactive)
+                                   target_duration=dur, no_interactive=no_interactive,
+                                   shot_intent=shot_intent,
+                                   visual_grammar_engine=visual_grammar_engine,
+                                   visual_grammar_decision=visual_grammar_decision)
+                if not _valid_media_path(broll):
+                    print(f"    [Local explainer] replacing missing media for segment {idx+1}.")
+                    broll = _generate_local_explainer_image(queries[0] if queries else niche, idx)
+                    visual_grammar_engine.register_explainer()
+                    _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                        **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+                        **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                        "selection": {
+                            "query": queries[0] if queries else niche,
+                            "provider": "local",
+                            "provider_id": Path(broll).name,
+                            "score": None,
+                            "confidence": "fallback",
+                            "confidence_level": "MEDIUM",
+                            "portrait_score": 10.0,
+                            "relevance_score": 7.0,
+                            "quality_gate_passed": True,
+                            "scene_importance": _scene_importance_for_index(idx, seg["narration"]),
+                            "selection_reason": "local explainer fallback replaced missing provider media",
+                            "rejection_reason": "provider returned missing or empty media file",
+                            "fallback_level": "local_explainer",
+                            "warnings": ["provider returned missing or empty media file", "local explainer fallback"],
+                            "rejection_reasons": ["provider returned missing or empty media file"],
+                            "candidate_count": 0,
+                            "score_breakdown": {},
+                        },
+                    }
                 selection_metadata = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
                 media_assets.append(_media_asset_from_path(
                     broll,
@@ -4412,8 +5210,21 @@ def main():
             OUT_DIR / "media_manifest.json",
             {"assets": [asset.to_dict() for asset in media_assets]},
         )
+        continuity_report_path = OUT_DIR / "subject_continuity_report.json"
+        if isinstance(shot_plan, ShotPlan):
+            continuity_report = SubjectContinuityEngine().report_from_assets(
+                shot_plan,
+                media_assets,
+            )
+            write_manifest(continuity_report_path, continuity_report.to_dict())
+        grammar_report_path = write_manifest(
+            OUT_DIR / "visual_grammar_report.json",
+            visual_grammar_engine.report(),
+        )
         return StageResult(outputs={
             "media_manifest": str(path),
+            "subject_continuity_report": str(continuity_report_path),
+            "visual_grammar_report": str(grammar_report_path),
             "media_files": [str(asset.local_path) for asset in media_assets],
         })
 
@@ -4424,8 +5235,10 @@ def main():
         ]
 
     def validate_media_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        subject_report = record.outputs.get("subject_continuity_report")
         return (
             Path(record.outputs.get("media_manifest", "")).exists()
+            and (not subject_report or Path(subject_report).exists())
             and validate_paths(record.outputs.get("media_files", []))
         )
 
@@ -4576,6 +5389,11 @@ def main():
         instagram_caption = topic_metadata.instagram_caption or title
         instagram_caption = f"{instagram_caption}\n\n{hashtag_str}"
         youtube_tags = topic_metadata.youtube_tags
+        pinned_comment = generate_pinned_comment(
+            topic=niche,
+            title=title,
+            segments=script_payload.get("segments", []),
+        )
 
         video_id = f"{dt.datetime.now().strftime('%Y%m%d-%H%M%S')}-{slugify(title)}-{uuid.uuid4().hex[:6]}"
         artifact_store = ArtifactStore(SCRIPT_DIR)
@@ -4588,6 +5406,7 @@ def main():
             "title": title,
             "youtube_title": youtube_title,
             "youtube_description": youtube_description,
+            "pinned_comment": pinned_comment,
             "facebook_description": facebook_description,
             "instagram_caption": instagram_caption,
             "hashtags": hashtags,
@@ -4628,11 +5447,189 @@ def main():
             "meta_path": meta_path,
         })
 
+    def write_ffprobe_report(video_path: Path) -> Path:
+        report_path = OUT_DIR / "ffprobe.json"
+        try:
+            raw = run_ff([
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration,size,bit_rate:stream=codec_type,codec_name,width,height,duration",
+                "-of",
+                "json",
+                str(video_path),
+            ])
+            report_path.write_text(raw, encoding="utf-8")
+        except Exception as exc:
+            write_manifest(report_path, {"error": str(exc), "video_path": str(video_path)})
+        return report_path
+
+    def write_contact_sheet(video_path: Path) -> Path:
+        sheet_path = OUT_DIR / "contact_sheet.jpg"
+        if sheet_path.exists():
+            try:
+                sheet_path.unlink()
+            except OSError:
+                pass
+        try:
+            run_ff([
+                "ffmpeg",
+                "-y",
+                "-v",
+                "error",
+                "-i",
+                str(video_path),
+                "-vf",
+                "fps=1/5,scale=270:480,tile=4x3",
+                "-frames:v",
+                "1",
+                str(sheet_path),
+            ])
+        except Exception:
+            pass
+        return sheet_path
+
+    def write_provider_report() -> Path:
+        selection_diagnostics = load_selection_diagnostics()
+        provider_stats: dict[str, dict[str, Any]] = {}
+        for metadata in selection_diagnostics.values():
+            selection = metadata.get("selection", {}) if isinstance(metadata, dict) else {}
+            selected_provider = str(selection.get("provider") or "")
+            for attempt in metadata.get("selection_attempts", []) if isinstance(metadata, dict) else []:
+                provider = str(attempt.get("provider") or "")
+                if not provider:
+                    continue
+                stats = provider_stats.setdefault(provider, {
+                    "searched": 0,
+                    "assets_returned": 0,
+                    "assets_selected": 0,
+                    "assets_rejected": 0,
+                    "warnings": {},
+                })
+                stats["searched"] += 1
+                stats["assets_returned"] += int(attempt.get("candidate_count") or 0)
+                stats["assets_rejected"] += len(attempt.get("rejected") or [])
+                if attempt.get("accepted") or provider == selected_provider:
+                    stats["assets_selected"] += 1
+                for warning in attempt.get("warnings") or []:
+                    warning = str(warning)
+                    stats["warnings"][warning] = stats["warnings"].get(warning, 0) + 1
+            if selected_provider and not metadata.get("selection_attempts"):
+                stats = provider_stats.setdefault(selected_provider, {
+                    "searched": 0,
+                    "assets_returned": 0,
+                    "assets_selected": 0,
+                    "assets_rejected": 0,
+                    "warnings": {},
+                })
+                stats["assets_returned"] += int(selection.get("candidate_count") or 1)
+                stats["assets_selected"] += 1
+        return write_manifest(OUT_DIR / "provider_report.json", provider_stats)
+
+    def write_adaptive_search_report() -> Path:
+        report = {
+            str(idx + 1): payload
+            for idx, payload in sorted(_ADAPTIVE_SEARCH_DIAGNOSTICS.items())
+        }
+        return write_manifest(OUT_DIR / "adaptive_search_report.json", report)
+
+    def load_selection_diagnostics() -> dict[int, dict[str, Any]]:
+        if _MEDIA_SELECTION_DIAGNOSTICS:
+            return dict(_MEDIA_SELECTION_DIAGNOSTICS)
+        manifest_path = OUT_DIR / "media_manifest.json"
+        if not manifest_path.exists():
+            return {}
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+        diagnostics: dict[int, dict[str, Any]] = {}
+        for idx, asset in enumerate(manifest.get("assets") or []):
+            if not isinstance(asset, dict):
+                continue
+            metadata = asset.get("metadata") or {}
+            if not isinstance(metadata, dict):
+                continue
+            selection = metadata.get("selection")
+            if not isinstance(selection, dict):
+                selection = {
+                    "provider": metadata.get("provider"),
+                    "provider_id": metadata.get("provider_asset_id"),
+                    "query": metadata.get("selected_query"),
+                    "media_mode": metadata.get("media_mode"),
+                    "confidence": metadata.get("confidence"),
+                    "confidence_level": metadata.get("confidence_level"),
+                    "selection_reason": metadata.get("selection_reason"),
+                    "rejection_reason": metadata.get("rejection_reason"),
+                    "candidate_count": metadata.get("candidate_count"),
+                }
+            diagnostics[idx] = {
+                "selection": selection,
+                "shot_intent": {
+                    "media_mode": metadata.get("media_mode"),
+                    "scene_importance": metadata.get("scene_importance"),
+                    "scene_type": metadata.get("scene_type"),
+                },
+            }
+        return diagnostics
+
+    def write_selection_report(metadata: dict) -> Path:
+        selection_diagnostics = load_selection_diagnostics()
+        lines = [
+            "=" * 50,
+            f"Selection Report: {metadata.get('title') or niche}",
+            "=" * 50,
+            "",
+        ]
+        for idx in sorted(selection_diagnostics):
+            item = selection_diagnostics[idx]
+            selection = item.get("selection", {}) if isinstance(item, dict) else {}
+            shot_intent = item.get("shot_intent", {}) if isinstance(item, dict) else {}
+            lines.extend([
+                f"Scene {idx + 1}",
+                f"Narration: {(metadata.get('segments') or [{}])[idx].get('narration', '') if idx < len(metadata.get('segments') or []) else ''}",
+                f"Provider: {selection.get('provider', '')}",
+                f"Provider ID: {selection.get('provider_id', '')}",
+                f"Media Mode: {selection.get('media_mode') or shot_intent.get('media_mode', '')}",
+                f"Primary Subject: {selection.get('primary_subject', '')}",
+                f"Subject Visible: {selection.get('subject_visible', '')}",
+                f"Continuity: {selection.get('continuity_reason', '')}",
+                f"Confidence: {selection.get('confidence_level') or selection.get('confidence', '')}",
+                f"Query: {selection.get('query') or selection.get('selected_query', '')}",
+                f"Reason: {selection.get('selection_reason', '')}",
+                f"Rejected: {selection.get('rejection_reason', '')}",
+                "",
+            ])
+        report_path = OUT_DIR / "selection_report.txt"
+        report_path.write_text("\n".join(lines), encoding="utf-8")
+        return report_path
+
+    def copy_queue_snapshot(pending_folder: Path, files: dict[str, Path]) -> dict[str, str]:
+        pending_folder.mkdir(parents=True, exist_ok=True)
+        copied: dict[str, str] = {}
+        for name, source in files.items():
+            source = Path(source)
+            if not source.exists() or not source.is_file():
+                continue
+            target = pending_folder / name
+            try:
+                shutil.copy2(str(source), str(target))
+                copied[name] = str(target)
+            except OSError:
+                continue
+        return copied
+
     def stage_queue_creation(ctx: PipelineContext) -> StageResult:
         metadata = ctx.values["metadata"]
         video_id = ctx.values["video_id"]
         artifact_store = ArtifactStore(SCRIPT_DIR)
         queue = FilesystemQueue(artifact_store.queue_root())
+        ffprobe_path = write_ffprobe_report(Path(ctx.values["final"]))
+        contact_sheet_path = write_contact_sheet(Path(ctx.values["final"]))
+        provider_report_path = write_provider_report()
+        adaptive_search_report_path = write_adaptive_search_report()
+        selection_report_path = write_selection_report(metadata)
         existing = queue.find(video_id)
         if existing is None:
             queue.create_pending(
@@ -4644,11 +5641,27 @@ def main():
                 },
             )
         pending_folder = artifact_store.queue_item_path("pending", video_id)
+        snapshot_files = {
+            "timeline.json": OUT_DIR / "timeline.json",
+            "shot_plan.json": OUT_DIR / "shot_plan.json",
+            "visual_grammar_report.json": OUT_DIR / "visual_grammar_report.json",
+            "subject_continuity_report.json": OUT_DIR / "subject_continuity_report.json",
+            "provider_report.json": provider_report_path,
+            "adaptive_search_report.json": adaptive_search_report_path,
+            "selection_report.txt": selection_report_path,
+            "contact_sheet.jpg": contact_sheet_path,
+            "media_manifest.json": OUT_DIR / "media_manifest.json",
+            "ffprobe.json": ffprobe_path,
+            "audio_mix_report.json": OUT_DIR / "audio_mix_report.json",
+            "upload_metadata.json": ctx.values["meta_path"],
+        }
+        copied_snapshot = copy_queue_snapshot(pending_folder, snapshot_files)
         payload = {
             "video_id": video_id,
             "queue_folder": str(pending_folder),
             "pending_video": str(pending_folder / "video.mp4"),
             "pending_video_yt": str(pending_folder / "video_yt_safe.mp4"),
+            "snapshot_artifacts": copied_snapshot,
         }
         path = write_manifest(OUT_DIR / "queue_manifest.json", payload)
         ctx.values["queue_folder"] = pending_folder

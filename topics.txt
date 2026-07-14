@@ -9,6 +9,9 @@ the mimic octopus that can impersonate 15 different creatures
 the shark that can live for over 400 years
 weird facts about the deep ocean abyss
 strange creatures of the mariana trench
+the pistol shrimp that creates a sonic boom
+how the vampire squid survives in the deep ocean
+the cuttlefish that can hypnotize its prey
 
 # --- Space & Atmospheric ---
 what happens if you get sucked into a black hole
@@ -17,6 +20,8 @@ the place where lightning strikes 300 times a year
 the extreme storm that creates a green sky
 mind-blowing facts about our solar system
 strange clouds and storm formations on Earth
+the mysterious 'Great Attractor' pulling our galaxy towards it
+the planet made of solid diamond
 
 # --- Earth, Geology & Extreme Environments ---
 the deepest hole on Earth and what they found inside
@@ -24,6 +29,8 @@ the lake of death that turns animals into stone
 the underwater volcano that is creating a new island
 the place on Earth where it constantly rains fish
 geological wonders hidden in plain sight
+the sailing stones of Death Valley that move on their own
+the giant crystal cave hidden deep underground
 
 # --- Animals & Plants ---
 the killer plant that eats rats alive
@@ -33,3 +40,9 @@ the bizarre plant that bleeds red sap when cut
 the massive underground fungus larger than a blue whale
 what is actually living in a single drop of pond water
 insects that quietly rule our ecosystem
+
+# --- Biology & Survival ---
+the frog that freezes solid in winter and thaws back to life
+the animal that can regenerate its entire head
+the plant that pretends to be a female insect
+how tardigrades survive the vacuum of space

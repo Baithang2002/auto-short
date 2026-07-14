@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
 
+from autovideo.config.audio import ClipAudioConfig, clip_audio_config_from_env
 from autovideo.config.channels import RenderProfile, resolve_render_profile
 from autovideo.config.defaults import DEFAULTS
 from autovideo.config.music import MusicConfig, music_config_from_settings
@@ -63,6 +64,7 @@ class AppConfig:
     speechify_voice_id: str
     elevenlabs_voice_id: str
     elevenlabs_model: str
+    clip_audio: ClipAudioConfig = field(default_factory=ClipAudioConfig)
     music: MusicConfig = field(default_factory=MusicConfig)
 
     @classmethod
@@ -82,6 +84,7 @@ class AppConfig:
         allow_external = settings.env_bool("AUTO_VIDEO_ALLOW_EXTERNAL_API_CALLS", profile.allow_external_api_calls)
         mock_uploads = settings.env_bool("AUTO_VIDEO_MOCK_UPLOADS", profile.mock_uploads)
         music_config = music_config_from_settings(settings, profile_order=profile.music_provider_priority)
+        clip_audio_config = clip_audio_config_from_env(settings.env_values)
 
         return cls(
             settings=settings,
@@ -125,5 +128,6 @@ class AppConfig:
             speechify_voice_id=settings.env("SPEECHIFY_VOICE_ID", DEFAULTS.providers.speechify_voice_id),
             elevenlabs_voice_id=settings.env("ELEVENLABS_VOICE_ID", DEFAULTS.providers.elevenlabs_voice_id),
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
+            clip_audio=clip_audio_config,
             music=music_config,
         )

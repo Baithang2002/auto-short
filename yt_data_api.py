@@ -20,6 +20,7 @@ which covers daily Shorts with massive headroom.
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Optional
@@ -59,9 +60,131 @@ def _get_creds():
     )
 
 
+def _get_comment_creds():
+    """Build credentials for YouTube comment operations when authorized."""
+    client_id     = os.environ.get("YT_CLIENT_ID", "").strip()
+    client_secret = os.environ.get("YT_CLIENT_SECRET", "").strip()
+    refresh_token = os.environ.get("YT_REFRESH_TOKEN", "").strip()
+
+    if not all([client_id, client_secret, refresh_token]):
+        return None
+
+    try:
+        from google.oauth2.credentials import Credentials
+    except ImportError:
+        return None
+
+    return Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri="https://oauth2.googleapis.com/token",
+        client_id=client_id,
+        client_secret=client_secret,
+        scopes=["https://www.googleapis.com/auth/youtube.force-ssl"],
+    )
+
+
 def is_api_available() -> bool:
     """True if YouTube Data API can be used (creds present + deps installed)."""
     return _get_creds() is not None
+
+
+def extract_video_id(url_or_id: str | None) -> str:
+    """Extract a YouTube video id from a URL or return the id-like value."""
+    value = (url_or_id or "").strip()
+    if not value:
+        return ""
+    patterns = (
+        r"youtu\.be/([A-Za-z0-9_-]{6,})",
+        r"youtube\.com/shorts/([A-Za-z0-9_-]{6,})",
+        r"youtube\.com/watch\?v=([A-Za-z0-9_-]{6,})",
+        r"youtube\.com/video/([A-Za-z0-9_-]{6,})",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, value)
+        if match:
+            return match.group(1)
+    return value if re.fullmatch(r"[A-Za-z0-9_-]{6,}", value) else ""
+
+
+def post_pinned_comment_via_api(video_id: str, comment_text: str) -> dict:
+    """Post a top-level YouTube comment and report pin status best-effort."""
+    video_id = extract_video_id(video_id)
+    comment_text = (comment_text or "").strip()
+    if not video_id or not comment_text:
+        return {
+            "status": "skipped",
+            "comment_id": "",
+            "pin_success": False,
+            "retry_attempts": 0,
+            "error": "missing video id or comment text",
+        }
+
+    creds = _get_comment_creds()
+    if creds is None:
+        return {
+            "status": "skipped",
+            "comment_id": "",
+            "pin_success": False,
+            "retry_attempts": 0,
+            "error": "comment credentials unavailable or dependency missing",
+        }
+
+    try:
+        from googleapiclient.discovery import build
+        from googleapiclient.errors import HttpError
+    except ImportError:
+        return {
+            "status": "error",
+            "comment_id": "",
+            "pin_success": False,
+            "retry_attempts": 0,
+            "error": "Missing dep: pip install google-api-python-client",
+        }
+
+    try:
+        youtube = build("youtube", "v3", credentials=creds, cache_discovery=False)
+        response = youtube.commentThreads().insert(
+            part="snippet",
+            body={
+                "snippet": {
+                    "videoId": video_id,
+                    "topLevelComment": {
+                        "snippet": {
+                            "textOriginal": comment_text[:10000],
+                        }
+                    },
+                }
+            },
+        ).execute()
+        comment_id = (
+            (response.get("snippet") or {})
+            .get("topLevelComment", {})
+            .get("id", "")
+        )
+        return {
+            "status": "ok",
+            "comment_id": comment_id,
+            "pin_success": False,
+            "retry_attempts": 1,
+            "pin_error": "YouTube Data API does not expose a supported pin-comment endpoint",
+        }
+    except HttpError as e:
+        return {
+            "status": "error",
+            "comment_id": "",
+            "pin_success": False,
+            "retry_attempts": 1,
+            "error": f"HTTP {e.resp.status}: {e._get_reason()}",
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "comment_id": "",
+            "pin_success": False,
+            "retry_attempts": 1,
+            "error": f"{type(e).__name__}: {e}",
+        }
 
 
 def upload_youtube_via_api(

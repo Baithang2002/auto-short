@@ -13,8 +13,15 @@ from .planning import (
     classify_scene_type,
     default_provider_capability_registry,
 )
+from .composer import (
+    CompositionKind,
+    HybridCompositionPlan,
+    HybridCompositionResult,
+    HybridVisualComposer,
+)
 from .selection import (
     CandidateScore,
+    MediaMode,
     MediaSelectionResult,
     SceneImportance,
     StockCandidate,
@@ -29,6 +36,11 @@ from .selection import (
     select_best_candidate,
     select_first_available_provider,
 )
+from .subject_continuity import (
+    SubjectContinuityEngine,
+    SubjectContinuityProfile,
+    SubjectContinuityReport,
+)
 from .visual_director import (
     DocumentaryStyleRules,
     DomainKnowledge,
@@ -40,11 +52,24 @@ from .visual_director import (
     VisualDirector,
     VisualGoal,
 )
+from .visual_grammar import (
+    CompositionBudget,
+    VisualGrammar,
+    VisualGrammarDecision,
+    VisualGrammarEngine,
+    default_visual_grammars,
+)
 
 __all__ = [
     "CapabilityRequirement",
     "CandidateScore",
+    "CompositionKind",
+    "CompositionBudget",
     "MediaSelectionResult",
+    "MediaMode",
+    "HybridCompositionPlan",
+    "HybridCompositionResult",
+    "HybridVisualComposer",
     "ProviderCapability",
     "ProviderCapabilityRegistry",
     "ProviderSearchPlan",
@@ -55,6 +80,9 @@ __all__ = [
     "SceneType",
     "SourcePlanner",
     "StockCandidate",
+    "SubjectContinuityEngine",
+    "SubjectContinuityProfile",
+    "SubjectContinuityReport",
     "VisualIntent",
     "DocumentaryStyleRules",
     "DomainKnowledge",
@@ -64,6 +92,9 @@ __all__ = [
     "ShotPlan",
     "TieredQueries",
     "VisualDirector",
+    "VisualGrammar",
+    "VisualGrammarDecision",
+    "VisualGrammarEngine",
     "VisualGoal",
     "build_visual_intent",
     "classify_scene_type",
@@ -76,4 +107,5 @@ __all__ = [
     "select_best_candidate",
     "select_first_available_provider",
     "default_provider_capability_registry",
+    "default_visual_grammars",
 ]

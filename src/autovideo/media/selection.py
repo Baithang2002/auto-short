@@ -350,6 +350,18 @@ class SceneImportance(str, Enum):
     CTA = "cta"
 
 
+class MediaMode(str, Enum):
+    """Editorial media arbitration mode for a scene."""
+
+    SHOW = "show"
+    PROVE = "prove"
+    EXPLAIN = "explain"
+    COMPARE = "compare"
+    REVEAL = "reveal"
+    TRANSITION = "transition"
+    CTA = "cta"
+
+
 @dataclass(frozen=True)
 class VisualIntent:
     """Structured visual need for one script segment."""
@@ -358,11 +370,16 @@ class VisualIntent:
     narration: str
     primary_subject: str
     queries: tuple[str, ...]
+    supporting_subjects: tuple[str, ...] = ()
+    subject_persistence_target: float = 0.85
+    allowed_substitutions: tuple[str, ...] = ()
+    forbidden_substitutions: tuple[str, ...] = ()
     action_terms: tuple[str, ...] = ()
     environment_terms: tuple[str, ...] = ()
     shot_type: str = ""
     keywords: tuple[str, ...] = ()
     scene_importance: SceneImportance = SceneImportance.SUPPORTING
+    media_mode: MediaMode = MediaMode.SHOW
 
 
 @dataclass(frozen=True)
@@ -487,6 +504,14 @@ class MediaSelectionResult:
             "attribution": attribution,
             "scene_type": scene_type,
             "capability": capability,
+            "media_mode": _score_text(self.score, "media_mode"),
+            "primary_subject": _score_text(self.score, "primary_subject"),
+            "subject_visible": bool(self.score and self.score.breakdown.get("_subject_visible_value")),
+            "subject_match_type": _score_text(self.score, "subject_match_type"),
+            "substitution_used": _score_text(self.score, "substitution_used"),
+            "forbidden_substitutions": list(self.score.breakdown.get("_forbidden_substitutions_value", [])) if self.score else [],
+            "continuity_score": _score_value(self.score, "subject_continuity_score"),
+            "continuity_reason": _score_text(self.score, "continuity_reason"),
             "confidence": self.confidence,
             "confidence_level": self.confidence.upper(),
             "selected_query": self.query_used,
@@ -509,6 +534,14 @@ class MediaSelectionResult:
                 "attribution": attribution,
                 "scene_type": scene_type,
                 "capability": capability,
+                "media_mode": _score_text(self.score, "media_mode"),
+                "primary_subject": _score_text(self.score, "primary_subject"),
+                "subject_visible": bool(self.score and self.score.breakdown.get("_subject_visible_value")),
+                "subject_match_type": _score_text(self.score, "subject_match_type"),
+                "substitution_used": _score_text(self.score, "substitution_used"),
+                "forbidden_substitutions": list(self.score.breakdown.get("_forbidden_substitutions_value", [])) if self.score else [],
+                "continuity_score": _score_value(self.score, "subject_continuity_score"),
+                "continuity_reason": _score_text(self.score, "continuity_reason"),
                 "score": round(self.score.score, 3) if self.score else None,
                 "confidence": self.confidence,
                 "confidence_level": self.confidence.upper(),
@@ -548,7 +581,16 @@ def build_visual_intent(segment: Mapping[str, Any] | Any, topic: str) -> VisualI
     action_terms = tuple(sorted({token for token in tokens if token in _ACTION_TERMS}))
     environment_terms = tuple(sorted({token for token in tokens if token in _ENVIRONMENT_TERMS}))
     shot_type = _shot_type(combined)
-    subject = _primary_subject(primary_text, topic)
+    subject = str(_segment_value(segment, "primary_subject") or "").strip()
+    if not subject:
+        subject = _primary_subject(primary_text, topic)
+    supporting_subjects = _string_tuple(_segment_value(segment, "supporting_subjects"))
+    allowed_substitutions = _string_tuple(_segment_value(segment, "allowed_substitutions"))
+    forbidden_substitutions = _string_tuple(_segment_value(segment, "forbidden_substitutions"))
+    subject_persistence_target = _float_or_default(
+        _segment_value(segment, "subject_persistence_target"),
+        0.85,
+    )
     keywords = tuple(sorted({
         token
         for token in _tokens(f"{subject} {primary_text} {topic}")
@@ -559,11 +601,16 @@ def build_visual_intent(segment: Mapping[str, Any] | Any, topic: str) -> VisualI
         narration=narration,
         primary_subject=subject,
         queries=queries or ((broll or topic),),
+        supporting_subjects=supporting_subjects,
+        subject_persistence_target=subject_persistence_target,
+        allowed_substitutions=allowed_substitutions,
+        forbidden_substitutions=forbidden_substitutions,
         action_terms=action_terms,
         environment_terms=environment_terms,
         shot_type=shot_type,
         keywords=keywords,
         scene_importance=_scene_importance(_segment_value(segment, "scene_importance")),
+        media_mode=_media_mode(_segment_value(segment, "media_mode")),
     )
 
 
@@ -760,6 +807,30 @@ def select_best_candidate(
         for item in scored
         if item[1].quality_gate_passed and item[1].score >= minimum_score
     ]
+    authentic_eligible = [
+        item
+        for item in scored
+        if _authentic_media_gate(
+            intent,
+            item[0],
+            item[1],
+            minimum_score=minimum_score,
+            output_width=output_width,
+            output_height=output_height,
+        )
+    ]
+    if authentic_eligible and _prefers_authentic_media(intent):
+        eligible = sorted(
+            authentic_eligible,
+            key=lambda item: (
+                _authentic_media_rank(item[0]),
+                item[1].quality_gate_passed,
+                item[1].relevance_score,
+                item[1].score,
+                item[0].provider_id,
+            ),
+            reverse=True,
+        )
     _, diagnostic_score = scored[0]
     if not eligible:
         warnings = []
@@ -785,6 +856,9 @@ def select_best_candidate(
         )
 
     selected, score = eligible[0]
+    authentic_gate_used = any(candidate is selected for candidate, _score in authentic_eligible)
+    if authentic_gate_used and not score.quality_gate_passed:
+        score = _with_authentic_gate_acceptance(score)
     selected, score, portrait_warning = _prefer_portrait_safe_alternative(
         eligible,
         selected,
@@ -801,6 +875,8 @@ def select_best_candidate(
     warnings: list[str] = []
     if portrait_warning:
         warnings.append(portrait_warning)
+    if authentic_gate_used:
+        warnings.append("authentic media gate selected subject match before composition")
     if score.confidence == "low":
         warnings.append("low confidence media match")
     return MediaSelectionResult(selected, score, len(candidates), tuple(warnings), rejected)
@@ -871,6 +947,16 @@ def score_candidate(
     else:
         rejection_reasons.append("subject not found in metadata")
 
+    continuity_score, continuity_breakdown, continuity_reasons = _subject_continuity_score(
+        intent,
+        candidate,
+        proof_text,
+    )
+    breakdown.update(continuity_breakdown)
+    rejection_reasons.extend(continuity_reasons)
+    if continuity_breakdown.get("_subject_visible_value"):
+        explanation.append("primary subject continuity preserved")
+
     action_score = sum(1.0 for term in intent.action_terms if term in proof_text)
     breakdown["action"] = action_score
     if action_score:
@@ -935,6 +1021,10 @@ def score_candidate(
         for key, value in breakdown.items()
         if isinstance(value, (int, float)) and key not in {"portrait_score", "relevance_score"}
     )
+    format_penalty = _explanatory_format_penalty(intent, candidate)
+    if format_penalty:
+        score += format_penalty
+        breakdown["explanatory_format_penalty"] = format_penalty
     if _requires_qr_visual(intent) and not _has_qr_evidence(candidate):
         score -= 8.0
         rejection_reasons.append("qr code not proven in provider metadata")
@@ -945,6 +1035,7 @@ def score_candidate(
     )
     rejection_reasons.extend(gate_reasons)
     breakdown["evidence_score"] = evidence_score
+    breakdown["_media_mode_value"] = intent.media_mode.value
     breakdown["_visual_domain_value"] = domain
     breakdown["_quality_gate_passed_value"] = gate_passed
     breakdown["_relevance_threshold_value"] = threshold
@@ -970,12 +1061,38 @@ def _segment_value(segment: Mapping[str, Any] | Any, key: str) -> Any:
     return getattr(segment, key, "")
 
 
+def _string_tuple(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        return (value,) if value.strip() else ()
+    try:
+        return tuple(str(item) for item in value if str(item).strip())
+    except TypeError:
+        return (str(value),) if str(value).strip() else ()
+
+
+def _float_or_default(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def _scene_importance(value: Any) -> SceneImportance:
     normalized = _normalize_text(str(value or "")).replace(" ", "_")
     for importance in SceneImportance:
         if normalized == importance.value:
             return importance
     return SceneImportance.SUPPORTING
+
+
+def _media_mode(value: Any) -> MediaMode:
+    normalized = _normalize_text(str(value or "")).replace(" ", "_")
+    for mode in MediaMode:
+        if normalized == mode.value:
+            return mode
+    return MediaMode.SHOW
 
 
 def _score_value(score: CandidateScore | None, key: str) -> float | None:
@@ -1051,6 +1168,111 @@ def _subject_score(intent: VisualIntent, text: str) -> float:
     if len(matched) == len(subject_tokens):
         return 3.5
     return len(matched) * 0.75
+
+
+def _subject_continuity_score(
+    intent: VisualIntent,
+    candidate: StockCandidate,
+    text: str,
+) -> tuple[float, dict[str, Any], tuple[str, ...]]:
+    terms = _continuity_terms(intent)
+    content = _normalize_text(text)
+    primary_matches = _matching_terms(content, terms["primary"])
+    supporting_matches = _matching_terms(content, terms["supporting"])
+    allowed_matches = _matching_terms(content, terms["allowed"])
+    forbidden_matches = _matching_terms(content, terms["forbidden"])
+    subject_visible = bool(primary_matches or supporting_matches or allowed_matches)
+    substitution = ""
+    match_type = "missing"
+    score = 0.0
+    reasons: list[str] = []
+
+    if primary_matches:
+        score += 4.0
+        match_type = "primary"
+    elif supporting_matches:
+        score += 2.0
+        match_type = "supporting"
+        substitution = supporting_matches[0]
+    elif allowed_matches:
+        score += 1.25
+        match_type = "allowed_substitution"
+        substitution = allowed_matches[0]
+    elif _requires_subject_persistence(intent):
+        score -= 3.5
+        reasons.append("primary subject continuity missing")
+
+    if forbidden_matches:
+        score -= 4.5
+        reasons.append("forbidden subject substitution accepted: " + ", ".join(forbidden_matches))
+
+    reason = "primary subject visible"
+    if match_type == "supporting":
+        reason = f"supporting subject used: {substitution}"
+    elif match_type == "allowed_substitution":
+        reason = f"allowed substitution used: {substitution}"
+    elif match_type == "missing":
+        reason = "primary subject absent from provider metadata"
+
+    breakdown = {
+        "subject_continuity_score": score,
+        "_primary_subject_value": intent.primary_subject,
+        "_subject_visible_value": subject_visible,
+        "_subject_match_type_value": match_type,
+        "_substitution_used_value": substitution,
+        "_forbidden_substitutions_value": forbidden_matches,
+        "_continuity_reason_value": reason,
+    }
+    return score, breakdown, tuple(reasons)
+
+
+def _continuity_terms(intent: VisualIntent) -> dict[str, tuple[str, ...]]:
+    return {
+        "primary": _term_variants((intent.primary_subject,)),
+        "supporting": _term_variants(intent.supporting_subjects),
+        "allowed": _term_variants(intent.allowed_substitutions),
+        "forbidden": _term_variants(intent.forbidden_substitutions),
+    }
+
+
+def _term_variants(values: tuple[str, ...]) -> tuple[str, ...]:
+    variants: list[str] = []
+    for value in values:
+        normalized = _normalize_text(value)
+        if not normalized:
+            continue
+        variants.append(normalized)
+        tokens = [token for token in _tokens(normalized) if token not in _STOPWORDS]
+        variants.extend(tokens)
+        if normalized.endswith("s"):
+            variants.append(normalized[:-1])
+        else:
+            variants.append(f"{normalized}s")
+    return tuple(dict.fromkeys(variants))
+
+
+def _matching_terms(text: str, terms: tuple[str, ...]) -> list[str]:
+    matches: list[str] = []
+    padded = f" {text} "
+    for term in terms:
+        if not term:
+            continue
+        if " " in term:
+            found = term in text
+        else:
+            found = f" {term} " in padded
+        if found:
+            matches.append(term)
+    return list(dict.fromkeys(matches))
+
+
+def _requires_subject_persistence(intent: VisualIntent) -> bool:
+    if intent.media_mode in {MediaMode.EXPLAIN, MediaMode.TRANSITION, MediaMode.CTA}:
+        return False
+    text = _normalize_text(intent.narration)
+    if any(term in text for term in ("instead", "meanwhile", "compared with", "not the")):
+        return False
+    return True
 
 
 def _duration_score(duration: float | None, target_duration: float) -> float:
@@ -1191,7 +1413,7 @@ def _visual_relevance_score(
         if "qr" in intent_tokens and tokens & _GENERIC_TECH_TERMS and "qr" not in tokens:
             score -= 3.0
             rejection_reasons.append("abstract tech footage without qr code")
-        if {"diagram", "map", "satellite"} & intent_tokens and not (tokens & {"diagram", "map", "satellite", "earth", "data", "animation"}):
+        if _requires_explanatory_format(intent) and {"diagram", "map", "satellite"} & intent_tokens and not (tokens & {"diagram", "map", "satellite", "earth", "data", "animation"}):
             score -= 2.5
             rejection_reasons.append("missing explanatory visual signal")
     if candidate.provider in {"nasa", "esa", "noaa", "wikimedia"} and matched_keywords:
@@ -1242,7 +1464,8 @@ def _quality_gate(
     }
     if domain == "explanatory" and requested_format and not (candidate_tokens & requested_format):
         formats = ", ".join(sorted(requested_format))
-        reasons.append(f"requested explanatory format not proven: {formats}")
+        if _requires_explanatory_format(intent):
+            reasons.append(f"requested explanatory format not proven: {formats}")
 
     wrong_domain = candidate_tokens & (_ANIMAL_CONTENT_TERMS | _GENERIC_PEOPLE_TERMS)
     requested_people_or_animals = intent_tokens & (_ANIMAL_CONTENT_TERMS | _GENERIC_PEOPLE_TERMS)
@@ -1268,7 +1491,7 @@ def _visual_domain(intent: VisualIntent) -> tuple[str, set[str]]:
     tokens = set(_tokens(_intent_text(intent)))
     if _requires_qr_visual(intent):
         return "qr_code", _QR_VISUAL_TERMS
-    if tokens & {"diagram", "infographic", "chart", "map", "satellite", "visualization"}:
+    if _requires_explanatory_format(intent) and tokens & {"diagram", "infographic", "chart", "map", "satellite", "visualization"}:
         return "explanatory", _EXPLANATORY_EVIDENCE_TERMS
     if tokens & _HISTORY_EVIDENCE_TERMS:
         return "history", _HISTORY_EVIDENCE_TERMS
@@ -1330,7 +1553,152 @@ def _has_qr_evidence(candidate: StockCandidate) -> bool:
 def _requires_specific_visual(intent: VisualIntent) -> bool:
     text = _normalize_text(_intent_text(intent))
     tokens = set(_tokens(text))
-    return bool(tokens & _SPECIFIC_VISUAL_TERMS)
+    specific_terms = tokens & _SPECIFIC_VISUAL_TERMS
+    if not specific_terms:
+        return False
+    if specific_terms <= {"diagram", "map", "mechanism"} and not _requires_explanatory_format(intent):
+        return False
+    return True
+
+
+def _requires_explanatory_format(intent: VisualIntent) -> bool:
+    return intent.media_mode in {MediaMode.EXPLAIN, MediaMode.COMPARE}
+
+
+def _prefers_authentic_media(intent: VisualIntent) -> bool:
+    return intent.media_mode in {
+        MediaMode.SHOW,
+        MediaMode.PROVE,
+        MediaMode.REVEAL,
+        MediaMode.TRANSITION,
+        MediaMode.CTA,
+    }
+
+
+def _explanatory_format_penalty(intent: VisualIntent, candidate: StockCandidate) -> float:
+    if _requires_explanatory_format(intent):
+        return 0.0
+    intent_tokens = set(_tokens(_intent_text(intent)))
+    requested_format = intent_tokens & {
+        "animation",
+        "chart",
+        "diagram",
+        "infographic",
+        "map",
+        "satellite",
+        "visualization",
+    }
+    if not requested_format:
+        return 0.0
+    candidate_tokens = set(_tokens(_candidate_content_text(candidate)))
+    return 0.0 if candidate_tokens & requested_format else -0.75
+
+
+def _authentic_media_gate(
+    intent: VisualIntent,
+    candidate: StockCandidate,
+    score: CandidateScore,
+    *,
+    minimum_score: float,
+    output_width: int,
+    output_height: int,
+) -> bool:
+    if not _prefers_authentic_media(intent):
+        return False
+    if not _is_authentic_candidate(candidate):
+        return False
+    if candidate.dedup_key in {""}:
+        return False
+    if "duplicate provider id" in score.rejection_reasons:
+        return False
+    if _requires_qr_visual(intent) and not _has_qr_evidence(candidate):
+        return False
+    if any(
+        reason.startswith("wrong-domain content")
+        or reason == "generic people or lifestyle footage"
+        for reason in score.rejection_reasons
+    ):
+        return False
+    if _portrait_safety_score(candidate, output_width, output_height) < 4.0:
+        return False
+    minimum_relevance = 6.25 if intent.scene_importance in {SceneImportance.HOOK, SceneImportance.MAIN_REVEAL} else 5.25
+    if score.relevance_score < minimum_relevance:
+        return False
+    subject_score = score.breakdown.get("subject", 0.0)
+    matched_subject = isinstance(subject_score, (int, float)) and subject_score > 0
+    matched_context = bool(
+        set(_tokens(_candidate_content_text(candidate)))
+        & ((set(intent.keywords) | set(intent.action_terms) | set(intent.environment_terms)) - _QUALITY_GATE_GENERIC_INTENT_TERMS)
+    )
+    if not (matched_subject or matched_context):
+        return False
+    return score.score >= max(0.0, minimum_score - 1.0)
+
+
+def _is_authentic_candidate(candidate: StockCandidate) -> bool:
+    if candidate.provider in {"hybrid_composer", "gemini_image", "broad_fallback"}:
+        return False
+    local_name = str(candidate.local_path or "").lower()
+    if "local_explainer" in local_name or "hybrid_visual" in local_name:
+        return False
+    return candidate.provider in {
+        "local",
+        "pexels",
+        "pixabay",
+        "mixkit",
+        "coverr",
+        "videvo",
+        "nasa",
+        "esa",
+        "noaa",
+        "usgs",
+        "usfws",
+        "nps",
+        "wikimedia",
+        "loc",
+        "smithsonian",
+        "europeana",
+        "internet_archive",
+        "flickr_commons",
+    }
+
+
+def _authentic_media_rank(candidate: StockCandidate) -> int:
+    if candidate.provider in {"pexels", "pixabay", "mixkit", "coverr", "videvo"} and not candidate.is_image:
+        return 7
+    if candidate.provider in {"nasa", "esa", "noaa", "usgs", "usfws", "nps", "wikimedia", "loc", "smithsonian", "europeana", "internet_archive"} and not candidate.is_image:
+        return 6
+    if candidate.provider in {"pexels", "pixabay", "mixkit", "coverr", "videvo"}:
+        return 5
+    if candidate.provider in {"nasa", "esa", "noaa", "usgs", "usfws", "nps", "wikimedia", "loc", "smithsonian", "europeana", "internet_archive"}:
+        return 4
+    if candidate.provider == "local":
+        return 3
+    return 1
+
+
+def _with_authentic_gate_acceptance(score: CandidateScore) -> CandidateScore:
+    breakdown = dict(score.breakdown)
+    original_rejection = str(breakdown.get("_rejection_reason_value") or "")
+    breakdown["_quality_gate_passed_value"] = True
+    breakdown["_acceptance_reason_value"] = (
+        "accepted by authentic media gate: subject match and usable framing beat composition fallback"
+    )
+    breakdown["_selection_reason_value"] = "authentic subject media selected before composition"
+    breakdown["_rejection_reason_value"] = original_rejection
+    filtered_rejections = tuple(
+        reason
+        for reason in score.rejection_reasons
+        if not reason.startswith("requested explanatory format not proven")
+        and "no explanatory evidence" not in reason
+        and "wrong-domain content for explanatory" not in reason
+    )
+    return CandidateScore(
+        score=score.score,
+        explanation=tuple(dict.fromkeys((*score.explanation, "authentic media gate"))),
+        breakdown=breakdown,
+        rejection_reasons=filtered_rejections,
+    )
 
 
 def _selection_reason(explanation: list[str], rejection_reasons: list[str]) -> str:

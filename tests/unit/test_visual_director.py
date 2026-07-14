@@ -4,6 +4,7 @@ from pathlib import Path
 
 from autovideo.media import (
     KnowledgePackStore,
+    MediaMode,
     QueryTier,
     ShotPlan,
     VisualDirector,
@@ -122,6 +123,9 @@ class VisualDirectorTests(unittest.TestCase):
         self.assertEqual(plan.intents[0].visual_goal, VisualGoal.REVEAL)
         self.assertEqual(plan.intents[1].visual_goal, VisualGoal.EXPLAIN)
         self.assertEqual(plan.intents[2].visual_goal, VisualGoal.TRANSITION)
+        self.assertEqual(plan.intents[0].media_mode.value, MediaMode.REVEAL.value)
+        self.assertEqual(plan.intents[1].media_mode.value, MediaMode.EXPLAIN.value)
+        self.assertEqual(plan.intents[2].media_mode.value, MediaMode.CTA.value)
 
     def test_style_rules_are_global_documentary_rules(self) -> None:
         plan = VisualDirector().plan(
@@ -189,7 +193,85 @@ class VisualDirectorTests(unittest.TestCase):
 
         self.assertEqual(restored.domain_id, plan.domain_id)
         self.assertEqual(restored.intents[0].visual_goal, plan.intents[0].visual_goal)
+        self.assertEqual(restored.intents[0].media_mode, plan.intents[0].media_mode)
         self.assertEqual(restored.intents[0].search_queries, plan.intents[0].search_queries)
+
+    def test_scene_specific_queries_are_not_overridden_by_domain_defaults(self) -> None:
+        plan = VisualDirector().plan(
+            topic="mind-blowing facts about our solar system",
+            segments=[
+                {
+                    "narration": "Jupiter acted like a giant vacuum cleaner, pulling dangerous rocks away from Earth.",
+                    "broll": "jupiter planet rotating",
+                },
+                {
+                    "narration": "A rogue Mars-sized world smashed into Earth, creating our massive protective moon.",
+                    "broll": "planet colliding with earth",
+                },
+                {
+                    "narration": "Earth's magnetic field catches solar wind and charged particles.",
+                    "broll": "earth magnetosphere solar wind",
+                },
+                {
+                    "narration": "Those particles light up the upper atmosphere as auroras.",
+                    "broll": "aurora borealis timelapse",
+                },
+            ],
+        )
+
+        first_queries = [intent.search_queries[0].lower() for intent in plan.intents]
+
+        self.assertEqual(len(first_queries), len(set(first_queries)))
+        self.assertIn("jupiter", first_queries[0])
+        self.assertIn("planet colliding", first_queries[1])
+        self.assertIn("magnetosphere", first_queries[2])
+        self.assertIn("aurora", first_queries[3])
+
+    def test_adjacent_duplicate_queries_are_diversified_when_alternates_exist(self) -> None:
+        plan = VisualDirector().plan(
+            topic="How Roman Aqueducts Changed Civilization",
+            segments=[
+                {
+                    "narration": "Roman arches carried water across valleys.",
+                    "broll": "Roman aqueduct bridge",
+                    "broll_queries": ["Pont du Gard aqueduct"],
+                },
+                {
+                    "narration": "Stone channels used gravity to move water without pumps.",
+                    "broll": "Roman aqueduct bridge",
+                    "broll_queries": ["Roman water channel"],
+                },
+            ],
+        )
+
+        first_queries = [intent.search_queries[0] for intent in plan.intents]
+
+        self.assertNotEqual(first_queries[0], first_queries[1])
+
+    def test_single_storm_reference_does_not_hijack_wildlife_topic(self) -> None:
+        plan = VisualDirector().plan(
+            topic="Why Sharks Have Survived for 400 Million Years",
+            segments=[
+                {
+                    "narration": "Sharks survived ancient extinctions, giant waves, and storms.",
+                    "broll": "prehistoric shark swimming ocean",
+                },
+                {
+                    "narration": "Their skin is covered in tiny tooth-like scales.",
+                    "broll": "shark skin close up",
+                },
+                {
+                    "narration": "Electroreception helps them detect prey in dark water.",
+                    "broll": "shark swimming underwater close up",
+                },
+            ],
+        )
+
+        queries = " ".join(query for intent in plan.intents for query in intent.search_queries).lower()
+
+        self.assertNotEqual(plan.domain_id, "lightning_weather")
+        self.assertNotIn("lightning strike", queries)
+        self.assertNotIn("thunderstorm", queries)
 
 
 if __name__ == "__main__":

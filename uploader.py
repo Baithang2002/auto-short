@@ -44,6 +44,13 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+SCRIPT_DIR    = Path(__file__).parent.resolve()
+SRC_DIR       = SCRIPT_DIR / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from autovideo.engagement import generate_pinned_comment
+
 try:
     from playwright.sync_api import (
         sync_playwright, Error as PWError, TimeoutError as PWTimeout,
@@ -53,12 +60,12 @@ except ImportError:
     class PWError(Exception): pass
     class PWTimeout(Exception): pass
 
-SCRIPT_DIR    = Path(__file__).parent.resolve()
 SESSION_DIR   = SCRIPT_DIR / "browser_session"
 OUT_DIR       = SCRIPT_DIR / "output"
 SCREENSHOTS   = OUT_DIR / "screenshots"
 LOG_PATH      = OUT_DIR / "upload_log.json"
 META_PATH     = OUT_DIR / "upload_metadata.json"
+ENGAGEMENT_REPORT_PATH = OUT_DIR / "youtube_engagement_report.json"
 
 PLATFORMS = ("youtube", "instagram", "facebook")
 
@@ -73,6 +80,61 @@ def die(msg: str) -> None:
 
 def _ts() -> str:
     return dt.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def _write_youtube_engagement_report(report: dict) -> Path:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    ENGAGEMENT_REPORT_PATH.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    return ENGAGEMENT_REPORT_PATH
+
+
+def _post_upload_engagement(result: dict, metadata: dict) -> dict:
+    """Generate/post a YouTube pinned-comment candidate after successful upload."""
+    if result.get("status") != "ok":
+        return result
+    comment = (
+        metadata.get("pinned_comment")
+        or generate_pinned_comment(
+            topic=metadata.get("title", ""),
+            title=metadata.get("youtube_title", ""),
+            segments=metadata.get("segments") or (),
+        )
+    )
+    upload_id = result.get("video_id") or result.get("url") or ""
+    engagement = {
+        "generated_pinned_comment": comment,
+        "upload_id": upload_id,
+        "comment_id": "",
+        "pin_success": False,
+        "retry_attempts": 0,
+    }
+    try:
+        import yt_data_api
+        post_result = yt_data_api.post_pinned_comment_via_api(str(upload_id), comment)
+        engagement.update({
+            "comment_id": post_result.get("comment_id", ""),
+            "pin_success": bool(post_result.get("pin_success")),
+            "retry_attempts": int(post_result.get("retry_attempts", 0) or 0),
+            "status": post_result.get("status", "unknown"),
+        })
+        if post_result.get("error"):
+            engagement["error"] = post_result.get("error")
+        if post_result.get("pin_error"):
+            engagement["pin_error"] = post_result.get("pin_error")
+    except Exception as exc:
+        engagement.update({
+            "status": "error",
+            "error": f"{type(exc).__name__}: {exc}",
+        })
+    _write_youtube_engagement_report(engagement)
+    result["pinned_comment"] = comment
+    result["engagement_report"] = str(ENGAGEMENT_REPORT_PATH)
+    result["comment_id"] = engagement.get("comment_id", "")
+    result["pin_success"] = bool(engagement.get("pin_success"))
+    return result
 
 
 def _safe(name: str) -> str:
@@ -440,7 +502,7 @@ def _yt_swap_audio_post_upload(page, video_url: str, mood: Optional[str]) -> dic
 
 
 def upload_youtube(context, video_path: Path, title: str, description: str, tags: str = "",
-                   music_mood: Optional[str] = None) -> dict:
+                   music_mood: Optional[str] = None, pinned_comment: str = "") -> dict:
     print("[YouTube] upload...")
 
     # Prefer the Data API path when credentials are configured. This is the
@@ -451,10 +513,15 @@ def upload_youtube(context, video_path: Path, title: str, description: str, tags
         if yt_data_api.is_api_available():
             print("    [i] Using YouTube Data API (no browser)")
             tag_list = [t.strip() for t in (tags or "").split(",") if t.strip()] if tags else []
-            return yt_data_api.upload_youtube_via_api(
+            result = yt_data_api.upload_youtube_via_api(
                 video_path, title, description, tag_list,
                 privacy="public", made_for_kids=False,
             )
+            return _post_upload_engagement(result, {
+                "title": title,
+                "youtube_title": title,
+                "pinned_comment": pinned_comment,
+            })
         print("    [i] No YT_REFRESH_TOKEN configured; falling back to browser upload.")
     except ImportError:
         print("    [i] yt_data_api module not available; falling back to browser upload.")
@@ -490,7 +557,11 @@ def upload_youtube(context, video_path: Path, title: str, description: str, tags
             url_for_id = url or page.url
             swap = _yt_swap_audio_post_upload(page, url_for_id, music_mood)
             result.update(swap)
-        return result
+        return _post_upload_engagement(result, {
+            "title": title,
+            "youtube_title": title,
+            "pinned_comment": pinned_comment,
+        })
     finally:
         page.close()
 
@@ -674,6 +745,7 @@ DISPATCH = {
         m["youtube_title"], m["youtube_description"],
         m.get("youtube_tags", ""),
         m.get("music_mood"),
+        m.get("pinned_comment", ""),
     ),
     "instagram": lambda ctx, vp, m: upload_instagram(ctx, vp, m["instagram_caption"]),
     "facebook":  lambda ctx, vp, m: upload_facebook(ctx, vp, m["facebook_description"]),
@@ -722,6 +794,8 @@ def _resolve_metadata(args) -> dict:
         "youtube_tags":          meta.get("youtube_tags", ""),
         "music_mood":            meta.get("music_mood"),
         "video_path_yt":         meta.get("video_path_yt"),
+        "pinned_comment":        meta.get("pinned_comment", ""),
+        "segments":              meta.get("segments", []),
     }
 
 
