@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Any, Mapping
 
+from .editorial import EditorialCanon
 from .visual_director import MediaMode, ShotIntent, ShotPlan
 
 
@@ -60,27 +61,37 @@ class SubjectContinuityEngine:
         plan: ShotPlan,
         *,
         segments: list[Mapping[str, Any]] | None = None,
+        editorial_canon: EditorialCanon | None = None,
     ) -> SubjectContinuityProfile:
         """Build deterministic continuity rules from the current shot plan."""
 
-        primary_subject = _clean_subject(plan.primary_subject or "")
+        primary_subject = _clean_subject(editorial_canon.primary_subject if editorial_canon else plan.primary_subject or "")
         if not primary_subject:
             primary_subject = _clean_subject(_first_nonempty(plan.required_subjects))
         if not primary_subject:
             primary_subject = _clean_subject(plan.topic)
 
         supporting = _dedupe_terms([
+            *(editorial_canon.secondary_subjects if editorial_canon else ()),
+            *(editorial_canon.supporting_entities if editorial_canon else ()),
+            *(editorial_canon.location_entities if editorial_canon else ()),
             *plan.supporting_subjects,
             *plan.required_subjects,
             *plan.visual_identity,
             *_topic_supporting_subjects(plan.topic, primary_subject),
         ])
         allowed = _dedupe_terms([
+            *(editorial_canon.secondary_subjects if editorial_canon else ()),
+            *(editorial_canon.supporting_entities if editorial_canon else ()),
+            *(editorial_canon.comparison_entities if editorial_canon else ()),
+            *(editorial_canon.location_entities if editorial_canon else ()),
             *plan.allowed_substitutions,
             *supporting,
             *_topic_allowed_substitutions(plan.topic, primary_subject),
         ])
         forbidden = _dedupe_terms([
+            *(editorial_canon.forbidden_primary_subjects if editorial_canon else ()),
+            *(editorial_canon.avoid_terms if editorial_canon else ()),
             *plan.forbidden_substitutions,
             *plan.avoid_terms,
             *_topic_forbidden_substitutions(plan.topic, primary_subject),
@@ -99,14 +110,16 @@ class SubjectContinuityEngine:
         plan: ShotPlan,
         *,
         segments: list[Mapping[str, Any]] | None = None,
+        editorial_canon: EditorialCanon | None = None,
     ) -> ShotPlan:
         """Return a shot plan enriched with continuity metadata."""
 
-        profile = self.build_profile(plan, segments=segments)
+        profile = self.build_profile(plan, segments=segments, editorial_canon=editorial_canon)
         intents = tuple(_apply_profile_to_intent(intent, profile) for intent in plan.intents)
         diagnostics = {
             **plan.diagnostics,
             "subject_continuity": profile.to_dict(),
+            "primary_subject_locked": bool(editorial_canon),
         }
         return replace(
             plan,

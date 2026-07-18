@@ -27,6 +27,11 @@ class EngagementAudioTests(unittest.TestCase):
         self.assertEqual(config.fade_ms, 400)
         self.assertTrue(config.noise_gate)
 
+    def test_clip_audio_is_disabled_by_default_to_protect_narration(self) -> None:
+        config = clip_audio_config_from_env({})
+
+        self.assertFalse(config.use_clip_audio)
+
     def test_clip_audio_filter_includes_ducking_when_enabled(self) -> None:
         config = clip_audio_config_from_env({
             "AUTO_VIDEO_CLIP_AUDIO_VOLUME": "0.25",

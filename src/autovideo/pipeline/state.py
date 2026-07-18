@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+
+STATE_SAVE_RETRY_ATTEMPTS = 5
+STATE_SAVE_RETRY_DELAY_SEC = 0.1
 
 
 def utc_now_iso() -> str:
@@ -145,6 +150,8 @@ class PipelineStateStore:
         return PipelineRunState.from_dict(data)
 
     def save(self, state: PipelineRunState) -> None:
+        """Atomically persist state, retrying transient Windows file locks."""
+
         self.path.parent.mkdir(parents=True, exist_ok=True)
         state.updated_at = utc_now_iso()
         tmp = self.path.with_name(f"{self.path.name}.tmp")
@@ -152,4 +159,11 @@ class PipelineStateStore:
             json.dumps(state.to_dict(), indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-        os.replace(tmp, self.path)
+        for attempt in range(STATE_SAVE_RETRY_ATTEMPTS):
+            try:
+                os.replace(tmp, self.path)
+                return
+            except PermissionError:
+                if attempt == STATE_SAVE_RETRY_ATTEMPTS - 1:
+                    raise
+                time.sleep(STATE_SAVE_RETRY_DELAY_SEC * (attempt + 1))

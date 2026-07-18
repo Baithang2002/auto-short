@@ -10,7 +10,9 @@ from typing import Mapping
 class ClipAudioConfig:
     """Configuration for preserving usable audio from selected source clips."""
 
-    use_clip_audio: bool = True
+    # Source clips are not a trustworthy narration source.  They remain opt-in
+    # because stock and archive footage can contain speech or music.
+    use_clip_audio: bool = False
     volume: float = 0.30
     ducking: bool = True
     fade_ms: int = 250
@@ -21,7 +23,7 @@ def clip_audio_config_from_env(env: Mapping[str, str]) -> ClipAudioConfig:
     """Build clip-audio configuration from environment variables."""
 
     return ClipAudioConfig(
-        use_clip_audio=_env_bool(env, "AUTO_VIDEO_USE_CLIP_AUDIO", True),
+        use_clip_audio=_env_bool(env, "AUTO_VIDEO_USE_CLIP_AUDIO", False),
         volume=_clamp(_env_float(env, "AUTO_VIDEO_CLIP_AUDIO_VOLUME", 0.30), 0.0, 1.0),
         ducking=_env_bool(env, "AUTO_VIDEO_CLIP_AUDIO_DUCKING", True),
         fade_ms=max(0, _env_int(env, "AUTO_VIDEO_CLIP_AUDIO_FADE_MS", 250)),

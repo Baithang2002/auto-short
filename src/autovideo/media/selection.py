@@ -12,6 +12,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
 
+from .evidence import (
+    EntityFidelity,
+    EvidenceVerificationEngine,
+    EvidenceVerificationResult,
+)
+
 
 _STOPWORDS = {
     "a",
@@ -380,6 +386,12 @@ class VisualIntent:
     keywords: tuple[str, ...] = ()
     scene_importance: SceneImportance = SceneImportance.SUPPORTING
     media_mode: MediaMode = MediaMode.SHOW
+    requested_entity: str = ""
+    entity_type: str = ""
+    entity_aliases: tuple[str, ...] = ()
+    entity_required_terms: tuple[str, ...] = ()
+    entity_optional_terms: tuple[str, ...] = ()
+    entity_forbidden_terms: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -518,6 +530,10 @@ class MediaSelectionResult:
             "portrait_score": _score_value(self.score, "portrait_score"),
             "relevance_score": _score_value(self.score, "relevance_score"),
             "evidence_score": _score_value(self.score, "evidence_score"),
+            "evidence_verification": dict(self.score.breakdown.get("_evidence_verification_value", {})) if self.score else {},
+            "entity_fidelity": _score_text(self.score, "entity_fidelity"),
+            "metadata_confidence": _score_value(self.score, "metadata_confidence"),
+            "selected_entity": _score_text(self.score, "selected_entity"),
             "visual_domain": _score_text(self.score, "visual_domain"),
             "quality_gate_passed": bool(self.score and self.score.quality_gate_passed),
             "acceptance_reason": _score_text(self.score, "acceptance_reason"),
@@ -548,6 +564,10 @@ class MediaSelectionResult:
                 "portrait_score": _score_value(self.score, "portrait_score"),
                 "relevance_score": _score_value(self.score, "relevance_score"),
                 "evidence_score": _score_value(self.score, "evidence_score"),
+                "evidence_verification": dict(self.score.breakdown.get("_evidence_verification_value", {})) if self.score else {},
+                "entity_fidelity": _score_text(self.score, "entity_fidelity"),
+                "metadata_confidence": _score_value(self.score, "metadata_confidence"),
+                "selected_entity": _score_text(self.score, "selected_entity"),
                 "visual_domain": _score_text(self.score, "visual_domain"),
                 "quality_gate_passed": bool(self.score and self.score.quality_gate_passed),
                 "acceptance_reason": _score_text(self.score, "acceptance_reason"),
@@ -587,6 +607,23 @@ def build_visual_intent(segment: Mapping[str, Any] | Any, topic: str) -> VisualI
     supporting_subjects = _string_tuple(_segment_value(segment, "supporting_subjects"))
     allowed_substitutions = _string_tuple(_segment_value(segment, "allowed_substitutions"))
     forbidden_substitutions = _string_tuple(_segment_value(segment, "forbidden_substitutions"))
+    scene_entity = _segment_value(segment, "scene_entity")
+    if isinstance(scene_entity, Mapping):
+        requested_entity = str(scene_entity.get("canonical_entity") or "")
+        entity_type = str(scene_entity.get("entity_type") or "")
+        entity_aliases = _string_tuple(scene_entity.get("aliases"))
+        entity_required_terms = _string_tuple(scene_entity.get("required_terms"))
+        entity_optional_terms = _string_tuple(scene_entity.get("optional_terms"))
+        entity_forbidden_terms = _string_tuple(scene_entity.get("forbidden_terms"))
+    else:
+        requested_entity = str(_segment_value(segment, "requested_entity") or "")
+        entity_type = str(_segment_value(segment, "entity_type") or "")
+        entity_aliases = _string_tuple(_segment_value(segment, "entity_aliases"))
+        entity_required_terms = _string_tuple(_segment_value(segment, "entity_required_terms"))
+        entity_optional_terms = _string_tuple(_segment_value(segment, "entity_optional_terms"))
+        entity_forbidden_terms = _string_tuple(_segment_value(segment, "entity_forbidden_terms"))
+    if not requested_entity:
+        requested_entity = subject
     subject_persistence_target = _float_or_default(
         _segment_value(segment, "subject_persistence_target"),
         0.85,
@@ -611,6 +648,12 @@ def build_visual_intent(segment: Mapping[str, Any] | Any, topic: str) -> VisualI
         keywords=keywords,
         scene_importance=_scene_importance(_segment_value(segment, "scene_importance")),
         media_mode=_media_mode(_segment_value(segment, "media_mode")),
+        requested_entity=requested_entity,
+        entity_type=entity_type,
+        entity_aliases=entity_aliases,
+        entity_required_terms=entity_required_terms,
+        entity_optional_terms=entity_optional_terms,
+        entity_forbidden_terms=entity_forbidden_terms,
     )
 
 
@@ -774,6 +817,7 @@ def select_best_candidate(
     output_width: int = 1080,
     output_height: int = 1920,
     minimum_score: float = 1.0,
+    evidence_engine: EvidenceVerificationEngine | None = None,
 ) -> MediaSelectionResult:
     """Select the highest-scoring candidate from one provider pool."""
 
@@ -789,6 +833,7 @@ def select_best_candidate(
                 target_duration_sec=target_duration_sec,
                 output_width=output_width,
                 output_height=output_height,
+                evidence_engine=evidence_engine,
             ),
         )
         for candidate in candidates
@@ -891,6 +936,7 @@ def select_first_available_provider(
     output_width: int = 1080,
     output_height: int = 1920,
     minimum_score: float = 1.0,
+    evidence_engine: EvidenceVerificationEngine | None = None,
 ) -> MediaSelectionResult:
     """Select using provider order, not global cross-provider competition."""
 
@@ -907,6 +953,7 @@ def select_first_available_provider(
             output_width=output_width,
             output_height=output_height,
             minimum_score=minimum_score,
+            evidence_engine=evidence_engine,
         )
         warnings.extend(result.warnings)
         rejected.extend(result.rejected)
@@ -929,6 +976,7 @@ def score_candidate(
     target_duration_sec: float = 5.0,
     output_width: int = 1080,
     output_height: int = 1920,
+    evidence_engine: EvidenceVerificationEngine | None = None,
 ) -> CandidateScore:
     """Score a candidate deterministically from provider metadata."""
 
@@ -946,6 +994,19 @@ def score_candidate(
         explanation.append("subject matched")
     else:
         rejection_reasons.append("subject not found in metadata")
+
+    evidence_result = _verify_evidence(intent, candidate, evidence_engine)
+    breakdown["entity_fidelity_score"] = evidence_result.metadata_confidence * 10.0
+    breakdown["entity_fidelity_bonus"] = evidence_result.score_bonus
+    breakdown["metadata_confidence"] = evidence_result.metadata_confidence
+    breakdown["_evidence_verification_value"] = evidence_result.to_dict()
+    breakdown["_entity_fidelity_value"] = evidence_result.entity_fidelity.value
+    breakdown["_metadata_confidence_value"] = evidence_result.metadata_confidence
+    breakdown["_selected_entity_value"] = evidence_result.selected_entity
+    if evidence_result.accepted:
+        explanation.append(f"entity fidelity: {evidence_result.entity_fidelity.value}")
+    else:
+        rejection_reasons.append(evidence_result.fallback_reason or "entity not verified")
 
     continuity_score, continuity_breakdown, continuity_reasons = _subject_continuity_score(
         intent,
@@ -989,7 +1050,7 @@ def score_candidate(
 
     duplicate_score = 1.0
     if candidate.dedup_key in used_provider_ids or candidate.provider_id in used_provider_ids:
-        duplicate_score = -20.0
+        duplicate_score = -100.0
         rejection_reasons.append("duplicate provider id")
     breakdown["dedup"] = duplicate_score
 
@@ -1032,7 +1093,11 @@ def score_candidate(
         intent,
         candidate,
         relevance_score,
+        evidence_result,
     )
+    if duplicate_score < 0:
+        gate_passed = False
+        gate_reasons = tuple(dict.fromkeys((*gate_reasons, "duplicate provider id")))
     rejection_reasons.extend(gate_reasons)
     breakdown["evidence_score"] = evidence_score
     breakdown["_media_mode_value"] = intent.media_mode.value
@@ -1059,6 +1124,69 @@ def _segment_value(segment: Mapping[str, Any] | Any, key: str) -> Any:
     if isinstance(segment, Mapping):
         return segment.get(key, "")
     return getattr(segment, key, "")
+
+
+def _verify_evidence(
+    intent: VisualIntent,
+    candidate: StockCandidate,
+    evidence_engine: EvidenceVerificationEngine | None,
+) -> EvidenceVerificationResult:
+    engine = evidence_engine or EvidenceVerificationEngine()
+    requested = intent.requested_entity or intent.primary_subject
+    aliases = tuple(dict.fromkeys((
+        *intent.entity_aliases,
+        *intent.entity_required_terms,
+        *intent.supporting_subjects,
+    )))
+    close_substitutes = _close_substitutes_for_entity(requested, intent)
+    related_entities = tuple(dict.fromkeys((
+        *intent.allowed_substitutions,
+        *intent.supporting_subjects,
+        *intent.entity_optional_terms,
+    )))
+    generic_categories = _generic_categories_for_entity(requested, intent)
+    environment_terms = tuple(dict.fromkeys((*intent.environment_terms, *intent.entity_optional_terms)))
+    forbidden = tuple(dict.fromkeys((*intent.forbidden_substitutions, *intent.entity_forbidden_terms)))
+    return engine.verify(
+        requested_entity=requested,
+        aliases=aliases,
+        close_substitutes=close_substitutes,
+        related_entities=related_entities,
+        generic_categories=generic_categories,
+        environment_terms=environment_terms,
+        forbidden_entities=forbidden,
+        candidate=candidate,
+    )
+
+
+def _close_substitutes_for_entity(entity: str, intent: VisualIntent) -> tuple[str, ...]:
+    text = _normalize_text(entity)
+    if text == "greenland shark":
+        return ("Somniosus microcephalus", "sleeper shark", "Arctic shark")
+    if text == "butterfly":
+        return ("caterpillar", "monarch butterfly", "swallowtail butterfly")
+    if text == "octopus":
+        return ("common octopus", "mimic octopus", "cephalopod")
+    if text == "titanic":
+        return ("RMS Titanic", "Titanic wreck", "Titanic shipwreck", "ocean liner")
+    if text in {"great pyramid", "great pyramid of giza"}:
+        return ("Giza pyramid", "Pyramid of Khufu", "Egyptian pyramid")
+    return tuple(intent.allowed_substitutions)
+
+
+def _generic_categories_for_entity(entity: str, intent: VisualIntent) -> tuple[str, ...]:
+    text = _normalize_text(entity)
+    if "shark" in text:
+        return ("shark", "marine animal", "deep sea", "ocean wildlife")
+    if text == "butterfly":
+        return ("insect", "garden", "flower", "pollinator")
+    if "octopus" in text:
+        return ("underwater", "reef", "marine animal", "ocean wildlife")
+    if text == "titanic":
+        return ("ship", "boat", "ocean", "shipwreck")
+    if any(term in text for term in ("petra", "colosseum", "machu picchu", "taj mahal", "great wall")):
+        return ("ruins", "landmark", "ancient architecture", "travel")
+    return tuple(intent.keywords)
 
 
 def _string_tuple(value: Any) -> tuple[str, ...]:
@@ -1427,6 +1555,7 @@ def _quality_gate(
     intent: VisualIntent,
     candidate: StockCandidate,
     relevance_score: float,
+    evidence_result: EvidenceVerificationResult | None = None,
 ) -> tuple[bool, str, float, float, tuple[str, ...]]:
     """Apply independent domain-evidence and relevance acceptance rules."""
 
@@ -1479,6 +1608,20 @@ def _quality_gate(
         reasons.append("wildlife subject not proven in provider metadata")
     if domain == "qr_code" and not _has_qr_evidence(candidate):
         reasons.append("qr code evidence required")
+
+    if evidence_result is not None:
+        specific_entity = _specific_entity_required(intent)
+        if specific_entity and evidence_result.entity_fidelity in {
+            EntityFidelity.RELATED_ENTITY,
+            EntityFidelity.GENERIC_CATEGORY,
+            EntityFidelity.ENVIRONMENT_ONLY,
+            EntityFidelity.UNKNOWN,
+        }:
+            reasons.append(
+                f"entity fidelity too weak for specific subject: {evidence_result.entity_fidelity.value}"
+            )
+        if not evidence_result.accepted and intent.scene_importance in {SceneImportance.HOOK, SceneImportance.MAIN_REVEAL}:
+            reasons.append("critical scene entity not verified")
 
     dedup_value = candidate.dedup_key
     if not dedup_value or not candidate.provider_id:
@@ -1561,6 +1704,22 @@ def _requires_specific_visual(intent: VisualIntent) -> bool:
     return True
 
 
+def _specific_entity_required(intent: VisualIntent) -> bool:
+    if not (intent.entity_type or intent.entity_aliases or intent.entity_required_terms):
+        return False
+    entity = _normalize_text(intent.requested_entity or intent.primary_subject)
+    meaningful = [token for token in entity.split() if token not in _STOPWORDS]
+    if len(meaningful) >= 2:
+        return True
+    return entity in {
+        "titanic",
+        "petra",
+        "colosseum",
+        "butterfly",
+        "octopus",
+    }
+
+
 def _requires_explanatory_format(intent: VisualIntent) -> bool:
     return intent.media_mode in {MediaMode.EXPLAIN, MediaMode.COMPARE}
 
@@ -1612,6 +1771,14 @@ def _authentic_media_gate(
     if "duplicate provider id" in score.rejection_reasons:
         return False
     if _requires_qr_visual(intent) and not _has_qr_evidence(candidate):
+        return False
+    evidence = score.breakdown.get("_evidence_verification_value", {})
+    fidelity = str(evidence.get("entity_fidelity") or score.breakdown.get("_entity_fidelity_value") or "")
+    if _specific_entity_required(intent) and fidelity not in {
+        EntityFidelity.EXACT_ENTITY.value,
+        EntityFidelity.EXACT_ALIAS.value,
+        EntityFidelity.CLOSE_SUBSTITUTE.value,
+    }:
         return False
     if any(
         reason.startswith("wrong-domain content")

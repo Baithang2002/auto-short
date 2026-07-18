@@ -2,8 +2,8 @@
 pipeline_daily.py - the entry point a scheduler should call.
 
 What it does:
-  1. Reads topics.txt (one topic per line, # for comments).
-  2. Round-robin picks the next topic via a tiny tracked state file (state/daily_state.json).
+  1. Selects a viable, novel topic from configured topic sources.
+  2. Falls back to legacy round-robin only when the scheduler is disabled.
   3. Runs pipeline.py with that topic.
   4. Appends a one-line note to state/daily_runs.log with timestamp + topic + exit code.
   5. On Stage 2 failure (any platform), the position still advances - tomorrow gets
@@ -21,7 +21,21 @@ import datetime as dt
 import json
 import subprocess
 import sys
+import uuid
 from pathlib import Path
+
+SRC_DIR = Path(__file__).parent.resolve() / "src"
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from autovideo.intelligence import (
+    AutonomousContentScheduler,
+    ContentHistoryStore,
+    ContentSchedulerConfig,
+    SchedulerResult,
+    load_topic_sources,
+    topic_source_for_path,
+)
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 TOPICS     = SCRIPT_DIR / "topics.txt"
@@ -31,6 +45,8 @@ STATE      = STATE_DIR / "daily_state.json"
 RUN_LOG    = STATE_DIR / "daily_runs.log"
 OUTPUT_STATE = OUT_DIR / "daily_state.json"
 OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
+CONTENT_HISTORY = STATE_DIR / "content_history.json"
+SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
 
 
 def load_topics() -> list:
@@ -125,15 +141,51 @@ def already_posted_today() -> bool:
     return False
 
 
+def schedule_topic() -> tuple[str | None, str, SchedulerResult | None]:
+    """Choose one viable topic and persist scheduling diagnostics/history."""
+
+    config = ContentSchedulerConfig.from_env()
+    if not config.enabled:
+        _idx, topic = pick_next(load_topics())
+        return topic, "", None
+
+    sources = [
+        topic_source_for_path(SCRIPT_DIR / source_name)
+        for source_name in config.topic_sources
+    ]
+    candidates = load_topic_sources(sources)
+    run_id = uuid.uuid4().hex
+    history_store = ContentHistoryStore(CONTENT_HISTORY)
+    result = AutonomousContentScheduler(config=config).schedule(candidates, history_store.load())
+    result.write_json(SCHEDULER_REPORT)
+    history_store.record_decisions(result, run_id=run_id)
+    return (result.selected.topic if result.selected else None), run_id, result
+
+
 def main():
     if already_posted_today():
         print(f"[daily] A successful post already happened today. Skipping (backup cron).")
         sys.exit(0)
 
-    topics = load_topics()
-    idx, topic = pick_next(topics)
+    try:
+        topic, scheduler_run_id, scheduler_result = schedule_topic()
+    except (OSError, ValueError, RuntimeError) as exc:
+        print(f"[daily] scheduler failed: {exc}")
+        append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler_error={exc!r}")
+        sys.exit(2)
+    if not topic:
+        print("[daily] no APPROVED topic is currently eligible; no video will be generated.")
+        append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler=no_eligible_topic")
+        sys.exit(2)
     started = dt.datetime.now()
-    print(f"[daily] {started:%Y-%m-%d %H:%M:%S}  topic #{idx+1}/{len(topics)}: {topic!r}")
+    if scheduler_result is None:
+        print(f"[daily] {started:%Y-%m-%d %H:%M:%S}  legacy topic rotation: {topic!r}")
+    else:
+        selected = scheduler_result.selected
+        print(
+            f"[daily] {started:%Y-%m-%d %H:%M:%S}  scheduled topic: {topic!r} "
+            f"(viability={selected.viability_score:.2f}, rank={selected.ranking_score:.2f})"
+        )
 
     # YouTube-only for now (Instagram/Facebook sessions not connected).
     # To re-enable, change to: [..., topic, "--platforms", "youtube", "instagram", "facebook"]
@@ -149,6 +201,8 @@ def main():
     line = (f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  "
             f"exit={proc.returncode}  duration={secs:.0f}s")
     append_log(line)
+    if scheduler_run_id and proc.returncode == 0:
+        ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
     print(f"[daily] done ({secs:.0f}s, exit {proc.returncode}). Logged to {RUN_LOG}")
     sys.exit(proc.returncode)
 

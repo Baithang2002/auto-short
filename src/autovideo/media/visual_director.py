@@ -9,6 +9,14 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping
 
+from .editorial import DocumentaryMode, EditorialCanon
+from .scene_entities import (
+    SceneEntity,
+    SceneEntityPlan,
+    SceneEntityPlanner,
+    isolated_query_candidates,
+)
+
 
 class VisualGoal(str, Enum):
     SHOW = "show"
@@ -67,7 +75,9 @@ class ShotIntent:
     visual_goal: VisualGoal
     media_mode: MediaMode
     visual_role: str
+    documentary_role: str
     primary_subject: str
+    scene_entity: SceneEntity | None = None
     required_entities: tuple[str, ...] = ()
     action: str = ""
     environment: str = ""
@@ -98,7 +108,9 @@ class ShotIntent:
             "visual_goal": self.visual_goal.value,
             "media_mode": self.media_mode.value,
             "visual_role": self.visual_role,
+            "documentary_role": self.documentary_role,
             "primary_subject": self.primary_subject,
+            "scene_entity": self.scene_entity.to_dict() if self.scene_entity else None,
             "required_entities": list(self.required_entities),
             "action": self.action,
             "environment": self.environment,
@@ -120,7 +132,9 @@ class ShotIntent:
             visual_goal=VisualGoal(str(data.get("visual_goal", VisualGoal.SHOW.value))),
             media_mode=_media_mode_from_value(data.get("media_mode", data.get("visual_goal", MediaMode.SHOW.value))),
             visual_role=str(data.get("visual_role", "")),
+            documentary_role=str(data.get("documentary_role", data.get("visual_role", ""))),
             primary_subject=str(data.get("primary_subject", "")),
+            scene_entity=SceneEntity.from_dict(data["scene_entity"]) if data.get("scene_entity") else None,
             required_entities=tuple(str(item) for item in data.get("required_entities", [])),
             action=str(data.get("action", "")),
             environment=str(data.get("environment", "")),
@@ -286,8 +300,20 @@ class VisualDirector:
         if query_budget:
             self.query_budget.update({str(k): int(v) for k, v in query_budget.items()})
 
-    def plan(self, *, topic: str, segments: list[Mapping[str, Any]]) -> ShotPlan:
-        knowledge = self._match_domain(topic, segments)
+    def plan(
+        self,
+        *,
+        topic: str,
+        segments: list[Mapping[str, Any]],
+        editorial_canon: EditorialCanon | None = None,
+        scene_entity_plan: SceneEntityPlan | None = None,
+    ) -> ShotPlan:
+        if editorial_canon and scene_entity_plan is None:
+            scene_entity_plan = SceneEntityPlanner().plan(
+                editorial_canon=editorial_canon,
+                segments=segments,
+            )
+        knowledge = self._match_domain(topic, segments, editorial_canon=editorial_canon)
         style_rules = DocumentaryStyleRules(
             shot_variety=("wide", "close", "action", "detail", "mechanism", "payoff"),
             explainer_limits={
@@ -299,21 +325,73 @@ class VisualDirector:
             visual_rhythm=("hook_exact_subject", "establish_subject", "show_mechanism", "show_proof", "payoff_subject"),
         )
         intents = [
-            self._intent_for_segment(index, segment, topic, knowledge, len(segments))
+            self._intent_for_segment(
+                index,
+                segment,
+                topic,
+                knowledge,
+                len(segments),
+                editorial_canon,
+                scene_entity_plan,
+            )
             for index, segment in enumerate(segments)
         ]
         intents = self._diversify_adjacent_queries(intents)
+        primary_subject = editorial_canon.primary_subject if editorial_canon else (knowledge.primary_subject if knowledge else _clean_query(topic))
+        supporting_subjects = (
+            _dedupe_terms([
+                *editorial_canon.secondary_subjects,
+                *editorial_canon.supporting_entities,
+                *editorial_canon.location_entities,
+            ])
+            if editorial_canon
+            else (knowledge.named_entities if knowledge else ())
+        )
+        allowed_substitutions = (
+            _dedupe_terms([
+                *editorial_canon.secondary_subjects,
+                *editorial_canon.supporting_entities,
+                *editorial_canon.comparison_entities,
+                *editorial_canon.location_entities,
+            ])
+            if editorial_canon
+            else (knowledge.required_entities if knowledge else ())
+        )
+        forbidden_substitutions = (
+            _dedupe_terms([
+                *editorial_canon.forbidden_primary_subjects,
+                *editorial_canon.avoid_terms,
+                *(knowledge.avoid_terms if knowledge else ()),
+            ])
+            if editorial_canon
+            else (knowledge.avoid_terms if knowledge else ("generic people", "unrelated landscape"))
+        )
+        visual_identity = (
+            editorial_canon.visual_identity
+            if editorial_canon and editorial_canon.visual_identity
+            else (knowledge.visual_identity if knowledge else (_clean_query(topic),))
+        )
+        required_subjects = (
+            _dedupe_terms([primary_subject, *editorial_canon.secondary_subjects])
+            if editorial_canon
+            else (knowledge.required_entities if knowledge else (_clean_query(topic),))
+        )
+        avoid_terms = (
+            _dedupe_terms([*editorial_canon.avoid_terms, *(knowledge.avoid_terms if knowledge else ())])
+            if editorial_canon
+            else (knowledge.avoid_terms if knowledge else ("generic lifestyle", "unrelated people"))
+        )
         return ShotPlan(
             topic=topic,
             domain_id=knowledge.id if knowledge else "generic",
-            primary_subject=knowledge.primary_subject if knowledge else _clean_query(topic),
-            supporting_subjects=knowledge.named_entities if knowledge else (),
+            primary_subject=primary_subject,
+            supporting_subjects=supporting_subjects,
             subject_persistence_target=0.85,
-            allowed_substitutions=knowledge.required_entities if knowledge else (),
-            forbidden_substitutions=knowledge.avoid_terms if knowledge else ("generic people", "unrelated landscape"),
-            visual_identity=knowledge.visual_identity if knowledge else (_clean_query(topic),),
-            required_subjects=knowledge.required_entities if knowledge else (_clean_query(topic),),
-            avoid_terms=knowledge.avoid_terms if knowledge else ("generic lifestyle", "unrelated people"),
+            allowed_substitutions=allowed_substitutions,
+            forbidden_substitutions=forbidden_substitutions,
+            visual_identity=visual_identity,
+            required_subjects=required_subjects,
+            avoid_terms=avoid_terms,
             style_rules=style_rules,
             query_budget=dict(self.query_budget),
             intents=tuple(intents),
@@ -321,17 +399,29 @@ class VisualDirector:
                 "planner": "visual_director",
                 "knowledge_pack": self.knowledge_store.path.name,
                 "matched_domain": knowledge.id if knowledge else "generic",
+                "editorial_canon": editorial_canon.to_dict() if editorial_canon else None,
+                "scene_entity_plan": scene_entity_plan.to_report() if scene_entity_plan else None,
+                "primary_subject_locked": bool(editorial_canon),
             },
         )
 
-    def _match_domain(self, topic: str, segments: list[Mapping[str, Any]]) -> DomainKnowledge | None:
+    def _match_domain(
+        self,
+        topic: str,
+        segments: list[Mapping[str, Any]],
+        *,
+        editorial_canon: EditorialCanon | None = None,
+    ) -> DomainKnowledge | None:
         text = _normalize(" ".join([
             topic,
             " ".join(str(segment.get("narration", "")) for segment in segments),
             " ".join(str(segment.get("broll", "")) for segment in segments),
         ]))
         best: tuple[int, DomainKnowledge] | None = None
+        canon_subject = _normalize(editorial_canon.primary_subject) if editorial_canon else ""
         for domain in self.knowledge_store.load():
+            if canon_subject and _normalize(domain.primary_subject) != canon_subject:
+                continue
             score = sum(1 for term in domain.trigger_terms if _normalize(term) in text)
             if score and (best is None or score > best[0]):
                 best = (score, domain)
@@ -344,6 +434,8 @@ class VisualDirector:
         topic: str,
         knowledge: DomainKnowledge | None,
         total_segments: int,
+        editorial_canon: EditorialCanon | None = None,
+        scene_entity_plan: SceneEntityPlan | None = None,
     ) -> ShotIntent:
         narration = str(segment.get("narration", ""))
         broll = str(segment.get("broll", "") or topic)
@@ -351,15 +443,18 @@ class VisualDirector:
         if isinstance(raw_queries, str):
             raw_queries = [raw_queries]
         visual_goal = _visual_goal(index, narration, total_segments)
+        documentary_role = _documentary_role_for_index(index, visual_goal, total_segments, editorial_canon)
         shot_type = _shot_type_for_index(index, visual_goal)
-        primary_subject = knowledge.primary_subject if knowledge else _clean_query(broll or topic)
+        primary_subject = editorial_canon.primary_subject if editorial_canon else (knowledge.primary_subject if knowledge else _clean_query(broll or topic))
+        scene_entity = scene_entity_plan.entity_for_index(index) if scene_entity_plan else None
         action = _action_phrase(narration, broll)
         scene_importance = _scene_importance(index, narration, total_segments)
-        exact_queries = self._tier_queries(QueryTier.EXACT, narration, knowledge, broll, action, shot_type, raw_queries)
-        entity_queries = self._tier_queries(QueryTier.ENTITY, narration, knowledge, broll, action, shot_type, raw_queries)
-        mechanism_queries = self._tier_queries(QueryTier.MECHANISM, narration, knowledge, broll, action, shot_type, raw_queries)
-        context_queries = self._tier_queries(QueryTier.CONTEXT, narration, knowledge, broll, action, shot_type, raw_queries)
-        fallback_queries = self._tier_queries(QueryTier.FALLBACK, narration, knowledge, broll, action, shot_type, raw_queries)
+        all_scene_entities = scene_entity_plan.entities if scene_entity_plan else ()
+        exact_queries, exact_rejections = self._tier_queries(QueryTier.EXACT, narration, knowledge, broll, action, shot_type, raw_queries, editorial_canon, documentary_role, scene_entity, all_scene_entities)
+        entity_queries, entity_rejections = self._tier_queries(QueryTier.ENTITY, narration, knowledge, broll, action, shot_type, raw_queries, editorial_canon, documentary_role, scene_entity, all_scene_entities)
+        mechanism_queries, mechanism_rejections = self._tier_queries(QueryTier.MECHANISM, narration, knowledge, broll, action, shot_type, raw_queries, editorial_canon, documentary_role, scene_entity, all_scene_entities)
+        context_queries, context_rejections = self._tier_queries(QueryTier.CONTEXT, narration, knowledge, broll, action, shot_type, raw_queries, editorial_canon, documentary_role, scene_entity, all_scene_entities)
+        fallback_queries, fallback_rejections = self._tier_queries(QueryTier.FALLBACK, narration, knowledge, broll, action, shot_type, raw_queries, editorial_canon, documentary_role, scene_entity, all_scene_entities)
         query_tiers = tuple(
             TieredQueries(tier, tuple(queries[:self.query_budget[tier.value]]), self.query_budget[tier.value])
             for tier, queries in (
@@ -376,19 +471,37 @@ class VisualDirector:
             visual_goal=visual_goal,
             media_mode=_media_mode(visual_goal, scene_importance),
             visual_role=_visual_role(index, visual_goal, total_segments),
+            documentary_role=documentary_role,
             primary_subject=primary_subject,
-            required_entities=knowledge.required_entities if knowledge else (primary_subject,),
+            scene_entity=scene_entity,
+            required_entities=_required_entities(primary_subject, knowledge, editorial_canon, scene_entity),
             action=action,
             environment=_environment(narration, broll, topic),
             shot_type=shot_type,
             preferred_sources=_preferred_sources(knowledge, narration, topic),
-            negative_terms=knowledge.avoid_terms if knowledge else ("generic people", "unrelated landscape"),
+            negative_terms=_negative_terms(knowledge, editorial_canon, scene_entity),
             query_tiers=query_tiers,
             minimum_confidence="high" if scene_importance in {"hook", "main_reveal"} else "medium",
             allow_explainer_card=visual_goal in {VisualGoal.EXPLAIN, VisualGoal.PROVE},
             diagnostics={
                 "knowledge_domain": knowledge.id if knowledge else "generic",
                 "bounded_query_count": sum(len(tier.queries) for tier in query_tiers),
+                "editorial_canon_primary_subject": primary_subject if editorial_canon else "",
+                "documentary_role": documentary_role,
+                "scene_entity": scene_entity.to_dict() if scene_entity else None,
+                "query_isolation_rejections": [
+                    *exact_rejections,
+                    *entity_rejections,
+                    *mechanism_rejections,
+                    *context_rejections,
+                    *fallback_rejections,
+                ],
+                "fallback_chain": [
+                    scene_entity.canonical_entity,
+                    *scene_entity.aliases,
+                    *scene_entity.optional_terms,
+                    "generic documentary",
+                ] if scene_entity else [],
             },
         )
 
@@ -401,7 +514,11 @@ class VisualDirector:
         action: str,
         shot_type: str,
         raw_queries: list[Any],
-    ) -> list[str]:
+        editorial_canon: EditorialCanon | None = None,
+        documentary_role: str = "",
+        scene_entity: SceneEntity | None = None,
+        all_scene_entities: tuple[SceneEntity, ...] = (),
+    ) -> tuple[list[str], tuple[dict[str, Any], ...]]:
         domain_queries: tuple[str, ...] = ()
         if knowledge:
             domain_queries = {
@@ -412,9 +529,12 @@ class VisualDirector:
                 QueryTier.FALLBACK: knowledge.fallback_queries,
             }[tier]
         if tier == QueryTier.EXACT:
+            canon_query = _canon_scene_query(editorial_canon, documentary_role, narration, broll, action, shot_type, scene_entity)
             scene_query = _scene_specific_query(knowledge, narration, broll, action, shot_type)
             narration_query = _join_terms(_narration_visual_terms(narration), shot_type)
             base = [
+                *_scene_entity_exact_queries(scene_entity, documentary_role, action, shot_type),
+                canon_query,
                 scene_query,
                 narration_query,
                 _join_terms(_sanitize_query_for_domain(broll, knowledge), shot_type),
@@ -422,19 +542,36 @@ class VisualDirector:
             ]
             if knowledge:
                 if _weak_scene_query(scene_query, knowledge):
-                    return _dedupe_queries([*domain_queries, *base])
-                return _dedupe_queries([*base, *domain_queries])
-            return _dedupe_queries(base)
-        if tier == QueryTier.ENTITY and knowledge:
-            return _dedupe_queries([
-                _join_terms(entity, _sanitize_query_for_domain(action or shot_type, knowledge))
-                for entity in domain_queries
-            ])
+                    return _isolate_query_list([*domain_queries, *base], scene_entity, all_scene_entities)
+                return _isolate_query_list([*base, *domain_queries], scene_entity, all_scene_entities)
+            return _isolate_query_list(base, scene_entity, all_scene_entities)
+        if tier == QueryTier.ENTITY:
+            entity_queries = _scene_entity_alias_queries(scene_entity, action, shot_type)
+            entity_queries.extend(_canon_entity_queries(editorial_canon, action, shot_type, scene_entity))
+            if knowledge:
+                entity_queries.extend(
+                    _join_terms(entity, _sanitize_query_for_domain(action or shot_type, knowledge))
+                    for entity in domain_queries
+                )
+            return _isolate_query_list(entity_queries, scene_entity, all_scene_entities)
         if tier == QueryTier.MECHANISM:
-            return _dedupe_queries([*domain_queries, _join_terms(broll, "mechanism"), _join_terms(broll, "diagram")])
+            return _isolate_query_list([
+                *_scene_entity_broader_queries(scene_entity, "mechanism"),
+                *domain_queries,
+                _join_terms(broll, "mechanism"),
+                _join_terms(broll, "diagram"),
+            ], scene_entity, all_scene_entities)
         if tier == QueryTier.CONTEXT:
-            return _dedupe_queries([*domain_queries, _join_terms(broll, "documentary")])
-        return _dedupe_queries([*domain_queries, broll])
+            return _isolate_query_list([
+                *_scene_entity_broader_queries(scene_entity, "documentary"),
+                *domain_queries,
+                _join_terms(broll, "documentary"),
+            ], scene_entity, all_scene_entities)
+        return _isolate_query_list([
+            *_scene_entity_broader_queries(scene_entity, "wide shot"),
+            *domain_queries,
+            broll,
+        ], scene_entity, all_scene_entities)
 
     def _diversify_adjacent_queries(self, intents: list[ShotIntent]) -> list[ShotIntent]:
         diversified: list[ShotIntent] = []
@@ -466,6 +603,198 @@ def _visual_goal(index: int, narration: str, total_segments: int) -> VisualGoal:
     if any(term in text for term in ("massive", "tiny", "secret", "hidden", "wild")):
         return VisualGoal.EMPHASIZE
     return VisualGoal.SHOW
+
+
+def _documentary_role_for_index(
+    index: int,
+    goal: VisualGoal,
+    total_segments: int,
+    editorial_canon: EditorialCanon | None,
+) -> str:
+    if editorial_canon and index < len(editorial_canon.expected_scene_roles):
+        return editorial_canon.expected_scene_roles[index]
+    return _visual_role(index, goal, total_segments)
+
+
+def _required_entities(
+    primary_subject: str,
+    knowledge: DomainKnowledge | None,
+    editorial_canon: EditorialCanon | None,
+    scene_entity: SceneEntity | None = None,
+) -> tuple[str, ...]:
+    if scene_entity:
+        return _dedupe_terms([
+            scene_entity.canonical_entity,
+            *scene_entity.required_terms,
+            *scene_entity.aliases,
+        ])
+    if editorial_canon:
+        return _dedupe_terms([
+            primary_subject,
+            *editorial_canon.secondary_subjects,
+            *editorial_canon.supporting_entities,
+        ])
+    return knowledge.required_entities if knowledge else (primary_subject,)
+
+
+def _negative_terms(
+    knowledge: DomainKnowledge | None,
+    editorial_canon: EditorialCanon | None,
+    scene_entity: SceneEntity | None = None,
+) -> tuple[str, ...]:
+    if editorial_canon:
+        return _dedupe_terms([
+            *(scene_entity.forbidden_terms if scene_entity else ()),
+            *editorial_canon.forbidden_primary_subjects,
+            *editorial_canon.avoid_terms,
+            *(knowledge.avoid_terms if knowledge else ()),
+        ])
+    return knowledge.avoid_terms if knowledge else ("generic people", "unrelated landscape")
+
+
+def _canon_entity_queries(
+    editorial_canon: EditorialCanon | None,
+    action: str,
+    shot_type: str,
+    scene_entity: SceneEntity | None = None,
+) -> list[str]:
+    if not editorial_canon:
+        return []
+    if scene_entity:
+        return [
+            _join_terms(scene_entity.canonical_entity, action or shot_type),
+            *[_join_terms(alias, action or shot_type) for alias in scene_entity.aliases],
+        ]
+    entities = [
+        editorial_canon.primary_subject,
+        *editorial_canon.secondary_subjects,
+        *editorial_canon.supporting_entities[:5],
+        *editorial_canon.location_entities[:3],
+    ]
+    return [
+        _join_terms(entity, action or shot_type)
+        for entity in _dedupe_terms(entities)
+    ]
+
+
+def _canon_scene_query(
+    editorial_canon: EditorialCanon | None,
+    role: str,
+    narration: str,
+    broll: str,
+    action: str,
+    shot_type: str,
+    scene_entity: SceneEntity | None = None,
+) -> str:
+    if not editorial_canon:
+        return ""
+    if scene_entity:
+        return _scene_entity_role_query(scene_entity, role, narration, broll, action, shot_type)
+    subject = editorial_canon.primary_subject
+    role_norm = _normalize(role)
+    mode = editorial_canon.documentary_mode
+    if role_norm == "map":
+        if mode == DocumentaryMode.PLACE:
+            return _join_terms(subject, "world map")
+        if mode == DocumentaryMode.MULTI_SUBJECT:
+            return "world wonders map"
+        return _join_terms(subject, "map")
+    if role_norm in {"landscape", "overview"}:
+        identity = editorial_canon.visual_identity[0] if editorial_canon.visual_identity else subject
+        return _join_terms(identity, "wide documentary")
+    if role_norm == "comparison" and editorial_canon.comparison_entities:
+        return _join_terms(subject, editorial_canon.comparison_entities[0], "comparison")
+    if role_norm in {"wildlife", "close up", "macro"}:
+        return _join_terms(subject, "close up", action or shot_type)
+    if role_norm in {"evidence", "timeline"}:
+        if editorial_canon.secondary_subjects:
+            return _join_terms(editorial_canon.secondary_subjects[0], "archive documentary")
+        return _join_terms(subject, "archive documentary")
+    if role_norm in {"process", "explanation"}:
+        narration_terms = _narration_visual_terms(narration)
+        return _join_terms(subject, narration_terms or broll, "diagram" if "explanation" in role_norm else shot_type)
+    return _join_terms(subject, action or broll, shot_type)
+
+
+def _scene_entity_exact_queries(
+    scene_entity: SceneEntity | None,
+    role: str,
+    action: str,
+    shot_type: str,
+) -> list[str]:
+    if not scene_entity:
+        return []
+    return _dedupe_queries([
+        _scene_entity_role_query(scene_entity, role, "", "", action, shot_type),
+        _join_terms(scene_entity.canonical_entity, action or shot_type),
+        _join_terms(scene_entity.canonical_entity, "documentary"),
+    ])
+
+
+def _scene_entity_alias_queries(
+    scene_entity: SceneEntity | None,
+    action: str,
+    shot_type: str,
+) -> list[str]:
+    if not scene_entity:
+        return []
+    return _dedupe_queries([
+        *[_join_terms(alias, action or shot_type) for alias in scene_entity.aliases],
+        *[_join_terms(term, action or shot_type) for term in scene_entity.required_terms],
+    ])
+
+
+def _scene_entity_broader_queries(
+    scene_entity: SceneEntity | None,
+    descriptor: str,
+) -> list[str]:
+    if not scene_entity:
+        return []
+    return _dedupe_queries([
+        *[_join_terms(scene_entity.canonical_entity, term) for term in scene_entity.optional_terms],
+        _join_terms(scene_entity.canonical_entity, descriptor),
+    ])
+
+
+def _scene_entity_role_query(
+    scene_entity: SceneEntity,
+    role: str,
+    narration: str,
+    broll: str,
+    action: str,
+    shot_type: str,
+) -> str:
+    entity = scene_entity.canonical_entity
+    role_norm = _normalize(role)
+    if scene_entity.entity_type == "map":
+        return _join_terms(entity, "documentary map")
+    if scene_entity.entity_type == "landmark":
+        if role_norm == "map":
+            return _join_terms(entity, "aerial wide documentary")
+        if role_norm in {"close up", "macro", "evidence"}:
+            return _join_terms(entity, "architectural detail")
+        return _join_terms(entity, action or "wide documentary")
+    if scene_entity.entity_type == "species":
+        if role_norm in {"close up", "macro", "evidence"}:
+            return _join_terms(entity, "close up")
+        return _join_terms(entity, action or shot_type or "documentary")
+    if role_norm == "map":
+        return _join_terms(entity, "map")
+    narration_terms = _narration_visual_terms(narration)
+    return _join_terms(entity, action or narration_terms or broll or shot_type)
+
+
+def _isolate_query_list(
+    queries: list[Any],
+    scene_entity: SceneEntity | None,
+    all_scene_entities: tuple[SceneEntity, ...],
+) -> tuple[list[str], tuple[dict[str, Any], ...]]:
+    accepted, rejected = isolated_query_candidates(
+        scene_entity=scene_entity,
+        queries=queries,
+        all_entities=all_scene_entities,
+    )
+    return list(accepted), rejected
 
 
 def _media_mode(goal: VisualGoal, scene_importance: str) -> MediaMode:
@@ -695,6 +1024,18 @@ def _dedupe_queries(queries: list[Any]) -> list[str]:
             seen.add(key)
             ordered.append(cleaned)
     return ordered
+
+
+def _dedupe_terms(values: list[str] | tuple[str, ...]) -> tuple[str, ...]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values:
+        cleaned = _clean_query(value)
+        key = _normalize(cleaned)
+        if cleaned and key not in seen:
+            seen.add(key)
+            ordered.append(cleaned)
+    return tuple(ordered)
 
 
 def _first_distinct_query(queries: tuple[str, ...], previous_key: str) -> str:

@@ -87,6 +87,7 @@ jobs:
           YT_CLIENT_SECRET:    ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN:    ${{ secrets.YT_REFRESH_TOKEN }}
           YT_MUSIC:            "true"
+          AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
@@ -126,6 +127,8 @@ jobs:
             output/final.mp4
             output/final_yt_safe.mp4
             output/upload_metadata.json
+            output/scheduler_report.json
+            output/publish_quality_report.json
             output/daily_runs.log
             output/screenshots/
           retention-days: 7

@@ -21,6 +21,8 @@ The table below tracks the maturity of each architectural component. Contributor
 | Media Selection | ✅ Implemented | Deterministic B-roll candidate scoring before Timeline construction |
 | Source Planning | ✅ Implemented | Capability-driven query and provider strategy before media selection |
 | Provider Expansion | ✅ Implemented | Scene-type routing and optional stock/archive/science provider registration |
+| Content Scheduling | ✅ Implemented | Viability-aware topic ranking, uniqueness, category rotation, and durable history |
+| Publish Quality Gate | ✅ Implemented | Post-render artifact policy emits an auditable approve/defer/block verdict before unattended upload |
 | Pipeline (orchestrator + stages) | 🚧 In Progress | Legacy monolithic `main()` still authoritative |
 | Interface (CLIs, workflows) | 🚧 In Progress | Legacy entry points at repo root, new location planned |
 | Long-form profile | 📋 Deferred | `bias_long.py` continues as a parallel variant |
@@ -591,12 +593,16 @@ Configuration flags control resume behavior:
 
 ### Scheduling
 
-The scheduler is a thin layer atop the orchestrator that:
+The scheduler is a thin layer ahead of the orchestrator that:
 
-- Picks the next topic from the rotation
+- Loads candidates from independent topic sources (`topics.txt`, optional `topics.json`)
+- Scores candidates with the Documentary Viability Engine before any provider or script work
+- Ranks approved candidates by viability, canonical-subject uniqueness, and category diversity
+- Uses REVIEW candidates, then a configured evergreen pool, to guarantee forward progress
+- Persists selections, deferrals, rejections, and generated topics in `state/content_history.json`
 - Invokes the orchestrator with that topic
 - Handles same-day deduplication (a backup cron should not double-post)
-- Persists the rotation state back to durable storage
+- Writes `output/scheduler_report.json` for every autonomous selection
 
 The current implementation uses GitHub Actions cron. A future self-hosted or serverless invoker would implement the same interface.
 

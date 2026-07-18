@@ -1,8 +1,10 @@
 import json
 import logging
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from autovideo.pipeline import (
     PipelineContext,
@@ -320,6 +322,23 @@ class PipelineOrchestratorTests(unittest.TestCase):
 
             self.assertEqual(raw["stages"]["metadata"]["outputs"]["metadata"], "output/upload_metadata.json")
             self.assertEqual(loaded.stages["metadata"].outputs["metadata"], "output/upload_metadata.json")
+
+    def test_state_save_retries_transient_windows_file_lock(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            state_path = Path(tmp) / "output" / "pipeline_state.json"
+            store = PipelineStateStore(state_path)
+            state = self.make_orchestrator(Path(tmp), []).run(self.make_context(Path(tmp))).state
+            original_replace = os.replace
+
+            with patch(
+                "autovideo.pipeline.state.os.replace",
+                side_effect=[PermissionError("locked"), original_replace],
+            ) as replace_mock, patch("autovideo.pipeline.state.time.sleep") as sleep_mock:
+                store.save(state)
+
+            self.assertEqual(replace_mock.call_count, 2)
+            sleep_mock.assert_called_once()
+            self.assertTrue(state_path.exists())
 
 
 if __name__ == "__main__":

@@ -3,15 +3,23 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Callable, Optional
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
+SRC_DIR    = SCRIPT_DIR / "src"
 OUT_DIR    = SCRIPT_DIR / "output"
 META_PATH  = OUT_DIR / "upload_metadata.json"
 LOG_PATH   = OUT_DIR / "upload_log.json"
+QUALITY_REPORT_PATH = OUT_DIR / "publish_quality_report.json"
+
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from autovideo.pipeline import upload_allowed_from_report
 
 
 def _python() -> str:
@@ -156,6 +164,18 @@ def main(engine_script: str, *,
             print("           python upload_worker.py")
         else:
             print(f"[{prefix}] --skip-upload set; stopping after generation.")
+        return
+
+    enforce_quality_gate = os.environ.get(
+        "AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE", ""
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    may_upload, quality_reason = upload_allowed_from_report(
+        QUALITY_REPORT_PATH,
+        enforce=enforce_quality_gate,
+    )
+    if not may_upload:
+        print(f"[{prefix}] Upload deferred: {quality_reason}.")
+        print(f"[{prefix}] Render remains in the pending queue for review.")
         return
 
     # ---- Stage 2 ----

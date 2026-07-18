@@ -52,6 +52,7 @@ import hashlib
 import datetime as dt
 from pathlib import Path
 from difflib import SequenceMatcher
+from types import SimpleNamespace
 from typing import Any
 from PIL import Image, ImageDraw, ImageFont
 
@@ -68,6 +69,14 @@ SRC_DIR = SCRIPT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+
+def _env_flag(*names: str, default: str = "0") -> bool:
+    for name in names:
+        value = os.environ.get(name)
+        if value is not None:
+            return value.strip().lower() not in {"0", "false", "no", ""}
+    return default.strip().lower() not in {"0", "false", "no", ""}
+
 from autovideo.audio import ClipAudioDecision, build_audio_mix_report, clip_audio_filter
 from autovideo.config import AppConfig, DEFAULTS, ProviderRegistry, Settings
 from autovideo.domain import (
@@ -79,17 +88,30 @@ from autovideo.domain import (
     VoiceTrack,
     build_timeline,
 )
-from autovideo.intelligence import build_topic_metadata
+from autovideo.intelligence import (
+    DocumentaryViabilityConfig,
+    DocumentaryViabilityDecision,
+    DocumentaryViabilityEngine,
+    build_topic_metadata,
+)
 from autovideo.engagement import generate_pinned_comment
 from autovideo.media import (
+    EditorialCanon,
+    EditorialCanonBuilder,
+    EntityFidelity,
+    EvidenceVerificationConfig,
+    EvidenceVerificationEngine,
+    KnowledgePackStore,
     MediaSelectionResult,
     QueryPlanner,
+    SceneEntityPlanner,
     SceneImportance,
     SearchStrategy,
     SourcePlanner,
     HybridVisualComposer,
     ShotPlan,
     SubjectContinuityEngine,
+    VisionVerificationResult,
     VisualGrammarEngine,
     VisualDirector,
     build_visual_intent,
@@ -99,6 +121,7 @@ from autovideo.media import (
     candidate_from_pixabay_hit,
     candidate_from_remote_item,
     default_provider_capability_registry,
+    score_candidate,
     select_best_candidate,
 )
 from autovideo.music import MusicPlanner
@@ -110,6 +133,9 @@ from autovideo.pipeline import (
     PipelineOrchestrator,
     PipelineStage,
     PipelineStateStore,
+    PublishQualityArtifacts,
+    PublishQualityConfig,
+    PublishQualityGate,
     StageRecord,
     StageResult,
 )
@@ -145,6 +171,7 @@ INPUT_DIR            = SCRIPT_DIR / "input_clips"   # drop your own .mp4/.mov cl
 MUSIC_DIR            = SCRIPT_DIR / "music"          # drop royalty-free .mp3/.wav/.m4a tracks here
 VIDEO_EXTENSIONS     = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
 IMAGE_EXTENSIONS     = {".jpg", ".jpeg", ".png", ".webp", ".bmp"}
+FFMPEG_SAFE_IMAGE_FORMATS = {"JPEG", "PNG", "BMP"}
 AUDIO_EXTENSIONS     = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 MEDIA_EXTENSIONS     = VIDEO_EXTENSIONS | IMAGE_EXTENSIONS
 DEFAULT_MUSIC_VOLUME = DEFAULTS.render.default_music_volume                    # background bed under narration
@@ -224,8 +251,13 @@ FLICKR_COMMONS_API_URL = os.environ.get("FLICKR_COMMONS_API_URL", "").strip()
 FLICKR_API_KEY     = os.environ.get("FLICKR_API_KEY", "").strip()
 ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "1" if ARCHIVE_PROVIDERS_ENABLED else "0").lower() not in {"0", "false", "no"}
 AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = int(os.environ.get("AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES", "5") or "5")
-AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION = os.environ.get("AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION", "true").lower() not in {"0", "false", "no"}
+AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION = _env_flag("AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION", default="true")
 AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE = float(os.environ.get("AUTO_VIDEO_PROVIDER_EXPANSION_CONFIDENCE", "0.75") or "0.75")
+ENABLE_AI_VISUAL_QA = _env_flag("ENABLE_AI_VISUAL_QA", "AUTO_VIDEO_VISUAL_QA_ENABLED", default="0")
+AI_VISUAL_QA_PROVIDER = os.environ.get("AI_VISUAL_QA_PROVIDER", "gemini").strip().lower() or "gemini"
+AI_VISUAL_QA_MIN_METADATA_CONFIDENCE = float(os.environ.get("AI_VISUAL_QA_MIN_METADATA_CONFIDENCE", "0.90") or "0.90")
+AI_VISUAL_QA_MAX_CANDIDATES = int(os.environ.get("AI_VISUAL_QA_MAX_CANDIDATES", "3") or "3")
+AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO = float(os.environ.get("AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO", "0.50") or "0.50")
 # Channel name used in end card and SEO metadata
 APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
 APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
@@ -261,9 +293,15 @@ def die(msg):
     sys.exit(1)
 
 
-def run_ff(args, cwd=None):
+def run_ff(args, cwd=None, timeout=120):
     """Run an ffmpeg/ffprobe command, raising with readable output on failure."""
-    p = subprocess.run(args, cwd=cwd, capture_output=True, text=True)
+    try:
+        p = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(
+            f"Command timed out after {timeout}s: {' '.join(args)}\n"
+            f"ffmpeg hung — likely due to a corrupt or incompatible input file."
+        )
     if p.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(args)}\n{p.stderr[-800:]}")
     return p.stdout
@@ -981,6 +1019,80 @@ def _valid_raster_image(filepath):
         return False
 
 
+def _safe_raster_image_info(filepath):
+    """Return raster metadata when Pillow can fully decode the file."""
+
+    try:
+        with Image.open(filepath) as img:
+            img.verify()
+        with Image.open(filepath) as img:
+            img.load()
+            return {
+                "format": str(img.format or "").upper(),
+                "mode": str(img.mode or ""),
+                "size": tuple(img.size),
+            }
+    except (OSError, ValueError, Image.DecompressionBombError):
+        return None
+
+
+def _prepare_raster_image_for_ffmpeg(filepath, idx):
+    """Validate and normalize a raster image to a format FFmpeg handles reliably."""
+
+    info = _safe_raster_image_info(filepath)
+    if not info:
+        print(f"[!] Segment {idx}: '{Path(filepath).name}' is not a valid image.")
+        return None
+    suffix = Path(filepath).suffix.lower()
+    image_format = str(info.get("format") or "").upper()
+    expected_formats = {
+        ".jpg": {"JPEG"},
+        ".jpeg": {"JPEG"},
+        ".png": {"PNG"},
+        ".bmp": {"BMP"},
+        ".webp": {"WEBP"},
+    }.get(suffix, set())
+    if image_format in FFMPEG_SAFE_IMAGE_FORMATS and (not expected_formats or image_format in expected_formats):
+        return Path(filepath)
+
+    normalized = OUT_DIR / f"normalized_img_{idx}.png"
+    try:
+        with Image.open(filepath) as img:
+            img.load()
+            if img.mode not in {"RGB", "RGBA"}:
+                img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+            if img.mode == "RGBA":
+                background = Image.new("RGB", img.size, (0, 0, 0))
+                background.paste(img, mask=img.getchannel("A"))
+                img = background
+            else:
+                img = img.convert("RGB")
+            normalized.parent.mkdir(parents=True, exist_ok=True)
+            img.save(normalized, format="PNG", optimize=True)
+        print(
+            f"    [Image normalize] {Path(filepath).name} "
+            f"({image_format or 'unknown'} as {suffix or 'no extension'}) -> {normalized.name}"
+        )
+        return normalized
+    except (OSError, ValueError, Image.DecompressionBombError) as exc:
+        print(f"[!] Segment {idx}: failed to normalize image '{Path(filepath).name}': {exc}")
+        return None
+
+
+def _fallback_color_clip(idx, duration, reason):
+    """Create a simple dark clip when a media asset cannot be rendered safely."""
+
+    print(f"[!] Segment {idx}: {reason} — using fallback color clip.")
+    out_path = OUT_DIR / f"img_clip_{idx}.mp4"
+    run_ff([
+        "ffmpeg", "-y",
+        "-f", "lavfi", "-i", f"color=c=#1a1a2e:s={WIDTH}x{HEIGHT}:d={duration:.3f}:r={FPS}",
+        "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+        str(out_path),
+    ])
+    return out_path
+
+
 def get_local_media():
     """Return list of valid local media files (videos + images) from INPUT_DIR."""
     if not INPUT_DIR.exists():
@@ -1545,8 +1657,9 @@ def _exact_subject_candidate_count(candidates, intent):
 
 
 def _candidate_has_exact_subject(candidate, intent):
-    text = _candidate_metadata_text(candidate)
-    return any(term in text for term in _exact_subject_terms(intent))
+    score = score_candidate(intent, candidate, evidence_engine=EvidenceVerificationEngine())
+    fidelity = score.breakdown.get("_entity_fidelity_value")
+    return fidelity in {EntityFidelity.EXACT_ENTITY.value, EntityFidelity.EXACT_ALIAS.value}
 
 
 def _confidence_value(confidence):
@@ -1557,6 +1670,153 @@ def _confidence_value(confidence):
         "fallback": 0.2,
         "rejected": 0.0,
     }.get(str(confidence or "").lower(), 0.0)
+
+
+def _evidence_engine():
+    return EvidenceVerificationEngine(
+        EvidenceVerificationConfig(
+            enable_ai_visual_qa=ENABLE_AI_VISUAL_QA,
+            ai_visual_qa_provider=AI_VISUAL_QA_PROVIDER,
+            ai_visual_qa_min_metadata_confidence=AI_VISUAL_QA_MIN_METADATA_CONFIDENCE,
+            ai_visual_qa_max_candidates=AI_VISUAL_QA_MAX_CANDIDATES,
+        ),
+        vision_verifier=_gemini_visual_qa_verifier if ENABLE_AI_VISUAL_QA else None,
+    )
+
+
+def _gemini_visual_qa_verifier(requested_entity, candidate):
+    """Best-effort Gemini visual QA for already-local media assets.
+
+    Remote candidates are verified by metadata before download. Vision QA is
+    intentionally best-effort and never required for pipeline success.
+    """
+
+    local_path = Path(getattr(candidate, "local_path", "") or "")
+    if not local_path.exists():
+        return None
+    try:
+        samples = _representative_visual_samples(local_path, requested_entity)
+        if not samples:
+            return None
+        prompt = (
+            "Requested Entity:\n"
+            f"{requested_entity}\n\n"
+            "Question:\n"
+            "Does this image/frame primarily depict the requested entity?\n\n"
+            "Return compact JSON with: match, matched_entity, confidence, brief_reasoning."
+        )
+        client = _get_gemini_client()
+        if client is None:
+            return None
+        # The installed google-genai versions differ across environments. Keep
+        # this optional call defensive so vision unavailability never fails.
+        from google.genai import types
+
+        parts = [types.Part.from_text(text=prompt)]
+        for sample in samples:
+            parts.append(types.Part.from_bytes(data=Path(sample).read_bytes(), mime_type="image/jpeg"))
+        response = client.models.generate_content(
+            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
+            contents=[types.Content(role="user", parts=parts)],
+        )
+        raw = str(getattr(response, "text", "") or "").strip()
+        data = _extract_json_object(raw)
+        confidence = float(data.get("confidence", 0.0) or 0.0)
+        return VisionVerificationResult(
+            match=bool(data.get("match")),
+            matched_entity=str(data.get("matched_entity") or ""),
+            confidence=max(0.0, min(1.0, confidence)),
+            reasoning=str(data.get("brief_reasoning") or data.get("reasoning") or "")[:240],
+            provider="gemini",
+        )
+    except Exception as exc:
+        return VisionVerificationResult(match=False, provider="gemini", error=str(exc)[:240])
+
+
+def _extract_json_object(raw):
+    text = str(raw or "").strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?", "", text, flags=re.IGNORECASE).strip()
+        text = re.sub(r"```$", "", text).strip()
+    start = text.find("{")
+    end = text.rfind("}")
+    if start >= 0 and end > start:
+        text = text[start:end + 1]
+    try:
+        return json.loads(text)
+    except Exception:
+        return {}
+
+
+def _representative_visual_samples(path, requested_entity, max_frames=3):
+    """Return one image or up to three evenly spaced video frames for vision QA."""
+
+    path = Path(path)
+    if is_image(path):
+        prepared = _prepare_raster_image_for_ffmpeg(path, f"vision_{slugify(requested_entity)}")
+        return [prepared] if prepared else []
+    try:
+        duration = max(media_duration(path), 0.1)
+    except Exception:
+        duration = 1.0
+    times = [duration / 2.0] if max_frames <= 1 else [duration * 0.25, duration * 0.5, duration * 0.75]
+    samples = []
+    for sample_idx, timestamp in enumerate(times[:max_frames]):
+        out = OUT_DIR / f"vision_sample_{slugify(requested_entity)}_{sample_idx}.jpg"
+        try:
+            run_ff([
+                "ffmpeg", "-y",
+                "-ss", f"{timestamp:.3f}",
+                "-i", str(path),
+                "-frames:v", "1",
+                "-q:v", "3",
+                str(out),
+            ], timeout=30)
+            if out.exists():
+                samples.append(out)
+        except Exception:
+            continue
+    return samples
+
+
+def _record_post_download_visual_qa(idx, intent, media_path):
+    """Attach best-effort visual QA diagnostics after a selected asset is local."""
+
+    if not ENABLE_AI_VISUAL_QA:
+        return
+    requested_entity = (
+        getattr(intent, "requested_entity", "")
+        or getattr(intent, "primary_subject", "")
+        or ""
+    )
+    if not requested_entity or not media_path:
+        return
+    selection_payload = _MEDIA_SELECTION_DIAGNOSTICS.setdefault(idx, {"selection": {}})
+    selection = selection_payload.setdefault("selection", {})
+    evidence = selection.setdefault("evidence_verification", {})
+    if evidence.get("post_download_vision_checked"):
+        return
+    evidence.setdefault("requested_entity", requested_entity)
+    evidence["post_download_vision_checked"] = True
+    evidence["vision_requested"] = True
+    evidence["vision_provider"] = AI_VISUAL_QA_PROVIDER
+    evidence["local_media_path"] = str(media_path)
+    result = _gemini_visual_qa_verifier(
+        requested_entity,
+        SimpleNamespace(local_path=Path(media_path)),
+    )
+    if result is None:
+        evidence["vision_invoked"] = False
+        evidence["vision_result"] = "unavailable"
+        evidence.setdefault("fallback_reason", "vision verifier unavailable or no samples")
+        return
+    evidence["vision_invoked"] = True
+    evidence["vision_result"] = "match" if result.match else "no_match"
+    evidence["vision_confidence"] = result.confidence
+    evidence["vision_reasoning"] = result.reasoning
+    evidence["vision_error"] = result.error
+    if result.matched_entity:
+        evidence["selected_entity"] = result.matched_entity
 
 
 def _candidate_extension(candidate):
@@ -1631,6 +1891,11 @@ def _selection_intent(queries, fallback="", narration="", idx=None, shot_intent=
             "scene_importance": _scene_importance_for_index(idx, narration) if idx is not None else "",
             "media_mode": getattr(getattr(shot_intent, "media_mode", None), "value", getattr(shot_intent, "media_mode", "")) or "",
             "primary_subject": getattr(shot_intent, "primary_subject", "") or "",
+            "scene_entity": (
+                getattr(shot_intent, "scene_entity", None).to_dict()
+                if getattr(shot_intent, "scene_entity", None)
+                else None
+            ),
             "supporting_subjects": list(getattr(shot_intent, "required_entities", ()) or ()),
             "subject_persistence_target": (
                 getattr(shot_intent, "diagnostics", {})
@@ -1745,6 +2010,7 @@ def _select_candidate_for_provider(
         output_width=WIDTH,
         output_height=HEIGHT,
         minimum_score=effective_minimum,
+        evidence_engine=_evidence_engine(),
     )
     _remember_media_selection(idx, result, provider_name)
     if result.selected_candidate:
@@ -2015,6 +2281,7 @@ def _select_adaptive_result(intent, candidates, used_set, target_duration):
             output_width=WIDTH,
             output_height=HEIGHT,
             minimum_score=max(1.0, _minimum_score_for_intent(intent)),
+            evidence_engine=_evidence_engine(),
         )
         if exact_result.selected_candidate:
             return exact_result
@@ -2026,6 +2293,7 @@ def _select_adaptive_result(intent, candidates, used_set, target_duration):
         output_width=WIDTH,
         output_height=HEIGHT,
         minimum_score=max(1.0, _minimum_score_for_intent(intent)),
+        evidence_engine=_evidence_engine(),
     )
 
 
@@ -3348,6 +3616,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
     if _valid_media_path(adaptive_out):
         _save_persistent_used(used_set)
         selection = (_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}) or {}).get("selection", {})
+        _record_post_download_visual_qa(idx, canonical_intent, adaptive_out)
         visual_grammar_engine.register_real_asset(provider=selection.get("provider", "adaptive"))
         return adaptive_out
     if adaptive_out:
@@ -3555,6 +3824,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
             continue
         if _valid_media_path(out):
             _save_persistent_used(used_set)
+            _record_post_download_visual_qa(idx, canonical_intent, out)
             visual_grammar_engine.register_real_asset(provider=source)
             return out
         if out:
@@ -3720,6 +3990,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         )
         if _valid_media_path(broad_out):
             _save_persistent_used(used_set)
+            _record_post_download_visual_qa(idx, canonical_intent, broad_out)
             visual_grammar_engine.register_real_asset(provider="pexels")
             return broad_out
         if broad_out:
@@ -3873,7 +4144,7 @@ def _media_asset_from_path(path, *, source=MediaSource.UNKNOWN, idx=0, metadata=
     if not is_image(local_path):
         try:
             duration = media_duration(local_path)
-        except (OSError, subprocess.CalledProcessError, ValueError):
+        except (OSError, RuntimeError, subprocess.CalledProcessError, ValueError):
             duration = None
     return MediaAsset(
         local_path=local_path,
@@ -4017,7 +4288,45 @@ def build_segment(idx, broll, voice, duration, compare_pair=None):
 
     # Image mode: convert to clip with Ken Burns effect first
     if is_image(broll):
-        img_clip = image_to_clip(broll, duration, idx)
+        safe_image = _prepare_raster_image_for_ffmpeg(broll, idx)
+        if safe_image is None:
+            img_clip = _fallback_color_clip(
+                idx,
+                duration,
+                f"'{Path(broll).name}' is not a renderable image",
+            )
+        else:
+            img_clip = image_to_clip(safe_image, duration, idx)
+        run_ff([
+            "ffmpeg", "-y",
+            "-i", str(img_clip),
+            "-i", str(voice),
+            "-t", f"{duration:.3f}",
+            "-c:v", "copy",
+            "-c:a", "aac", "-b:a", "160k", "-ar", "44100",
+            "-shortest",
+            str(out_path),
+        ])
+        _record_clip_audio_decision(
+            idx=idx,
+            broll=broll,
+            extracted=False,
+            used=False,
+            reason="still image has no clip audio",
+        )
+        return out_path
+
+        if not _valid_raster_image(broll):
+            print(f"[!] Segment {idx}: '{Path(broll).name}' is not a valid image — using fallback color clip.")
+            img_clip = OUT_DIR / f"img_clip_{idx}.mp4"
+            run_ff([
+                "ffmpeg", "-y",
+                "-f", "lavfi", "-i", f"color=c=#1a1a2e:s={WIDTH}x{HEIGHT}:d={duration:.3f}:r={FPS}",
+                "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
+                str(img_clip),
+            ])
+        else:
+            img_clip = image_to_clip(broll, duration, idx)
         run_ff([
             "ffmpeg", "-y",
             "-i", str(img_clip),
@@ -4962,6 +5271,50 @@ def main():
     def load_topic_selection(ctx: PipelineContext, record: StageRecord) -> None:
         ctx.values["topic_stage"] = read_manifest(Path(record.outputs["topic_manifest"]))
 
+    def stage_documentary_viability(ctx: PipelineContext) -> StageResult:
+        config = DocumentaryViabilityConfig.from_env(os.environ)
+        report = DocumentaryViabilityEngine(config).evaluate(niche)
+        report_path = write_manifest(OUT_DIR / "documentary_viability_report.json", report.to_dict())
+        ctx.values["documentary_viability"] = report.to_dict()
+        print(
+            "[Viability] "
+            f"{report.decision.value} score={report.overall_score:.2f} "
+            f"enabled={config.enabled}"
+        )
+        if config.enabled:
+            if report.decision == DocumentaryViabilityDecision.SKIP:
+                raise RuntimeError(
+                    "Documentary viability gate skipped this topic before script generation: "
+                    + "; ".join(report.reasons)
+                )
+            if (
+                report.decision == DocumentaryViabilityDecision.REVIEW
+                and not config.allow_review_topics
+            ):
+                raise RuntimeError(
+                    "Documentary viability gate requires review for this topic: "
+                    + "; ".join(report.reasons)
+                )
+        warnings = []
+        if report.decision != DocumentaryViabilityDecision.APPROVED:
+            warnings.append(f"documentary viability decision: {report.decision.value}")
+        return StageResult(
+            outputs={
+                "documentary_viability_report": str(report_path),
+                "decision": report.decision.value,
+                "overall_score": round(report.overall_score, 4),
+            },
+            warnings=warnings,
+        )
+
+    def load_documentary_viability(ctx: PipelineContext, record: StageRecord) -> None:
+        report_path = Path(record.outputs.get("documentary_viability_report", ""))
+        if report_path.exists():
+            ctx.values["documentary_viability"] = read_manifest(report_path)
+
+    def validate_documentary_viability(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("documentary_viability_report", "")).exists()
+
     def stage_script_generation(ctx: PipelineContext) -> StageResult:
         if reuse_script:
             script_payload = load_cached_script(announce=True)
@@ -4975,28 +5328,92 @@ def main():
         script_payload = load_cached_script(announce=False)
         set_script_context(ctx, script_payload)
 
+    def _query_generation_report(shot_plan: ShotPlan) -> dict:
+        scenes = []
+        for intent in shot_plan.intents:
+            scene_entity = intent.scene_entity.to_dict() if intent.scene_entity else None
+            scenes.append({
+                "scene_index": intent.scene_index,
+                "documentary_role": intent.documentary_role,
+                "visual_goal": intent.visual_goal.value,
+                "canonical_entity": scene_entity.get("canonical_entity") if scene_entity else intent.primary_subject,
+                "scene_entity": scene_entity,
+                "generated_queries": list(intent.search_queries),
+                "rejected_mixed_queries": intent.diagnostics.get("query_isolation_rejections", []),
+                "fallback_chain": intent.diagnostics.get("fallback_chain", []),
+            })
+        return {
+            "planner": "scene_entity_query_isolation",
+            "primary_subject": shot_plan.primary_subject,
+            "scenes": scenes,
+        }
+
     def stage_media_planning(ctx: PipelineContext) -> StageResult:
         overrides = {}
         if review_broll:
             raw = interactive_broll_review(ctx.values["segments"], niche)
             overrides = {int(k): v for k, v in raw.items()}
-        shot_plan = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+        knowledge_store = KnowledgePackStore()
+        editorial_canon, lock_report, scene_role_report, domain_report = EditorialCanonBuilder().build(
+            topic=niche,
+            segments=ctx.values["segments"],
+            knowledge_domains=knowledge_store.load(),
+        )
+        scene_entity_plan = SceneEntityPlanner().plan(
+            editorial_canon=editorial_canon,
+            segments=ctx.values["segments"],
+        )
+        editorial_canon_path = editorial_canon.write_json(OUT_DIR / "editorial_canon.json")
+        primary_subject_lock_path = write_manifest(
+            OUT_DIR / "primary_subject_lock_report.json",
+            lock_report.to_dict(),
+        )
+        scene_role_path = write_manifest(OUT_DIR / "scene_role_report.json", scene_role_report)
+        domain_report_path = write_manifest(OUT_DIR / "domain_classification_report.json", domain_report)
+        shot_plan = VisualDirector(knowledge_store).plan(
+            topic=niche,
+            segments=ctx.values["segments"],
+            editorial_canon=editorial_canon,
+            scene_entity_plan=scene_entity_plan,
+        )
         shot_plan = SubjectContinuityEngine().apply(
             shot_plan,
             segments=ctx.values["segments"],
+            editorial_canon=editorial_canon,
         )
         shot_plan_path = shot_plan.write_json(OUT_DIR / "shot_plan.json")
+        scene_entity_report_path = write_manifest(
+            OUT_DIR / "scene_entity_report.json",
+            scene_entity_plan.to_report(),
+        )
+        query_generation_report_path = write_manifest(
+            OUT_DIR / "query_generation_report.json",
+            _query_generation_report(shot_plan),
+        )
         ctx.values["broll_overrides"] = overrides
+        ctx.values["editorial_canon"] = editorial_canon
         ctx.values["shot_plan"] = shot_plan
         path = write_manifest(
             OUT_DIR / "media_planning_manifest.json",
             {
                 "broll_overrides": {str(k): v for k, v in overrides.items()},
+                "editorial_canon": str(editorial_canon_path),
+                "primary_subject_lock_report": str(primary_subject_lock_path),
+                "scene_role_report": str(scene_role_path),
+                "domain_classification_report": str(domain_report_path),
+                "scene_entity_report": str(scene_entity_report_path),
+                "query_generation_report": str(query_generation_report_path),
                 "shot_plan": str(shot_plan_path),
             },
         )
         return StageResult(outputs={
             "media_planning_manifest": str(path),
+            "editorial_canon": str(editorial_canon_path),
+            "primary_subject_lock_report": str(primary_subject_lock_path),
+            "scene_role_report": str(scene_role_path),
+            "domain_classification_report": str(domain_report_path),
+            "scene_entity_report": str(scene_entity_report_path),
+            "query_generation_report": str(query_generation_report_path),
             "shot_plan": str(shot_plan_path),
         })
 
@@ -5005,15 +5422,64 @@ def main():
         ctx.values["broll_overrides"] = {
             int(k): v for k, v in payload.get("broll_overrides", {}).items()
         }
+        canon_path = Path(payload.get("editorial_canon") or record.outputs.get("editorial_canon", ""))
+        if canon_path.exists():
+            ctx.values["editorial_canon"] = EditorialCanon.from_dict(read_manifest(canon_path))
+        else:
+            knowledge_store = KnowledgePackStore()
+            editorial_canon, lock_report, scene_role_report, domain_report = EditorialCanonBuilder().build(
+                topic=niche,
+                segments=ctx.values["segments"],
+                knowledge_domains=knowledge_store.load(),
+            )
+            ctx.values["editorial_canon"] = editorial_canon
+            editorial_canon.write_json(OUT_DIR / "editorial_canon.json")
+            write_manifest(OUT_DIR / "primary_subject_lock_report.json", lock_report.to_dict())
+            write_manifest(OUT_DIR / "scene_role_report.json", scene_role_report)
+            write_manifest(OUT_DIR / "domain_classification_report.json", domain_report)
+            scene_entity_plan = SceneEntityPlanner().plan(
+                editorial_canon=editorial_canon,
+                segments=ctx.values["segments"],
+            )
+            write_manifest(OUT_DIR / "scene_entity_report.json", scene_entity_plan.to_report())
         shot_plan_path = Path(payload.get("shot_plan") or record.outputs.get("shot_plan", ""))
         if shot_plan_path.exists():
             ctx.values["shot_plan"] = ShotPlan.from_dict(read_manifest(shot_plan_path))
+            write_manifest(OUT_DIR / "scene_entity_report.json", {
+                "scenes": [
+                    {
+                        "scene_index": intent.scene_index,
+                        "scene_entity": intent.scene_entity.to_dict() if intent.scene_entity else None,
+                    }
+                    for intent in ctx.values["shot_plan"].intents
+                ],
+                "rejected_mixed_queries": [],
+                "fallback_chains": [
+                    {
+                        "scene_index": intent.scene_index,
+                        "fallback_chain": intent.diagnostics.get("fallback_chain", []),
+                    }
+                    for intent in ctx.values["shot_plan"].intents
+                ],
+            })
+            write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
         else:
-            shot_plan = VisualDirector().plan(topic=niche, segments=ctx.values["segments"])
+            knowledge_store = KnowledgePackStore()
+            shot_plan = VisualDirector(knowledge_store).plan(
+                topic=niche,
+                segments=ctx.values["segments"],
+                editorial_canon=ctx.values.get("editorial_canon"),
+                scene_entity_plan=SceneEntityPlanner().plan(
+                    editorial_canon=ctx.values["editorial_canon"],
+                    segments=ctx.values["segments"],
+                ) if ctx.values.get("editorial_canon") else None,
+            )
             ctx.values["shot_plan"] = SubjectContinuityEngine().apply(
                 shot_plan,
                 segments=ctx.values["segments"],
+                editorial_canon=ctx.values.get("editorial_canon"),
             )
+            write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
 
     def stage_voice_generation(ctx: PipelineContext) -> StageResult:
         voice_items = make_all_voices(ctx.values["segments"], duration)
@@ -5035,6 +5501,58 @@ def main():
             Path(record.outputs.get("voice_manifest", "")).exists()
             and validate_paths(record.outputs.get("voice_files", []))
         )
+
+    def write_fallback_quality_report(media_assets: list[MediaAsset]) -> Path:
+        scenes = []
+        local_explainer_count = 0
+        hybrid_count = 0
+        for idx, asset in enumerate(media_assets):
+            metadata = asset.metadata if isinstance(asset.metadata, dict) else {}
+            selection = metadata.get("selection") if isinstance(metadata.get("selection"), dict) else {}
+            provider = str(selection.get("provider") or metadata.get("provider") or asset.source.value)
+            fallback_level = str(selection.get("fallback_level") or metadata.get("fallback_level") or "")
+            reason = str(selection.get("selection_reason") or metadata.get("selection_reason") or "")
+            provider_id = str(selection.get("provider_id") or metadata.get("provider_asset_id") or "")
+            is_local_explainer = (
+                fallback_level == "local_explainer"
+                or "local explainer" in reason.lower()
+                or ("explainer" in provider_id.lower() and provider in {"local", MediaSource.LOCAL.value})
+            )
+            is_hybrid = provider in {"hybrid", "hybrid_composer"} or fallback_level == "hybrid_composer"
+            if is_local_explainer:
+                local_explainer_count += 1
+            if is_hybrid:
+                hybrid_count += 1
+            scenes.append({
+                "scene_index": idx,
+                "provider": provider,
+                "provider_id": provider_id,
+                "fallback_level": fallback_level,
+                "is_local_explainer": is_local_explainer,
+                "is_hybrid_composer": is_hybrid,
+                "confidence": selection.get("confidence_level") or selection.get("confidence"),
+                "reason": reason,
+            })
+        total = max(1, len(media_assets))
+        local_explainer_ratio = local_explainer_count / total
+        report = {
+            "total_scenes": len(media_assets),
+            "local_explainer_count": local_explainer_count,
+            "hybrid_composer_count": hybrid_count,
+            "local_explainer_ratio": round(local_explainer_ratio, 4),
+            "max_allowed_local_explainer_ratio": AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO,
+            "quality_gate_passed": local_explainer_ratio <= AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO,
+            "scenes": scenes,
+        }
+        path = write_manifest(OUT_DIR / "fallback_quality_report.json", report)
+        if not report["quality_gate_passed"]:
+            raise RuntimeError(
+                "Visual fallback quality gate failed: "
+                f"{local_explainer_count}/{len(media_assets)} scenes used local explainer fallbacks "
+                f"({local_explainer_ratio:.0%}; max {AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO:.0%}). "
+                "Stopping before timeline/render so automation does not publish a weak video."
+            )
+        return path
 
     def stage_media_selection(ctx: PipelineContext) -> StageResult:
         used_set = set()
@@ -5206,6 +5724,7 @@ def main():
                     metadata=selection_metadata,
                 ))
         ctx.values["media_assets"] = media_assets
+        fallback_quality_report_path = write_fallback_quality_report(media_assets)
         path = write_manifest(
             OUT_DIR / "media_manifest.json",
             {"assets": [asset.to_dict() for asset in media_assets]},
@@ -5225,6 +5744,7 @@ def main():
             "media_manifest": str(path),
             "subject_continuity_report": str(continuity_report_path),
             "visual_grammar_report": str(grammar_report_path),
+            "fallback_quality_report": str(fallback_quality_report_path),
             "media_files": [str(asset.local_path) for asset in media_assets],
         })
 
@@ -5490,6 +6010,23 @@ def main():
             pass
         return sheet_path
 
+    def verify_render_decode(video_path: Path) -> bool:
+        null_output = "NUL" if os.name == "nt" else "/dev/null"
+        try:
+            run_ff([
+                "ffmpeg",
+                "-v",
+                "error",
+                "-i",
+                str(video_path),
+                "-f",
+                "null",
+                null_output,
+            ], timeout=120)
+            return True
+        except Exception:
+            return False
+
     def write_provider_report() -> Path:
         selection_diagnostics = load_selection_diagnostics()
         provider_stats: dict[str, dict[str, Any]] = {}
@@ -5534,6 +6071,30 @@ def main():
         }
         return write_manifest(OUT_DIR / "adaptive_search_report.json", report)
 
+    def write_evidence_verification_report() -> Path:
+        selection_diagnostics = load_selection_diagnostics()
+        report = {}
+        for idx in sorted(selection_diagnostics):
+            item = selection_diagnostics[idx]
+            selection = item.get("selection", {}) if isinstance(item, dict) else {}
+            evidence = selection.get("evidence_verification") or item.get("evidence_verification") or {}
+            report[str(idx + 1)] = {
+                "requested_entity": evidence.get("requested_entity") or selection.get("primary_subject", ""),
+                "selected_entity": evidence.get("selected_entity") or selection.get("selected_entity", ""),
+                "entity_fidelity": evidence.get("entity_fidelity") or selection.get("entity_fidelity", ""),
+                "metadata_confidence": evidence.get("metadata_confidence") or selection.get("metadata_confidence"),
+                "vision_requested": bool(evidence.get("vision_requested")),
+                "vision_invoked": bool(evidence.get("vision_invoked")),
+                "post_download_vision_checked": bool(evidence.get("post_download_vision_checked")),
+                "vision_result": evidence.get("vision_result"),
+                "vision_confidence": evidence.get("vision_confidence"),
+                "fallback_reason": evidence.get("fallback_reason") or selection.get("rejection_reason", ""),
+                "candidate_ranking": evidence.get("candidate_ranking"),
+                "candidate_id": evidence.get("candidate_id") or f"{selection.get('provider', '')}:{selection.get('provider_id', '')}",
+                "candidate_ranking_summary": selection.get("score_breakdown", {}).get("_evidence_verification_value", evidence),
+            }
+        return write_manifest(OUT_DIR / "evidence_verification_report.json", report)
+
     def load_selection_diagnostics() -> dict[int, dict[str, Any]]:
         if _MEDIA_SELECTION_DIAGNOSTICS:
             return dict(_MEDIA_SELECTION_DIAGNOSTICS)
@@ -5573,6 +6134,50 @@ def main():
                 },
             }
         return diagnostics
+
+    def stage_publish_quality_gate(ctx: PipelineContext) -> StageResult:
+        video_path = Path(ctx.values["final"])
+        ffprobe_path = write_ffprobe_report(video_path)
+        contact_sheet_path = write_contact_sheet(video_path)
+        evidence_report_path = write_evidence_verification_report()
+        artifacts = PublishQualityArtifacts(
+            video_path=video_path,
+            captions_path=OUT_DIR / "captions.ass",
+            timeline_path=OUT_DIR / "timeline.json",
+            media_manifest_path=OUT_DIR / "media_manifest.json",
+            ffprobe_path=ffprobe_path,
+            fallback_quality_path=OUT_DIR / "fallback_quality_report.json",
+            audio_mix_path=OUT_DIR / "audio_mix_report.json",
+            evidence_verification_path=evidence_report_path,
+            contact_sheet_path=contact_sheet_path,
+            decode_verified=verify_render_decode(video_path),
+        )
+        report = PublishQualityGate(PublishQualityConfig.from_env()).evaluate(artifacts)
+        report_path = report.write_json(OUT_DIR / "publish_quality_report.json")
+        ctx.values["publish_quality_report"] = report.to_dict()
+        warnings = [
+            f"{check.name}: {check.message}"
+            for check in report.checks
+            if check.severity.value in {"WARNING", "DEFER", "BLOCK"}
+        ]
+        print(f"[quality] Publish decision: {report.verdict.value}")
+        return StageResult(
+            outputs={
+                "publish_quality_report": str(report_path),
+                "verdict": report.verdict.value,
+                "ffprobe": str(ffprobe_path),
+                "contact_sheet": str(contact_sheet_path),
+            },
+            warnings=warnings,
+        )
+
+    def load_publish_quality_gate(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["publish_quality_report"] = read_manifest(
+            Path(record.outputs["publish_quality_report"])
+        )
+
+    def validate_publish_quality_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("publish_quality_report", "")).exists()
 
     def write_selection_report(metadata: dict) -> Path:
         selection_diagnostics = load_selection_diagnostics()
@@ -5625,10 +6230,17 @@ def main():
         video_id = ctx.values["video_id"]
         artifact_store = ArtifactStore(SCRIPT_DIR)
         queue = FilesystemQueue(artifact_store.queue_root())
-        ffprobe_path = write_ffprobe_report(Path(ctx.values["final"]))
-        contact_sheet_path = write_contact_sheet(Path(ctx.values["final"]))
+        ffprobe_path = OUT_DIR / "ffprobe.json"
+        if not ffprobe_path.exists():
+            ffprobe_path = write_ffprobe_report(Path(ctx.values["final"]))
+        contact_sheet_path = OUT_DIR / "contact_sheet.jpg"
+        if not contact_sheet_path.exists():
+            contact_sheet_path = write_contact_sheet(Path(ctx.values["final"]))
         provider_report_path = write_provider_report()
         adaptive_search_report_path = write_adaptive_search_report()
+        evidence_verification_report_path = OUT_DIR / "evidence_verification_report.json"
+        if not evidence_verification_report_path.exists():
+            evidence_verification_report_path = write_evidence_verification_report()
         selection_report_path = write_selection_report(metadata)
         existing = queue.find(video_id)
         if existing is None:
@@ -5642,12 +6254,23 @@ def main():
             )
         pending_folder = artifact_store.queue_item_path("pending", video_id)
         snapshot_files = {
+            "scheduler_report.json": OUT_DIR / "scheduler_report.json",
+            "documentary_viability_report.json": OUT_DIR / "documentary_viability_report.json",
             "timeline.json": OUT_DIR / "timeline.json",
+            "editorial_canon.json": OUT_DIR / "editorial_canon.json",
+            "primary_subject_lock_report.json": OUT_DIR / "primary_subject_lock_report.json",
+            "scene_role_report.json": OUT_DIR / "scene_role_report.json",
+            "domain_classification_report.json": OUT_DIR / "domain_classification_report.json",
+            "scene_entity_report.json": OUT_DIR / "scene_entity_report.json",
+            "query_generation_report.json": OUT_DIR / "query_generation_report.json",
             "shot_plan.json": OUT_DIR / "shot_plan.json",
             "visual_grammar_report.json": OUT_DIR / "visual_grammar_report.json",
             "subject_continuity_report.json": OUT_DIR / "subject_continuity_report.json",
+            "fallback_quality_report.json": OUT_DIR / "fallback_quality_report.json",
+            "publish_quality_report.json": OUT_DIR / "publish_quality_report.json",
             "provider_report.json": provider_report_path,
             "adaptive_search_report.json": adaptive_search_report_path,
+            "evidence_verification_report.json": evidence_verification_report_path,
             "selection_report.txt": selection_report_path,
             "contact_sheet.jpg": contact_sheet_path,
             "media_manifest.json": OUT_DIR / "media_manifest.json",
@@ -5707,6 +6330,12 @@ def main():
     )
     stages = [
         PipelineStage("topic_selection", stage_topic_selection, load=load_topic_selection),
+        PipelineStage(
+            "documentary_viability",
+            stage_documentary_viability,
+            load=load_documentary_viability,
+            validate_outputs=validate_documentary_viability,
+        ),
         PipelineStage("script_generation", stage_script_generation, load=load_script_generation),
         PipelineStage("media_planning", stage_media_planning, load=load_media_planning),
         PipelineStage("voice_generation", stage_voice_generation, load=load_voice_generation, validate_outputs=validate_voice_outputs),
@@ -5715,6 +6344,12 @@ def main():
         PipelineStage("timeline_construction", stage_timeline, load=load_timeline),
         PipelineStage("rendering", stage_rendering, load=load_rendering, validate_outputs=validate_render_outputs),
         PipelineStage("metadata", stage_metadata, load=load_metadata),
+        PipelineStage(
+            "publish_quality_gate",
+            stage_publish_quality_gate,
+            load=load_publish_quality_gate,
+            validate_outputs=validate_publish_quality_outputs,
+        ),
         PipelineStage("queue_creation", stage_queue_creation, load=load_queue_creation, validate_outputs=validate_queue_outputs),
     ]
     orchestrator = PipelineOrchestrator(

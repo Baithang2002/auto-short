@@ -36,10 +36,29 @@ from .selection import (
     select_best_candidate,
     select_first_available_provider,
 )
+from .evidence import (
+    EntityFidelity,
+    EvidenceVerificationConfig,
+    EvidenceVerificationEngine,
+    EvidenceVerificationResult,
+    VisionVerificationResult,
+)
 from .subject_continuity import (
     SubjectContinuityEngine,
     SubjectContinuityProfile,
     SubjectContinuityReport,
+)
+from .editorial import (
+    DocumentaryMode,
+    EditorialCanon,
+    EditorialCanonBuilder,
+    PrimarySubjectLockReport,
+)
+from .scene_entities import (
+    SceneEntity,
+    SceneEntityPlan,
+    SceneEntityPlanner,
+    isolated_query_candidates,
 )
 from .visual_director import (
     DocumentaryStyleRules,
@@ -77,6 +96,9 @@ __all__ = [
     "QueryPlanner",
     "SearchStrategy",
     "SceneImportance",
+    "SceneEntity",
+    "SceneEntityPlan",
+    "SceneEntityPlanner",
     "SceneType",
     "SourcePlanner",
     "StockCandidate",
@@ -85,8 +107,16 @@ __all__ = [
     "SubjectContinuityReport",
     "VisualIntent",
     "DocumentaryStyleRules",
+    "DocumentaryMode",
     "DomainKnowledge",
+    "EditorialCanon",
+    "EditorialCanonBuilder",
+    "EntityFidelity",
+    "EvidenceVerificationConfig",
+    "EvidenceVerificationEngine",
+    "EvidenceVerificationResult",
     "KnowledgePackStore",
+    "PrimarySubjectLockReport",
     "QueryTier",
     "ShotIntent",
     "ShotPlan",
@@ -96,6 +126,7 @@ __all__ = [
     "VisualGrammarDecision",
     "VisualGrammarEngine",
     "VisualGoal",
+    "VisionVerificationResult",
     "build_visual_intent",
     "classify_scene_type",
     "candidate_from_local_path",
@@ -108,4 +139,5 @@ __all__ = [
     "select_first_available_provider",
     "default_provider_capability_registry",
     "default_visual_grammars",
+    "isolated_query_candidates",
 ]
