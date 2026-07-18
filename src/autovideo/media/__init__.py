@@ -60,6 +60,18 @@ from .scene_entities import (
     SceneEntityPlanner,
     isolated_query_candidates,
 )
+from .canonical_entities import (
+    CanonicalEntityReport,
+    CanonicalEntityResolverConfig,
+    CanonicalSceneEntity,
+    CanonicalSceneEntityResolver,
+)
+from .semantic_queries import (
+    SemanticQueryConfig,
+    SemanticQueryReport,
+    SemanticSceneQuery,
+    SemanticVisualQueryEngine,
+)
 from .visual_director import (
     DocumentaryStyleRules,
     DomainKnowledge,
@@ -99,6 +111,10 @@ __all__ = [
     "SceneEntity",
     "SceneEntityPlan",
     "SceneEntityPlanner",
+    "CanonicalEntityReport",
+    "CanonicalEntityResolverConfig",
+    "CanonicalSceneEntity",
+    "CanonicalSceneEntityResolver",
     "SceneType",
     "SourcePlanner",
     "StockCandidate",
@@ -127,6 +143,10 @@ __all__ = [
     "VisualGrammarEngine",
     "VisualGoal",
     "VisionVerificationResult",
+    "SemanticQueryConfig",
+    "SemanticQueryReport",
+    "SemanticSceneQuery",
+    "SemanticVisualQueryEngine",
     "build_visual_intent",
     "classify_scene_type",
     "candidate_from_local_path",

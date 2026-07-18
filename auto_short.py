@@ -50,6 +50,7 @@ import time
 import uuid
 import hashlib
 import datetime as dt
+from dataclasses import replace
 from pathlib import Path
 from difflib import SequenceMatcher
 from types import SimpleNamespace
@@ -92,10 +93,18 @@ from autovideo.intelligence import (
     DocumentaryViabilityConfig,
     DocumentaryViabilityDecision,
     DocumentaryViabilityEngine,
+    SceneCoverage,
+    SourceCoverageConfig,
+    SourceCoverageDecision,
+    SourceCoverageEvaluator,
     build_topic_metadata,
+    sample_scene_indexes,
 )
 from autovideo.engagement import generate_pinned_comment
 from autovideo.media import (
+    CanonicalEntityReport,
+    CanonicalEntityResolverConfig,
+    CanonicalSceneEntityResolver,
     EditorialCanon,
     EditorialCanonBuilder,
     EntityFidelity,
@@ -105,6 +114,9 @@ from autovideo.media import (
     MediaSelectionResult,
     QueryPlanner,
     SceneEntityPlanner,
+    SemanticQueryConfig,
+    SemanticQueryReport,
+    SemanticVisualQueryEngine,
     SceneImportance,
     SearchStrategy,
     SourcePlanner,
@@ -2027,7 +2039,7 @@ def _select_candidate_for_provider(
     return None
 
 
-def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", per_page=10):
+def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", per_page=10, timeout_sec=30):
     """Return normalized Pexels candidates without downloading them."""
 
     import requests
@@ -2048,7 +2060,7 @@ def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", pe
                     "per_page": per_page,
                     "size": "medium",
                 },
-                timeout=30,
+                timeout=timeout_sec,
             )
             response.raise_for_status()
             videos = response.json().get("videos", []) or []
@@ -2078,7 +2090,7 @@ def _best_pixabay_rendition(hit, *, allow_landscape=False):
     return best
 
 
-def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, per_page=20):
+def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, per_page=20, timeout_sec=30):
     """Return normalized Pixabay candidates without downloading them."""
 
     import requests
@@ -2098,7 +2110,7 @@ def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, pe
                     "per_page": per_page,
                     "safesearch": "true",
                 },
-                timeout=30,
+                timeout=timeout_sec,
             )
             response.raise_for_status()
             hits = response.json().get("hits", []) or []
@@ -2121,6 +2133,7 @@ def _json_stock_candidates(
     headers=None,
     params_extra=None,
     license_name="",
+    timeout_sec=30,
 ):
     """Return normalized configured JSON-provider candidates without downloading."""
 
@@ -2136,7 +2149,7 @@ def _json_stock_candidates(
                 endpoint,
                 headers=headers or {},
                 params={"q": enriched, "query": enriched, **(params_extra or {})},
-                timeout=30,
+                timeout=timeout_sec,
             )
             response.raise_for_status()
             items = _json_items(response.json())
@@ -2153,7 +2166,7 @@ def _json_stock_candidates(
     return candidate_pool
 
 
-def _wikimedia_candidates(queries):
+def _wikimedia_candidates(queries, *, timeout_sec=30):
     """Return Wikimedia candidates without downloading them."""
 
     import requests
@@ -2180,7 +2193,7 @@ def _wikimedia_candidates(queries):
                         "prop": "imageinfo",
                         "iiprop": "url|mime|size|extmetadata",
                     },
-                    timeout=30,
+                    timeout=timeout_sec,
                 )
                 response.raise_for_status()
                 pages = (response.json().get("query", {}) or {}).get("pages", {}) or {}
@@ -2195,14 +2208,14 @@ def _wikimedia_candidates(queries):
     return candidate_pool
 
 
-def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=False):
+def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=False, timeout_sec=30):
     if provider == "pexels":
         orientation = "landscape" if landscape else "portrait"
-        return _pexels_video_candidates(queries, fallback, orientation=orientation)
+        return _pexels_video_candidates(queries, fallback, orientation=orientation, timeout_sec=timeout_sec)
     if provider == "pixabay":
-        return _pixabay_video_candidates(queries, fallback, allow_landscape=landscape)
+        return _pixabay_video_candidates(queries, fallback, allow_landscape=landscape, timeout_sec=timeout_sec)
     if provider == "wikimedia":
-        return _wikimedia_candidates(queries)
+        return _wikimedia_candidates(queries, timeout_sec=timeout_sec)
     if provider == "mixkit":
         return _json_stock_candidates(
             "mixkit",
@@ -2210,6 +2223,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             queries,
             fallback=fallback,
             license_name="Mixkit License",
+            timeout_sec=timeout_sec,
         )
     if provider == "coverr":
         return _json_stock_candidates(
@@ -2218,6 +2232,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             queries,
             fallback=fallback,
             license_name="Coverr License",
+            timeout_sec=timeout_sec,
         )
     if provider == "videvo" and VIDEVO_API_URL and VIDEVO_API_KEY:
         return _json_stock_candidates(
@@ -2227,6 +2242,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             fallback=fallback,
             headers={"Authorization": f"Bearer {VIDEVO_API_KEY}"},
             license_name="Videvo license varies by clip",
+            timeout_sec=timeout_sec,
         )
     if provider == "noaa":
         return _json_stock_candidates(
@@ -2235,6 +2251,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             queries,
             fallback=fallback,
             license_name="NOAA public domain / usage varies",
+            timeout_sec=timeout_sec,
         )
     if provider == "esa":
         return _json_stock_candidates(
@@ -2243,6 +2260,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             queries,
             fallback=fallback,
             license_name="ESA media usage guidelines",
+            timeout_sec=timeout_sec,
         )
     if provider == "usgs":
         return _json_stock_candidates(
@@ -2251,6 +2269,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             queries,
             fallback=fallback,
             license_name="USGS public domain / usage varies",
+            timeout_sec=timeout_sec,
         )
     return []
 
@@ -2312,6 +2331,7 @@ def _fetch_adaptive_broll(
     used_set,
     target_duration,
     intent,
+    provider_query_variants=None,
 ):
     """Build an expanded candidate pool before downloading a stock asset."""
 
@@ -2344,7 +2364,11 @@ def _fetch_adaptive_broll(
     before_result = None
     for order, plan in enumerate(plans):
         provider = plan.provider_id
-        plan_queries = list(plan.queries) or []
+        plan_queries = list(
+            (provider_query_variants or {}).get(provider)
+            or plan.queries
+            or []
+        )
         if provider not in {
             "pexels",
             "pixabay",
@@ -3523,7 +3547,8 @@ def _dedupe_runtime_queries(queries):
 def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set=None,
                 hybrid=False, threshold=0.5, dalle=False, target_duration=5.0,
                 no_interactive=False, shot_intent=None,
-                visual_grammar_engine=None, visual_grammar_decision=None):
+                visual_grammar_engine=None, visual_grammar_decision=None,
+                provider_query_variants=None):
     """Chain b-roll sources: local -> DALL-E (opt) -> Pexels -> Pixabay -> NASA (space).
 
     Uses a persistent cross-video used_set so clips aren't repeated across runs.
@@ -3612,6 +3637,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         used_set=used_set,
         target_duration=target_duration,
         intent=canonical_intent,
+        provider_query_variants=provider_query_variants,
     )
     if _valid_media_path(adaptive_out):
         _save_persistent_used(used_set)
@@ -3624,7 +3650,11 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
 
     for plan in strategy.provider_plans:
         source = plan.provider_id
-        plan_queries = list(plan.queries) or queries
+        plan_queries = list(
+            (provider_query_variants or {}).get(source)
+            or plan.queries
+            or queries
+        )
         if plan.score <= 0:
             continue
         if source == "local":
@@ -5481,6 +5511,257 @@ def main():
             )
             write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
 
+    def _resolved_provider_intent(intent, report: CanonicalEntityReport | None):
+        """Create a retrieval-only ShotIntent without mutating the ShotPlan."""
+
+        if report is None:
+            return intent
+        resolution = report.scene_for_index(intent.scene_index)
+        if resolution is None:
+            return intent
+        return replace(
+            intent,
+            primary_subject=resolution.canonical_entity,
+            scene_entity=resolution.resolved_entity,
+            required_entities=(
+                resolution.canonical_entity,
+                *resolution.supporting_entities,
+            ),
+        )
+
+    def stage_canonical_entity_resolution(ctx: PipelineContext) -> StageResult:
+        """Resolve provider-facing entities while retaining the original ShotPlan."""
+
+        report = CanonicalSceneEntityResolver(
+            CanonicalEntityResolverConfig.from_env(os.environ)
+        ).resolve(
+            documentary_topic=niche,
+            shot_plan=ctx.values["shot_plan"],
+        )
+        report_path = report.write_json(OUT_DIR / "canonical_entity_report.json")
+        ctx.values["canonical_entity_report"] = report
+        return StageResult(outputs={"canonical_entity_report": str(report_path)})
+
+    def load_canonical_entity_resolution(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["canonical_entity_report"] = CanonicalEntityReport.from_dict(
+            read_manifest(Path(record.outputs["canonical_entity_report"]))
+        )
+
+    def validate_canonical_entity_resolution(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("canonical_entity_report", "")).exists()
+
+    def stage_semantic_query_planning(ctx: PipelineContext) -> StageResult:
+        """Translate canonical entities into provider-only query language."""
+
+        shot_plan = ctx.values["shot_plan"]
+        canonical_report = ctx.values.get("canonical_entity_report")
+        resolved_intents = tuple(
+            _resolved_provider_intent(intent, canonical_report)
+            for intent in shot_plan.intents
+        )
+        retrieval_shot_plan = SimpleNamespace(
+            intents=resolved_intents,
+            primary_subject=shot_plan.primary_subject,
+        )
+        report = SemanticVisualQueryEngine(
+            SemanticQueryConfig.from_env(os.environ)
+        ).plan(
+            # The canonical resolver is authoritative for retrieval identity.
+            # Supplying the editorial title here would let the legacy semantic
+            # normalizer reintroduce title-wide entities such as "rainforest"
+            # into a scene explicitly resolved as "Amazon River".
+            documentary_topic="",
+            shot_plan=retrieval_shot_plan,
+        )
+        report = replace(report, documentary_topic=niche)
+        report_path = report.write_json(OUT_DIR / "semantic_query_report.json")
+        ctx.values["semantic_query_report"] = report
+        return StageResult(outputs={"semantic_query_report": str(report_path)})
+
+    def load_semantic_query_planning(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["semantic_query_report"] = SemanticQueryReport.from_dict(
+            read_manifest(Path(record.outputs["semantic_query_report"]))
+        )
+
+    def validate_semantic_query_planning(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("semantic_query_report", "")).exists()
+
+    def _source_coverage_intents(shot_plan: ShotPlan, maximum: int) -> list:
+        intents = list(shot_plan.intents)
+        critical = [
+            intent
+            for intent in intents
+            if str(intent.scene_importance).upper() in {"HOOK", "MAIN_REVEAL"}
+        ]
+        selected_indexes = set(sample_scene_indexes(len(intents), maximum))
+        selected_indexes.update(intent.scene_index for intent in critical)
+        selected = [intent for intent in intents if intent.scene_index in selected_indexes]
+        if len(selected) > maximum:
+            selected = critical[:maximum]
+            selected_indexes = {intent.scene_index for intent in selected}
+            for intent in intents:
+                if len(selected) >= maximum:
+                    break
+                if intent.scene_index not in selected_indexes:
+                    selected.append(intent)
+                    selected_indexes.add(intent.scene_index)
+        return selected
+
+    def _probe_source_coverage_scene(
+        intent,
+        config: SourceCoverageConfig,
+        narrations: dict[int, str],
+        canonical_report: CanonicalEntityReport | None = None,
+        semantic_report: SemanticQueryReport | None = None,
+    ) -> SceneCoverage:
+        provider_intent = _resolved_provider_intent(intent, canonical_report)
+        semantic_scene = (
+            semantic_report.scene_for_index(intent.scene_index)
+            if semantic_report else None
+        )
+        queries = list(
+            semantic_scene.provider_queries if semantic_scene else provider_intent.search_queries
+        )[:config.max_queries_per_scene]
+        fallback = provider_intent.primary_subject or niche
+        visual_intent = _selection_intent(
+            queries,
+            fallback=fallback,
+            narration=narrations.get(intent.scene_index, ""),
+            idx=intent.scene_index,
+            shot_intent=provider_intent,
+        )
+        strategy = _build_search_strategy(
+            queries,
+            fallback,
+            narrations.get(intent.scene_index, ""),
+            idx=intent.scene_index,
+            intent=visual_intent,
+        )
+        supported = {"pexels", "pixabay", "wikimedia", "mixkit", "coverr", "videvo"}
+        plans = [
+            plan
+            for plan in strategy.provider_plans
+            if plan.provider_id in supported and plan.score > 0
+        ][:config.max_providers_per_scene]
+        attempted: list[str] = []
+        candidates = []
+        reasons: list[str] = []
+        for plan in plans:
+            attempted.append(plan.provider_id)
+            plan_queries = list(
+                semantic_scene.queries_for(plan.provider_id)
+                if semantic_scene else plan.queries or queries
+            )[:config.max_queries_per_scene]
+            try:
+                provider_candidates = _adaptive_provider_candidates(
+                    plan.provider_id,
+                    plan_queries,
+                    fallback,
+                    timeout_sec=config.provider_timeout_sec,
+                )
+            except Exception as exc:
+                reasons.append(f"{plan.provider_id} probe failed: {exc}")
+                continue
+            candidates.extend(provider_candidates)
+            if not provider_candidates:
+                reasons.append(f"{plan.provider_id} returned no candidates")
+        candidates = _dedupe_candidates(candidates)
+        minimum_score = max(1.0, _minimum_score_for_intent(visual_intent))
+        scored = [
+            score_candidate(
+                visual_intent,
+                candidate,
+                target_duration_sec=SHORTS_SCENE_TARGET_DURATION,
+                output_width=WIDTH,
+                output_height=HEIGHT,
+                evidence_engine=EvidenceVerificationEngine(),
+            )
+            for candidate in candidates
+        ]
+        accepted = [
+            score
+            for score in scored
+            if score.quality_gate_passed and score.score >= minimum_score
+        ]
+        if candidates and not accepted:
+            reasons.append("candidates found but none passed production scoring")
+        if not plans:
+            reasons.append("no probe-supported provider was ranked for this scene")
+        entity = (
+            provider_intent.scene_entity.canonical_entity
+            if provider_intent.scene_entity else provider_intent.primary_subject
+        )
+        return SceneCoverage(
+            scene_index=intent.scene_index,
+            canonical_entity=entity,
+            documentary_role=intent.documentary_role,
+            scene_importance=intent.scene_importance,
+            query=queries[0] if queries else fallback,
+            providers_attempted=tuple(attempted),
+            candidates_found=len(candidates),
+            accepted_candidates=len(accepted),
+            best_score=max((score.score for score in scored), default=None),
+            covered=bool(accepted),
+            reasons=tuple(reasons),
+        )
+
+    def stage_source_coverage(ctx: PipelineContext) -> StageResult:
+        config = SourceCoverageConfig.from_env(os.environ)
+        if not config.enabled:
+            report = SourceCoverageEvaluator(config).evaluate(niche, ())
+            report_path = report.write_json(OUT_DIR / "source_coverage_report.json")
+            ctx.values["source_coverage"] = report.to_dict()
+            return StageResult(outputs={
+                "source_coverage_report": str(report_path),
+                "decision": report.decision.value,
+                "coverage_ratio": 0.0,
+            })
+        narrations = {
+            index: str(segment.get("narration") or "")
+            for index, segment in enumerate(ctx.values["segments"])
+        }
+        sampled_intents = _source_coverage_intents(ctx.values["shot_plan"], config.max_scenes)
+        scenes = [
+            _probe_source_coverage_scene(
+                intent,
+                config,
+                narrations,
+                ctx.values.get("canonical_entity_report"),
+                ctx.values.get("semantic_query_report"),
+            )
+            for intent in sampled_intents
+        ]
+        report = SourceCoverageEvaluator(config).evaluate(niche, scenes)
+        report_path = report.write_json(OUT_DIR / "source_coverage_report.json")
+        ctx.values["source_coverage"] = report.to_dict()
+        print(
+            f"[Coverage] {report.decision.value} "
+            f"coverage={report.coverage_ratio:.0%} sampled={len(report.scenes)}"
+        )
+        enforce = _env_flag("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", default="false")
+        if enforce and report.decision == SourceCoverageDecision.DEFERRED:
+            raise RuntimeError(
+                "Source coverage preflight deferred this topic before voice generation: "
+                + "; ".join(report.reasons)
+            )
+        warnings = list(report.reasons) if report.decision == SourceCoverageDecision.DEFERRED else []
+        return StageResult(
+            outputs={
+                "source_coverage_report": str(report_path),
+                "decision": report.decision.value,
+                "coverage_ratio": round(report.coverage_ratio, 4),
+            },
+            warnings=warnings,
+        )
+
+    def load_source_coverage(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["source_coverage"] = read_manifest(
+            Path(record.outputs["source_coverage_report"])
+        )
+
+    def validate_source_coverage(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("source_coverage_report", "")).exists()
+
     def stage_voice_generation(ctx: PipelineContext) -> StageResult:
         voice_items = make_all_voices(ctx.values["segments"], duration)
         ctx.values["voice_items"] = voice_items
@@ -5559,6 +5840,8 @@ def main():
         media_assets = []
         broll_overrides = ctx.values.get("broll_overrides", {})
         shot_plan = ctx.values.get("shot_plan")
+        canonical_entity_report = ctx.values.get("canonical_entity_report")
+        semantic_query_report = ctx.values.get("semantic_query_report")
         visual_grammar_engine = VisualGrammarEngine(
             topic=niche,
             total_scenes=len(ctx.values["voice_items"]),
@@ -5568,6 +5851,14 @@ def main():
             seg = item["segment"]
             dur = item["duration"]
             shot_intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
+            provider_shot_intent = (
+                _resolved_provider_intent(shot_intent, canonical_entity_report)
+                if shot_intent else None
+            )
+            semantic_scene = (
+                semantic_query_report.scene_for_index(idx)
+                if isinstance(semantic_query_report, SemanticQueryReport) else None
+            )
             visual_grammar_decision = None
 
             if compare_mode:
@@ -5644,20 +5935,32 @@ def main():
                             ))
                             continue
                         print(f"    [Gemini Image] failed; falling through to stock sources.")
-                        queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
+                        queries = list(
+                            semantic_scene.provider_queries if semantic_scene
+                            else provider_shot_intent.search_queries if provider_shot_intent
+                            else broll_query_list(seg, niche)
+                        )
                     elif "queries" in override:
                         queries = override["queries"]
                     else:
-                        queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
+                        queries = list(
+                            semantic_scene.provider_queries if semantic_scene
+                            else provider_shot_intent.search_queries if provider_shot_intent
+                            else broll_query_list(seg, niche)
+                        )
                 else:
-                    queries = list(shot_intent.search_queries) if shot_intent else broll_query_list(seg, niche)
+                    queries = list(
+                        semantic_scene.provider_queries if semantic_scene
+                        else provider_shot_intent.search_queries if provider_shot_intent
+                        else broll_query_list(seg, niche)
+                    )
                 if not queries:
                     queries = broll_query_list(seg, niche)
                 visual_grammar_decision = visual_grammar_engine.decide(
                     scene_index=idx,
                     narration=seg["narration"],
                     queries=tuple(queries),
-                    shot_intent=shot_intent,
+                    shot_intent=provider_shot_intent,
                 )
                 queries = _dedupe_runtime_queries([
                     *visual_grammar_decision.repaired_queries,
@@ -5678,17 +5981,35 @@ def main():
                             "query_budget": shot_plan.query_budget,
                         },
                         "shot_intent": shot_intent.to_dict(),
+                        "canonical_scene_entity": (
+                            canonical_entity_report.scene_for_index(idx).to_dict()
+                            if canonical_entity_report and canonical_entity_report.scene_for_index(idx)
+                            else None
+                        ),
+                        "semantic_query_plan": semantic_scene.to_dict() if semantic_scene else None,
                         "visual_grammar": visual_grammar_decision.to_dict(),
                     }
 
                 print(f"[3/5] Segment {idx+1}: fetching B-roll '{queries[0]}'...")
-                broll = fetch_broll(queries, idx, fallback=niche,
-                                   local_media=local_media, narration=seg["narration"],
-                                   used_set=used_set, hybrid=hybrid, threshold=threshold, dalle=dalle,
-                                   target_duration=dur, no_interactive=no_interactive,
-                                   shot_intent=shot_intent,
-                                   visual_grammar_engine=visual_grammar_engine,
-                                   visual_grammar_decision=visual_grammar_decision)
+                broll = fetch_broll(
+                    queries,
+                    idx,
+                    fallback=(provider_shot_intent.primary_subject if provider_shot_intent else niche),
+                    local_media=local_media,
+                    narration=seg["narration"],
+                    used_set=used_set,
+                    hybrid=hybrid,
+                    threshold=threshold,
+                    dalle=dalle,
+                    target_duration=dur,
+                    no_interactive=no_interactive,
+                    shot_intent=provider_shot_intent,
+                    visual_grammar_engine=visual_grammar_engine,
+                    visual_grammar_decision=visual_grammar_decision,
+                    provider_query_variants=(
+                        semantic_scene.provider_variants if semantic_scene else None
+                    ),
+                )
                 if not _valid_media_path(broll):
                     print(f"    [Local explainer] replacing missing media for segment {idx+1}.")
                     broll = _generate_local_explainer_image(queries[0] if queries else niche, idx)
@@ -6256,6 +6577,7 @@ def main():
         snapshot_files = {
             "scheduler_report.json": OUT_DIR / "scheduler_report.json",
             "documentary_viability_report.json": OUT_DIR / "documentary_viability_report.json",
+            "source_coverage_report.json": OUT_DIR / "source_coverage_report.json",
             "timeline.json": OUT_DIR / "timeline.json",
             "editorial_canon.json": OUT_DIR / "editorial_canon.json",
             "primary_subject_lock_report.json": OUT_DIR / "primary_subject_lock_report.json",
@@ -6263,6 +6585,8 @@ def main():
             "domain_classification_report.json": OUT_DIR / "domain_classification_report.json",
             "scene_entity_report.json": OUT_DIR / "scene_entity_report.json",
             "query_generation_report.json": OUT_DIR / "query_generation_report.json",
+            "canonical_entity_report.json": OUT_DIR / "canonical_entity_report.json",
+            "semantic_query_report.json": OUT_DIR / "semantic_query_report.json",
             "shot_plan.json": OUT_DIR / "shot_plan.json",
             "visual_grammar_report.json": OUT_DIR / "visual_grammar_report.json",
             "subject_continuity_report.json": OUT_DIR / "subject_continuity_report.json",
@@ -6338,6 +6662,24 @@ def main():
         ),
         PipelineStage("script_generation", stage_script_generation, load=load_script_generation),
         PipelineStage("media_planning", stage_media_planning, load=load_media_planning),
+        PipelineStage(
+            "canonical_entity_resolution",
+            stage_canonical_entity_resolution,
+            load=load_canonical_entity_resolution,
+            validate_outputs=validate_canonical_entity_resolution,
+        ),
+        PipelineStage(
+            "semantic_query_planning",
+            stage_semantic_query_planning,
+            load=load_semantic_query_planning,
+            validate_outputs=validate_semantic_query_planning,
+        ),
+        PipelineStage(
+            "source_coverage",
+            stage_source_coverage,
+            load=load_source_coverage,
+            validate_outputs=validate_source_coverage,
+        ),
         PipelineStage("voice_generation", stage_voice_generation, load=load_voice_generation, validate_outputs=validate_voice_outputs),
         PipelineStage("media_selection", stage_media_selection, load=load_media_selection, validate_outputs=validate_media_outputs),
         PipelineStage("music", stage_music, load=load_music),

@@ -39,6 +39,26 @@ class ContentSchedulerTests(unittest.TestCase):
             evergreen_topics=(),
         )
 
+    def test_history_marks_preflight_deferred_topic_as_reconsiderable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = ContentHistoryStore(Path(directory) / "content_history.json")
+            store.save([ContentHistoryRecord(
+                topic="Rainforests",
+                primary_subject="rainforest",
+                category="Nature",
+                documentary_angle="overview",
+                viability_score=0.7,
+                decision="SELECTED",
+                status="scheduled",
+                reason="scheduled",
+                recorded_at="2026-07-18T00:00:00Z",
+                run_id="run-1",
+            )])
+            self.assertTrue(store.mark_deferred(run_id="run-1", reason="coverage too weak"))
+            record = store.load()[0]
+        self.assertEqual("coverage_deferred", record.status)
+        self.assertEqual("coverage too weak", record.reason)
+
     def test_text_source_ignores_comments_blank_lines_and_duplicates(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "topics.txt"

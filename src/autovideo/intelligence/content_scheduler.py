@@ -281,6 +281,24 @@ class ContentHistoryStore:
                 return True
         return False
 
+    def mark_deferred(self, *, run_id: str, reason: str) -> bool:
+        """Mark a scheduled topic as preflight-deferred so it may be reconsidered later."""
+
+        records = self.load()
+        for index in range(len(records) - 1, -1, -1):
+            record = records[index]
+            if record.run_id == run_id and record.status == "scheduled":
+                records[index] = ContentHistoryRecord(
+                    **{
+                        **record.to_dict(),
+                        "status": "coverage_deferred",
+                        "reason": reason,
+                    },
+                )
+                self.save(records)
+                return True
+        return False
+
 
 class AutonomousContentScheduler:
     """Select the strongest viable topic while enforcing novelty and diversity."""

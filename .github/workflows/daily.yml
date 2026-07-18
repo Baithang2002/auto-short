@@ -88,6 +88,7 @@ jobs:
           YT_REFRESH_TOKEN:    ${{ secrets.YT_REFRESH_TOKEN }}
           YT_MUSIC:            "true"
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
+          AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
@@ -128,6 +129,7 @@ jobs:
             output/final_yt_safe.mp4
             output/upload_metadata.json
             output/scheduler_report.json
+            output/source_coverage_report.json
             output/publish_quality_report.json
             output/daily_runs.log
             output/screenshots/

@@ -22,6 +22,9 @@ The table below tracks the maturity of each architectural component. Contributor
 | Source Planning | ✅ Implemented | Capability-driven query and provider strategy before media selection |
 | Provider Expansion | ✅ Implemented | Scene-type routing and optional stock/archive/science provider registration |
 | Content Scheduling | ✅ Implemented | Viability-aware topic ranking, uniqueness, category rotation, and durable history |
+| Source Coverage Preflight | ✅ Implemented | Bounded metadata-only media probe before voice generation; scheduled runs recover to another topic when coverage is weak |
+| Canonical Scene Entity Resolver | ✅ Implemented | Converts documentary phrasing into auditable, retrieval-safe scene entities without altering editorial identity |
+| Semantic Visual Query Engine | ✅ Implemented | Translates canonical scene entities into provider-specific search language at the retrieval boundary |
 | Publish Quality Gate | ✅ Implemented | Post-render artifact policy emits an auditable approve/defer/block verdict before unattended upload |
 | Pipeline (orchestrator + stages) | 🚧 In Progress | Legacy monolithic `main()` still authoritative |
 | Interface (CLIs, workflows) | 🚧 In Progress | Legacy entry points at repo root, new location planned |

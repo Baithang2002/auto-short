@@ -19,9 +19,11 @@ from __future__ import annotations
 import ast
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 import uuid
+from dataclasses import replace
 from pathlib import Path
 
 SRC_DIR = Path(__file__).parent.resolve() / "src"
@@ -47,6 +49,7 @@ OUTPUT_STATE = OUT_DIR / "daily_state.json"
 OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
 CONTENT_HISTORY = STATE_DIR / "content_history.json"
 SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
+SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
 
 
 def load_topics() -> list:
@@ -141,7 +144,7 @@ def already_posted_today() -> bool:
     return False
 
 
-def schedule_topic() -> tuple[str | None, str, SchedulerResult | None]:
+def schedule_topic(excluded_topics: set[str] | None = None) -> tuple[str | None, str, SchedulerResult | None]:
     """Choose one viable topic and persist scheduling diagnostics/history."""
 
     config = ContentSchedulerConfig.from_env()
@@ -149,11 +152,21 @@ def schedule_topic() -> tuple[str | None, str, SchedulerResult | None]:
         _idx, topic = pick_next(load_topics())
         return topic, "", None
 
+    excluded = {topic.casefold() for topic in (excluded_topics or set())}
     sources = [
         topic_source_for_path(SCRIPT_DIR / source_name)
         for source_name in config.topic_sources
     ]
-    candidates = load_topic_sources(sources)
+    candidates = [
+        candidate for candidate in load_topic_sources(sources)
+        if candidate.topic.casefold() not in excluded
+    ]
+    config = replace(
+        config,
+        evergreen_topics=tuple(
+            topic for topic in config.evergreen_topics if topic.casefold() not in excluded
+        ),
+    )
     run_id = uuid.uuid4().hex
     history_store = ContentHistoryStore(CONTENT_HISTORY)
     result = AutonomousContentScheduler(config=config).schedule(candidates, history_store.load())
@@ -162,49 +175,80 @@ def schedule_topic() -> tuple[str | None, str, SchedulerResult | None]:
     return (result.selected.topic if result.selected else None), run_id, result
 
 
+def source_coverage_deferred(topic: str) -> tuple[bool, str]:
+    """Return whether the latest run deferred this exact topic before voice generation."""
+
+    if not SOURCE_COVERAGE_REPORT.exists():
+        return False, ""
+    try:
+        report = json.loads(SOURCE_COVERAGE_REPORT.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False, ""
+    if str(report.get("topic", "")).casefold() != topic.casefold():
+        return False, ""
+    if str(report.get("decision", "")).upper() != "DEFERRED":
+        return False, ""
+    return True, "; ".join(str(item) for item in report.get("reasons", []) if item)
+
+
 def main():
     if already_posted_today():
         print(f"[daily] A successful post already happened today. Skipping (backup cron).")
         sys.exit(0)
 
-    try:
-        topic, scheduler_run_id, scheduler_result = schedule_topic()
-    except (OSError, ValueError, RuntimeError) as exc:
-        print(f"[daily] scheduler failed: {exc}")
-        append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler_error={exc!r}")
-        sys.exit(2)
-    if not topic:
-        print("[daily] no APPROVED topic is currently eligible; no video will be generated.")
-        append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler=no_eligible_topic")
-        sys.exit(2)
+    max_recoveries = max(0, int(os.environ.get("AUTO_VIDEO_SOURCE_COVERAGE_MAX_RECOVERIES", "2") or "2"))
+    attempted_topics: set[str] = set()
+    recovery_count = 0
+    scheduler_run_id = ""
+    scheduler_result = None
+    topic = None
+    proc = None
     started = dt.datetime.now()
-    if scheduler_result is None:
-        print(f"[daily] {started:%Y-%m-%d %H:%M:%S}  legacy topic rotation: {topic!r}")
-    else:
-        selected = scheduler_result.selected
-        print(
-            f"[daily] {started:%Y-%m-%d %H:%M:%S}  scheduled topic: {topic!r} "
-            f"(viability={selected.viability_score:.2f}, rank={selected.ranking_score:.2f})"
+    while True:
+        try:
+            topic, scheduler_run_id, scheduler_result = schedule_topic(attempted_topics)
+        except (OSError, ValueError, RuntimeError) as exc:
+            print(f"[daily] scheduler failed: {exc}")
+            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler_error={exc!r}")
+            sys.exit(2)
+        if not topic:
+            print("[daily] no eligible topic remains after source-coverage recovery.")
+            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler=no_eligible_topic")
+            sys.exit(2)
+        if scheduler_result is None:
+            print(f"[daily] {dt.datetime.now():%Y-%m-%d %H:%M:%S}  legacy topic rotation: {topic!r}")
+        else:
+            selected = scheduler_result.selected
+            print(
+                f"[daily] {dt.datetime.now():%Y-%m-%d %H:%M:%S}  scheduled topic: {topic!r} "
+                f"(viability={selected.viability_score:.2f}, rank={selected.ranking_score:.2f})"
+            )
+        cmd = [sys.executable or "python", str(SCRIPT_DIR / "pipeline.py"),
+               topic, "--platforms", "youtube", "--no-interactive"]
+        environment = os.environ.copy()
+        environment.setdefault("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", "true")
+        proc = subprocess.run(cmd, cwd=str(SCRIPT_DIR), env=environment)
+        deferred, reason = source_coverage_deferred(topic)
+        if not deferred or recovery_count >= max_recoveries:
+            break
+        ContentHistoryStore(CONTENT_HISTORY).mark_deferred(
+            run_id=scheduler_run_id,
+            reason=reason or "source coverage preflight deferred topic",
         )
-
-    # YouTube-only for now (Instagram/Facebook sessions not connected).
-    # To re-enable, change to: [..., topic, "--platforms", "youtube", "instagram", "facebook"]
-    # --no-interactive: scheduled runs cannot answer stdin prompts. Without
-    # this, a missing-broll segment hangs the renderer forever, the daily run
-    # never finishes, and tomorrow's run can't start.
-    cmd = [sys.executable or "python", str(SCRIPT_DIR / "pipeline.py"),
-           topic, "--platforms", "youtube", "--no-interactive"]
-    proc = subprocess.run(cmd, cwd=str(SCRIPT_DIR))
+        attempted_topics.add(topic)
+        recovery_count += 1
+        print(f"[daily] coverage deferred {topic!r}; selecting recovery topic ({recovery_count}/{max_recoveries}).")
 
     finished = dt.datetime.now()
     secs = (finished - started).total_seconds()
     line = (f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  "
             f"exit={proc.returncode}  duration={secs:.0f}s")
     append_log(line)
-    if scheduler_run_id and proc.returncode == 0:
+    if scheduler_run_id and proc and proc.returncode == 0:
         ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
-    print(f"[daily] done ({secs:.0f}s, exit {proc.returncode}). Logged to {RUN_LOG}")
-    sys.exit(proc.returncode)
+    exit_code = proc.returncode if proc else 2
+    print(f"[daily] done ({secs:.0f}s, exit {exit_code}). Logged to {RUN_LOG}")
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

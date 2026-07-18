@@ -33,6 +33,14 @@ from .topic_sources import (
     load_topic_sources,
     topic_source_for_path,
 )
+from .source_coverage import (
+    SceneCoverage,
+    SourceCoverageConfig,
+    SourceCoverageDecision,
+    SourceCoverageEvaluator,
+    SourceCoverageReport,
+    sample_scene_indexes,
+)
 
 __all__ = [
     "DocumentaryViabilityConfig",
@@ -60,4 +68,10 @@ __all__ = [
     "load_topic_sources",
     "topic_identity",
     "topic_source_for_path",
+    "SceneCoverage",
+    "SourceCoverageConfig",
+    "SourceCoverageDecision",
+    "SourceCoverageEvaluator",
+    "SourceCoverageReport",
+    "sample_scene_indexes",
 ]
