@@ -307,3 +307,24 @@ def _dedupe(values: Sequence[str]) -> tuple[str, ...]:
             seen.add(key)
             result.append(cleaned)
     return tuple(result)
+
+
+def _env_bool(env: Mapping[str, str], name: str, default: bool) -> bool:
+    """Read a conventional boolean environment value with a stable default."""
+
+    value = env.get(name)
+    return default if value is None else str(value).strip().lower() not in {
+        "0",
+        "false",
+        "no",
+        "",
+    }
+
+
+def _env_int(env: Mapping[str, str], name: str, default: int) -> int:
+    """Read a positive integer environment value without failing configuration load."""
+
+    try:
+        return int(env.get(name, str(default)) or default)
+    except (TypeError, ValueError):
+        return default

@@ -9,6 +9,7 @@ from tests.unit import _path  # noqa: F401
 from autovideo.media import (
     CanonicalSceneEntityResolver,
     SceneEntity,
+    SemanticQueryConfig,
     SemanticVisualQueryEngine,
 )
 
@@ -27,6 +28,15 @@ def _intent(entity: str) -> SimpleNamespace:
 
 
 class SemanticVisualQueryEngineTests(unittest.TestCase):
+    def test_configuration_loads_from_environment(self) -> None:
+        config = SemanticQueryConfig.from_env({
+            "AUTO_VIDEO_SEMANTIC_QUERY_ENGINE_ENABLED": "false",
+            "AUTO_VIDEO_SEMANTIC_QUERY_MAX_PER_SCENE": "6",
+        })
+
+        self.assertFalse(config.enabled)
+        self.assertEqual(6, config.max_queries_per_scene)
+
     def test_uses_canonical_entity_not_documentary_title(self) -> None:
         topic = "How Camels Survive the World's Harshest Deserts"
         report = SemanticVisualQueryEngine().plan(
