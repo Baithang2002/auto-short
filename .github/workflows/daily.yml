@@ -97,6 +97,9 @@ jobs:
           AUTO_VIDEO_VERIFIED_MEDIA_MAX_REPLACEMENTS: "2"
           AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES: "3"
           AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_POLICY: "abort"
+          # An unavailable external vision model must not turn a valid render
+          # into a failed daily run. Its outcome remains auditable as UNVERIFIED.
+          AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE: "true"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then

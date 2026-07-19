@@ -6265,9 +6265,13 @@ def main():
             initial_result = result
             attempts.append(result)
 
-            # Disabled is an intentional compatibility mode: preserve the
-            # existing selected media while still emitting an audit record.
-            if not config.enabled or result.decision is VerificationDecision.VERIFIED:
+            # Disabled and externally unavailable verification are intentional
+            # soft-pass modes. Keep the selected media and preserve an audit
+            # record; do not burn replacement attempts on a provider outage.
+            if result.decision in {
+                VerificationDecision.VERIFIED,
+                VerificationDecision.UNVERIFIED,
+            }:
                 asset.metadata.setdefault("verified_media", result.to_dict())
                 final_results.append(result)
                 continue

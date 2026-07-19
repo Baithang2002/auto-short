@@ -122,6 +122,21 @@ class VerifiedMediaGateTests(unittest.TestCase):
         self.assertEqual(VerificationDecision.UNVERIFIED, result.decision)
         self.assertEqual([], calls)
 
+    def test_transient_vision_quota_failure_preserves_critical_asset_as_unverified(self) -> None:
+        gate = VerifiedMediaGate(
+            self.config,
+            verifier=lambda request, sample_count: DownloadedMediaEvidence(
+                entity_match=False,
+                error="429 RESOURCE_EXHAUSTED: quota exceeded",
+            ),
+        )
+
+        result = gate.evaluate(self._request())
+
+        self.assertEqual(VerificationDecision.UNVERIFIED, result.decision)
+        self.assertFalse(result.should_abort)
+        self.assertIn("verification unavailable", result.reason)
+
     def test_report_records_replacement_attempts(self) -> None:
         rejected = VerifiedMediaGate(
             self.config,

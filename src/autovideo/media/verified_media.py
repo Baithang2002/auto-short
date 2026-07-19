@@ -39,6 +39,7 @@ class VerifiedMediaGateConfig:
     critical_scene_policy: str = "abort"
     frame_sample_count: int = 3
     allow_unverified_lower_priority: bool = True
+    allow_unverified_when_vision_unavailable: bool = True
 
     @classmethod
     def from_env(cls, values: Mapping[str, str]) -> "VerifiedMediaGateConfig":
@@ -75,6 +76,9 @@ class VerifiedMediaGateConfig:
             frame_sample_count=max(1, whole("AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES", 3)),
             allow_unverified_lower_priority=flag(
                 "AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_UNVERIFIED_LOWER_PRIORITY", True
+            ),
+            allow_unverified_when_vision_unavailable=flag(
+                "AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE", True
             ),
         )
 
@@ -122,7 +126,7 @@ class VerifiedMediaSceneResult:
     def should_abort(self) -> bool:
         return (
             self.request.priority is VerificationPriority.CRITICAL
-            and self.decision is not VerificationDecision.VERIFIED
+            and self.decision is VerificationDecision.REJECTED
         )
 
     def to_dict(self) -> dict[str, object]:
@@ -178,6 +182,17 @@ class VerifiedMediaGate:
         if evidence is None:
             return self._failed(request, "frame verifier produced no evidence", replacement_attempt)
         if evidence.error:
+            if (
+                self.config.allow_unverified_when_vision_unavailable
+                and _is_transient_verifier_error(evidence.error)
+            ):
+                return VerifiedMediaSceneResult(
+                    request,
+                    VerificationDecision.UNVERIFIED,
+                    evidence,
+                    f"frame verification unavailable: {evidence.error}",
+                    replacement_attempt,
+                )
             return self._failed(request, f"frame verifier failed: {evidence.error}", replacement_attempt, evidence)
 
         entity_ok = evidence.entity_match and evidence.entity_confidence >= self._entity_threshold(request)
@@ -229,6 +244,23 @@ class VerifiedMediaGate:
             decision = VerificationDecision.UNVERIFIED
             reason = f"{reason}; lower-priority fallback allowed"
         return VerifiedMediaSceneResult(request, decision, evidence, reason, replacement_attempt)
+
+
+def _is_transient_verifier_error(error: str) -> bool:
+    """Return true only when vision could not judge an otherwise valid asset."""
+
+    text = str(error or "").casefold()
+    return any(marker in text for marker in (
+        "resource_exhausted",
+        "quota",
+        "rate limit",
+        "429",
+        "timeout",
+        "timed out",
+        "network",
+        "unavailable",
+        "connection",
+    ))
 
 
 @dataclass(frozen=True)
