@@ -90,6 +90,16 @@ from .visual_grammar import (
     VisualGrammarEngine,
     default_visual_grammars,
 )
+from .verified_media import (
+    DownloadedMediaEvidence,
+    VerificationDecision,
+    VerificationPriority,
+    VerificationRequest,
+    VerifiedMediaGate,
+    VerifiedMediaGateConfig,
+    VerifiedMediaReport,
+    VerifiedMediaSceneResult,
+)
 
 __all__ = [
     "CapabilityRequirement",
@@ -143,6 +153,14 @@ __all__ = [
     "VisualGrammarEngine",
     "VisualGoal",
     "VisionVerificationResult",
+    "DownloadedMediaEvidence",
+    "VerificationDecision",
+    "VerificationPriority",
+    "VerificationRequest",
+    "VerifiedMediaGate",
+    "VerifiedMediaGateConfig",
+    "VerifiedMediaReport",
+    "VerifiedMediaSceneResult",
     "SemanticQueryConfig",
     "SemanticQueryReport",
     "SemanticSceneQuery",

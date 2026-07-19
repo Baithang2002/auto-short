@@ -89,6 +89,14 @@ jobs:
           YT_MUSIC:            "true"
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
+          # Final downloaded-media verification. A critical scene that cannot
+          # be proved from sampled frames stops before rendering/uploading.
+          AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"
+          AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_CONFIDENCE: "0.85"
+          AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_ACTION_CONFIDENCE: "0.75"
+          AUTO_VIDEO_VERIFIED_MEDIA_MAX_REPLACEMENTS: "2"
+          AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES: "3"
+          AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_POLICY: "abort"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then

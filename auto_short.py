@@ -120,6 +120,13 @@ from autovideo.media import (
     SceneImportance,
     SearchStrategy,
     SourcePlanner,
+    DownloadedMediaEvidence,
+    VerificationDecision,
+    VerificationPriority,
+    VerificationRequest,
+    VerifiedMediaGate,
+    VerifiedMediaGateConfig,
+    VerifiedMediaReport,
     HybridVisualComposer,
     ShotPlan,
     SubjectContinuityEngine,
@@ -1829,6 +1836,119 @@ def _record_post_download_visual_qa(idx, intent, media_path):
     evidence["vision_error"] = result.error
     if result.matched_entity:
         evidence["selected_entity"] = result.matched_entity
+
+
+def _verification_priority_for_intent(intent) -> VerificationPriority:
+    importance = getattr(getattr(intent, "scene_importance", None), "value", None)
+    importance = str(importance or getattr(intent, "scene_importance", "")).upper()
+    if importance in {"HOOK", "MAIN_REVEAL"}:
+        return VerificationPriority.CRITICAL
+    if importance == "SUPPORTING":
+        return VerificationPriority.HIGH
+    if importance == "TRANSITION":
+        return VerificationPriority.LOW
+    return VerificationPriority.MEDIUM
+
+
+def _verification_request_for_asset(idx, asset, intent) -> VerificationRequest:
+    entity = (
+        getattr(intent, "requested_entity", "")
+        or getattr(getattr(intent, "scene_entity", None), "canonical_entity", "")
+        or getattr(intent, "primary_subject", "")
+        or ""
+    )
+    action_terms = tuple(getattr(intent, "action_terms", ()) or ())
+    visual_goal = getattr(getattr(intent, "visual_goal", None), "value", None)
+    return VerificationRequest(
+        scene_index=idx,
+        media_path=Path(asset.local_path),
+        expected_entity=str(entity),
+        expected_action=str(action_terms[0]) if action_terms else "",
+        visual_goal=str(visual_goal or ""),
+        priority=_verification_priority_for_intent(intent),
+    )
+
+
+def _gemini_verified_media_verifier(request, max_frames):
+    """Verify downloaded frames only; metadata and search text are excluded."""
+
+    try:
+        samples = _representative_visual_samples(
+            request.media_path,
+            request.expected_entity or f"scene_{request.scene_index}",
+            max_frames=max_frames,
+        )
+        if not samples:
+            return DownloadedMediaEvidence(
+                entity_match=False,
+                sampled_frames=(),
+                provider="gemini",
+                error="no representative frames could be sampled",
+            )
+        client = _get_gemini_client()
+        if client is None:
+            return DownloadedMediaEvidence(
+                entity_match=False,
+                sampled_frames=tuple(str(sample) for sample in samples),
+                provider="gemini",
+                error="Gemini visual verifier is unavailable",
+            )
+        from google.genai import types
+
+        prompt = (
+            "Evaluate only the supplied frames, not their filenames or any search query.\n\n"
+            f"Expected entity: {request.expected_entity or 'not specified'}\n"
+            f"Expected action: {request.expected_action or 'not required'}\n"
+            f"Visual goal: {request.visual_goal or 'show'}\n\n"
+            "Does the media primarily depict the expected entity, and when an action is "
+            "required, does it visibly depict that action? Return compact JSON only: "
+            "entity_match, entity_confidence, verified_entity, action_match, "
+            "action_confidence, verified_action, reasoning. Confidence values must be 0 to 1."
+        )
+        parts = [types.Part.from_text(text=prompt)]
+        for sample in samples:
+            parts.append(types.Part.from_bytes(
+                data=Path(sample).read_bytes(), mime_type="image/jpeg"
+            ))
+        response = client.models.generate_content(
+            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
+            contents=[types.Content(role="user", parts=parts)],
+        )
+        data = _extract_json_object(str(getattr(response, "text", "") or ""))
+        def as_optional_bool(value):
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, str):
+                normalized = value.strip().lower()
+                if normalized in {"true", "yes", "match"}:
+                    return True
+                if normalized in {"false", "no", "no_match"}:
+                    return False
+            return None
+
+        entity_match = as_optional_bool(data.get("entity_match", data.get("match", False)))
+        action_match = as_optional_bool(data.get("action_match"))
+        return DownloadedMediaEvidence(
+            entity_match=entity_match is True,
+            entity_confidence=max(0.0, min(1.0, float(
+                data.get("entity_confidence", data.get("confidence", 0.0)) or 0.0
+            ))),
+            action_match=action_match,
+            action_confidence=max(0.0, min(1.0, float(
+                data.get("action_confidence", 0.0) or 0.0
+            ))),
+            verified_entity=str(data.get("verified_entity") or data.get("matched_entity") or ""),
+            verified_action=str(data.get("verified_action") or ""),
+            reasoning=str(data.get("reasoning") or data.get("brief_reasoning") or "")[:300],
+            sampled_frames=tuple(str(sample) for sample in samples),
+            provider="gemini",
+        )
+    except Exception as exc:
+        return DownloadedMediaEvidence(
+            entity_match=False,
+            provider="gemini",
+            error=str(exc)[:300],
+        )
 
 
 def _candidate_extension(candidate):
@@ -6075,6 +6195,177 @@ def main():
             MediaAsset.from_dict(asset) for asset in payload.get("assets", [])
         ]
 
+    def _replacement_queries(ctx: PipelineContext, idx: int, intent) -> list[str]:
+        semantic_report = ctx.values.get("semantic_query_report")
+        semantic_scene = (
+            semantic_report.scene_for_index(idx)
+            if isinstance(semantic_report, SemanticQueryReport) else None
+        )
+        if semantic_scene and semantic_scene.provider_queries:
+            return list(semantic_scene.provider_queries)
+        return list(getattr(intent, "search_queries", ()) or ())
+
+    def stage_verified_media(ctx: PipelineContext) -> StageResult:
+        """Reject bad downloaded assets before Timeline construction.
+
+        Retrieval remains the owner of provider calls and deterministic scoring.
+        This stage only asks it for a bounded replacement after frame evidence
+        rejects an already-downloaded selection.
+        """
+
+        config = VerifiedMediaGateConfig.from_env(os.environ)
+        gate = VerifiedMediaGate(
+            config,
+            verifier=_gemini_verified_media_verifier if config.enabled else None,
+        )
+        shot_plan = ctx.values.get("shot_plan")
+        canonical_report = ctx.values.get("canonical_entity_report")
+        voice_by_index = {item["idx"]: item for item in ctx.values.get("voice_items", [])}
+        media_assets = list(ctx.values.get("media_assets", []))
+        used_set = set()
+        for asset in media_assets:
+            selection = (asset.metadata or {}).get("selection", {})
+            provider = str(selection.get("provider") or "")
+            provider_id = str(selection.get("provider_id") or "")
+            if provider and provider_id:
+                used_set.add(f"{provider}:{provider_id}")
+            used_set.add(str(asset.local_path))
+
+        final_results = []
+        attempts = []
+
+        def write_verified_report() -> Path:
+            payload = VerifiedMediaReport(
+                tuple(final_results), tuple(attempts)
+            ).to_dict()
+            for row in payload["scenes"]:
+                scene_index = int(row["scene_index"])
+                if scene_index >= len(media_assets):
+                    continue
+                selection = (media_assets[scene_index].metadata or {}).get("selection", {})
+                evidence = selection.get("evidence_verification", {}) if isinstance(selection, dict) else {}
+                row["selection"] = {
+                    "provider": selection.get("provider"),
+                    "provider_id": selection.get("provider_id"),
+                    "score": selection.get("score"),
+                    "confidence": selection.get("confidence_level") or selection.get("confidence"),
+                    "candidate_count": selection.get("candidate_count"),
+                    "candidate_ranking": evidence.get("candidate_ranking"),
+                }
+            return write_manifest(OUT_DIR / "verified_media_report.json", payload)
+
+        for idx, asset in enumerate(media_assets):
+            item = voice_by_index.get(idx)
+            intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
+            provider_intent = _resolved_provider_intent(intent, canonical_report) if intent else None
+            request = _verification_request_for_asset(idx, asset, provider_intent)
+            if not request.expected_entity:
+                request = replace(request, expected_entity=niche)
+            result = gate.evaluate(request)
+            initial_result = result
+            attempts.append(result)
+
+            # Disabled is an intentional compatibility mode: preserve the
+            # existing selected media while still emitting an audit record.
+            if not config.enabled or result.decision is VerificationDecision.VERIFIED:
+                asset.metadata.setdefault("verified_media", result.to_dict())
+                final_results.append(result)
+                continue
+
+            original_asset = asset
+            replacement = None
+            queries = _replacement_queries(ctx, idx, provider_intent)
+            fallback = getattr(provider_intent, "primary_subject", "") or niche
+            for replacement_attempt in range(1, config.max_replacement_attempts + 1):
+                if not item or not queries:
+                    break
+                try:
+                    candidate_path = fetch_broll(
+                        queries,
+                        idx,
+                        fallback=fallback,
+                        local_media=local_media,
+                        narration=item["segment"].get("narration", ""),
+                        used_set=used_set,
+                        # A rejected authentic asset must not be replaced by a
+                        # composer/card before the gate has exhausted real media.
+                        hybrid=False,
+                        threshold=threshold,
+                        dalle=False,
+                        target_duration=item["duration"],
+                        no_interactive=True,
+                        shot_intent=provider_intent,
+                        provider_query_variants=None,
+                    )
+                except (SystemExit, Exception) as exc:
+                    print(f"    [Verified media] replacement retrieval failed for segment {idx + 1}: {exc}")
+                    break
+                if not _valid_media_path(candidate_path):
+                    break
+                replacement_metadata = _MEDIA_SELECTION_DIAGNOSTICS.get(idx, {})
+                candidate_asset = _media_asset_from_path(
+                    candidate_path,
+                    source=_media_source_from_selection(replacement_metadata),
+                    idx=idx,
+                    metadata=replacement_metadata,
+                )
+                candidate_request = _verification_request_for_asset(idx, candidate_asset, provider_intent)
+                if not candidate_request.expected_entity:
+                    candidate_request = replace(candidate_request, expected_entity=niche)
+                result = gate.evaluate(candidate_request, replacement_attempt=replacement_attempt)
+                attempts.append(result)
+                if result.decision is VerificationDecision.VERIFIED:
+                    replacement = candidate_asset
+                    media_assets[idx] = candidate_asset
+                    break
+
+            if replacement is None:
+                # Never allow a rejected replacement to displace the original.
+                media_assets[idx] = original_asset
+                if request.priority is not VerificationPriority.CRITICAL:
+                    result = replace(
+                        initial_result,
+                        decision=VerificationDecision.UNVERIFIED,
+                        reason=f"{initial_result.reason}; no verified replacement available",
+                    )
+            media_assets[idx].metadata.setdefault("verified_media", result.to_dict())
+            final_results.append(result)
+
+            if gate.must_abort(result):
+                report_path = write_verified_report()
+                raise RuntimeError(
+                    "Verified Media Gate rejected critical scene "
+                    f"{idx + 1} ({request.expected_entity or niche}): {result.reason}. "
+                    f"See {report_path.name}."
+                )
+
+        ctx.values["media_assets"] = media_assets
+        media_manifest = write_manifest(
+            OUT_DIR / "media_manifest.json",
+            {"assets": [asset.to_dict() for asset in media_assets]},
+        )
+        report_path = write_verified_report()
+        fallback_report = write_fallback_quality_report(media_assets)
+        return StageResult(outputs={
+            "verified_media_report": str(report_path),
+            "media_manifest": str(media_manifest),
+            "fallback_quality_report": str(fallback_report),
+            "media_files": [str(asset.local_path) for asset in media_assets],
+        })
+
+    def load_verified_media(ctx: PipelineContext, record: StageRecord) -> None:
+        payload = read_manifest(Path(record.outputs["media_manifest"]))
+        ctx.values["media_assets"] = [
+            MediaAsset.from_dict(asset) for asset in payload.get("assets", [])
+        ]
+
+    def validate_verified_media_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return (
+            Path(record.outputs.get("verified_media_report", "")).exists()
+            and Path(record.outputs.get("media_manifest", "")).exists()
+            and validate_paths(record.outputs.get("media_files", []))
+        )
+
     def validate_media_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
         subject_report = record.outputs.get("subject_continuity_report")
         return (
@@ -6595,6 +6886,7 @@ def main():
             "provider_report.json": provider_report_path,
             "adaptive_search_report.json": adaptive_search_report_path,
             "evidence_verification_report.json": evidence_verification_report_path,
+            "verified_media_report.json": OUT_DIR / "verified_media_report.json",
             "selection_report.txt": selection_report_path,
             "contact_sheet.jpg": contact_sheet_path,
             "media_manifest.json": OUT_DIR / "media_manifest.json",
@@ -6682,6 +6974,12 @@ def main():
         ),
         PipelineStage("voice_generation", stage_voice_generation, load=load_voice_generation, validate_outputs=validate_voice_outputs),
         PipelineStage("media_selection", stage_media_selection, load=load_media_selection, validate_outputs=validate_media_outputs),
+        PipelineStage(
+            "verified_media",
+            stage_verified_media,
+            load=load_verified_media,
+            validate_outputs=validate_verified_media_outputs,
+        ),
         PipelineStage("music", stage_music, load=load_music),
         PipelineStage("timeline_construction", stage_timeline, load=load_timeline),
         PipelineStage("rendering", stage_rendering, load=load_rendering, validate_outputs=validate_render_outputs),
