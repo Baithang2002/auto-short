@@ -50,6 +50,15 @@ OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
 CONTENT_HISTORY = STATE_DIR / "content_history.json"
 SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
 SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
+FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
+PUBLISH_QUALITY_REPORT = OUT_DIR / "publish_quality_report.json"
+VERIFIED_MEDIA_REPORT = OUT_DIR / "verified_media_report.json"
+ATTEMPT_REPORTS = (
+    SOURCE_COVERAGE_REPORT,
+    FALLBACK_QUALITY_REPORT,
+    PUBLISH_QUALITY_REPORT,
+    VERIFIED_MEDIA_REPORT,
+)
 
 
 def load_topics() -> list:
@@ -191,30 +200,100 @@ def source_coverage_deferred(topic: str) -> tuple[bool, str]:
     return True, "; ".join(str(item) for item in report.get("reasons", []) if item)
 
 
-def main():
+def _read_json(path: Path) -> dict:
+    """Read one JSON diagnostic artifact without treating a missing file as an error."""
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def clear_attempt_reports() -> None:
+    """Remove stale quality reports before a new topic attempt begins."""
+
+    for report_path in ATTEMPT_REPORTS:
+        try:
+            report_path.unlink()
+        except FileNotFoundError:
+            continue
+
+
+def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
+    """Return whether a failed attempt should recover with another topic.
+
+    Only content-specific quality outcomes are recoverable here. Provider
+    credentials, renderer failures, and upload failures remain terminal so a
+    broken deployment is not hidden by repeatedly spending generation quota.
+    """
+
+    deferred, reason = source_coverage_deferred(topic)
+    if deferred:
+        return True, reason or "source coverage preflight deferred topic"
+
+    fallback_report = _read_json(FALLBACK_QUALITY_REPORT)
+    if fallback_report and not bool(fallback_report.get("quality_gate_passed", True)):
+        return True, "visual fallback quality gate deferred topic"
+
+    verified_report = _read_json(VERIFIED_MEDIA_REPORT)
+    rejected_scenes = [
+        scene for scene in verified_report.get("scenes", [])
+        if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "rejected"
+    ]
+    if rejected_scenes:
+        return True, "verified media gate rejected planned scene media"
+
+    publish_report = _read_json(PUBLISH_QUALITY_REPORT)
+    if str(publish_report.get("verdict", "")).upper() == "DEFERRED":
+        return True, "post-render publish quality gate deferred topic"
+
+    return False, ""
+
+
+def max_topic_attempts() -> int:
+    """Load the bounded number of candidate topics permitted in one daily run."""
+
+    try:
+        legacy_recoveries = max(
+            0,
+            int(os.environ.get("AUTO_VIDEO_SOURCE_COVERAGE_MAX_RECOVERIES", "2") or "2"),
+        )
+    except ValueError:
+        legacy_recoveries = 2
+    default_attempts = legacy_recoveries + 1
+    try:
+        return max(
+            1,
+            int(os.environ.get("AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS", str(default_attempts))),
+        )
+    except ValueError:
+        return default_attempts
+
+
+def run_daily() -> int:
+    """Publish one quality-approved daily Short, recovering from weak topics."""
+
     if already_posted_today():
         print(f"[daily] A successful post already happened today. Skipping (backup cron).")
-        sys.exit(0)
+        return 0
 
-    max_recoveries = max(0, int(os.environ.get("AUTO_VIDEO_SOURCE_COVERAGE_MAX_RECOVERIES", "2") or "2"))
+    attempt_limit = max_topic_attempts()
     attempted_topics: set[str] = set()
-    recovery_count = 0
-    scheduler_run_id = ""
-    scheduler_result = None
-    topic = None
-    proc = None
     started = dt.datetime.now()
-    while True:
+    last_exit_code = 2
+
+    for attempt_number in range(1, attempt_limit + 1):
         try:
             topic, scheduler_run_id, scheduler_result = schedule_topic(attempted_topics)
         except (OSError, ValueError, RuntimeError) as exc:
             print(f"[daily] scheduler failed: {exc}")
             append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler_error={exc!r}")
-            sys.exit(2)
+            return 2
         if not topic:
-            print("[daily] no eligible topic remains after source-coverage recovery.")
+            print("[daily] no eligible topic remains after quality recovery.")
             append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler=no_eligible_topic")
-            sys.exit(2)
+            return 2
         if scheduler_result is None:
             print(f"[daily] {dt.datetime.now():%Y-%m-%d %H:%M:%S}  legacy topic rotation: {topic!r}")
         else:
@@ -227,28 +306,60 @@ def main():
                topic, "--platforms", "youtube", "--no-interactive"]
         environment = os.environ.copy()
         environment.setdefault("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", "true")
+        clear_attempt_reports()
         proc = subprocess.run(cmd, cwd=str(SCRIPT_DIR), env=environment)
-        deferred, reason = source_coverage_deferred(topic)
-        if not deferred or recovery_count >= max_recoveries:
-            break
+        last_exit_code = proc.returncode
+        if proc.returncode == 0:
+            ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
+            finished = dt.datetime.now()
+            secs = (finished - started).total_seconds()
+            append_log(
+                f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit=0  "
+                f"duration={secs:.0f}s  attempts={attempt_number}"
+            )
+            print(f"[daily] done ({secs:.0f}s, exit 0). Logged to {RUN_LOG}")
+            return 0
+
+        deferred, reason = candidate_quality_deferred(topic)
+        if not deferred:
+            finished = dt.datetime.now()
+            secs = (finished - started).total_seconds()
+            append_log(
+                f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
+                f"duration={secs:.0f}s  critical_failure=true"
+            )
+            print(f"[daily] stopped after critical failure ({secs:.0f}s, exit {proc.returncode}).")
+            return proc.returncode
+
         ContentHistoryStore(CONTENT_HISTORY).mark_deferred(
             run_id=scheduler_run_id,
-            reason=reason or "source coverage preflight deferred topic",
+            reason=reason,
+            status="quality_deferred",
         )
         attempted_topics.add(topic)
-        recovery_count += 1
-        print(f"[daily] coverage deferred {topic!r}; selecting recovery topic ({recovery_count}/{max_recoveries}).")
+        append_log(
+            f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
+            f"attempt={attempt_number}/{attempt_limit}  quality_deferred={reason!r}"
+        )
+        if attempt_number < attempt_limit:
+            print(
+                f"[daily] quality deferred {topic!r}; selecting recovery topic "
+                f"({attempt_number}/{attempt_limit})."
+            )
 
     finished = dt.datetime.now()
     secs = (finished - started).total_seconds()
-    line = (f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  "
-            f"exit={proc.returncode}  duration={secs:.0f}s")
-    append_log(line)
-    if scheduler_run_id and proc and proc.returncode == 0:
-        ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
-    exit_code = proc.returncode if proc else 2
-    print(f"[daily] done ({secs:.0f}s, exit {exit_code}). Logged to {RUN_LOG}")
-    sys.exit(exit_code)
+    print(
+        f"[daily] exhausted {attempt_limit} quality-recovery attempts "
+        f"({secs:.0f}s, exit {last_exit_code}). Logged to {RUN_LOG}"
+    )
+    return last_exit_code
+
+
+def main() -> None:
+    """Run the daily scheduler with a process-compatible exit code."""
+
+    sys.exit(run_daily())
 
 
 if __name__ == "__main__":

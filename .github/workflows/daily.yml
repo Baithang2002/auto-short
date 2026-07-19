@@ -89,6 +89,9 @@ jobs:
           YT_MUSIC:            "true"
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
+          # Try several different viable topics when a topic-specific quality
+          # gate defers one. Technical failures still stop immediately.
+          AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "6"
           # Final downloaded-media verification. A critical scene that cannot
           # be proved from sampled frames stops before rendering/uploading.
           AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"

@@ -281,8 +281,21 @@ class ContentHistoryStore:
                 return True
         return False
 
-    def mark_deferred(self, *, run_id: str, reason: str) -> bool:
-        """Mark a scheduled topic as preflight-deferred so it may be reconsidered later."""
+    def mark_deferred(
+        self,
+        *,
+        run_id: str,
+        reason: str,
+        status: str = "coverage_deferred",
+    ) -> bool:
+        """Mark a scheduled topic as deferred so it may be reconsidered later.
+
+        Args:
+            run_id: Identifier assigned to the scheduled topic.
+            reason: Human-readable reason for the deferral.
+            status: Durable diagnostic status for the deferral. The default
+                preserves the original source-coverage status.
+        """
 
         records = self.load()
         for index in range(len(records) - 1, -1, -1):
@@ -291,7 +304,7 @@ class ContentHistoryStore:
                 records[index] = ContentHistoryRecord(
                     **{
                         **record.to_dict(),
-                        "status": "coverage_deferred",
+                        "status": status,
                         "reason": reason,
                     },
                 )
