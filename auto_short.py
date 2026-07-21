@@ -5717,9 +5717,23 @@ def main():
     def stage_scene_visual_focus(ctx: PipelineContext) -> StageResult:
         """Resolve scene-visible entities while preserving the documentary anchor."""
 
+        canonical_report = ctx.values.get("canonical_entity_report")
+        resolved_intents = tuple(
+            _resolved_provider_intent(intent, canonical_report)
+            for intent in ctx.values["shot_plan"].intents
+        )
+        normalized_shot_plan = SimpleNamespace(
+            intents=resolved_intents,
+            primary_subject=(
+                canonical_report.canonical_documentary_entity
+                if isinstance(canonical_report, CanonicalEntityReport)
+                else ctx.values["shot_plan"].primary_subject
+            ),
+            domain_id=getattr(ctx.values["shot_plan"], "domain_id", ""),
+        )
         report = SceneVisualFocusPlanner().plan(
             documentary_topic=niche,
-            shot_plan=ctx.values["shot_plan"],
+            shot_plan=normalized_shot_plan,
             knowledge_domains=KnowledgePackStore().load(),
         )
         path = report.write_json(OUT_DIR / "scene_visual_focus_report.json")

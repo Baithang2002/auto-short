@@ -247,6 +247,7 @@ class SemanticVisualQueryEngine:
 
 
 _ENTITY_ALIASES: Mapping[str, tuple[str, ...]] = {
+    "egyptian pyramids": ("Great Pyramid of Giza", "Giza pyramids", "ancient Egyptian pyramids"),
     "rainforest": ("tropical rainforest", "Amazon rainforest", "jungle canopy", "forest river"),
     "camel": ("desert camel", "dromedary camel", "camel desert"),
     "penguin": ("Antarctic penguin", "emperor penguin", "penguin colony"),
@@ -264,8 +265,11 @@ def _canonical_visual_entity(raw_entity: str, topic: str) -> tuple[str, tuple[st
             decision = f"normalized documentary phrase {raw_entity!r} to visual entity {entity!r}"
             return entity, aliases, (decision,)
     words = [word for word in _words(raw_entity) if word not in _TITLE_WORDS]
-    fallback = " ".join(words[:3]) or raw_entity.strip() or "documentary subject"
-    return fallback, (), ("no domain synonym matched; removed title framing words",)
+    # The canonical resolver may return a multi-word physical target such as
+    # "ancient Egyptian stone blocks".  Truncating it loses the retrieval
+    # subject, while title framing has already been removed above.
+    fallback = " ".join(words) or raw_entity.strip() or "documentary subject"
+    return fallback, (), ("no domain synonym matched; removed title framing words without truncating the visual entity",)
 
 
 def _scene_descriptors(intent: Any, topic: str, canonical: str) -> tuple[str, ...]:
@@ -318,8 +322,9 @@ def _provider_variants(
 
 
 _TITLE_WORDS = {
-    "how", "why", "what", "the", "world", "worlds", "largest", "smallest", "secret", "hidden",
-    "survive", "survives", "actually", "still", "its", "and", "of", "in", "to", "a", "an",
+    "how", "why", "when", "where", "what", "the", "world", "worlds", "largest", "smallest", "secret",
+    "truth", "about", "inside", "hidden", "survive", "survives", "actually", "still", "its", "and", "of",
+    "in", "to", "a", "an",
 }
 _VISUAL_TERMS = {
     "aerial", "drone", "canopy", "rain", "rainfall", "mist", "river", "forest", "jungle", "tropical",

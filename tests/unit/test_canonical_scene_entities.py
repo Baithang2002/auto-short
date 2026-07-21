@@ -88,6 +88,55 @@ class CanonicalSceneEntityResolverTests(unittest.TestCase):
                 )
                 self.assertEqual(expected, report.scene_for_index(0).canonical_entity)
 
+    def test_normalizes_pyramid_title_and_scene_entities(self) -> None:
+        topic = "How Ancient Egyptians Built Stone Pyramids"
+        report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=_plan(
+                topic,
+                _intent(0, topic, narration="Workers moved massive stone blocks."),
+                _intent(1, topic, narration="Water made wet sand easier to pull across."),
+                _intent(2, topic, narration="Wall paintings show a wooden sled."),
+                _intent(3, topic, narration="Engineers tested a miniature sled in a laboratory."),
+            ),
+        )
+
+        self.assertEqual("Egyptian pyramids", report.canonical_documentary_entity)
+        self.assertEqual("ancient Egyptian stone blocks", report.scene_for_index(0).canonical_entity)
+        self.assertEqual("wet sand friction", report.scene_for_index(1).canonical_entity)
+        self.assertEqual("Egyptian wall painting", report.scene_for_index(2).canonical_entity)
+        self.assertEqual("laboratory sled experiment", report.scene_for_index(3).canonical_entity)
+        self.assertTrue(all(
+            scene.canonical_entity.casefold() != topic.casefold()
+            for scene in report.scenes
+        ))
+
+    def test_instructional_title_prefixes_never_become_retrieval_entities(self) -> None:
+        resolver = CanonicalSceneEntityResolver()
+        topics = (
+            "How Coral Reefs Grow",
+            "Why Coral Reefs Matter",
+            "When Coral Reefs Bleach",
+            "Where Coral Reefs Thrive",
+            "The Secret of Coral Reefs",
+            "Inside Coral Reefs",
+            "The Truth About Coral Reefs",
+        )
+
+        for topic in topics:
+            with self.subTest(topic=topic):
+                report = resolver.resolve(
+                    documentary_topic=topic,
+                    shot_plan=_plan(topic, _intent(0, topic)),
+                )
+                entity = report.scene_for_index(0).canonical_entity
+                self.assertNotEqual(topic.casefold(), entity.casefold())
+                self.assertFalse(entity.startswith((
+                    "how ", "why ", "when ", "where ", "the secret of ",
+                    "inside ", "the truth about ",
+                )))
+                self.assertIn("coral reefs", entity)
+
     def test_disabled_resolver_preserves_existing_entity(self) -> None:
         topic = "How Camels Survive the World's Harshest Deserts"
         report = CanonicalSceneEntityResolver(
@@ -110,6 +159,7 @@ class CanonicalSceneEntityResolverTests(unittest.TestCase):
 
         self.assertEqual("rainforest", restored.scene_for_index(0).canonical_entity)
         self.assertEqual(topic, restored.documentary_topic)
+        self.assertEqual("rainforest", restored.canonical_documentary_entity)
 
 
 if __name__ == "__main__":

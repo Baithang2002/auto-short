@@ -110,6 +110,29 @@ class SemanticVisualQueryEngineTests(unittest.TestCase):
         self.assertTrue(all("rainforest" not in query.lower()
                             for query in report.scene_for_index(0).provider_queries))
 
+    def test_pyramid_title_never_reaches_provider_queries(self) -> None:
+        topic = "How Ancient Egyptians Built Stone Pyramids"
+        source = SimpleNamespace(
+            scene_index=0,
+            primary_subject=topic,
+            scene_entity=SceneEntity("ancient Egyptian stone blocks", "process"),
+            action="moving",
+            environment="desert",
+            shot_type="wide",
+            documentary_role="process",
+            search_queries=("ancient Egyptian stone blocks moving",),
+        )
+        report = SemanticVisualQueryEngine().plan(
+            documentary_topic="",
+            shot_plan=SimpleNamespace(intents=(source,), primary_subject="Egyptian pyramids"),
+        )
+
+        scene = report.scene_for_index(0)
+        self.assertEqual("ancient egyptian stone blocks", scene.canonical_visual_entity)
+        self.assertTrue(scene.provider_queries)
+        self.assertTrue(all(topic.casefold() not in query.casefold() for query in scene.provider_queries))
+        self.assertTrue(all("stone blocks" in query.lower() for query in scene.provider_queries))
+
 
 if __name__ == "__main__":
     unittest.main()

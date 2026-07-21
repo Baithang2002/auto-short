@@ -101,6 +101,7 @@ class CanonicalEntityReport:
 
     documentary_topic: str
     primary_subject: str
+    canonical_documentary_entity: str
     config: CanonicalEntityResolverConfig
     scenes: tuple[CanonicalSceneEntity, ...]
 
@@ -115,6 +116,7 @@ class CanonicalEntityReport:
         return {
             "documentary_topic": self.documentary_topic,
             "primary_subject": self.primary_subject,
+            "canonical_documentary_entity": self.canonical_documentary_entity,
             "configuration": asdict(self.config),
             "scene_mapping": [scene.to_dict() for scene in self.scenes],
         }
@@ -134,6 +136,13 @@ class CanonicalEntityReport:
         return cls(
             documentary_topic=str(data.get("documentary_topic", "")),
             primary_subject=str(data.get("primary_subject", "")),
+            canonical_documentary_entity=str(
+                data.get("canonical_documentary_entity")
+                or _documentary_entity(
+                    str(data.get("documentary_topic", "")),
+                    str(data.get("primary_subject", "")),
+                )
+            ),
             config=CanonicalEntityResolverConfig(
                 enabled=bool(config_data.get("enabled", True)),
                 max_entities_per_scene=int(config_data.get("max_entities_per_scene", 3)),
@@ -165,9 +174,14 @@ class CanonicalSceneEntityResolver:
             self._resolve_scene(documentary_topic, intent)
             for intent in getattr(shot_plan, "intents", ())
         )
+        primary_subject = str(getattr(shot_plan, "primary_subject", ""))
         return CanonicalEntityReport(
             documentary_topic=documentary_topic,
-            primary_subject=str(getattr(shot_plan, "primary_subject", "")),
+            primary_subject=primary_subject,
+            canonical_documentary_entity=_documentary_entity(
+                documentary_topic,
+                primary_subject,
+            ),
             config=self.config,
             scenes=scenes,
         )
@@ -223,6 +237,36 @@ class CanonicalSceneEntityResolver:
 
 
 _ENTITY_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
+    (
+        "laboratory sled experiment",
+        ("sled friction experiment",),
+        ("laboratory", "miniature sled", "testing sled", "controlled experiment"),
+    ),
+    (
+        "Egyptian wall painting",
+        ("ancient Egyptian relief", "Egyptian tomb painting"),
+        ("wall painting", "tomb painting", "egyptian relief"),
+    ),
+    (
+        "wooden sled",
+        ("ancient Egyptian sled", "stone transport sled"),
+        ("wooden sled", "wooden sleds", "sled carrying", "pulling these heavy stone sleds"),
+    ),
+    (
+        "wet sand friction",
+        ("water on sand", "damp sand physics"),
+        ("wet sand", "dampened sand", "damp sand", "water to the sand", "sand causes friction"),
+    ),
+    (
+        "ancient Egyptian stone blocks",
+        ("pyramid stone blocks", "Egyptian construction stones"),
+        ("stone blocks", "stone block", "two ton stones", "heavy stone"),
+    ),
+    (
+        "Egyptian pyramids",
+        ("Great Pyramid of Giza", "Giza pyramids", "ancient Egyptian pyramids"),
+        ("pyramid", "pyramids", "great pyramid"),
+    ),
     ("Amazon River", ("Amazon basin river",), ("amazon river",)),
     ("deforestation", ("rainforest deforestation", "forest clearing"), ("deforestation", "forest clearing")),
     ("rainforest canopy", ("tropical canopy", "jungle canopy"), ("rainforest canopy", "jungle canopy")),
@@ -237,6 +281,33 @@ _ENTITY_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
     ("roman ruins", ("ancient Rome", "Roman Empire"), ("roman empire", "ancient rome", "roman ruins")),
     ("deep ocean", ("deep sea", "ocean depths", "marine life"), ("deep ocean", "deep sea")),
 )
+
+
+_DOCUMENTARY_ENTITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("Egyptian pyramids", ("pyramid", "pyramids", "great pyramid")),
+    ("Amazon River", ("amazon river",)),
+    ("rainforest", ("rainforest", "jungle")),
+    ("greenland shark", ("greenland shark",)),
+    ("octopus", ("octopus",)),
+    ("camel", ("camel", "dromedary")),
+    ("volcano", ("volcano", "volcanic", "lava")),
+    ("honeybee", ("honeybee", "honey bee")),
+    ("penguin", ("penguin",)),
+    ("aurora borealis", ("aurora", "northern lights")),
+    ("roman ruins", ("roman empire", "ancient rome", "roman ruins")),
+    ("deep ocean", ("deep ocean", "deep sea")),
+)
+
+
+def _documentary_entity(topic: str, primary_subject: str) -> str:
+    """Return a visual noun phrase for the documentary, never its title text."""
+
+    corpus = _normalize(f"{topic} {primary_subject}")
+    for canonical, markers in _DOCUMENTARY_ENTITY_RULES:
+        if any(marker in corpus for marker in markers):
+            return canonical
+    fallback = _clean_fallback(primary_subject or topic)
+    return fallback
 
 
 def _resolve_entity(
@@ -287,9 +358,10 @@ def _supporting_entities(canonical: str, intent: Any, maximum: int) -> tuple[str
 
 
 _STOP_WORDS = {
-    "a", "an", "and", "are", "actually", "behind", "can", "did", "does", "do", "everything",
-    "harshest", "hidden", "how", "in", "is", "its", "largest", "life", "of", "on", "secret",
-    "still", "survive", "survives", "that", "the", "their", "this", "to", "why", "world", "worlds",
+    "a", "an", "and", "are", "actually", "about", "behind", "can", "did", "does", "do", "everything",
+    "harshest", "hidden", "how", "in", "inside", "is", "its", "largest", "life", "of", "on", "secret",
+    "still", "survive", "survives", "that", "the", "their", "this", "to", "truth", "when", "where", "why",
+    "world", "worlds",
 }
 
 
