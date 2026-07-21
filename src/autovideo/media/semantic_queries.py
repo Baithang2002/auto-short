@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from .scene_constraints import SceneConstraintReport, SceneVisualConstraints
 from .scene_entities import SceneEntity
 
 
@@ -55,6 +56,8 @@ class SemanticSceneQuery:
     provider_variants: Mapping[str, tuple[str, ...]]
     normalization_decisions: tuple[str, ...]
     provider_entity: SceneEntity
+    mandatory_constraints: tuple[dict[str, Any], ...] = ()
+    rejected_unconstrained_queries: tuple[dict[str, str], ...] = ()
 
     def queries_for(self, provider: str = "") -> tuple[str, ...]:
         """Return provider-specific queries, falling back to generic provider language."""
@@ -77,6 +80,8 @@ class SemanticSceneQuery:
             },
             "normalization_decisions": list(self.normalization_decisions),
             "provider_entity": self.provider_entity.to_dict(),
+            "mandatory_constraints": list(self.mandatory_constraints),
+            "rejected_unconstrained_queries": list(self.rejected_unconstrained_queries),
         }
 
     @classmethod
@@ -94,6 +99,13 @@ class SemanticSceneQuery:
             },
             normalization_decisions=tuple(str(item) for item in data.get("normalization_decisions", [])),
             provider_entity=SceneEntity.from_dict(dict(data.get("provider_entity", {}))),
+            mandatory_constraints=tuple(
+                dict(item) for item in data.get("mandatory_constraints", [])
+            ),
+            rejected_unconstrained_queries=tuple(
+                {str(key): str(value) for key, value in dict(item).items()}
+                for item in data.get("rejected_unconstrained_queries", [])
+            ),
         )
 
 
@@ -154,11 +166,22 @@ class SemanticVisualQueryEngine:
     def __init__(self, config: SemanticQueryConfig | None = None) -> None:
         self.config = config or SemanticQueryConfig()
 
-    def plan(self, *, documentary_topic: str, shot_plan: Any) -> SemanticQueryReport:
+    def plan(
+        self,
+        *,
+        documentary_topic: str,
+        shot_plan: Any,
+        constraint_report: SceneConstraintReport | None = None,
+    ) -> SemanticQueryReport:
         """Build provider-only query language from an existing ShotPlan."""
 
         scenes = tuple(
-            self._scene_query(documentary_topic, intent)
+            self._scene_query(
+                documentary_topic,
+                intent,
+                constraint_report.scene_for_index(getattr(intent, "scene_index", 0))
+                if constraint_report else None,
+            )
             for intent in getattr(shot_plan, "intents", ())
         )
         return SemanticQueryReport(
@@ -168,17 +191,34 @@ class SemanticVisualQueryEngine:
             scenes=scenes,
         )
 
-    def _scene_query(self, topic: str, intent: Any) -> SemanticSceneQuery:
+    def _scene_query(
+        self,
+        topic: str,
+        intent: Any,
+        constraints: SceneVisualConstraints | None,
+    ) -> SemanticSceneQuery:
         source_entity = getattr(intent, "scene_entity", None)
         raw_entity = str(getattr(source_entity, "canonical_entity", "") or getattr(intent, "primary_subject", ""))
         canonical, aliases, decisions = _canonical_visual_entity(raw_entity, topic)
         descriptors = _scene_descriptors(intent, topic, canonical)
         entities = _dedupe((canonical, *aliases))[:self.config.max_normalized_entities]
         queries = _build_queries(entities, descriptors, self.config.max_queries_per_scene)
+        rejected: tuple[dict[str, str], ...] = ()
+        if constraints and constraints.constraints:
+            queries = _dedupe((*constraints.query_seeds, *queries))
+            queries, rejected = constraints.filter_queries(queries)
+            if not queries:
+                queries = constraints.query_seeds
+            decisions = (*decisions, "preserved mandatory scene visual constraints")
         if not self.config.enabled:
             queries = tuple(getattr(intent, "search_queries", ())[:self.config.max_queries_per_scene])
             decisions = (*decisions, "semantic query engine disabled; retained ShotPlan queries")
         variants = _provider_variants(canonical, aliases, descriptors, queries) if self.config.provider_specific_variants else {}
+        if constraints and constraints.constraints:
+            variants = {
+                provider: constraints.filter_queries(provider_queries)[0] or queries
+                for provider, provider_queries in variants.items()
+            }
         provider_entity = SceneEntity(
             canonical_entity=canonical,
             entity_type=str(getattr(source_entity, "entity_type", "visual_entity") or "visual_entity"),
@@ -199,6 +239,10 @@ class SemanticVisualQueryEngine:
             provider_variants=variants,
             normalization_decisions=tuple(decisions),
             provider_entity=provider_entity,
+            mandatory_constraints=tuple(
+                constraint.to_dict() for constraint in constraints.constraints
+            ) if constraints else (),
+            rejected_unconstrained_queries=rejected,
         )
 
 

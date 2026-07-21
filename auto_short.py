@@ -99,6 +99,10 @@ from autovideo.intelligence import (
     SourceCoverageEvaluator,
     build_topic_metadata,
     sample_scene_indexes,
+    ExactSubjectAvailabilityGate,
+    ExactSubjectGateConfig,
+    ExactSubjectGateDecision,
+    subject_definition_from_pipeline,
 )
 from autovideo.engagement import generate_pinned_comment
 from autovideo.media import (
@@ -114,6 +118,11 @@ from autovideo.media import (
     MediaSelectionResult,
     QueryPlanner,
     SceneEntityPlanner,
+    SceneConstraintConfig,
+    SceneConstraintPlanner,
+    SceneConstraintReport,
+    SceneVisualFocusPlanner,
+    SceneVisualFocusReport,
     SemanticQueryConfig,
     SemanticQueryReport,
     SemanticVisualQueryEngine,
@@ -3668,7 +3677,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 hybrid=False, threshold=0.5, dalle=False, target_duration=5.0,
                 no_interactive=False, shot_intent=None,
                 visual_grammar_engine=None, visual_grammar_decision=None,
-                provider_query_variants=None):
+                provider_query_variants=None, scene_constraints=None):
     """Chain b-roll sources: local -> DALL-E (opt) -> Pexels -> Pixabay -> NASA (space).
 
     Uses a persistent cross-video used_set so clips aren't repeated across runs.
@@ -4117,6 +4126,16 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
     # This is the "broad nature shot" safety net so scheduled runs don't die.
     print(f"    [!] No specific footage found for segment {idx+1} ('{keyword}'); trying broad niche search.")
     broad_terms = _broad_fallback_terms(keyword, narration, fallback)
+    if scene_constraints and getattr(scene_constraints, "constraints", ()):
+        constrained_terms, rejected_terms = scene_constraints.filter_queries(broad_terms)
+        if not constrained_terms:
+            print("    [Constraint guard] skipped broad fallback that lost mandatory visuals.")
+            _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+                **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                "rejected_unconstrained_broad_queries": list(rejected_terms),
+            }
+            return None
+        broad_terms = list(constrained_terms)
     broad_out = fetch_pexels_video(
         broad_terms,
         idx,
@@ -5649,6 +5668,34 @@ def main():
             ),
         )
 
+    def _focused_provider_intent(
+        intent,
+        canonical_report: CanonicalEntityReport | None,
+        focus_report: SceneVisualFocusReport | None,
+    ):
+        """Apply a retrieval-only scene focus without changing the ShotPlan."""
+
+        provider_intent = _resolved_provider_intent(intent, canonical_report)
+        if provider_intent is None or not isinstance(focus_report, SceneVisualFocusReport):
+            return provider_intent
+        focus = focus_report.scene_for_index(provider_intent.scene_index)
+        if focus is None:
+            return provider_intent
+        focused_entity = focus.to_scene_entity(provider_intent.scene_entity)
+        return replace(
+            provider_intent,
+            primary_subject=focus.required_visual_entity,
+            scene_entity=focused_entity,
+            required_entities=(
+                focus.required_visual_entity,
+                *focus.query_terms,
+            ),
+            diagnostics={
+                **provider_intent.diagnostics,
+                "scene_visual_focus": focus.to_dict(),
+            },
+        )
+
     def stage_canonical_entity_resolution(ctx: PipelineContext) -> StageResult:
         """Resolve provider-facing entities while retaining the original ShotPlan."""
 
@@ -5667,6 +5714,26 @@ def main():
             read_manifest(Path(record.outputs["canonical_entity_report"]))
         )
 
+    def stage_scene_visual_focus(ctx: PipelineContext) -> StageResult:
+        """Resolve scene-visible entities while preserving the documentary anchor."""
+
+        report = SceneVisualFocusPlanner().plan(
+            documentary_topic=niche,
+            shot_plan=ctx.values["shot_plan"],
+            knowledge_domains=KnowledgePackStore().load(),
+        )
+        path = report.write_json(OUT_DIR / "scene_visual_focus_report.json")
+        ctx.values["scene_visual_focus_report"] = report
+        return StageResult(outputs={"scene_visual_focus_report": str(path)})
+
+    def load_scene_visual_focus(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["scene_visual_focus_report"] = SceneVisualFocusReport.from_dict(
+            read_manifest(Path(record.outputs["scene_visual_focus_report"]))
+        )
+
+    def validate_scene_visual_focus(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("scene_visual_focus_report", "")).exists()
+
     def validate_canonical_entity_resolution(_ctx: PipelineContext, record: StageRecord) -> bool:
         return Path(record.outputs.get("canonical_entity_report", "")).exists()
 
@@ -5676,7 +5743,11 @@ def main():
         shot_plan = ctx.values["shot_plan"]
         canonical_report = ctx.values.get("canonical_entity_report")
         resolved_intents = tuple(
-            _resolved_provider_intent(intent, canonical_report)
+            _focused_provider_intent(
+                intent,
+                canonical_report,
+                ctx.values.get("scene_visual_focus_report"),
+            )
             for intent in shot_plan.intents
         )
         retrieval_shot_plan = SimpleNamespace(
@@ -5692,6 +5763,7 @@ def main():
             # into a scene explicitly resolved as "Amazon River".
             documentary_topic="",
             shot_plan=retrieval_shot_plan,
+            constraint_report=ctx.values.get("scene_constraint_report"),
         )
         report = replace(report, documentary_topic=niche)
         report_path = report.write_json(OUT_DIR / "semantic_query_report.json")
@@ -5702,6 +5774,38 @@ def main():
         ctx.values["semantic_query_report"] = SemanticQueryReport.from_dict(
             read_manifest(Path(record.outputs["semantic_query_report"]))
         )
+
+    def stage_scene_constraint_planning(ctx: PipelineContext) -> StageResult:
+        """Freeze mandatory visual requirements before provider query translation."""
+
+        focused_intents = tuple(
+            _focused_provider_intent(
+                intent,
+                ctx.values.get("canonical_entity_report"),
+                ctx.values.get("scene_visual_focus_report"),
+            )
+            for intent in ctx.values["shot_plan"].intents
+        )
+        report = SceneConstraintPlanner(
+            SceneConstraintConfig.from_env(os.environ)
+        ).plan(
+            documentary_topic=niche,
+            shot_plan=SimpleNamespace(
+                intents=focused_intents,
+                primary_subject=ctx.values["shot_plan"].primary_subject,
+            ),
+        )
+        path = report.write_json(OUT_DIR / "scene_constraint_report.json")
+        ctx.values["scene_constraint_report"] = report
+        return StageResult(outputs={"scene_constraint_report": str(path)})
+
+    def load_scene_constraint_planning(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["scene_constraint_report"] = SceneConstraintReport.from_dict(
+            read_manifest(Path(record.outputs["scene_constraint_report"]))
+        )
+
+    def validate_scene_constraint_planning(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("scene_constraint_report", "")).exists()
 
     def validate_semantic_query_planning(_ctx: PipelineContext, record: StageRecord) -> bool:
         return Path(record.outputs.get("semantic_query_report", "")).exists()
@@ -5733,15 +5837,27 @@ def main():
         narrations: dict[int, str],
         canonical_report: CanonicalEntityReport | None = None,
         semantic_report: SemanticQueryReport | None = None,
+        constraint_report: SceneConstraintReport | None = None,
+        focus_report: SceneVisualFocusReport | None = None,
     ) -> SceneCoverage:
-        provider_intent = _resolved_provider_intent(intent, canonical_report)
+        provider_intent = _focused_provider_intent(
+            intent,
+            canonical_report,
+            focus_report,
+        )
         semantic_scene = (
             semantic_report.scene_for_index(intent.scene_index)
             if semantic_report else None
         )
+        constraint_scene = (
+            constraint_report.scene_for_index(intent.scene_index)
+            if isinstance(constraint_report, SceneConstraintReport) else None
+        )
         queries = list(
             semantic_scene.provider_queries if semantic_scene else provider_intent.search_queries
         )[:config.max_queries_per_scene]
+        if constraint_scene:
+            queries = list(constraint_scene.filter_queries(queries)[0] or constraint_scene.query_seeds)
         fallback = provider_intent.primary_subject or niche
         visual_intent = _selection_intent(
             queries,
@@ -5848,6 +5964,8 @@ def main():
                 narrations,
                 ctx.values.get("canonical_entity_report"),
                 ctx.values.get("semantic_query_report"),
+                ctx.values.get("scene_constraint_report"),
+                ctx.values.get("scene_visual_focus_report"),
             )
             for intent in sampled_intents
         ]
@@ -5961,7 +6079,9 @@ def main():
         broll_overrides = ctx.values.get("broll_overrides", {})
         shot_plan = ctx.values.get("shot_plan")
         canonical_entity_report = ctx.values.get("canonical_entity_report")
+        scene_visual_focus_report = ctx.values.get("scene_visual_focus_report")
         semantic_query_report = ctx.values.get("semantic_query_report")
+        scene_constraint_report = ctx.values.get("scene_constraint_report")
         visual_grammar_engine = VisualGrammarEngine(
             topic=niche,
             total_scenes=len(ctx.values["voice_items"]),
@@ -5971,13 +6091,18 @@ def main():
             seg = item["segment"]
             dur = item["duration"]
             shot_intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
-            provider_shot_intent = (
-                _resolved_provider_intent(shot_intent, canonical_entity_report)
-                if shot_intent else None
-            )
+            provider_shot_intent = _focused_provider_intent(
+                shot_intent,
+                canonical_entity_report,
+                scene_visual_focus_report,
+            ) if shot_intent else None
             semantic_scene = (
                 semantic_query_report.scene_for_index(idx)
                 if isinstance(semantic_query_report, SemanticQueryReport) else None
+            )
+            constraint_scene = (
+                scene_constraint_report.scene_for_index(idx)
+                if isinstance(scene_constraint_report, SceneConstraintReport) else None
             )
             visual_grammar_decision = None
 
@@ -6086,6 +6211,14 @@ def main():
                     *visual_grammar_decision.repaired_queries,
                     *queries,
                 ])
+                if constraint_scene:
+                    constrained_queries, rejected_queries = constraint_scene.filter_queries(queries)
+                    queries = list(constrained_queries or constraint_scene.query_seeds)
+                    if rejected_queries:
+                        _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+                            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                            "rejected_unconstrained_runtime_queries": list(rejected_queries),
+                        }
                 if shot_intent:
                     _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
                         **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
@@ -6106,7 +6239,14 @@ def main():
                             if canonical_entity_report and canonical_entity_report.scene_for_index(idx)
                             else None
                         ),
+                        "scene_visual_focus": (
+                            scene_visual_focus_report.scene_for_index(idx).to_dict()
+                            if scene_visual_focus_report
+                            and scene_visual_focus_report.scene_for_index(idx)
+                            else None
+                        ),
                         "semantic_query_plan": semantic_scene.to_dict() if semantic_scene else None,
+                        "scene_constraints": constraint_scene.to_dict() if constraint_scene else None,
                         "visual_grammar": visual_grammar_decision.to_dict(),
                     }
 
@@ -6129,6 +6269,7 @@ def main():
                     provider_query_variants=(
                         semantic_scene.provider_variants if semantic_scene else None
                     ),
+                    scene_constraints=constraint_scene,
                 )
                 if not _valid_media_path(broll):
                     print(f"    [Local explainer] replacing missing media for segment {idx+1}.")
@@ -6175,6 +6316,7 @@ def main():
             continuity_report = SubjectContinuityEngine().report_from_assets(
                 shot_plan,
                 media_assets,
+                scene_visual_focus_report=scene_visual_focus_report,
             )
             write_manifest(continuity_report_path, continuity_report.to_dict())
         grammar_report_path = write_manifest(
@@ -6220,6 +6362,8 @@ def main():
         )
         shot_plan = ctx.values.get("shot_plan")
         canonical_report = ctx.values.get("canonical_entity_report")
+        scene_visual_focus_report = ctx.values.get("scene_visual_focus_report")
+        scene_constraint_report = ctx.values.get("scene_constraint_report")
         voice_by_index = {item["idx"]: item for item in ctx.values.get("voice_items", [])}
         media_assets = list(ctx.values.get("media_assets", []))
         used_set = set()
@@ -6257,7 +6401,11 @@ def main():
         for idx, asset in enumerate(media_assets):
             item = voice_by_index.get(idx)
             intent = shot_plan.intent_for_index(idx) if isinstance(shot_plan, ShotPlan) else None
-            provider_intent = _resolved_provider_intent(intent, canonical_report) if intent else None
+            provider_intent = _focused_provider_intent(
+                intent,
+                canonical_report,
+                scene_visual_focus_report,
+            ) if intent else None
             request = _verification_request_for_asset(idx, asset, provider_intent)
             if not request.expected_entity:
                 request = replace(request, expected_entity=niche)
@@ -6300,6 +6448,10 @@ def main():
                         no_interactive=True,
                         shot_intent=provider_intent,
                         provider_query_variants=None,
+                        scene_constraints=(
+                            scene_constraint_report.scene_for_index(idx)
+                            if isinstance(scene_constraint_report, SceneConstraintReport) else None
+                        ),
                     )
                 except (SystemExit, Exception) as exc:
                     print(f"    [Verified media] replacement retrieval failed for segment {idx + 1}: {exc}")
@@ -6369,6 +6521,38 @@ def main():
             and Path(record.outputs.get("media_manifest", "")).exists()
             and validate_paths(record.outputs.get("media_files", []))
         )
+
+    def stage_exact_subject_availability(ctx: PipelineContext) -> StageResult:
+        """Defer identity-specific documentaries without exact selected evidence."""
+
+        report = ExactSubjectAvailabilityGate(
+            ExactSubjectGateConfig.from_env(os.environ)
+        ).evaluate(
+            topic=niche,
+            subject=subject_definition_from_pipeline(
+                editorial_canon=ctx.values.get("editorial_canon"),
+                canonical_report=ctx.values.get("canonical_entity_report"),
+                shot_plan=ctx.values.get("shot_plan"),
+            ),
+            media_assets=ctx.values.get("media_assets", ()),
+            verified_media_report=read_manifest(OUT_DIR / "verified_media_report.json"),
+        )
+        report_path = report.write_json(OUT_DIR / "exact_subject_gate_report.json")
+        ctx.values["exact_subject_gate_report"] = report
+        if report.decision is ExactSubjectGateDecision.DEFERRED:
+            raise RuntimeError(
+                "Strict Exact Subject Availability Gate deferred this topic before rendering: "
+                f"{report.failure_reason}. See {report_path.name}."
+            )
+        return StageResult(outputs={"exact_subject_gate_report": str(report_path)})
+
+    def load_exact_subject_availability(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["exact_subject_gate_report"] = read_manifest(
+            Path(record.outputs["exact_subject_gate_report"])
+        )
+
+    def validate_exact_subject_availability(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("exact_subject_gate_report", "")).exists()
 
     def validate_media_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
         subject_report = record.outputs.get("subject_continuity_report")
@@ -6879,9 +7063,11 @@ def main():
             "scene_role_report.json": OUT_DIR / "scene_role_report.json",
             "domain_classification_report.json": OUT_DIR / "domain_classification_report.json",
             "scene_entity_report.json": OUT_DIR / "scene_entity_report.json",
+            "scene_visual_focus_report.json": OUT_DIR / "scene_visual_focus_report.json",
             "query_generation_report.json": OUT_DIR / "query_generation_report.json",
             "canonical_entity_report.json": OUT_DIR / "canonical_entity_report.json",
             "semantic_query_report.json": OUT_DIR / "semantic_query_report.json",
+            "scene_constraint_report.json": OUT_DIR / "scene_constraint_report.json",
             "shot_plan.json": OUT_DIR / "shot_plan.json",
             "visual_grammar_report.json": OUT_DIR / "visual_grammar_report.json",
             "subject_continuity_report.json": OUT_DIR / "subject_continuity_report.json",
@@ -6891,6 +7077,7 @@ def main():
             "adaptive_search_report.json": adaptive_search_report_path,
             "evidence_verification_report.json": evidence_verification_report_path,
             "verified_media_report.json": OUT_DIR / "verified_media_report.json",
+            "exact_subject_gate_report.json": OUT_DIR / "exact_subject_gate_report.json",
             "selection_report.txt": selection_report_path,
             "contact_sheet.jpg": contact_sheet_path,
             "media_manifest.json": OUT_DIR / "media_manifest.json",
@@ -6965,6 +7152,18 @@ def main():
             validate_outputs=validate_canonical_entity_resolution,
         ),
         PipelineStage(
+            "scene_visual_focus",
+            stage_scene_visual_focus,
+            load=load_scene_visual_focus,
+            validate_outputs=validate_scene_visual_focus,
+        ),
+        PipelineStage(
+            "scene_constraint_planning",
+            stage_scene_constraint_planning,
+            load=load_scene_constraint_planning,
+            validate_outputs=validate_scene_constraint_planning,
+        ),
+        PipelineStage(
             "semantic_query_planning",
             stage_semantic_query_planning,
             load=load_semantic_query_planning,
@@ -6983,6 +7182,12 @@ def main():
             stage_verified_media,
             load=load_verified_media,
             validate_outputs=validate_verified_media_outputs,
+        ),
+        PipelineStage(
+            "exact_subject_availability",
+            stage_exact_subject_availability,
+            load=load_exact_subject_availability,
+            validate_outputs=validate_exact_subject_availability,
         ),
         PipelineStage("music", stage_music, load=load_music),
         PipelineStage("timeline_construction", stage_timeline, load=load_timeline),

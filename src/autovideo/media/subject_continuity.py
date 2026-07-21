@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Any, Mapping
+from typing import TYPE_CHECKING, Any, Mapping
 
 from .editorial import EditorialCanon
 from .visual_director import MediaMode, ShotIntent, ShotPlan
+
+if TYPE_CHECKING:
+    from .scene_visual_focus import SceneVisualFocusReport
 
 
 @dataclass(frozen=True)
@@ -40,6 +43,7 @@ class SubjectContinuityReport:
     forbidden_substitutions_accepted: tuple[str, ...] = ()
     continuity_score: float = 0.0
     reasons_for_continuity_breaks: tuple[dict[str, Any], ...] = ()
+    scene_focus_exemptions: tuple[dict[str, Any], ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -50,6 +54,7 @@ class SubjectContinuityReport:
             "forbidden_substitutions_accepted": list(self.forbidden_substitutions_accepted),
             "continuity_score": self.continuity_score,
             "reasons_for_continuity_breaks": list(self.reasons_for_continuity_breaks),
+            "scene_focus_exemptions": list(self.scene_focus_exemptions),
         }
 
 
@@ -65,7 +70,8 @@ class SubjectContinuityEngine:
     ) -> SubjectContinuityProfile:
         """Build deterministic continuity rules from the current shot plan."""
 
-        primary_subject = _clean_subject(editorial_canon.primary_subject if editorial_canon else plan.primary_subject or "")
+        primary = editorial_canon.primary_subject if editorial_canon else plan.primary_subject
+        primary_subject = _clean_subject(primary or "")
         if not primary_subject:
             primary_subject = _clean_subject(_first_nonempty(plan.required_subjects))
         if not primary_subject:
@@ -136,6 +142,8 @@ class SubjectContinuityEngine:
         self,
         plan: ShotPlan,
         media_assets: list[Any],
+        *,
+        scene_visual_focus_report: "SceneVisualFocusReport | None" = None,
     ) -> SubjectContinuityReport:
         """Build continuity diagnostics from selected MediaAsset metadata."""
 
@@ -144,6 +152,7 @@ class SubjectContinuityEngine:
         substitutions: list[str] = []
         forbidden: list[str] = []
         breaks: list[dict[str, Any]] = []
+        focus_exemptions: list[dict[str, Any]] = []
 
         for index, asset in enumerate(media_assets):
             metadata = getattr(asset, "metadata", {}) or {}
@@ -155,13 +164,36 @@ class SubjectContinuityEngine:
             )
             if mode not in {MediaMode.SHOW.value, MediaMode.PROVE.value, MediaMode.REVEAL.value}:
                 continue
+            focus = (
+                scene_visual_focus_report.scene_for_index(index)
+                if scene_visual_focus_report is not None
+                else None
+            )
+            if (
+                focus is not None
+                and not focus.requires_documentary_anchor
+                and _normalize(focus.required_visual_entity) != _normalize(plan.primary_subject)
+            ):
+                focus_exemptions.append({
+                    "scene_index": index,
+                    "required_visual_entity": focus.required_visual_entity,
+                    "role": focus.role.value,
+                    "reason": "scene requires a focused result, mechanism, or evidence visual",
+                })
+                continue
             show_total += 1
             subject_visible = bool(
                 selection.get("subject_visible")
                 or metadata.get("subject_visible")
             )
-            substitution = str(selection.get("substitution_used") or metadata.get("substitution_used") or "")
-            accepted_forbidden = selection.get("forbidden_substitutions") or metadata.get("forbidden_substitutions") or []
+            substitution = str(
+                selection.get("substitution_used") or metadata.get("substitution_used") or ""
+            )
+            accepted_forbidden = (
+                selection.get("forbidden_substitutions")
+                or metadata.get("forbidden_substitutions")
+                or []
+            )
             if subject_visible:
                 visible += 1
             elif substitution:
@@ -173,7 +205,9 @@ class SubjectContinuityEngine:
                     "scene_index": index,
                     "media_mode": mode,
                     "provider": selection.get("provider") or metadata.get("provider"),
-                    "provider_id": selection.get("provider_id") or metadata.get("provider_asset_id"),
+                    "provider_id": (
+                        selection.get("provider_id") or metadata.get("provider_asset_id")
+                    ),
                     "query": selection.get("query") or metadata.get("selected_query"),
                     "reason": selection.get("continuity_reason")
                     or metadata.get("continuity_reason")
@@ -190,6 +224,7 @@ class SubjectContinuityEngine:
             forbidden_substitutions_accepted=tuple(dict.fromkeys(forbidden)),
             continuity_score=round(score, 3),
             reasons_for_continuity_breaks=tuple(breaks),
+            scene_focus_exemptions=tuple(focus_exemptions),
         )
 
 

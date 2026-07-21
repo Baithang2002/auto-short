@@ -53,11 +53,13 @@ SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
 FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
 PUBLISH_QUALITY_REPORT = OUT_DIR / "publish_quality_report.json"
 VERIFIED_MEDIA_REPORT = OUT_DIR / "verified_media_report.json"
+EXACT_SUBJECT_GATE_REPORT = OUT_DIR / "exact_subject_gate_report.json"
 ATTEMPT_REPORTS = (
     SOURCE_COVERAGE_REPORT,
     FALLBACK_QUALITY_REPORT,
     PUBLISH_QUALITY_REPORT,
     VERIFIED_MEDIA_REPORT,
+    EXACT_SUBJECT_GATE_REPORT,
 )
 
 
@@ -243,6 +245,16 @@ def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
     ]
     if rejected_scenes:
         return True, "verified media gate rejected planned scene media"
+
+    exact_subject_report = _read_json(EXACT_SUBJECT_GATE_REPORT)
+    if (
+        str(exact_subject_report.get("topic", "")).casefold() == topic.casefold()
+        and str(exact_subject_report.get("decision", "")).upper() == "DEFERRED"
+    ):
+        return True, str(
+            exact_subject_report.get("failure_reason")
+            or "strict exact-subject gate deferred topic"
+        )
 
     publish_report = _read_json(PUBLISH_QUALITY_REPORT)
     if str(publish_report.get("verdict", "")).upper() == "DEFERRED":

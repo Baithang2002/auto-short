@@ -125,7 +125,49 @@
       "exact_queries": ["lightning strike sky", "lightning bolt storm", "thunderstorm clouds lightning"],
       "mechanism_queries": ["electrical arc close up", "plasma channel lightning", "fulgurite sand glass"],
       "context_queries": ["dark storm clouds", "rain storm lightning"],
-      "fallback_queries": ["storm lightning", "electric spark"]
+      "fallback_queries": ["storm lightning", "electric spark"],
+      "scene_focus_rules": [
+        {
+          "match_terms": ["fulgurite", "petrified lightning"],
+          "entity": "fulgurite",
+          "aliases": ["fulgurite specimen", "lightning glass"],
+          "query_terms": ["fulgurite specimen glass", "fulgurite sand glass"],
+          "role": "result",
+          "requires_documentary_anchor": false
+        },
+        {
+          "match_terms": ["hollow tube", "hollow fulgurite", "fulgurite tube", "glass tube"],
+          "entity": "fulgurite tube",
+          "aliases": ["hollow fulgurite", "lightning glass tube"],
+          "query_terms": ["hollow fulgurite tube", "fulgurite sand glass"],
+          "role": "result",
+          "requires_documentary_anchor": false
+        },
+        {
+          "match_terms": ["molten glass", "melts the grains", "fuse instantly"],
+          "entity": "molten sand glass",
+          "aliases": ["molten glass", "fused sand"],
+          "query_terms": ["molten sand glass", "fused sand lightning"],
+          "role": "mechanism",
+          "requires_documentary_anchor": false
+        },
+        {
+          "match_terms": ["geologist", "scientists dig", "scientist brush"],
+          "entity": "fulgurite excavation",
+          "aliases": ["geologist digging fulgurite", "scientist examining fulgurite"],
+          "query_terms": ["geologist digging fulgurite", "fulgurite desert excavation"],
+          "role": "evidence",
+          "requires_documentary_anchor": false
+        },
+        {
+          "match_terms": ["air bubbles", "glass is actually smooth", "glass interior"],
+          "entity": "fulgurite glass interior",
+          "aliases": ["fulgurite air bubbles", "glass tube interior"],
+          "query_terms": ["fulgurite glass interior", "fulgurite air bubbles"],
+          "role": "evidence",
+          "requires_documentary_anchor": false
+        }
+      ]
     },
     {
       "id": "undersea_internet",

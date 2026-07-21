@@ -26,6 +26,21 @@ class PipelineDailyTests(unittest.TestCase):
         self.assertTrue(deferred)
         self.assertIn("fallback quality", reason)
 
+    def test_candidate_quality_deferred_detects_exact_subject_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            report_path = Path(directory) / "exact_subject_gate_report.json"
+            report_path.write_text(json.dumps({
+                "topic": "Greenland Shark",
+                "decision": "DEFERRED",
+                "failure_reason": "only generic substitutes were selected",
+            }), encoding="utf-8")
+
+            with patch.object(pipeline_daily, "EXACT_SUBJECT_GATE_REPORT", report_path):
+                deferred, reason = pipeline_daily.candidate_quality_deferred("Greenland Shark")
+
+        self.assertTrue(deferred)
+        self.assertIn("generic substitutes", reason)
+
     def test_run_daily_retries_quality_failure_then_publishes(self) -> None:
         scheduled = iter((
             ("Weak topic", "run-1", None),

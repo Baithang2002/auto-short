@@ -72,6 +72,19 @@ from .semantic_queries import (
     SemanticSceneQuery,
     SemanticVisualQueryEngine,
 )
+from .scene_constraints import (
+    MandatoryVisualConstraint,
+    SceneConstraintConfig,
+    SceneConstraintPlanner,
+    SceneConstraintReport,
+    SceneVisualConstraints,
+)
+from .scene_visual_focus import (
+    SceneVisualFocus,
+    SceneVisualFocusPlanner,
+    SceneVisualFocusReport,
+    VisualFocusRole,
+)
 from .visual_director import (
     DocumentaryStyleRules,
     DomainKnowledge,
@@ -165,6 +178,15 @@ __all__ = [
     "SemanticQueryReport",
     "SemanticSceneQuery",
     "SemanticVisualQueryEngine",
+    "MandatoryVisualConstraint",
+    "SceneConstraintConfig",
+    "SceneConstraintPlanner",
+    "SceneConstraintReport",
+    "SceneVisualConstraints",
+    "SceneVisualFocus",
+    "SceneVisualFocusPlanner",
+    "SceneVisualFocusReport",
+    "VisualFocusRole",
     "build_visual_intent",
     "classify_scene_type",
     "candidate_from_local_path",

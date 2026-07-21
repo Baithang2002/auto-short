@@ -250,6 +250,7 @@ class DomainKnowledge:
     mechanism_queries: tuple[str, ...]
     context_queries: tuple[str, ...]
     fallback_queries: tuple[str, ...]
+    scene_focus_rules: tuple[Mapping[str, Any], ...] = ()
 
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "DomainKnowledge":
@@ -266,6 +267,9 @@ class DomainKnowledge:
             mechanism_queries=tuple(str(item) for item in data.get("mechanism_queries", [])),
             context_queries=tuple(str(item) for item in data.get("context_queries", [])),
             fallback_queries=tuple(str(item) for item in data.get("fallback_queries", [])),
+            scene_focus_rules=tuple(
+                dict(item) for item in data.get("scene_focus_rules", [])
+            ),
         )
 
 

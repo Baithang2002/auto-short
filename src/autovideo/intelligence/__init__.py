@@ -41,6 +41,14 @@ from .source_coverage import (
     SourceCoverageReport,
     sample_scene_indexes,
 )
+from .exact_subject_gate import (
+    ExactSubjectAvailabilityGate,
+    ExactSubjectGateConfig,
+    ExactSubjectGateDecision,
+    ExactSubjectGateReport,
+    SubjectDefinition,
+    subject_definition_from_pipeline,
+)
 
 __all__ = [
     "DocumentaryViabilityConfig",
@@ -74,4 +82,10 @@ __all__ = [
     "SourceCoverageEvaluator",
     "SourceCoverageReport",
     "sample_scene_indexes",
+    "ExactSubjectAvailabilityGate",
+    "ExactSubjectGateConfig",
+    "ExactSubjectGateDecision",
+    "ExactSubjectGateReport",
+    "SubjectDefinition",
+    "subject_definition_from_pipeline",
 ]
