@@ -1,48 +1,70 @@
-# Wonders of the Nature - curiosity-optimized daily topic rotation
+# Wonders of the Nature - current daily topic pool
 # One topic per line. Lines starting with # are ignored.
+# Topics favor clear, visually demonstrable subjects so the autonomous quality
+# gates can select reliable documentaries without repeating older validation topics.
 
-# --- Deep Sea & Marine ---
-the immortal jellyfish that can live forever
-the zombie fungus that controls insect brains
-the silent animal that shoots super-hot bubbles
-the mimic octopus that can impersonate 15 different creatures
-the shark that can live for over 400 years
-weird facts about the deep ocean abyss
-strange creatures of the mariana trench
-the pistol shrimp that creates a sonic boom
-how the vampire squid survives in the deep ocean
-the cuttlefish that can hypnotize its prey
+# --- Wildlife & Animal Behavior ---
+why flamingos are pink
+how beavers reshape entire rivers
+why hummingbirds can fly backward
+how sea turtles find their way home
+why owls can hunt in complete darkness
+how crows remember human faces
+why elephants can hear through their feet
+how woodpeckers avoid brain damage
+why chameleons change color
+how ants build underground cities
+why penguins do not freeze on Antarctic ice
+how bats navigate in total darkness
 
-# --- Space & Atmospheric ---
-what happens if you get sucked into a black hole
-why space smells like seared steak and hot metal
-the place where lightning strikes 300 times a year
-the extreme storm that creates a green sky
-mind-blowing facts about our solar system
-strange clouds and storm formations on Earth
-the mysterious 'Great Attractor' pulling our galaxy towards it
-the planet made of solid diamond
+# --- Oceans, Water & Landscapes ---
+how mangrove forests protect coastlines from storms
+why coral reefs are called underwater cities
+how waterfalls carve through solid rock
+why rivers bend and change course
+how glaciers shape mountains and valleys
+why icebergs look blue
+how tides move entire oceans
+why some beaches have black sand
+how forests create their own rain
+why the ocean has giant blue holes
+how desert dunes move across the landscape
+why lakes can suddenly change color
 
-# --- Earth, Geology & Extreme Environments ---
-the deepest hole on Earth and what they found inside
-the lake of death that turns animals into stone
-the underwater volcano that is creating a new island
-the place on Earth where it constantly rains fish
-geological wonders hidden in plain sight
-the sailing stones of Death Valley that move on their own
-the giant crystal cave hidden deep underground
+# --- Earth Science & Weather ---
+how earthquakes can change a river's course
+why volcanoes create new land
+how caves grow giant crystal formations
+why lightning creates glass in sand
+how hurricanes grow into giant storms
+why snowflakes have six sides
+how rainbows form after a storm
+why the ground can crack into hexagons
+how wind shapes giant rock arches
+why some clouds look like flying saucers
 
-# --- Animals & Plants ---
-the killer plant that eats rats alive
-the micro-animal that can survive the vacuum of space
-the bird that can fly for ten months without landing
-the bizarre plant that bleeds red sap when cut
-the massive underground fungus larger than a blue whale
-what is actually living in a single drop of pond water
-insects that quietly rule our ecosystem
+# --- Space & Earth From Above ---
+how astronauts sleep in space
+why the moon has no weather
+how solar eclipses turn day into night
+why Venus is hotter than Mercury
+how comets grow their glowing tails
+why Earth has seasons
+how satellites take pictures of Earth
+why Mars has the tallest volcano in the solar system
+how the International Space Station stays in orbit
+why Saturn has rings
 
-# --- Biology & Survival ---
-the frog that freezes solid in winter and thaws back to life
-the animal that can regenerate its entire head
-the plant that pretends to be a female insect
-how tardigrades survive the vacuum of space
+# --- History, Engineering & Everyday Science ---
+how ancient Egyptians built stone pyramids
+why medieval castles had moats
+how Vikings navigated without GPS
+why ancient cities were built beside rivers
+how paper changed the world
+why old maps look so strange
+how wind turbines turn wind into electricity
+why suspension bridges can bend without breaking
+how shipping containers changed world trade
+why train tracks have small gaps
+how solar panels turn sunlight into electricity
+why airplanes leave white trails in the sky
