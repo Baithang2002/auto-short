@@ -194,8 +194,19 @@ class CanonicalSceneEntityResolver:
             or topic
         )
         narration = str(getattr(intent, "diagnostics", {}).get("narration", ""))
+        # ShotIntent deliberately stores only planning data, not the script
+        # narration. Its bounded query tiers are the durable scene-level
+        # evidence available to this resolver during normal pipeline runs.
+        scene_queries = tuple(str(item) for item in getattr(intent, "search_queries", ()))
         scene_corpus = " ".join(
-            (original, narration, *getattr(intent, "required_entities", ()))
+            (
+                original,
+                narration,
+                str(getattr(intent, "action", "")),
+                str(getattr(intent, "environment", "")),
+                *getattr(intent, "required_entities", ()),
+                *scene_queries,
+            )
         )
         canonical, synonyms, confidence, explanation = _resolve_entity(
             scene_corpus,

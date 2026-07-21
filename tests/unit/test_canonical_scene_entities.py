@@ -23,6 +23,7 @@ def _intent(
     action: str = "",
     environment: str = "",
     role: str = "overview",
+    search_queries: tuple[str, ...] = (),
 ) -> SimpleNamespace:
     return SimpleNamespace(
         scene_index=index,
@@ -34,6 +35,7 @@ def _intent(
         shot_type="wide",
         documentary_role=role,
         diagnostics={"narration": narration},
+        search_queries=search_queries,
     )
 
 
@@ -136,6 +138,20 @@ class CanonicalSceneEntityResolverTests(unittest.TestCase):
                     "inside ", "the truth about ",
                 )))
                 self.assertIn("coral reefs", entity)
+
+    def test_uses_scene_query_evidence_when_narration_is_not_persisted(self) -> None:
+        topic = "How Ancient Egyptians Built Stone Pyramids"
+        report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=_plan(
+                topic,
+                _intent(0, topic, search_queries=("wooden sled sand",)),
+                _intent(1, topic, search_queries=("wet sand friction close up",)),
+            ),
+        )
+
+        self.assertEqual("wooden sled", report.scene_for_index(0).canonical_entity)
+        self.assertEqual("wet sand friction", report.scene_for_index(1).canonical_entity)
 
     def test_disabled_resolver_preserves_existing_entity(self) -> None:
         topic = "How Camels Survive the World's Harshest Deserts"
