@@ -584,7 +584,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "viability engine deferred REVIEW topic",
-      "recorded_at": "2026-07-23T15:04:17Z",
+      "recorded_at": "2026-07-24T14:12:42Z",
       "source": "topics.txt",
       "run_id": "",
       "generated_at": ""
@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-23T15:04:17Z",
+      "recorded_at": "2026-07-24T14:12:42Z",
       "source": "topics.txt",
       "run_id": "",
       "generated_at": ""
@@ -938,6 +938,90 @@
       "source": "topics.txt",
       "run_id": "de860d83d7be428eb7a4391beeccac77",
       "generated_at": ""
+    },
+    {
+      "topic": "how ancient Egyptians built stone pyramids",
+      "primary_subject": "ancient",
+      "category": "Engineering",
+      "documentary_angle": "process",
+      "viability_score": 0.7185,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates",
+      "recorded_at": "2026-07-24T14:10:20Z",
+      "source": "topics.txt",
+      "run_id": "f579840747d3425096a6be4f82a3499d",
+      "generated_at": ""
+    },
+    {
+      "topic": "why ancient cities were built beside rivers",
+      "primary_subject": "ancient",
+      "category": "Engineering",
+      "documentary_angle": "explanation",
+      "viability_score": 0.7185,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-24T14:10:51Z",
+      "source": "topics.txt",
+      "run_id": "740fe35f58a243aa92ab4684011e5497",
+      "generated_at": ""
+    },
+    {
+      "topic": "why Mars has the tallest volcano in the solar system",
+      "primary_subject": "mar",
+      "category": "Astronomy",
+      "documentary_angle": "explanation",
+      "viability_score": 0.7491,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
+      "recorded_at": "2026-07-24T14:11:20Z",
+      "source": "topics.txt",
+      "run_id": "31fbae5624c44f87a9867dadbe737a51",
+      "generated_at": ""
+    },
+    {
+      "topic": "how earthquakes can change a river's course",
+      "primary_subject": "earthquake",
+      "category": "Geography",
+      "documentary_angle": "process",
+      "viability_score": 0.6917,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-24T14:11:36Z",
+      "source": "topics.txt",
+      "run_id": "0695d905d3f647d6ac6e3dfe3e30a67d",
+      "generated_at": ""
+    },
+    {
+      "topic": "how shipping containers changed world trade",
+      "primary_subject": "shipping",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6896,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-24T14:11:55Z",
+      "source": "topics.txt",
+      "run_id": "f5e6d91e4a4b4f12b1f968079837c24a",
+      "generated_at": ""
+    },
+    {
+      "topic": "how solar panels turn sunlight into electricity",
+      "primary_subject": "solar",
+      "category": "Astronomy",
+      "documentary_angle": "process",
+      "viability_score": 0.698,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "",
+      "recorded_at": "2026-07-24T14:12:42Z",
+      "source": "topics.txt",
+      "run_id": "827feaf010fd4f1b95c740bf2d289167",
+      "generated_at": "2026-07-24T14:23:58Z"
     }
   ]
 }
