@@ -161,6 +161,27 @@ class PublishQualityGateTests(unittest.TestCase):
             check.name for check in report.checks if check.severity.value == "DEFER"
         ])
 
+    def test_strict_mode_defers_when_a_critical_rendered_frame_is_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 0,
+                    "decision": "unavailable",
+                    "priority": "critical",
+                    "expected_entity": "penguin",
+                    "reason": "Gemini quota exceeded",
+                }],
+            })
+            report = PublishQualityGate(PublishQualityConfig(
+                require_verified_rendered_critical=True,
+            )).evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
+        self.assertIn("rendered_visual_qa", [
+            check.name for check in report.checks if check.severity.value == "DEFER"
+        ])
+
     def test_blocks_missing_caption_or_failed_decode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -184,6 +205,12 @@ class PublishQualityGateTests(unittest.TestCase):
         })
         self.assertFalse(config.enabled)
         self.assertEqual(0.2, config.max_hybrid_composer_ratio)
+
+    def test_configuration_can_require_critical_final_frame_verification(self) -> None:
+        config = PublishQualityConfig.from_env({
+            "AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL": "true",
+        })
+        self.assertTrue(config.require_verified_rendered_critical)
 
     def test_upload_enforcement_uses_persisted_verdict(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -17,6 +17,8 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 - Source coverage now distinguishes strict critical-scene proof from supporting-scene availability. A missing capability ranking also falls back to a bounded Pexels/Pixabay availability probe, so viable documentaries are not deferred solely by a narrow provider-routing decision.
 - A positive downloaded-media frame rejection now defers unattended publishing through the existing publish-quality gate. Transient vision-provider unavailability remains an auditable warning rather than an upload-blocking failure.
 - GitHub production runs also sample up to four final rendered SHOW/REVEAL/PROVE frames. This catches portrait crops and compositions that hide or replace the required visual entity after rendering; a confirmed mismatch defers upload and triggers normal daily-topic recovery.
+- The FFmpeg crossfade stitch now has a bounded scene-count-aware timeout instead of the generic 120-second command limit. This preserves protection against hung processes without rejecting healthy multi-scene 1080p renders on slower machines.
+- Direct CLI runs now enforce source-coverage deferrals by default, matching scheduled production behavior. GitHub production also requires final-frame verification for critical scenes; when Gemini vision is unavailable, the run defers rather than uploading an unverified hook or main reveal.
 
 ### Compatibility
 

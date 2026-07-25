@@ -111,6 +111,10 @@ jobs:
           AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED: "true"
           AUTO_VIDEO_RENDERED_VISUAL_QA_MAX_SCENES: "4"
           AUTO_VIDEO_RENDERED_VISUAL_QA_MIN_CONFIDENCE: "0.80"
+          # Quality wins over posting frequency. Without an available vision
+          # verdict for the hook or main reveal, defer and recover to a topic
+          # that can be proved rather than upload an unverified Short.
+          AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL: "true"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then

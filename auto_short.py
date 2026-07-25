@@ -334,7 +334,8 @@ def run_ff(args, cwd=None, timeout=120):
     except subprocess.TimeoutExpired:
         raise RuntimeError(
             f"Command timed out after {timeout}s: {' '.join(args)}\n"
-            f"ffmpeg hung — likely due to a corrupt or incompatible input file."
+            "ffmpeg did not finish within the bounded operation timeout; "
+            "the input may be corrupt, incompatible, or too slow to process."
         )
     if p.returncode != 0:
         raise RuntimeError(f"Command failed: {' '.join(args)}\n{p.stderr[-800:]}")
@@ -4804,6 +4805,10 @@ def concat_segments(seg_paths):
     for p in seg_paths:
         inputs.extend(["-i", str(p)])
 
+    # A single 1080p xfade graph has to decode and re-encode every segment.
+    # Keep corruption protection, but scale the bounded timeout with graph
+    # size so a healthy 12-scene Short is not mistaken for a hung process.
+    stitch_timeout = min(600, max(180, 45 * n))
     run_ff([
         "ffmpeg", "-y", *inputs,
         "-filter_complex", "; ".join(xfades + afades),
@@ -4811,7 +4816,7 @@ def concat_segments(seg_paths):
         "-c:v", "libx264", "-preset", "veryfast", "-pix_fmt", "yuv420p",
         "-c:a", "aac", "-b:a", "160k",
         str(combined),
-    ])
+    ], timeout=stitch_timeout)
     return combined
 
 
@@ -6095,7 +6100,10 @@ def main():
             f"[Coverage] {report.decision.value} "
             f"coverage={report.coverage_ratio:.0%} sampled={len(report.scenes)}"
         )
-        enforce = _env_flag("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", default="false")
+        # A direct CLI run must use the same safety standard as scheduled
+        # publishing. Set this explicitly to false only for development
+        # experiments that intentionally inspect weak fallback behavior.
+        enforce = _env_flag("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", default="true")
         if enforce and report.decision == SourceCoverageDecision.DEFERRED:
             raise RuntimeError(
                 "Source coverage preflight deferred this topic before voice generation: "

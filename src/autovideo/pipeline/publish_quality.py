@@ -40,6 +40,7 @@ class PublishQualityConfig:
     max_duplicate_asset_ratio: float = 0.25
     max_hybrid_composer_ratio: float = 0.50
     allow_clip_audio: bool = False
+    require_verified_rendered_critical: bool = False
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "PublishQualityConfig":
@@ -66,6 +67,11 @@ class PublishQualityConfig:
                 0.50,
             )),
             allow_clip_audio=_env_bool(values, "AUTO_VIDEO_PUBLISH_QUALITY_ALLOW_CLIP_AUDIO", False),
+            require_verified_rendered_critical=_env_bool(
+                values,
+                "AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL",
+                False,
+            ),
         )
 
 
@@ -329,8 +335,7 @@ class PublishQualityGate:
             )
         return _pass("verified_media", "downloaded-media verification accepted every selected scene")
 
-    @staticmethod
-    def _rendered_visual_quality(artifacts: PublishQualityArtifacts) -> PublishQualityCheck:
+    def _rendered_visual_quality(self, artifacts: PublishQualityArtifacts) -> PublishQualityCheck:
         """Use final-output evidence to catch crop or composition regressions."""
 
         if artifacts.rendered_visual_qa_path is None:
@@ -364,6 +369,23 @@ class PublishQualityGate:
             scene for scene in payload.get("scenes", [])
             if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "unavailable"
         ]
+        unavailable_critical = [
+            scene for scene in unavailable
+            if str(scene.get("priority", "")).lower() == "critical"
+        ]
+        if unavailable_critical and self.config.require_verified_rendered_critical:
+            return _defer(
+                "rendered_visual_qa",
+                "critical final-render frames could not be verified",
+                unavailable_critical_scenes=[
+                    {
+                        "scene_index": scene.get("scene_index"),
+                        "expected_entity": scene.get("expected_entity"),
+                        "reason": scene.get("reason"),
+                    }
+                    for scene in unavailable_critical
+                ],
+            )
         if unavailable:
             return PublishQualityCheck(
                 name="rendered_visual_qa",

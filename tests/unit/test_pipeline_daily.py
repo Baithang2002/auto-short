@@ -35,7 +35,8 @@ class PipelineDailyTests(unittest.TestCase):
                 "failure_reason": "only generic substitutes were selected",
             }), encoding="utf-8")
 
-            with patch.object(pipeline_daily, "EXACT_SUBJECT_GATE_REPORT", report_path):
+            with patch.object(pipeline_daily, "EXACT_SUBJECT_GATE_REPORT", report_path), \
+                 patch.object(pipeline_daily, "FALLBACK_QUALITY_REPORT", Path(directory) / "missing_fallback.json"):
                 deferred, reason = pipeline_daily.candidate_quality_deferred("Greenland Shark")
 
         self.assertTrue(deferred)
