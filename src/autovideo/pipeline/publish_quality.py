@@ -83,6 +83,8 @@ class PublishQualityArtifacts:
     evidence_verification_path: Path
     contact_sheet_path: Path
     decode_verified: bool
+    verified_media_path: Path | None = None
+    rendered_visual_qa_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -163,6 +165,8 @@ class PublishQualityGate:
             self._fallback_quality(artifacts),
             self._media_quality(artifacts),
             self._evidence_quality(artifacts),
+            self._verified_media_quality(artifacts),
+            self._rendered_visual_quality(artifacts),
             self._audio_quality(artifacts),
             self._contact_sheet(artifacts),
         )
@@ -274,6 +278,100 @@ class PublishQualityGate:
                 mismatched_scenes=mismatches,
             )
         return _pass("evidence_verification", "no verified post-download entity mismatches")
+
+    @staticmethod
+    def _verified_media_quality(artifacts: PublishQualityArtifacts) -> PublishQualityCheck:
+        """Prevent a frame-rejected asset from reaching an unattended upload.
+
+        Downloaded-media verification is allowed to be unavailable when an
+        external vision API has a transient outage.  A positive rejection is
+        different: it is evidence that the selected media is wrong, so the
+        existing uploader must defer the finished render.
+        """
+
+        if artifacts.verified_media_path is None:
+            return PublishQualityCheck(
+                name="verified_media",
+                severity=QualitySeverity.WARNING,
+                message="verified media report is unavailable for this legacy run",
+            )
+        payload = _read_json(artifacts.verified_media_path)
+        if not payload:
+            return _defer("verified_media", "verified media report is missing or invalid")
+        rejected = [
+            scene for scene in payload.get("scenes", [])
+            if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "rejected"
+        ]
+        if rejected:
+            return _defer(
+                "verified_media",
+                "downloaded-media verification rejected selected scene assets",
+                rejected_scenes=[
+                    {
+                        "scene_index": scene.get("scene_index"),
+                        "expected_entity": scene.get("expected_entity"),
+                        "priority": scene.get("priority"),
+                        "reason": scene.get("reason"),
+                    }
+                    for scene in rejected
+                ],
+            )
+        unavailable = [
+            scene for scene in payload.get("scenes", [])
+            if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "unverified"
+        ]
+        if unavailable:
+            return PublishQualityCheck(
+                name="verified_media",
+                severity=QualitySeverity.WARNING,
+                message="some media could not be frame-verified; no positive mismatch was reported",
+                metrics={"unverified_scene_count": len(unavailable)},
+            )
+        return _pass("verified_media", "downloaded-media verification accepted every selected scene")
+
+    @staticmethod
+    def _rendered_visual_quality(artifacts: PublishQualityArtifacts) -> PublishQualityCheck:
+        """Use final-output evidence to catch crop or composition regressions."""
+
+        if artifacts.rendered_visual_qa_path is None:
+            return PublishQualityCheck(
+                name="rendered_visual_qa",
+                severity=QualitySeverity.WARNING,
+                message="rendered visual QA report is unavailable for this legacy run",
+            )
+        payload = _read_json(artifacts.rendered_visual_qa_path)
+        if not payload:
+            return _defer("rendered_visual_qa", "rendered visual QA report is missing or invalid")
+        mismatches = [
+            scene for scene in payload.get("scenes", [])
+            if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "mismatch"
+        ]
+        if mismatches:
+            return _defer(
+                "rendered_visual_qa",
+                "final rendered frames do not match planned visual entities",
+                mismatched_scenes=[
+                    {
+                        "scene_index": scene.get("scene_index"),
+                        "expected_entity": scene.get("expected_entity"),
+                        "matched_entity": scene.get("matched_entity"),
+                        "reason": scene.get("reason"),
+                    }
+                    for scene in mismatches
+                ],
+            )
+        unavailable = [
+            scene for scene in payload.get("scenes", [])
+            if isinstance(scene, dict) and str(scene.get("decision", "")).lower() == "unavailable"
+        ]
+        if unavailable:
+            return PublishQualityCheck(
+                name="rendered_visual_qa",
+                severity=QualitySeverity.WARNING,
+                message="some final-render frames could not be verified; no mismatch was reported",
+                metrics={"unavailable_scene_count": len(unavailable)},
+            )
+        return _pass("rendered_visual_qa", "sampled final-render frames match planned visual entities")
 
     def _audio_quality(self, artifacts: PublishQualityArtifacts) -> PublishQualityCheck:
         payload = _read_json(artifacts.audio_mix_path)

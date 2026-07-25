@@ -67,6 +67,12 @@ class SourceCoverageTests(unittest.TestCase):
         )
         self.assertEqual(SourceCoverageDecision.SKIPPED, report.decision)
 
+    def test_supporting_score_ratio_is_configurable_and_bounded(self) -> None:
+        config = SourceCoverageConfig.from_env({
+            "AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO": "1.5",
+        })
+        self.assertEqual(1.0, config.supporting_scene_score_ratio)
+
     def test_sampling_is_bounded_and_evenly_distributed(self) -> None:
         self.assertEqual((0,), sample_scene_indexes(12, 1))
         self.assertEqual((0, 2, 4, 7, 9, 11), sample_scene_indexes(12, 6))

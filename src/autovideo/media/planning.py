@@ -748,6 +748,8 @@ def _is_energy_context(text: str) -> bool:
     if not tokens & ENERGY_TERMS:
         return False
     if "solar" in tokens:
+        if tokens & {"cell", "cells", "panel", "panels", "photovoltaic", "roof", "rooftop"}:
+            return True
         if tokens & SOLAR_ASTRONOMY_TERMS:
             return False
         return bool(tokens & SOLAR_ENERGY_TERMS)

@@ -23,6 +23,15 @@ from .publish_quality import (
     QualitySeverity,
     upload_allowed_from_report,
 )
+from .rendered_visual_qa import (
+    RenderedFrameVerifier,
+    RenderedSceneRequest,
+    RenderedVisualDecision,
+    RenderedVisualEvidence,
+    RenderedVisualQAGate,
+    RenderedVisualQAConfig,
+    RenderedVisualQAReport,
+)
 
 __all__ = [
     "PipelineContext",
@@ -42,4 +51,11 @@ __all__ = [
     "PublishQualityVerdict",
     "QualitySeverity",
     "upload_allowed_from_report",
+    "RenderedFrameVerifier",
+    "RenderedSceneRequest",
+    "RenderedVisualDecision",
+    "RenderedVisualEvidence",
+    "RenderedVisualQAGate",
+    "RenderedVisualQAConfig",
+    "RenderedVisualQAReport",
 ]

@@ -14,10 +14,13 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 
 - Solar-panel and other terrestrial renewable-energy scenes are now classified as energy rather than astronomy. Source coverage can rank existing Pexels and Pixabay capabilities for those scenes instead of incorrectly requiring NASA astronomy media.
 - Solar-wind and other space scenes remain astronomy-routed and retain NASA-first planning.
+- Source coverage now distinguishes strict critical-scene proof from supporting-scene availability. A missing capability ranking also falls back to a bounded Pexels/Pixabay availability probe, so viable documentaries are not deferred solely by a narrow provider-routing decision.
+- A positive downloaded-media frame rejection now defers unattended publishing through the existing publish-quality gate. Transient vision-provider unavailability remains an auditable warning rather than an upload-blocking failure.
+- GitHub production runs also sample up to four final rendered SHOW/REVEAL/PROVE frames. This catches portrait crops and compositions that hide or replace the required visual entity after rendering; a confirmed mismatch defers upload and triggers normal daily-topic recovery.
 
 ### Compatibility
 
-- No provider API, coverage threshold, CLI, Timeline, renderer, queue, or upload-metadata behavior changed. The fix only corrects provider capability routing before source-coverage probing.
+- No provider API, CLI, Timeline, renderer, queue, or upload-metadata schema changed. Critical hook and main-reveal scenes retain their existing production-score requirement; the new supporting-scene availability ratio is configurable through `AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO`.
 
 ---
 

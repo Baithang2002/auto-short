@@ -301,7 +301,7 @@ class MediaPlanningTests(unittest.TestCase):
         intent = build_visual_intent(
             {
                 "narration": "Solar panels turn sunlight into electricity using photovoltaic cells.",
-                "broll": "solar panels rooftop wide",
+                "broll": "solar panels rooftop wide space",
             },
             "How Solar Panels Turn Sunlight into Electricity",
         )

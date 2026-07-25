@@ -28,6 +28,7 @@ class SourceCoverageConfig:
     max_providers_per_scene: int = 2
     max_queries_per_scene: int = 1
     provider_timeout_sec: float = 6.0
+    supporting_scene_score_ratio: float = 0.65
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "SourceCoverageConfig":
@@ -57,6 +58,11 @@ class SourceCoverageConfig:
                 "AUTO_VIDEO_SOURCE_COVERAGE_PROVIDER_TIMEOUT_SEC",
                 6.0,
             )),
+            supporting_scene_score_ratio=_clamp(_env_float(
+                values,
+                "AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO",
+                0.65,
+            )),
         )
 
 
@@ -75,6 +81,8 @@ class SceneCoverage:
     best_score: float | None
     covered: bool
     reasons: tuple[str, ...] = ()
+    coverage_basis: str = "authentic_media"
+    required_score: float | None = None
 
     @property
     def critical(self) -> bool:

@@ -89,6 +89,9 @@ jobs:
           YT_MUSIC:            "true"
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
+          # Supporting scenes are an availability probe. Hooks and main
+          # reveals still require the final production score.
+          AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
           # Try several different viable topics when a topic-specific quality
           # gate defers one. Technical failures still stop immediately.
           AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "6"
@@ -103,6 +106,11 @@ jobs:
           # An unavailable external vision model must not turn a valid render
           # into a failed daily run. Its outcome remains auditable as UNVERIFIED.
           AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE: "true"
+          # Final-output samples catch incorrect crops or compositions that
+          # were not visible in the original downloaded asset.
+          AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED: "true"
+          AUTO_VIDEO_RENDERED_VISUAL_QA_MAX_SCENES: "4"
+          AUTO_VIDEO_RENDERED_VISUAL_QA_MIN_CONFIDENCE: "0.80"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
@@ -145,6 +153,9 @@ jobs:
             output/scheduler_report.json
             output/editorial_identity_report.json
             output/source_coverage_report.json
+            output/verified_media_report.json
+            output/evidence_verification_report.json
+            output/rendered_visual_qa_report.json
             output/publish_quality_report.json
             output/daily_runs.log
             output/screenshots/

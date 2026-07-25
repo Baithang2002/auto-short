@@ -26,6 +26,8 @@ class PublishQualityGateTests(unittest.TestCase):
         fallback = root / "fallback_quality_report.json"
         audio = root / "audio_mix_report.json"
         evidence = root / "evidence_verification_report.json"
+        verified = root / "verified_media_report.json"
+        rendered_qa = root / "rendered_visual_qa_report.json"
         contact = root / "contact_sheet.jpg"
         video.write_bytes(b"video")
         captions.write_text("[Script Info]", encoding="utf-8")
@@ -51,6 +53,8 @@ class PublishQualityGateTests(unittest.TestCase):
         self.write_json(fallback, {"quality_gate_passed": True})
         self.write_json(audio, {"segments": []})
         self.write_json(evidence, {"1": {"vision_result": "match"}})
+        self.write_json(verified, {"scenes": [{"decision": "verified"}]})
+        self.write_json(rendered_qa, {"scenes": [{"decision": "verified"}]})
         contact.write_bytes(b"sheet")
         values: dict[str, object] = {
             "video_path": video,
@@ -63,6 +67,8 @@ class PublishQualityGateTests(unittest.TestCase):
             "evidence_verification_path": evidence,
             "contact_sheet_path": contact,
             "decode_verified": True,
+            "verified_media_path": verified,
+            "rendered_visual_qa_path": rendered_qa,
         }
         values.update(overrides)
         return PublishQualityArtifacts(**values)  # type: ignore[arg-type]
@@ -100,6 +106,60 @@ class PublishQualityGateTests(unittest.TestCase):
             report = PublishQualityGate().evaluate(artifacts)
         self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
         self.assertIn("audio_quality", [check.name for check in report.checks if check.severity.value == "DEFER"])
+
+    def test_defers_selected_asset_rejected_by_frame_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.verified_media_path, {
+                "scenes": [{
+                    "scene_index": 4,
+                    "decision": "rejected",
+                    "expected_entity": "penguin",
+                    "reason": "frames show a leopard",
+                }],
+            })
+            report = PublishQualityGate().evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
+        self.assertIn("verified_media", [
+            check.name for check in report.checks if check.severity.value == "DEFER"
+        ])
+
+    def test_allows_transient_frame_verification_unavailability(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.verified_media_path, {
+                "scenes": [{
+                    "scene_index": 1,
+                    "decision": "unverified",
+                    "reason": "frame verification unavailable: quota exceeded",
+                }],
+            })
+            report = PublishQualityGate().evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.APPROVED, report.verdict)
+        self.assertIn("verified_media", [
+            check.name for check in report.checks if check.severity.value == "WARNING"
+        ])
+
+    def test_defers_final_render_entity_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 7,
+                    "decision": "mismatch",
+                    "expected_entity": "penguin",
+                    "matched_entity": "horse",
+                    "reason": "rendered frame does not prove the planned entity",
+                }],
+            })
+            report = PublishQualityGate().evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
+        self.assertIn("rendered_visual_qa", [
+            check.name for check in report.checks if check.severity.value == "DEFER"
+        ])
 
     def test_blocks_missing_caption_or_failed_decode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

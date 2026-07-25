@@ -166,6 +166,10 @@ from autovideo.pipeline import (
     PublishQualityArtifacts,
     PublishQualityConfig,
     PublishQualityGate,
+    RenderedSceneRequest,
+    RenderedVisualEvidence,
+    RenderedVisualQAGate,
+    RenderedVisualQAConfig,
     StageRecord,
     StageResult,
 )
@@ -1960,6 +1964,59 @@ def _gemini_verified_media_verifier(request, max_frames):
             provider="gemini",
             error=str(exc)[:300],
         )
+
+
+def _gemini_rendered_visual_verifier(request: RenderedSceneRequest) -> RenderedVisualEvidence:
+    """Verify one final-render frame without relying on file names or queries."""
+
+    try:
+        client = _get_gemini_client()
+        if client is None:
+            return RenderedVisualEvidence(False, provider="gemini", error="Gemini visual verifier is unavailable")
+        from google.genai import types
+
+        prompt = (
+            "Evaluate only this rendered video frame. Do not infer anything from file names or search terms.\n\n"
+            f"Expected entity: {request.expected_entity}\n"
+            f"Visual goal: {request.visual_goal or 'show'}\n\n"
+            "Does the visible frame clearly depict the expected entity? Return compact JSON only: "
+            "match, confidence, matched_entity, reasoning. Confidence must be 0 to 1."
+        )
+        response = client.models.generate_content(
+            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
+            contents=[types.Content(role="user", parts=[
+                types.Part.from_text(text=prompt),
+                types.Part.from_bytes(data=request.frame_path.read_bytes(), mime_type="image/jpeg"),
+            ])],
+        )
+        data = _extract_json_object(str(getattr(response, "text", "") or ""))
+        match = data.get("match", data.get("entity_match", False))
+        if isinstance(match, str):
+            match = match.strip().lower() in {"true", "yes", "match"}
+        return RenderedVisualEvidence(
+            match=bool(match),
+            confidence=max(0.0, min(1.0, float(data.get("confidence", data.get("entity_confidence", 0.0)) or 0.0))),
+            matched_entity=str(data.get("matched_entity") or data.get("verified_entity") or ""),
+            reasoning=str(data.get("reasoning") or data.get("brief_reasoning") or "")[:300],
+            provider="gemini",
+        )
+    except Exception as exc:
+        return RenderedVisualEvidence(False, provider="gemini", error=str(exc)[:300])
+
+
+def _extract_rendered_scene_frame(video_path: Path, timestamp_sec: float, scene_index: int) -> Path:
+    """Extract one final-output frame for the bounded rendered visual check."""
+
+    output = OUT_DIR / "rendered_visual_qa" / f"scene_{scene_index:02d}.jpg"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        run_ff([
+            "ffmpeg", "-y", "-ss", f"{max(0.0, timestamp_sec):.3f}",
+            "-i", str(video_path), "-frames:v", "1", "-q:v", "3", str(output),
+        ], timeout=30)
+    except Exception:
+        return output
+    return output
 
 
 def _candidate_extension(candidate):
@@ -5921,9 +5978,20 @@ def main():
             for plan in strategy.provider_plans
             if plan.provider_id in supported and plan.score > 0
         ][:config.max_providers_per_scene]
+        # Coverage preflight is an availability probe, not the final routing
+        # decision.  A narrow capability ranking must not make a concrete
+        # stock query appear impossible when the two configured stock sources
+        # can still answer it.  Final provider selection remains unchanged.
+        if not plans and queries:
+            plans = [
+                SimpleNamespace(provider_id=provider_id, queries=tuple(queries), score=0.01)
+                for provider_id in ("pexels", "pixabay")[:config.max_providers_per_scene]
+            ]
+            reasons = ["coverage probe used stock fallback after no provider plan was ranked"]
+        else:
+            reasons: list[str] = []
         attempted: list[str] = []
         candidates = []
-        reasons: list[str] = []
         for plan in plans:
             attempted.append(plan.provider_id)
             plan_queries = list(
@@ -5944,7 +6012,6 @@ def main():
             if not provider_candidates:
                 reasons.append(f"{plan.provider_id} returned no candidates")
         candidates = _dedupe_candidates(candidates)
-        minimum_score = max(1.0, _minimum_score_for_intent(visual_intent))
         scored = [
             score_candidate(
                 visual_intent,
@@ -5956,10 +6023,18 @@ def main():
             )
             for candidate in candidates
         ]
+        minimum_score = max(1.0, _minimum_score_for_intent(visual_intent))
+        critical = str(getattr(intent, "scene_importance", "")).upper() in {
+            "HOOK", "MAIN_REVEAL",
+        }
+        required_score = minimum_score if critical else max(
+            1.0,
+            minimum_score * config.supporting_scene_score_ratio,
+        )
         accepted = [
             score
             for score in scored
-            if score.quality_gate_passed and score.score >= minimum_score
+            if score.quality_gate_passed and score.score >= required_score
         ]
         if candidates and not accepted:
             reasons.append("candidates found but none passed production scoring")
@@ -5981,6 +6056,8 @@ def main():
             best_score=max((score.score for score in scored), default=None),
             covered=bool(accepted),
             reasons=tuple(reasons),
+            coverage_basis="production_score" if critical else "availability_score",
+            required_score=round(required_score, 4),
         )
 
     def stage_source_coverage(ctx: PipelineContext) -> StageResult:
@@ -6977,6 +7054,88 @@ def main():
             }
         return diagnostics
 
+    def stage_rendered_visual_qa(ctx: PipelineContext) -> StageResult:
+        """Check a bounded set of final rendered frames before publishing.
+
+        Only scenes that should visibly show or prove a concrete entity are
+        sampled. Explain/transition scenes are intentionally excluded because
+        their diagrams and motion graphics are valid non-literal visuals.
+        """
+
+        config = RenderedVisualQAConfig.from_env(os.environ)
+        timeline = ctx.values.get("timeline")
+        shot_plan = ctx.values.get("shot_plan")
+        focus_report = ctx.values.get("scene_visual_focus_report")
+        intent_by_index = {
+            intent.scene_index: intent
+            for intent in getattr(shot_plan, "intents", ())
+        }
+        candidates = []
+        for scene in getattr(timeline, "scenes", ()):
+            intent = intent_by_index.get(scene.index)
+            if intent is None:
+                continue
+            visual_goal = str(getattr(getattr(intent, "visual_goal", None), "value", getattr(intent, "visual_goal", "show"))).lower()
+            if visual_goal not in {"show", "reveal", "prove"}:
+                continue
+            priority = _verification_priority_for_intent(intent).value
+            focus = (
+                focus_report.scene_for_index(scene.index)
+                if isinstance(focus_report, SceneVisualFocusReport) else None
+            )
+            expected_entity = str(
+                getattr(focus, "required_visual_entity", "")
+                or getattr(intent, "requested_entity", "")
+                or getattr(getattr(intent, "scene_entity", None), "canonical_entity", "")
+                or getattr(intent, "primary_subject", "")
+                or niche
+            )
+            timestamp = scene.start_sec + (scene.duration_sec / 2.0)
+            candidates.append((
+                0 if priority == VerificationPriority.CRITICAL.value else 1,
+                scene.index,
+                RenderedSceneRequest(
+                    scene_index=scene.index,
+                    expected_entity=expected_entity,
+                    visual_goal=visual_goal,
+                    media_mode=str(getattr(getattr(intent, "media_mode", None), "value", getattr(intent, "media_mode", ""))),
+                    timestamp_sec=timestamp,
+                    frame_path=(
+                        _extract_rendered_scene_frame(Path(ctx.values["final"]), timestamp, scene.index)
+                        if config.enabled else OUT_DIR / "rendered_visual_qa" / f"scene_{scene.index:02d}.jpg"
+                    ),
+                    priority=priority,
+                ),
+            ))
+        requests = [item[2] for item in sorted(candidates)[:config.max_scenes]]
+        report = RenderedVisualQAGate(
+            config,
+            verifier=_gemini_rendered_visual_verifier if config.enabled else None,
+        ).evaluate(requests)
+        report_path = report.write_json(OUT_DIR / "rendered_visual_qa_report.json")
+        ctx.values["rendered_visual_qa_report"] = report.to_dict()
+        warnings = [
+            f"scene {scene.request.scene_index + 1}: {scene.reason}"
+            for scene in report.scenes
+            if scene.decision.value in {"mismatch", "unavailable"}
+        ]
+        print(
+            "[rendered QA] "
+            f"checked={len(report.scenes)} mismatches={sum(scene.decision.value == 'mismatch' for scene in report.scenes)}"
+        )
+        return StageResult(
+            outputs={"rendered_visual_qa_report": str(report_path)},
+            warnings=warnings,
+        )
+
+    def load_rendered_visual_qa(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["rendered_visual_qa_report"] = read_manifest(
+            Path(record.outputs["rendered_visual_qa_report"])
+        )
+
+    def validate_rendered_visual_qa_outputs(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("rendered_visual_qa_report", "")).exists()
+
     def stage_publish_quality_gate(ctx: PipelineContext) -> StageResult:
         video_path = Path(ctx.values["final"])
         ffprobe_path = write_ffprobe_report(video_path)
@@ -6993,6 +7152,8 @@ def main():
             evidence_verification_path=evidence_report_path,
             contact_sheet_path=contact_sheet_path,
             decode_verified=verify_render_decode(video_path),
+            verified_media_path=OUT_DIR / "verified_media_report.json",
+            rendered_visual_qa_path=OUT_DIR / "rendered_visual_qa_report.json",
         )
         report = PublishQualityGate(PublishQualityConfig.from_env()).evaluate(artifacts)
         report_path = report.write_json(OUT_DIR / "publish_quality_report.json")
@@ -7116,6 +7277,7 @@ def main():
             "subject_continuity_report.json": OUT_DIR / "subject_continuity_report.json",
             "fallback_quality_report.json": OUT_DIR / "fallback_quality_report.json",
             "publish_quality_report.json": OUT_DIR / "publish_quality_report.json",
+            "rendered_visual_qa_report.json": OUT_DIR / "rendered_visual_qa_report.json",
             "provider_report.json": provider_report_path,
             "adaptive_search_report.json": adaptive_search_report_path,
             "evidence_verification_report.json": evidence_verification_report_path,
@@ -7241,6 +7403,12 @@ def main():
         PipelineStage("music", stage_music, load=load_music),
         PipelineStage("timeline_construction", stage_timeline, load=load_timeline),
         PipelineStage("rendering", stage_rendering, load=load_rendering, validate_outputs=validate_render_outputs),
+        PipelineStage(
+            "rendered_visual_qa",
+            stage_rendered_visual_qa,
+            load=load_rendered_visual_qa,
+            validate_outputs=validate_rendered_visual_qa_outputs,
+        ),
         PipelineStage("metadata", stage_metadata, load=load_metadata),
         PipelineStage(
             "publish_quality_gate",
