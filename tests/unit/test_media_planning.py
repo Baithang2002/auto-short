@@ -297,6 +297,40 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertLess(order.index("pexels"), order.index("coverr"))
         self.assertLess(order.index("coverr"), order.index("videvo"))
 
+    def test_solar_panels_route_to_stock_energy_capabilities(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Solar panels turn sunlight into electricity using photovoltaic cells.",
+                "broll": "solar panels rooftop wide",
+            },
+            "How Solar Panels Turn Sunlight into Electricity",
+        )
+
+        strategy = SourcePlanner(
+            default_provider_capability_registry(local_enabled=False, gemini_image_enabled=False)
+        ).plan(QueryPlanner().plan(intent))
+        pexels = next(plan for plan in strategy.provider_plans if plan.provider_id == "pexels")
+        pixabay = next(plan for plan in strategy.provider_plans if plan.provider_id == "pixabay")
+
+        self.assertEqual(SceneType.ENERGY, strategy.query_plan.scene_type)
+        self.assertIn("energy_video", {item.capability for item in strategy.query_plan.capability_requirements})
+        self.assertGreater(pexels.score, 0)
+        self.assertGreater(pixabay.score, 0)
+        self.assertLess(strategy.provider_order.index("pexels"), strategy.provider_order.index("nasa"))
+
+    def test_solar_wind_remains_astronomy(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "Solar wind carries immense energy from the Sun into Earth's magnetosphere.", "broll": "solar wind space"},
+            "How Solar Wind Creates the Northern Lights",
+        )
+
+        strategy = SourcePlanner(
+            default_provider_capability_registry(local_enabled=False, gemini_image_enabled=False)
+        ).plan(QueryPlanner().plan(intent))
+
+        self.assertEqual(SceneType.ASTRONOMY, strategy.query_plan.scene_type)
+        self.assertLess(strategy.provider_order.index("nasa"), strategy.provider_order.index("pexels"))
+
     def test_gemini_image_is_fallback_unless_illustration_required(self) -> None:
         registry = default_provider_capability_registry(local_enabled=False)
         stock_intent = build_visual_intent(

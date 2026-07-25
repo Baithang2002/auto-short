@@ -35,6 +35,7 @@ class SceneType(str, Enum):
     ARCHIVE = "archive"
     GEOLOGY = "geology"
     VOLCANO = "volcano"
+    ENERGY = "energy"
     ABSTRACT_SCIENCE = "abstract_science"
     HUMAN = "human"
     LIFESTYLE = "lifestyle"
@@ -225,6 +226,12 @@ class QueryPlanner:
             ])
         if scene_type == SceneType.TECHNOLOGY:
             requirements.append(CapabilityRequirement("technology", required=True, weight=2.7))
+        if scene_type == SceneType.ENERGY:
+            requirements.extend([
+                CapabilityRequirement("energy_video", required=True, weight=3.2),
+                CapabilityRequirement("renewable_energy", weight=2.8),
+                CapabilityRequirement("technology", weight=1.4),
+            ])
         if scene_type in {SceneType.DIAGRAM, SceneType.MAP} or explanatory:
             requirements.extend([
                 CapabilityRequirement("diagrams", weight=2.6),
@@ -250,6 +257,8 @@ class QueryPlanner:
     def _primary_query(self, intent: VisualIntent, text: str) -> str:
         subject = _clean_query(intent.primary_subject)
         base = _clean_query(intent.queries[0] if intent.queries else subject or intent.topic)
+        if _is_energy_context(text):
+            return _clean_query(f"{base} renewable energy")
         if _has(text, {"volcano", "volcanoes", "volcanic", "lava", "magma", "eruption", "erupting"}):
             return _clean_query(f"{base} volcano lava geology archive")
         if _has(text, GEOLOGY_TERMS):
@@ -277,7 +286,13 @@ class QueryPlanner:
         alternates = [_clean_query(query) for query in intent.queries]
         if intent.primary_subject:
             alternates.append(_clean_query(f"{intent.primary_subject} {intent.shot_type}".strip()))
-        if _has(text, {"volcano", "volcanoes", "volcanic", "lava", "magma", "eruption", "erupting"}):
+        if _is_energy_context(text):
+            alternates.extend([
+                "solar panels aerial",
+                "solar panel roof",
+                "photovoltaic cell close up",
+            ])
+        elif _has(text, {"volcano", "volcanoes", "volcanic", "lava", "magma", "eruption", "erupting"}):
             alternates.extend(["volcano eruption lava flow", "volcanic island formation", "kilauea lava flow", "USGS volcano lava"])
         elif _has(text, GEOLOGY_TERMS):
             alternates.extend(["geology rock formation", "earth science landscape", "geological process diagram"])
@@ -432,11 +447,11 @@ def default_provider_capability_registry(
     ))
     registry.register(ProviderCapability(
         "pexels",
-        ("generic_stock_video", "wildlife_video", "nature_video", "city_video", "technology", "abstract_concepts", "ocean_video", "macro_video", "close_up_video", "human_video", "lifestyle_video"),
+        ("generic_stock_video", "wildlife_video", "nature_video", "city_video", "technology", "energy_video", "renewable_energy", "abstract_concepts", "ocean_video", "macro_video", "close_up_video", "human_video", "lifestyle_video"),
         base_priority=45,
         requires_api_key=True,
         enabled=pexels_enabled,
-        domains=("stock", "wildlife", "nature", "technology", "city"),
+        domains=("stock", "wildlife", "nature", "technology", "energy", "engineering", "physics", "city"),
         licensing="Pexels License",
         confidence=0.55,
     ))
@@ -451,11 +466,11 @@ def default_provider_capability_registry(
     ))
     registry.register(ProviderCapability(
         "pixabay",
-        ("generic_stock_video", "wildlife_video", "nature_video", "city_video", "technology", "abstract_concepts", "ocean_video", "history_video", "history_images", "archive_footage"),
+        ("generic_stock_video", "wildlife_video", "nature_video", "city_video", "technology", "energy_video", "renewable_energy", "abstract_concepts", "ocean_video", "history_video", "history_images", "archive_footage"),
         base_priority=48,
         requires_api_key=True,
         enabled=pixabay_enabled,
-        domains=("stock", "wildlife", "nature", "history"),
+        domains=("stock", "wildlife", "nature", "history", "technology", "energy", "engineering", "physics"),
         licensing="Pixabay Content License",
         confidence=0.5,
     ))
@@ -647,6 +662,11 @@ WILDLIFE_TERMS = {
 CITY_TERMS = {"city", "urban", "street", "traffic", "building", "skyscraper"}
 HISTORY_TERMS = {"ancient", "roman", "empire", "history", "castle", "ruins", "road", "archaeology"}
 TECH_TERMS = {"technology", "qr", "code", "computer", "phone", "robot", "chip", "screen", "data"}
+ENERGY_TERMS = {
+    "battery", "grid", "photovoltaic", "renewable", "solar", "turbine", "wind",
+}
+SOLAR_ENERGY_TERMS = {"cell", "cells", "electricity", "energy", "panel", "panels", "photovoltaic", "power", "roof", "rooftop"}
+SOLAR_ASTRONOMY_TERMS = {"aurora", "magnetosphere", "orbit", "space", "star", "stars", "wind"}
 DIAGRAM_TERMS = {"diagram", "infographic", "map", "chart", "explain", "explains"}
 EXPLANATORY_SCIENCE_TERMS = {
     "animation", "belt", "circulation", "conveyor", "coriolis", "data", "diagram",
@@ -675,6 +695,8 @@ def classify_scene_type(intent: VisualIntent) -> SceneType:
         return SceneType.MAP
     if _has(text, {"satellite", "data"}) and (_has(text, OCEAN_TERMS) or _has(text, WEATHER_TERMS)):
         return SceneType.SATELLITE
+    if _is_energy_context(text):
+        return SceneType.ENERGY
     if _has(text, SPACE_TERMS) and not _has(text, OCEAN_TERMS):
         return SceneType.ASTRONOMY
     if _has(text, {"volcano", "volcanoes", "volcanic", "lava", "magma", "eruption", "erupting"}):
@@ -717,6 +739,21 @@ def _norm(text: str) -> str:
 def _has(text: str, terms: set[str]) -> bool:
     tokens = set(_norm(text).split())
     return bool(tokens & terms)
+
+
+def _is_energy_context(text: str) -> bool:
+    """Return whether a solar/electricity scene is about terrestrial energy, not astronomy."""
+
+    tokens = set(_norm(text).split())
+    if not tokens & ENERGY_TERMS:
+        return False
+    if "solar" in tokens:
+        if tokens & SOLAR_ASTRONOMY_TERMS:
+            return False
+        return bool(tokens & SOLAR_ENERGY_TERMS)
+    if "wind" in tokens:
+        return "turbine" in tokens
+    return bool(tokens & {"battery", "grid", "photovoltaic", "renewable", "turbine"})
 
 
 def _clean_query(query: str) -> str:
@@ -773,4 +810,6 @@ def _provider_matches_scene_domain(provider: ProviderCapability, scene_type: Sce
         return bool(domains & {"ocean", "weather", "climate", "earth_science", "satellite"})
     if scene_type == SceneType.ASTRONOMY:
         return bool(domains & {"space", "astronomy"})
+    if scene_type == SceneType.ENERGY:
+        return bool(domains & {"energy", "engineering", "physics", "technology"})
     return False

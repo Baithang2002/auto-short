@@ -1,0 +1,121 @@
+{
+  "topic": "How Solar Panels Turn Sunlight into Electricity",
+  "decision": "DEFERRED",
+  "coverage_ratio": 0.0,
+  "sampled_scene_count": 6,
+  "covered_scene_count": 0,
+  "critical_uncovered_scenes": [
+    0,
+    1
+  ],
+  "reasons": [
+    "critical scenes lack acceptable authentic-media candidates",
+    "scene coverage 0% is below required 67%"
+  ],
+  "configuration": {
+    "enabled": true,
+    "minimum_scene_coverage_ratio": 0.67,
+    "max_scenes": 6,
+    "max_providers_per_scene": 2,
+    "max_queries_per_scene": 1,
+    "provider_timeout_sec": 6.0
+  },
+  "scenes": [
+    {
+      "scene_index": 0,
+      "canonical_entity": "solar panels",
+      "documentary_role": "hook",
+      "scene_importance": "hook",
+      "query": "solar panels wide",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": true
+    },
+    {
+      "scene_index": 1,
+      "canonical_entity": "solar panels",
+      "documentary_role": "overview",
+      "scene_importance": "main_reveal",
+      "query": "solar panels",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": true
+    },
+    {
+      "scene_index": 2,
+      "canonical_entity": "solar panels",
+      "documentary_role": "process",
+      "scene_importance": "supporting",
+      "query": "solar panels wide",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": false
+    },
+    {
+      "scene_index": 3,
+      "canonical_entity": "solar panels",
+      "documentary_role": "explanation",
+      "scene_importance": "supporting",
+      "query": "solar panels",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": false
+    },
+    {
+      "scene_index": 4,
+      "canonical_entity": "solar panels",
+      "documentary_role": "evidence",
+      "scene_importance": "supporting",
+      "query": "solar panels close",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": false
+    },
+    {
+      "scene_index": 5,
+      "canonical_entity": "solar panels",
+      "documentary_role": "close-up",
+      "scene_importance": "supporting",
+      "query": "solar panels",
+      "providers_attempted": [],
+      "candidates_found": 0,
+      "accepted_candidates": 0,
+      "best_score": null,
+      "covered": false,
+      "reasons": [
+        "no probe-supported provider was ranked for this scene"
+      ],
+      "critical": false
+    }
+  ]
+}

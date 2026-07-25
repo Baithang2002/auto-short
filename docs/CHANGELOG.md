@@ -10,7 +10,14 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 
 ## [Unreleased]
 
-Work in progress. Once released, entries here move to a versioned section.
+### Fixed
+
+- Solar-panel and other terrestrial renewable-energy scenes are now classified as energy rather than astronomy. Source coverage can rank existing Pexels and Pixabay capabilities for those scenes instead of incorrectly requiring NASA astronomy media.
+- Solar-wind and other space scenes remain astronomy-routed and retain NASA-first planning.
+
+### Compatibility
+
+- No provider API, coverage threshold, CLI, Timeline, renderer, queue, or upload-metadata behavior changed. The fix only corrects provider capability routing before source-coverage probing.
 
 ---
 

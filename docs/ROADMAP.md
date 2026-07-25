@@ -1,8 +1,7 @@
 # Roadmap
 
-This document answers one question: **What are we building next?**
-
-It does not repeat vision, architecture, or engineering rules — those live in `VISION.md`, `ARCHITECTURE.md`, and `ENGINEERING_GUIDE.md`. It does not record history — that lives in `CHANGELOG.md`. This document is forward-looking and short by design.
+This document describes the remaining product work. Completed implementation history
+lives in `CHANGELOG.md`; architecture boundaries live in `ARCHITECTURE.md`.
 
 ---
 
@@ -10,163 +9,115 @@ It does not repeat vision, architecture, or engineering rules — those live in 
 
 | | |
 |---|---|
-| **Current version** | v0.1.0 — Initial Production Baseline |
-| **Current phase** | Phase 1 — Shorts Platform (Era I, per `VISION.md`) |
-| **Overall maturity** | Production-running, single-format, single-channel, single-operator |
+| **Current phase** | Era I - Autonomous YouTube Shorts reliability |
+| **Operating model** | Single channel, single format, GitHub Actions scheduled publishing |
+| **Maturity** | Production-running with strict quality gates; final reliability validation in progress |
+| **Immediate focus** | Validate energy/physics provider routing with real provider responses |
 
-The daily Shorts pipeline is operational. Videos publish on schedule via GitHub Actions using the YouTube Data API. No operator intervention is required between topic definition and upload confirmation.
+The system can select a viable topic, generate a script and narration, retrieve and
+verify media, render a Short, apply music/captions/metadata, and upload through the
+YouTube Data API. Failed candidate topics are intended to recover to another viable
+topic rather than publish poor content.
 
-The layered architecture is defined and its foundational milestones are complete. Physical migration of legacy monolithic modules into the target modular architecture is the current focus.
-
----
+The current standard is **correctness before publication**: a run may defer when it
+cannot demonstrate adequate authentic-media coverage. It must not weaken those gates
+merely to create a video.
 
 ## Completed Milestones
 
-| Identifier | Scope | Ship version |
+### Architecture Foundation
+
+| Identifier | Scope | Status |
 |---|---|---|
-| PR #1 | Foundation Layer — cross-cutting utilities | v0.1.0 |
-| PR #2 | Storage Abstraction — artifact persistence + metadata | v0.1.0 |
-| PR #3 | Provider & Configuration Layer — fallback chains + `.env` loader | v0.1.0 |
-| PR #4 | Domain Integration — typed models wired into legacy stages | v0.2.0 |
-| PR #5 | Timeline Builder — Timeline IR emitted before rendering | v0.3.0 |
-| PR #6 | Renderer Contract — Timeline-based renderer interface + FFmpeg implementation | v0.3.0 |
-| PR #7 | Intelligent Media Selection — deterministic B-roll candidate scoring before Timeline construction | v0.4.0 |
-| PR #8 | Content Intelligence & Source Planning — capability-driven query/source planning before media selection | v0.5.0 |
-| PR #9 | Provider Expansion / Registry Formalization — scene-type routing and optional provider registration | v0.6.0 |
-| Documentation baseline | VISION · ENGINEERING_GUIDE · ARCHITECTURE · CHANGELOG · ROADMAP | v0.1.0 |
-| Serverless YouTube uploads | YouTube Data API path + OAuth refresh flow | v0.1.0 |
-| Daily automation | GitHub Actions schedule with off-peak cron + dedup guard | v0.1.0 |
+| PR #1 | Foundation layer | Complete |
+| PR #2 | Filesystem storage, metadata, and artifact boundaries | Complete |
+| PR #3 | Provider and configuration abstraction | Complete |
+| PR #4 | Typed domain-model integration | Complete |
+| PR #5 | Timeline intermediate representation | Complete |
+| PR #6 | Renderer contract and FFmpeg adapter | Complete |
+| PR #7 | Deterministic media-selection engine | Complete |
+| PR #8 | Content intelligence and capability-driven source planning | Complete |
+| PR #9 | Provider expansion and provider capability registry | Complete |
+| PR #9.5 / #9.6 | Portrait safety, relevance, and domain-safe media acceptance | Complete |
+| PR #10 | Declarative format/render profiles | Complete |
+| PR #11 | Resumable pipeline orchestration and stage artifacts | Complete |
 
-**Implementation Status** (mirrors `docs/ARCHITECTURE.md § Implementation Status`):
+### Documentary Quality and Editorial Reliability
 
-- ✅ Foundation
-- ✅ Storage
-- ✅ Providers
-- ✅ Domain Integration
-- ✅ Timeline Builder
-- ✅ Renderer (new contract)
-- ✅ Media Selection
-- ✅ Source Planning
-- ✅ Provider Expansion
-- 🚧 Pipeline (orchestrator + stages)
-- 🚧 Interface (CLIs, workflows)
+| Identifier | Scope | Status |
+|---|---|---|
+| PR #12 | Visual Director, ShotPlan, and knowledge-pack planning | Complete |
+| PR #13 | Archive/image source coverage expansion | Complete |
+| PR #14 / #14.1 | Hybrid Visual Composer and visual grammar policy | Complete |
+| PR #15 | Authentic-media-first arbitration | Complete |
+| PR #16 | Subject Continuity Engine | Complete |
+| PR #17 / #17.1 | Editorial Canon, primary-subject lock, scene entities, and query isolation | Complete |
+| PR #18 | Evidence Verification with optional selective AI vision | Complete |
+| PR #19 | Engagement and immersive audio planning | Complete |
+| Reliability extensions | Documentary viability, source coverage, semantic queries, scene constraints, canonical entities, verified-media gate, publish-quality gate, and scheduler recovery | Complete |
+| Editorial Identity hotfix | Rejects topic/domain/subject drift before source coverage | Complete |
+| Energy/physics capability-routing hotfix | Routes terrestrial solar/renewable-energy scenes to stock providers while retaining NASA-first astronomy routing | Implemented; awaiting real-provider validation |
 
----
+## Current Work
 
-## Current Focus
+### Validate Energy and Physics Coverage
 
-**PR #10 — Render Profiles.** Provider expansion is now behind the capability registry. The next boundary is moving Shorts format behavior into declarative render profiles without changing output behavior.
-
-This depends on PR #6 and should not change provider, storage, upload, queue, or metadata behavior.
-
----
+- **Objective.** Confirm that the energy-routing hotfix allows existing Pexels and Pixabay providers to satisfy Solar Panels and comparable energy/engineering scenes.
+- **Validation.** Run `How Solar Panels Turn Sunlight into Electricity` through GitHub Actions, inspect `source_coverage_report.json`, and confirm that Pexels/Pixabay are probed before voice generation.
+- **Success criteria.** The run either renders solar-focused media or defers only after real provider candidates fail scoring. It must never fail because no provider was ranked.
+- **Non-goal.** Do not weaken source-coverage thresholds or bypass media verification.
 
 ## Next Milestones
 
-Ordered by dependency, not by date. Each milestone is a coherent boundary, not a single feature.
+Ordered by dependency and impact.
 
-### PR #10 — Render Profiles
+### 1. Video-Level Semantic QA and Retry Policy
 
-- **Objective.** Expand the initial renderer profiles into declarative format profiles (ADR-006).
-- **Expected outcome.** Adding a new format (educational horizontal, long-form documentary, podcast video) requires only a new profile — no code changes to pipeline, renderer, or domain layers.
-- **Dependencies.** PR #6 (renderer consumes profile settings).
-- **Success criteria.** All current Shorts behavior is expressed as `shorts_vertical.yaml`. A second profile (`educational_horizontal.yaml`) is added as proof-of-concept and can render an example video without changes elsewhere.
+- **Objective.** Verify representative rendered frames against each scene's canonical entity and required constraints before upload.
+- **Why.** Candidate-level evidence verification cannot prove that the final crop, clip portion, or composition shown to the viewer matches narration.
+- **Outcome.** A scene that fails visual fidelity is retried with the next eligible candidate or causes a clean deferral; it is not uploaded silently.
+- **Dependencies.** Stable capability routing and existing evidence-verification diagnostics.
 
-### PR #11 — Pipeline Orchestrator with Resume Points
+### 2. Era I Reliability Burn-In
 
-- **Objective.** Introduce the resume-from-stage capability promised in `VISION.md` and `ARCHITECTURE.md § Resume Points`.
-- **Expected outcome.** A failed pipeline run can be resumed from the last successful stage using persisted artifact IDs.
-- **Dependencies.** PR #4 (typed models with content addresses), PR #5 (timeline as an inspectable artifact), PR #10 (profiles as data).
-- **Success criteria.** `--from-stage <name>` and `--only-stage <name>` flags work as documented. A failed publish stage does not require re-rendering.
+- **Objective.** Prove unattended operation over scheduled production runs.
+- **Success criteria.** Thirty scheduled runs with durable artifacts, topic recovery where appropriate, successful upload behavior, no identity leakage in sampled audits, and no unhandled provider failure preventing later runs.
+- **Outcome.** Establish the Shorts v1 production baseline.
 
----
+### 3. Analytics Feedback Loop
 
-## Future Phases
+- **Objective.** Use post-publication performance as a ranking signal among already viable, covered, and verified topics.
+- **Constraint.** Analytics may not override documentary viability, source coverage, evidence verification, or publish-quality gates.
 
-Work beyond the next milestones is grouped into phases. Each phase is a coherent product step, not a sprint.
+## Future Eras
 
-**Phase 1 — Shorts Platform** *(current, PRs #1 – #8 shipped)*
-The vertical Shorts pipeline works reliably end-to-end, unattended, on a daily schedule. Layered architecture is defined and its foundations are in place.
+### Era II - Multi-Format Production
 
-**Phase 2 — Timeline Engine** *(PRs #4 – #7 complete)*
-Typed domain models, explicit timeline representation, formal renderer contract, and deterministic pre-timeline media selection.
+- Horizontal educational Shorts.
+- Long-form documentaries with chapters, structured research, show notes, and long-duration safety controls.
+- Podcast-video profiles.
 
-**Phase 3 — Production Scaling** *(PRs #9 – #11 range)*
-Provider expansion, declarative render profiles, resumable orchestration, quality-driven provider ranking based on measured output, feedback-informed prompt tuning, content quality scoring before publish.
+### Era III - Multi-Channel Platform
 
-**Phase 4 — Long-form Production**
-Long-form documentary and podcast formats folded into the render-profile mechanism (retires the parallel `bias_long.py` variant per ADR-012). Longer-duration content-safety enforcement, chapter markers, structured show-notes.
+- Per-channel branding, voice, topic policy, provider preferences, and analytics.
+- Shared provider budgets, footage libraries, and music licensing records.
 
-**Phase 5 — Multi-channel Platform**
-Multiple channels under a single deployment. Per-channel branding, per-channel provider preferences, per-channel analytics. Cross-channel resource sharing for footage and music libraries.
+### Era IV - Autonomous Operator
 
----
-
-## Version Roadmap
-
-Approximate semver progression. Milestone descriptions replace dates.
-
-| Version | Milestone description |
-|---|---|
-| v0.1.0 | Initial Production Baseline. Daily Shorts publishing works. Foundation, Storage, and Providers established. Documentation baseline shipped. |
-| v0.2.0 | Domain Integration complete (PR #4). Typed models used across all stage boundaries. |
-| v0.3.0 | Timeline Builder + new Renderer contract (PRs #5 – #6). Renderer is a pure function. |
-| v0.4.0 | Intelligent Media Selection complete (PR #7). B-roll candidates are scored deterministically before Timeline construction. |
-| v0.5.0 | Content Intelligence & Source Planning complete (PR #8). Scenes route by visual capability before media selection. |
-| v0.6.0 | Provider Expansion / Registry Formalization (PR #9). Providers register capabilities; preferences are configuration. |
-| v0.7.0 | Render Profiles introduced (PR #10). Multiple formats supported declaratively. |
-| v0.8.0 | Resumable Pipeline Orchestrator (PR #11). Any stage can restart from persisted upstream artifacts. |
-| v0.9.0 | Multi-channel deployment. Per-channel configuration and analytics. |
-| v0.10.0 | Analytics feedback loop. Topic selection informed by measured audience data. |
-| v1.0.0 | Production-ready platform. Full backward compatibility guarantee begins. All Era II success criteria met. |
-
-Versions between v0.1.0 and v1.0.0 may release non-consecutively as scope shifts. Skipped versions are recorded in `CHANGELOG.md` with the reason.
-
----
+- Strategy-level topic selection informed by analytics, retention, engagement, and revenue.
+- Configurable business goals and channel guardrails.
 
 ## Deferred Work
 
-The following are intentionally postponed. Contributors should not preemptively implement them; wait for a scheduled migration PR that lifts the deferral.
+- Object storage until multi-machine deployment requires it.
+- Instagram and Facebook upload APIs until their account/app requirements justify implementation.
+- Browser automation for YouTube Studio actions such as comment pinning; the YouTube upload API remains preferred.
+- YouTube Audio Library pre-staging and Content-ID hardening.
+- Live streaming, real-time transcription, enterprise multi-tenancy, and a manual video-editing UI.
 
-- **Object storage backend.** Content-addressed persistence in S3-compatible storage. Deferred per ADR-001 until multi-machine deployment requires it.
-- **Instagram Graph API upload.** Requires Business account and Meta app review. Deferred until channel monetization justifies the setup effort.
-- **Facebook Graph API upload.** Same rationale as above.
-- **YouTube Audio Library pre-staging** ("Phase E" internally). Optional Content-ID hardening. Deferred while `YT_MUSIC=true` remains an acceptable trade-off.
-- **Full replacement of browser-based uploaders.** Playwright fallbacks continue to exist for platforms without usable APIs. Retired only when API paths are proven for those platforms.
-- **Live streaming, interactive video, real-time transcription.** Out of scope per `VISION.md § Out of Scope`.
-- **Multi-tenant enterprise deployment.** Out of scope per `VISION.md § Out of Scope`.
+## Definition of Era I Complete
 
-Deferred items are not the same as **cancelled** items. A deferred item may become active in a later phase; a cancelled item is removed from the roadmap and does not return.
-
----
-
-## Roadmap Maintenance
-
-This document is a **living** document — the only one in `docs/` that is expected to change frequently.
-
-**When a milestone completes:**
-
-1. Move it from *Next Milestones* into the appropriate row of *Completed Milestones*.
-2. Update *Current Focus* to point at the next in-flight milestone.
-3. Update *Implementation Status* if a component changed status.
-4. Update `ARCHITECTURE.md § Implementation Status` in the same pull request.
-
-**When a new milestone is scoped:**
-
-1. Append it to *Next Milestones* with objective, outcome, dependencies, and success criteria.
-2. If it introduces a new architectural decision, add or supersede the corresponding ADR in `ARCHITECTURE.md`.
-3. Reserve its version slot in the *Version Roadmap*.
-
-**When priorities shift:**
-
-1. Reorder *Next Milestones* by dependency, not by preference.
-2. Move de-prioritized work into *Deferred Work* with a one-line explanation.
-3. Never delete an entry — deferrals and cancellations are part of the record.
-
-**When a phase completes:**
-
-1. Confirm every milestone in the phase has shipped.
-2. Update *Current Status* to point at the next phase.
-3. Refresh the *Version Roadmap* if versions moved.
-
-Roadmap entries should stay short. If a milestone description grows beyond a few lines, its detail belongs in the pull request description, in `ARCHITECTURE.md`, or in a new ADR — not here.
+Era I is complete only when the pipeline reliably creates and publishes correct
+Shorts without daily operator intervention. The required evidence is the completed
+video-level QA policy plus the reliability burn-in, not simply the existence of more
+architecture or providers.
