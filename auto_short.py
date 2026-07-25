@@ -111,6 +111,8 @@ from autovideo.media import (
     CanonicalSceneEntityResolver,
     EditorialCanon,
     EditorialCanonBuilder,
+    EditorialIdentityGate,
+    EditorialIdentityReport,
     EntityFidelity,
     EvidenceVerificationConfig,
     EvidenceVerificationEngine,
@@ -5632,6 +5634,7 @@ def main():
                 ],
             })
             write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
+
         else:
             knowledge_store = KnowledgePackStore()
             shot_plan = VisualDirector(knowledge_store).plan(
@@ -5649,6 +5652,31 @@ def main():
                 editorial_canon=ctx.values.get("editorial_canon"),
             )
             write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
+
+    def stage_editorial_identity(ctx: PipelineContext) -> StageResult:
+        """Reject a plan whose subject no longer represents the requested topic."""
+
+        report = EditorialIdentityGate().evaluate(
+            topic=niche,
+            editorial_canon=ctx.values["editorial_canon"],
+            shot_plan=ctx.values["shot_plan"],
+        )
+        report_path = report.write_json(OUT_DIR / "editorial_identity_report.json")
+        ctx.values["editorial_identity_report"] = report
+        if not report.approved:
+            raise RuntimeError(
+                "Editorial identity gate rejected this topic before source coverage: "
+                + "; ".join(report.reasons)
+            )
+        return StageResult(outputs={"editorial_identity_report": str(report_path)})
+
+    def load_editorial_identity(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["editorial_identity_report"] = EditorialIdentityReport.from_dict(
+            read_manifest(Path(record.outputs["editorial_identity_report"]))
+        )
+
+    def validate_editorial_identity(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return Path(record.outputs.get("editorial_identity_report", "")).exists()
 
     def _resolved_provider_intent(intent, report: CanonicalEntityReport | None):
         """Create a retrieval-only ShotIntent without mutating the ShotPlan."""
@@ -7070,6 +7098,7 @@ def main():
         snapshot_files = {
             "scheduler_report.json": OUT_DIR / "scheduler_report.json",
             "documentary_viability_report.json": OUT_DIR / "documentary_viability_report.json",
+            "editorial_identity_report.json": OUT_DIR / "editorial_identity_report.json",
             "source_coverage_report.json": OUT_DIR / "source_coverage_report.json",
             "timeline.json": OUT_DIR / "timeline.json",
             "editorial_canon.json": OUT_DIR / "editorial_canon.json",
@@ -7159,6 +7188,12 @@ def main():
         ),
         PipelineStage("script_generation", stage_script_generation, load=load_script_generation),
         PipelineStage("media_planning", stage_media_planning, load=load_media_planning),
+        PipelineStage(
+            "editorial_identity",
+            stage_editorial_identity,
+            load=load_editorial_identity,
+            validate_outputs=validate_editorial_identity,
+        ),
         PipelineStage(
             "canonical_entity_resolution",
             stage_canonical_entity_resolution,

@@ -50,12 +50,14 @@ OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
 CONTENT_HISTORY = STATE_DIR / "content_history.json"
 SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
 SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
+EDITORIAL_IDENTITY_REPORT = OUT_DIR / "editorial_identity_report.json"
 FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
 PUBLISH_QUALITY_REPORT = OUT_DIR / "publish_quality_report.json"
 VERIFIED_MEDIA_REPORT = OUT_DIR / "verified_media_report.json"
 EXACT_SUBJECT_GATE_REPORT = OUT_DIR / "exact_subject_gate_report.json"
 ATTEMPT_REPORTS = (
     SOURCE_COVERAGE_REPORT,
+    EDITORIAL_IDENTITY_REPORT,
     FALLBACK_QUALITY_REPORT,
     PUBLISH_QUALITY_REPORT,
     VERIFIED_MEDIA_REPORT,
@@ -202,6 +204,17 @@ def source_coverage_deferred(topic: str) -> tuple[bool, str]:
     return True, "; ".join(str(item) for item in report.get("reasons", []) if item)
 
 
+def editorial_identity_deferred(topic: str) -> tuple[bool, str]:
+    """Return whether topic planning rejected an inconsistent editorial identity."""
+
+    report = _read_json(EDITORIAL_IDENTITY_REPORT)
+    if str(report.get("topic", "")).casefold() != topic.casefold():
+        return False, ""
+    if str(report.get("decision", "")).upper() != "REJECTED":
+        return False, ""
+    return True, "; ".join(str(item) for item in report.get("reasons", []) if item)
+
+
 def _read_json(path: Path) -> dict:
     """Read one JSON diagnostic artifact without treating a missing file as an error."""
 
@@ -233,6 +246,10 @@ def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
     deferred, reason = source_coverage_deferred(topic)
     if deferred:
         return True, reason or "source coverage preflight deferred topic"
+
+    deferred, reason = editorial_identity_deferred(topic)
+    if deferred:
+        return True, reason or "editorial identity gate rejected topic planning"
 
     fallback_report = _read_json(FALLBACK_QUALITY_REPORT)
     if fallback_report and not bool(fallback_report.get("quality_gate_passed", True)):

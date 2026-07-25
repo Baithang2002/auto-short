@@ -54,6 +54,11 @@ from .editorial import (
     EditorialCanonBuilder,
     PrimarySubjectLockReport,
 )
+from .editorial_identity import (
+    EditorialIdentityDecision,
+    EditorialIdentityGate,
+    EditorialIdentityReport,
+)
 from .scene_entities import (
     SceneEntity,
     SceneEntityPlan,
@@ -150,6 +155,9 @@ __all__ = [
     "DomainKnowledge",
     "EditorialCanon",
     "EditorialCanonBuilder",
+    "EditorialIdentityDecision",
+    "EditorialIdentityGate",
+    "EditorialIdentityReport",
     "EntityFidelity",
     "EvidenceVerificationConfig",
     "EvidenceVerificationEngine",

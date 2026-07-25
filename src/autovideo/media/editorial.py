@@ -115,9 +115,18 @@ class EditorialCanonBuilder:
     ) -> tuple[EditorialCanon, PrimarySubjectLockReport, dict[str, Any], dict[str, Any]]:
         topic_clean = _clean(topic)
         domain_scores = _score_domains(topic_clean, segments, knowledge_domains)
+        topic_domain_scores = [
+            (score, domain)
+            for score, domain in domain_scores
+            if _has_topic_evidence(topic_clean, domain)
+        ]
         explicit_subject = _explicit_subject(topic_clean)
         mode = _documentary_mode(topic_clean, explicit_subject)
-        primary_subject = explicit_subject or _best_topic_domain_subject(domain_scores) or topic_clean
+        primary_subject = (
+            explicit_subject
+            or _best_topic_domain_subject(topic_domain_scores)
+            or _topic_subject(topic_clean)
+        )
         if not explicit_subject and mode == DocumentaryMode.PLACE and "largest desert" in _norm(topic_clean):
             primary_subject = "Antarctica"
 
@@ -167,6 +176,13 @@ class EditorialCanonBuilder:
                 "builder": "editorial_canon",
                 "explicit_subject": explicit_subject,
                 "matched_domain": getattr(domain, "id", "") if domain else "",
+                "primary_subject_source": (
+                    "explicit_subject"
+                    if explicit_subject
+                    else "topic_supported_domain"
+                    if domain
+                    else "topic_phrase"
+                ),
             },
         )
         lock_report = PrimarySubjectLockReport(
@@ -211,7 +227,17 @@ class EditorialCanonBuilder:
         return canon, lock_report, scene_role_report, domain_report
 
 
-def _score_domains(topic: str, segments: Sequence[Mapping[str, Any]], domains: Sequence[Any]) -> list[tuple[int, Any]]:
+def _score_domains(
+    topic: str,
+    segments: Sequence[Mapping[str, Any]],
+    domains: Sequence[Any],
+) -> list[tuple[int, Any]]:
+    """Rank domains only when the topic itself supports the domain.
+
+    Script text can refine a topic-supported domain, but generic narration terms
+    such as "dance" must never establish a documentary identity on their own.
+    """
+
     topic_text = _norm(topic)
     opening = _norm(str(segments[0].get("narration", "")) if segments else "")
     all_text = _norm(" ".join([
@@ -223,22 +249,36 @@ def _score_domains(topic: str, segments: Sequence[Mapping[str, Any]], domains: S
     for domain in domains:
         score = 0
         primary = _norm(getattr(domain, "primary_subject", ""))
-        if primary and primary in topic_text:
+        if primary and _contains_phrase(topic_text, primary):
             score += 100
         for term in getattr(domain, "trigger_terms", ()):
             term_norm = _norm(term)
             if not term_norm:
                 continue
-            if term_norm in topic_text:
+            if _contains_phrase(topic_text, term_norm):
                 score += 50
-            if term_norm in opening:
+            if _contains_phrase(opening, term_norm):
                 score += 12
-            if term_norm in all_text:
+            if _contains_phrase(all_text, term_norm):
                 score += 2
         if score:
             scored.append((score, domain))
     scored.sort(key=lambda item: item[0], reverse=True)
     return scored
+
+
+def _has_topic_evidence(topic: str, domain: Any) -> bool:
+    """Return whether a domain is explicitly supported by the requested topic."""
+
+    topic_text = _norm(topic)
+    primary = _norm(getattr(domain, "primary_subject", ""))
+    if primary and _contains_phrase(topic_text, primary):
+        return True
+    return any(
+        _contains_phrase(topic_text, _norm(term))
+        for term in getattr(domain, "trigger_terms", ())
+        if _norm(term)
+    )
 
 
 def _explicit_subject(topic: str) -> str:
@@ -424,12 +464,86 @@ def _documentary_type(topic: str, mode: DocumentaryMode) -> str:
     return "single_subject_documentary"
 
 
+_TITLE_PREFIXES = {
+    "how",
+    "why",
+    "when",
+    "where",
+    "inside",
+    "the",
+    "truth",
+    "secret",
+}
+
+_SUBJECT_BOUNDARY_WORDS = {
+    "are",
+    "become",
+    "becomes",
+    "build",
+    "built",
+    "can",
+    "change",
+    "changed",
+    "changes",
+    "create",
+    "created",
+    "creates",
+    "do",
+    "does",
+    "form",
+    "forms",
+    "grow",
+    "grows",
+    "has",
+    "have",
+    "is",
+    "live",
+    "lives",
+    "melt",
+    "melts",
+    "move",
+    "moves",
+    "protect",
+    "protects",
+    "survive",
+    "survives",
+    "turn",
+    "turns",
+    "work",
+    "works",
+}
+
+
+def _topic_subject(topic: str) -> str:
+    """Extract a concrete subject phrase when no known domain matches.
+
+    This deliberately favors the noun phrase at the start of an instructional
+    title. It prevents provider queries from receiving the entire title.
+    """
+
+    words = re.findall(r"[A-Za-z0-9]+", _clean(topic))
+    while words and words[0].lower() in _TITLE_PREFIXES:
+        words.pop(0)
+    subject_words: list[str] = []
+    for word in words:
+        if word.lower() in _SUBJECT_BOUNDARY_WORDS:
+            break
+        subject_words.append(word)
+    return " ".join(subject_words[:5]) or _clean(topic)
+
+
 def _clean(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").replace("-", " ")).strip()
 
 
 def _norm(value: Any) -> str:
     return re.sub(r"[^a-z0-9]+", " ", str(value or "").lower()).strip()
+
+
+def _contains_phrase(corpus: str, phrase: str) -> bool:
+    """Return whether a normalized phrase appears at token boundaries."""
+
+    return f" {phrase} " in f" {corpus} "
 
 
 def _dedupe(values: Sequence[str]) -> tuple[str, ...]:
