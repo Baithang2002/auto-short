@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-27T08:19:18Z",
+      "recorded_at": "2026-07-27T09:22:35Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-27T08:19:18Z",
+      "recorded_at": "2026-07-27T09:22:35Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1512,6 +1512,20 @@
       "source": "coverage_proven",
       "run_id": "5b3dbf264a204920a1e24ce934f667ac",
       "generated_at": ""
+    },
+    {
+      "topic": "How Ants Build Underground Cities",
+      "primary_subject": "ant",
+      "category": "Engineering",
+      "documentary_angle": "process",
+      "viability_score": 0.6278,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "topic passed background source-coverage qualification",
+      "recorded_at": "2026-07-27T09:22:35Z",
+      "source": "coverage_proven",
+      "run_id": "da2c61802317452bb41167df7cbd5eb1",
+      "generated_at": "2026-07-27T09:25:54Z"
     }
   ]
 }

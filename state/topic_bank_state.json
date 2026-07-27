@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-27T09:12:32Z",
+  "updated_at": "2026-07-27T09:25:54Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -19,15 +19,15 @@
     },
     {
       "topic": "How Ants Build Underground Cities",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-27T09:10:19Z",
+      "last_attempt_at": "2026-07-27T09:25:54Z",
       "last_qualified_at": "2026-07-27T09:10:19Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/18f7b1552034eea9aaa8.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-27T09:25:54Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
