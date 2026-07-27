@@ -18,6 +18,7 @@ from .documentary_viability import (
 )
 from .topic_metadata import TopicCategory, classify_topic
 from .topic_sources import TopicCandidate
+from .topic_bank import TopicBankStatus
 
 _KNOWLEDGE_DIR = Path(__file__).resolve().parent / "knowledge"
 _DEFAULT_TOPIC_BANK_PATH = _KNOWLEDGE_DIR / "nature_safe_topics.json"
@@ -92,6 +93,7 @@ class ContentSchedulerConfig:
     coverage_proven_bonus: float = 0.12
     topic_bank_category_cooldown_days: int = 2
     topic_bank_category_diversity_penalty: float = 0.18
+    topic_bank_quarantine_days: int = 14
     coverage_proven_topics: tuple[str, ...] = field(default_factory=_load_default_coverage_proven_topics)
     evergreen_topics: tuple[str, ...] = (
         "Why Volcanoes Create New Land",
@@ -179,6 +181,10 @@ class ContentSchedulerConfig:
                 "AUTO_VIDEO_SCHEDULER_TOPIC_BANK_CATEGORY_DIVERSITY_PENALTY",
                 0.18,
             ),
+            topic_bank_quarantine_days=max(
+                0,
+                _env_int(values, "AUTO_VIDEO_TOPIC_BANK_QUARANTINE_DAYS", 14),
+            ),
             coverage_proven_topics=coverage_proven,
             evergreen_topics=evergreen,
         )
@@ -256,6 +262,7 @@ class ScheduledCandidate:
     decision: SchedulingDecision
     topic_bank_category: str = ""
     topic_bank_category_diversity_score: float = 1.0
+    topic_bank_status: str = ""
     selection_path: str = ""
     reasons: tuple[str, ...] = ()
 
@@ -301,6 +308,7 @@ class SchedulerResult:
                 "coverage_proven_bonus": self.config.coverage_proven_bonus,
                 "topic_bank_category_cooldown_days": self.config.topic_bank_category_cooldown_days,
                 "topic_bank_category_diversity_penalty": self.config.topic_bank_category_diversity_penalty,
+                "topic_bank_quarantine_days": self.config.topic_bank_quarantine_days,
                 "coverage_proven_topics": list(self.config.coverage_proven_topics),
                 "evergreen_topics": list(self.config.evergreen_topics),
             },
@@ -422,25 +430,43 @@ class AutonomousContentScheduler:
         self,
         candidates: Iterable[TopicCandidate],
         history: Sequence[ContentHistoryRecord] = (),
+        topic_bank_statuses: Mapping[str, str | TopicBankStatus] | None = None,
     ) -> SchedulerResult:
         """Evaluate and rank candidates using only viability and scheduling state."""
 
         timestamp = self._now().astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        bank_statuses = {
+            _normalise(topic): (
+                status.value
+                if isinstance(status, TopicBankStatus)
+                else str(status).lower()
+            )
+            for topic, status in (topic_bank_statuses or {}).items()
+        }
         source_candidates = _merge_coverage_proven_candidates(
             tuple(candidates),
             self.config,
+            bank_statuses,
         )[:self.config.max_candidates]
         evaluated: list[ScheduledCandidate] = []
         for candidate in source_candidates:
             viability = self.viability_engine.evaluate(candidate.topic)
             identity = topic_identity(candidate.topic)
-            evaluated.append(self._evaluate_candidate(candidate, identity, viability, history))
+            evaluated.append(
+                self._evaluate_candidate(
+                    candidate,
+                    identity,
+                    viability,
+                    history,
+                    topic_bank_status=bank_statuses.get(_normalise(candidate.topic), ""),
+                )
+            )
 
         selected = self._choose_approved(evaluated)
         if selected is None:
             selected = self._choose_review_fallback(evaluated)
         if selected is None:
-            evergreen = self._evaluate_evergreen(history)
+            evergreen = self._evaluate_evergreen(history, bank_statuses)
             evaluated.extend(evergreen)
             selected = self._choose_approved(evergreen)
             if selected is None:
@@ -479,12 +505,19 @@ class AutonomousContentScheduler:
 
     @staticmethod
     def _choose_approved(candidates: Sequence[ScheduledCandidate]) -> ScheduledCandidate | None:
-        return _highest_ranked(
+        eligible = [
             candidate
             for candidate in candidates
             if candidate.decision == SchedulingDecision.SELECTED
             and candidate.viability_decision == DocumentaryViabilityDecision.APPROVED.value
-        )
+        ]
+        for status in (TopicBankStatus.PROVEN.value, TopicBankStatus.CANDIDATE.value, ""):
+            selected = _highest_ranked(
+                candidate for candidate in eligible if candidate.topic_bank_status == status
+            )
+            if selected is not None:
+                return selected
+        return None
 
     def _choose_review_fallback(self, candidates: Sequence[ScheduledCandidate]) -> ScheduledCandidate | None:
         eligible: list[ScheduledCandidate] = []
@@ -502,6 +535,7 @@ class AutonomousContentScheduler:
     def _evaluate_evergreen(
         self,
         history: Sequence[ContentHistoryRecord],
+        topic_bank_statuses: Mapping[str, str],
     ) -> list[ScheduledCandidate]:
         candidates = [
             TopicCandidate(topic=topic, source="evergreen")
@@ -510,7 +544,18 @@ class AutonomousContentScheduler:
         evaluated = []
         for candidate in candidates:
             viability = self.viability_engine.evaluate(candidate.topic)
-            evaluated.append(self._evaluate_candidate(candidate, topic_identity(candidate.topic), viability, history))
+            evaluated.append(
+                self._evaluate_candidate(
+                    candidate,
+                    topic_identity(candidate.topic),
+                    viability,
+                    history,
+                    topic_bank_status=topic_bank_statuses.get(
+                        _normalise(candidate.topic),
+                        "",
+                    ),
+                )
+            )
         return evaluated
 
     @staticmethod
@@ -530,6 +575,8 @@ class AutonomousContentScheduler:
         identity: TopicIdentity,
         viability: DocumentaryViabilityReport,
         history: Sequence[ContentHistoryRecord],
+        *,
+        topic_bank_status: str = "",
     ) -> ScheduledCandidate:
         active_history = [record for record in history if record.status in {"scheduled", "generated"}]
         similarity = max((_topic_similarity(identity.topic_tokens, _tokens(record.topic)) for record in active_history), default=0.0)
@@ -575,7 +622,10 @@ class AutonomousContentScheduler:
             active_history,
         )
 
-        if exact_topic_generated:
+        if topic_bank_status == TopicBankStatus.QUARANTINED.value:
+            reasons.append("topic is quarantined after a quality-gate failure")
+            decision = SchedulingDecision.REJECTED
+        elif exact_topic_generated:
             reasons.append("exact topic was already generated")
             decision = SchedulingDecision.REJECTED
         elif viability.decision == DocumentaryViabilityDecision.SKIP:
@@ -610,9 +660,15 @@ class AutonomousContentScheduler:
                 category_diversity,
                 self.config,
             )
-            if candidate.source == "coverage_proven" and self.config.prefer_coverage_proven_topics:
+            if (
+                candidate.source == "coverage_proven"
+                and self.config.prefer_coverage_proven_topics
+                and topic_bank_status in {"", TopicBankStatus.PROVEN.value}
+            ):
                 rank = _clamp(rank + self.config.coverage_proven_bonus)
                 reasons.append("coverage-proven topic receives provider-reliability bonus")
+            elif topic_bank_status == TopicBankStatus.CANDIDATE.value:
+                reasons.append("topic-bank candidate is awaiting successful production burn-in")
             if topic_bank_category_recent:
                 rank = _clamp(rank - self.config.topic_bank_category_diversity_penalty)
         return ScheduledCandidate(
@@ -627,6 +683,7 @@ class AutonomousContentScheduler:
             category_diversity_score=category_diversity,
             topic_bank_category=topic_bank_category,
             topic_bank_category_diversity_score=topic_bank_category_diversity,
+            topic_bank_status=topic_bank_status,
             similarity_score=round(similarity, 4),
             cooldown_active=topic_cooldown or subject_cooldown,
             ranking_score=round(rank, 4) if rank is not None else None,
@@ -724,6 +781,7 @@ def _upsert_non_generated_records(
 def _merge_coverage_proven_candidates(
     candidates: Sequence[TopicCandidate],
     config: ContentSchedulerConfig,
+    topic_bank_statuses: Mapping[str, str] | None = None,
 ) -> tuple[TopicCandidate, ...]:
     """Prepend provider-friendly topics without duplicating operator sources."""
 
@@ -735,6 +793,8 @@ def _merge_coverage_proven_candidates(
     for topic in config.coverage_proven_topics:
         key = _normalise(topic)
         if not key or key in seen:
+            continue
+        if (topic_bank_statuses or {}).get(key) == TopicBankStatus.QUARANTINED.value:
             continue
         seen.add(key)
         merged.append(TopicCandidate(topic=topic, source="coverage_proven"))
@@ -803,9 +863,12 @@ def _topic_bank_category_within_cooldown(
 
 
 def _is_forbidden_repeat(candidate: ScheduledCandidate) -> bool:
-    """Return whether a candidate is an exact repeat that must not be promoted."""
+    """Return whether a candidate must never be promoted by emergency fallback."""
 
-    return "exact topic was already generated" in candidate.reasons
+    return (
+        "exact topic was already generated" in candidate.reasons
+        or "topic is quarantined after a quality-gate failure" in candidate.reasons
+    )
 
 
 def _history_record(candidate: ScheduledCandidate, recorded_at: str, *, run_id: str = "") -> ContentHistoryRecord:

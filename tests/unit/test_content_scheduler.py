@@ -369,6 +369,72 @@ class ContentSchedulerTests(unittest.TestCase):
         self.assertEqual(wildlife_candidate.topic_bank_category_diversity_score, 0.0)
         self.assertIn("topic-bank category", "; ".join(wildlife_candidate.reasons))
 
+    def test_proven_topic_is_selected_before_unproven_candidate(self) -> None:
+        proven = "How Bees Make Honey"
+        candidate = "Why Volcanoes Create New Land"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                proven: (0.70, DocumentaryViabilityDecision.APPROVED),
+                candidate: (0.95, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(proven, candidate),
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+
+        result = scheduler.schedule(
+            [],
+            topic_bank_statuses={
+                proven: "proven",
+                candidate: "candidate",
+            },
+        )
+
+        self.assertEqual(result.selected.topic, proven)
+        self.assertEqual(result.selected.topic_bank_status, "proven")
+
+    def test_quarantined_topic_is_not_emergency_promoted(self) -> None:
+        quarantined = "How Bees Make Honey"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                quarantined: (0.95, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(quarantined,),
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+
+        result = scheduler.schedule(
+            [],
+            topic_bank_statuses={quarantined: "quarantined"},
+        )
+
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.candidates, ())
+
+    def test_quarantined_source_topic_is_rejected(self) -> None:
+        quarantined = "How Paper Is Made"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                quarantined: (0.95, DocumentaryViabilityDecision.APPROVED),
+            }),
+            self.config,
+            now=lambda: self.now,
+        )
+
+        result = scheduler.schedule(
+            [TopicCandidate(quarantined, "topics.txt")],
+            topic_bank_statuses={quarantined: "quarantined"},
+        )
+
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.candidates[0].decision, SchedulingDecision.REJECTED)
+        self.assertIn("quarantined", "; ".join(result.candidates[0].reasons))
+
     def test_config_reads_topic_sources_and_evergreen_pool(self) -> None:
         config = ContentSchedulerConfig.from_env({
             "AUTO_VIDEO_SCHEDULER_TOPIC_SOURCES": "ideas.json,topics.txt",
@@ -376,6 +442,7 @@ class ContentSchedulerTests(unittest.TestCase):
             "AUTO_VIDEO_SCHEDULER_COVERAGE_PROVEN_TOPICS": "Bees,Volcanoes",
             "AUTO_VIDEO_SCHEDULER_FORBID_REPEATED_TOPICS": "true",
             "AUTO_VIDEO_SCHEDULER_TOPIC_BANK_CATEGORY_COOLDOWN_DAYS": "4",
+            "AUTO_VIDEO_TOPIC_BANK_QUARANTINE_DAYS": "21",
             "AUTO_VIDEO_SCHEDULER_MAX_CANDIDATES": "12",
         })
 
@@ -384,6 +451,7 @@ class ContentSchedulerTests(unittest.TestCase):
         self.assertEqual(config.coverage_proven_topics, ("Bees", "Volcanoes"))
         self.assertTrue(config.forbid_repeated_topics)
         self.assertEqual(config.topic_bank_category_cooldown_days, 4)
+        self.assertEqual(config.topic_bank_quarantine_days, 21)
         self.assertEqual(config.max_candidates, 12)
 
     def test_multiple_sources_are_deduplicated(self) -> None:

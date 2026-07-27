@@ -33,6 +33,11 @@ from .topic_sources import (
     load_topic_sources,
     topic_source_for_path,
 )
+from .topic_bank import (
+    TopicBankRecord,
+    TopicBankStateStore,
+    TopicBankStatus,
+)
 from .source_coverage import (
     SceneCoverage,
     SourceCoverageConfig,
@@ -67,6 +72,9 @@ __all__ = [
     "TopicCandidate",
     "TopicIdentity",
     "TopicSource",
+    "TopicBankRecord",
+    "TopicBankStateStore",
+    "TopicBankStatus",
     "TopicCategory",
     "TopicClassification",
     "TopicMetadata",

@@ -35,6 +35,7 @@ from autovideo.intelligence import (
     ContentHistoryStore,
     ContentSchedulerConfig,
     SchedulerResult,
+    TopicBankStateStore,
     load_topic_sources,
     topic_source_for_path,
 )
@@ -48,7 +49,9 @@ RUN_LOG    = STATE_DIR / "daily_runs.log"
 OUTPUT_STATE = OUT_DIR / "daily_state.json"
 OUTPUT_RUN_LOG = OUT_DIR / "daily_runs.log"
 CONTENT_HISTORY = STATE_DIR / "content_history.json"
+TOPIC_BANK_STATE = STATE_DIR / "topic_bank_state.json"
 SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
+TOPIC_BANK_REPORT = OUT_DIR / "topic_bank_status_report.json"
 SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
 EDITORIAL_IDENTITY_REPORT = OUT_DIR / "editorial_identity_report.json"
 FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
@@ -165,6 +168,7 @@ def schedule_topic(excluded_topics: set[str] | None = None) -> tuple[str | None,
         _idx, topic = pick_next(load_topics())
         return topic, "", None
 
+    configured_bank_topics = (*config.coverage_proven_topics, *config.evergreen_topics)
     excluded = {topic.casefold() for topic in (excluded_topics or set())}
     sources = [
         topic_source_for_path(SCRIPT_DIR / source_name)
@@ -174,6 +178,10 @@ def schedule_topic(excluded_topics: set[str] | None = None) -> tuple[str | None,
         candidate for candidate in load_topic_sources(sources)
         if candidate.topic.casefold() not in excluded
     ]
+    status_topics = (
+        *configured_bank_topics,
+        *(candidate.topic for candidate in candidates),
+    )
     config = replace(
         config,
         coverage_proven_topics=tuple(
@@ -185,10 +193,45 @@ def schedule_topic(excluded_topics: set[str] | None = None) -> tuple[str | None,
     )
     run_id = uuid.uuid4().hex
     history_store = ContentHistoryStore(CONTENT_HISTORY)
-    result = AutonomousContentScheduler(config=config).schedule(candidates, history_store.load())
+    history = history_store.load()
+    topic_bank_store = TopicBankStateStore(TOPIC_BANK_STATE)
+    configured_keys = {topic.casefold() for topic in status_topics}
+    topic_bank_store.bootstrap(
+        generated=tuple(
+            (record.topic, record.generated_at or record.recorded_at)
+            for record in history
+            if record.status == "generated" and record.topic.casefold() in configured_keys
+        ),
+        deferred=tuple(
+            (record.topic, record.reason, record.recorded_at)
+            for record in history
+            if record.status in {"coverage_deferred", "quality_deferred"}
+            and record.topic.casefold() in configured_keys
+        ),
+        quarantine_days=config.topic_bank_quarantine_days,
+    )
+    bank_topics = (
+        *config.coverage_proven_topics,
+        *config.evergreen_topics,
+        *(candidate.topic for candidate in candidates),
+    )
+    bank_statuses = topic_bank_store.status_map(bank_topics)
+    result = AutonomousContentScheduler(config=config).schedule(
+        candidates,
+        history,
+        bank_statuses,
+    )
     result.write_json(SCHEDULER_REPORT)
+    topic_bank_store.write_report(TOPIC_BANK_REPORT, status_topics)
     history_store.record_decisions(result, run_id=run_id)
     return (result.selected.topic if result.selected else None), run_id, result
+
+
+def update_topic_bank_report(config: ContentSchedulerConfig) -> None:
+    """Refresh the inspectable topic-bank snapshot after a run outcome."""
+
+    topics = (*config.coverage_proven_topics, *config.evergreen_topics)
+    TopicBankStateStore(TOPIC_BANK_STATE).write_report(TOPIC_BANK_REPORT, topics)
 
 
 def source_coverage_deferred(topic: str) -> tuple[bool, str]:
@@ -343,6 +386,9 @@ def run_daily() -> int:
         last_exit_code = proc.returncode
         if proc.returncode == 0:
             ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
+            if scheduler_result is not None:
+                TopicBankStateStore(TOPIC_BANK_STATE).mark_success(topic)
+                update_topic_bank_report(scheduler_result.config)
             finished = dt.datetime.now()
             secs = (finished - started).total_seconds()
             append_log(
@@ -356,6 +402,12 @@ def run_daily() -> int:
         if not deferred:
             finished = dt.datetime.now()
             secs = (finished - started).total_seconds()
+            if scheduler_result is not None:
+                ContentHistoryStore(CONTENT_HISTORY).mark_deferred(
+                    run_id=scheduler_run_id,
+                    reason=f"critical technical failure exit={proc.returncode}",
+                    status="technical_failed",
+                )
             append_log(
                 f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
                 f"duration={secs:.0f}s  critical_failure=true"
@@ -368,6 +420,13 @@ def run_daily() -> int:
             reason=reason,
             status="quality_deferred",
         )
+        if scheduler_result is not None:
+            TopicBankStateStore(TOPIC_BANK_STATE).mark_failure(
+                topic,
+                reason=reason,
+                quarantine_days=scheduler_result.config.topic_bank_quarantine_days,
+            )
+            update_topic_bank_report(scheduler_result.config)
         attempted_topics.add(topic)
         append_log(
             f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "

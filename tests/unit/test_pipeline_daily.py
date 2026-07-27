@@ -74,17 +74,38 @@ class PipelineDailyTests(unittest.TestCase):
         generated.assert_called_once_with(run_id="run-2")
 
     def test_run_daily_stops_immediately_for_critical_failure(self) -> None:
+        scheduler_result = SimpleNamespace(
+            selected=SimpleNamespace(viability_score=0.9, ranking_score=0.8),
+            config=pipeline_daily.ContentSchedulerConfig(
+                coverage_proven_topics=("Topic",),
+                evergreen_topics=(),
+            ),
+        )
         with patch.object(pipeline_daily, "already_posted_today", return_value=False), \
              patch.object(pipeline_daily, "max_topic_attempts", return_value=3), \
-             patch.object(pipeline_daily, "schedule_topic", return_value=("Topic", "run-1", None)), \
+             patch.object(
+                 pipeline_daily,
+                 "schedule_topic",
+                 return_value=("Topic", "run-1", scheduler_result),
+             ), \
              patch.object(pipeline_daily, "clear_attempt_reports"), \
              patch.object(pipeline_daily.subprocess, "run", return_value=SimpleNamespace(returncode=2)) as run, \
              patch.object(pipeline_daily, "candidate_quality_deferred", return_value=(False, "")), \
-             patch.object(pipeline_daily, "append_log"):
+             patch.object(pipeline_daily, "append_log"), \
+             patch.object(
+                 pipeline_daily.ContentHistoryStore,
+                 "mark_deferred",
+                 return_value=True,
+             ) as failed:
             result = pipeline_daily.run_daily()
 
         self.assertEqual(result, 2)
         self.assertEqual(run.call_count, 1)
+        failed.assert_called_once_with(
+            run_id="run-1",
+            reason="critical technical failure exit=2",
+            status="technical_failed",
+        )
 
     def test_max_topic_attempts_preserves_legacy_recovery_setting(self) -> None:
         with patch.dict(
@@ -115,7 +136,7 @@ class PipelineDailyTests(unittest.TestCase):
             def __init__(self, config):
                 captured["config"] = config
 
-            def schedule(self, _candidates, _history):
+            def schedule(self, _candidates, _history, _bank_statuses):
                 return SimpleNamespace(
                     selected=SimpleNamespace(topic="Fresh proven"),
                     write_json=lambda _path: None,
@@ -131,6 +152,19 @@ class PipelineDailyTests(unittest.TestCase):
             def record_decisions(self, _result, *, run_id):
                 captured["run_id"] = run_id
 
+        class FakeTopicBankStore:
+            def __init__(self, _path):
+                pass
+
+            def bootstrap(self, **_kwargs):
+                return None
+
+            def status_map(self, _topics):
+                return {}
+
+            def write_report(self, _path, _topics):
+                return None
+
         config = pipeline_daily.ContentSchedulerConfig(
             topic_sources=("topics.txt",),
             coverage_proven_topics=("Used topic", "Fresh proven"),
@@ -141,12 +175,101 @@ class PipelineDailyTests(unittest.TestCase):
              patch.object(pipeline_daily, "topic_source_for_path", return_value=SimpleNamespace()), \
              patch.object(pipeline_daily, "load_topic_sources", return_value=[]), \
              patch.object(pipeline_daily, "AutonomousContentScheduler", FakeScheduler), \
-             patch.object(pipeline_daily, "ContentHistoryStore", FakeStore):
+             patch.object(pipeline_daily, "ContentHistoryStore", FakeStore), \
+             patch.object(pipeline_daily, "TopicBankStateStore", FakeTopicBankStore):
             topic, _run_id, _result = pipeline_daily.schedule_topic({"Used topic"})
 
         self.assertEqual(topic, "Fresh proven")
         self.assertEqual(captured["config"].coverage_proven_topics, ("Fresh proven",))
         self.assertEqual(captured["config"].evergreen_topics, ("Fresh evergreen",))
+
+    def test_successful_daily_run_promotes_topic_to_proven(self) -> None:
+        config = pipeline_daily.ContentSchedulerConfig(
+            coverage_proven_topics=("Fresh topic",),
+            evergreen_topics=(),
+        )
+        scheduler_result = SimpleNamespace(
+            selected=SimpleNamespace(viability_score=0.9, ranking_score=0.8),
+            config=config,
+        )
+
+        with patch.object(pipeline_daily, "already_posted_today", return_value=False), \
+             patch.object(pipeline_daily, "max_topic_attempts", return_value=1), \
+             patch.object(
+                 pipeline_daily,
+                 "schedule_topic",
+                 return_value=("Fresh topic", "run-1", scheduler_result),
+             ), \
+             patch.object(pipeline_daily, "clear_attempt_reports"), \
+             patch.object(
+                 pipeline_daily.subprocess,
+                 "run",
+                 return_value=SimpleNamespace(returncode=0),
+             ), \
+             patch.object(pipeline_daily, "append_log"), \
+             patch.object(
+                 pipeline_daily.ContentHistoryStore,
+                 "mark_generated",
+                 return_value=True,
+             ), \
+             patch.object(
+                 pipeline_daily.TopicBankStateStore,
+                 "mark_success",
+             ) as mark_success, \
+             patch.object(pipeline_daily, "update_topic_bank_report"):
+            result = pipeline_daily.run_daily()
+
+        self.assertEqual(result, 0)
+        mark_success.assert_called_once_with("Fresh topic")
+
+    def test_quality_deferral_quarantines_topic(self) -> None:
+        config = pipeline_daily.ContentSchedulerConfig(
+            topic_bank_quarantine_days=21,
+            coverage_proven_topics=("Weak topic",),
+            evergreen_topics=(),
+        )
+        scheduler_result = SimpleNamespace(
+            selected=SimpleNamespace(viability_score=0.9, ranking_score=0.8),
+            config=config,
+        )
+
+        with patch.object(pipeline_daily, "already_posted_today", return_value=False), \
+             patch.object(pipeline_daily, "max_topic_attempts", return_value=1), \
+             patch.object(
+                 pipeline_daily,
+                 "schedule_topic",
+                 return_value=("Weak topic", "run-1", scheduler_result),
+             ), \
+             patch.object(pipeline_daily, "clear_attempt_reports"), \
+             patch.object(
+                 pipeline_daily.subprocess,
+                 "run",
+                 return_value=SimpleNamespace(returncode=1),
+             ), \
+             patch.object(
+                 pipeline_daily,
+                 "candidate_quality_deferred",
+                 return_value=(True, "coverage too weak"),
+             ), \
+             patch.object(pipeline_daily, "append_log"), \
+             patch.object(
+                 pipeline_daily.ContentHistoryStore,
+                 "mark_deferred",
+                 return_value=True,
+             ), \
+             patch.object(
+                 pipeline_daily.TopicBankStateStore,
+                 "mark_failure",
+             ) as mark_failure, \
+             patch.object(pipeline_daily, "update_topic_bank_report"):
+            result = pipeline_daily.run_daily()
+
+        self.assertEqual(result, 1)
+        mark_failure.assert_called_once_with(
+            "Weak topic",
+            reason="coverage too weak",
+            quarantine_days=21,
+        )
 
 
 if __name__ == "__main__":

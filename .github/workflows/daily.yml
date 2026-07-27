@@ -155,6 +155,7 @@ jobs:
             output/final_yt_safe.mp4
             output/upload_metadata.json
             output/scheduler_report.json
+            output/topic_bank_status_report.json
             output/editorial_identity_report.json
             output/source_coverage_report.json
             output/verified_media_report.json

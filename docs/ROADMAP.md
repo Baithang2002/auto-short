@@ -57,15 +57,16 @@ merely to create a video.
 | Reliability extensions | Documentary viability, source coverage, semantic queries, scene constraints, canonical entities, verified-media gate, publish-quality gate, and scheduler recovery | Complete |
 | Editorial Identity hotfix | Rejects topic/domain/subject drift before source coverage | Complete |
 | Energy/physics capability-routing hotfix | Routes terrestrial solar/renewable-energy scenes to stock providers while retaining NASA-first astronomy routing | Implemented; awaiting real-provider validation |
-| Autonomous topic supply | Large nature-safe topic bank, coverage-proven priority, category rotation, and exact-repeat blocking | Complete |
+| Autonomous topic supply | Large nature-safe candidate bank, category rotation, exact-repeat blocking, and persistent production burn-in states | Complete |
 
 ## Current Work
 
 ### Era I Reliability Burn-In
 
 - **Objective.** Prove that GitHub Actions can publish fresh, correct Shorts without daily operator intervention.
-- **Validation.** Monitor scheduled runs using the topic bank, `scheduler_report.json`, `source_coverage_report.json`, `verified_media_report.json`, and `publish_quality_report.json`.
+- **Validation.** Monitor scheduled runs using the topic bank, `topic_bank_status_report.json`, `scheduler_report.json`, `source_coverage_report.json`, `verified_media_report.json`, and `publish_quality_report.json`.
 - **Success criteria.** Runs choose non-repeated, provider-friendly topics; recover from weak candidates; upload only when quality gates pass; and leave complete diagnostics when they defer.
+- **Burn-in policy.** New bank entries begin as candidates, become proven only after a complete successful production run, and are temporarily quarantined after a content-quality deferral. Critical technical failures do not change topic status.
 - **Non-goal.** Do not weaken source-coverage thresholds, media verification, rendered QA, or publish-quality gates just to force daily output.
 
 ## Next Milestones
