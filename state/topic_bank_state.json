@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-27T09:10:42Z",
+  "updated_at": "2026-07-27T09:12:32Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -421,6 +421,21 @@
       "last_failure_at": "2026-07-27T07:37:09Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-10T07:37:09Z"
+    },
+    {
+      "topic": "Why Saturn Has Rings",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-27T09:12:32Z",
+      "last_qualified_at": "2026-07-27T09:12:32Z",
+      "last_coverage_ratio": 0.8333,
+      "qualified_script_path": "state/qualified_scripts/516568cd0ec87a1eb264.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     }
   ]
 }
