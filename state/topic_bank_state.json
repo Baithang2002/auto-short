@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-27T09:25:54Z",
+  "updated_at": "2026-07-27T12:47:12Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -31,6 +31,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How Beavers Build Dams",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-27T12:46:17Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T12:46:17Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-10T12:46:17Z"
     },
     {
       "topic": "How Bees Make Honey",
@@ -136,6 +151,36 @@
       "last_failure_at": "2026-07-27T07:39:38Z",
       "last_failure_reason": "visual fallback quality gate deferred topic",
       "quarantine_until": "2026-08-10T07:39:38Z"
+    },
+    {
+      "topic": "How Mars Got Its Red Color",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-27T12:45:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T12:45:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T12:45:37Z"
+    },
+    {
+      "topic": "How Roman Aqueducts Changed Civilization",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-27T12:46:58Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T12:46:58Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
+      "quarantine_until": "2026-08-10T12:46:58Z"
     },
     {
       "topic": "How Sand Dunes Move Across Deserts",
@@ -258,6 +303,21 @@
       "quarantine_until": "2026-08-10T09:09:29Z"
     },
     {
+      "topic": "How The Nile River Shaped Ancient Egypt",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-27T12:46:31Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T12:46:31Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T12:46:31Z"
+    },
+    {
       "topic": "How Wildfires Help Some Forests Regrow",
       "status": "quarantined",
       "success_count": 0,
@@ -316,6 +376,21 @@
       "last_failure_at": "2026-07-27T08:19:03Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-10T08:19:03Z"
+    },
+    {
+      "topic": "Why Flamingos Are Pink",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-27T12:47:12Z",
+      "last_qualified_at": "2026-07-27T12:47:12Z",
+      "last_coverage_ratio": 0.8333,
+      "qualified_script_path": "state/qualified_scripts/a85cd82dac310a72de72.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Glaciers Carve Valleys",
@@ -436,6 +511,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "Why Whales Sing Across the Ocean",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-27T12:45:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T12:45:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T12:45:59Z"
     }
   ]
 }
