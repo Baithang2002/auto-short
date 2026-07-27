@@ -20,6 +20,7 @@ import ast
 import datetime as dt
 import json
 import os
+import shutil
 import subprocess
 import sys
 import uuid
@@ -52,6 +53,8 @@ CONTENT_HISTORY = STATE_DIR / "content_history.json"
 TOPIC_BANK_STATE = STATE_DIR / "topic_bank_state.json"
 SCHEDULER_REPORT = OUT_DIR / "scheduler_report.json"
 TOPIC_BANK_REPORT = OUT_DIR / "topic_bank_status_report.json"
+LAST_SCRIPT = OUT_DIR / "last_script.json"
+QUALIFIED_SCRIPT_DIR = STATE_DIR / "qualified_scripts"
 SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
 EDITORIAL_IDENTITY_REPORT = OUT_DIR / "editorial_identity_report.json"
 FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
@@ -234,6 +237,46 @@ def update_topic_bank_report(config: ContentSchedulerConfig) -> None:
     TopicBankStateStore(TOPIC_BANK_STATE).write_report(TOPIC_BANK_REPORT, topics)
 
 
+def prepare_qualified_script(
+    topic: str,
+    scheduler_result: SchedulerResult | None,
+) -> Path | None:
+    """Seed the exact preflighted script for a qualified daily topic."""
+
+    if (
+        scheduler_result is None
+        or scheduler_result.selected is None
+        or getattr(scheduler_result.selected, "topic_bank_status", "") != "qualified"
+    ):
+        return None
+    record = TopicBankStateStore(TOPIC_BANK_STATE).record_for(topic)
+    if record is None or not record.qualified_script_path:
+        print(f"[daily] qualified script missing for {topic!r}; generating a fresh script.")
+        return None
+    source = (SCRIPT_DIR / record.qualified_script_path).resolve()
+    qualified_root = QUALIFIED_SCRIPT_DIR.resolve()
+    if not source.is_relative_to(qualified_root) or not source.exists():
+        print(f"[daily] qualified script unavailable for {topic!r}; generating a fresh script.")
+        return None
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, LAST_SCRIPT)
+    return source
+
+
+def remove_consumed_qualified_script(path: Path | None) -> None:
+    """Remove a qualified script after publication or content deferral."""
+
+    if path is None:
+        return
+    resolved = path.resolve()
+    if not resolved.is_relative_to(QUALIFIED_SCRIPT_DIR.resolve()):
+        return
+    try:
+        resolved.unlink()
+    except FileNotFoundError:
+        return
+
+
 def source_coverage_deferred(topic: str) -> tuple[bool, str]:
     """Return whether the latest run deferred this exact topic before voice generation."""
 
@@ -379,6 +422,9 @@ def run_daily() -> int:
             )
         cmd = [sys.executable or "python", str(SCRIPT_DIR / "pipeline.py"),
                topic, "--platforms", "youtube", "--no-interactive"]
+        qualified_script = prepare_qualified_script(topic, scheduler_result)
+        if qualified_script is not None:
+            cmd.append("--reuse-script")
         environment = os.environ.copy()
         environment.setdefault("AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE", "true")
         clear_attempt_reports()
@@ -388,6 +434,7 @@ def run_daily() -> int:
             ContentHistoryStore(CONTENT_HISTORY).mark_generated(run_id=scheduler_run_id)
             if scheduler_result is not None:
                 TopicBankStateStore(TOPIC_BANK_STATE).mark_success(topic)
+                remove_consumed_qualified_script(qualified_script)
                 update_topic_bank_report(scheduler_result.config)
             finished = dt.datetime.now()
             secs = (finished - started).total_seconds()
@@ -426,6 +473,7 @@ def run_daily() -> int:
                 reason=reason,
                 quarantine_days=scheduler_result.config.topic_bank_quarantine_days,
             )
+            remove_consumed_qualified_script(qualified_script)
             update_topic_bank_report(scheduler_result.config)
         attempted_topics.add(topic)
         append_log(

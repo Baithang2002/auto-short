@@ -395,6 +395,33 @@ class ContentSchedulerTests(unittest.TestCase):
         self.assertEqual(result.selected.topic, proven)
         self.assertEqual(result.selected.topic_bank_status, "proven")
 
+    def test_qualified_unused_topic_is_selected_before_candidate(self) -> None:
+        qualified = "How Sand Dunes Move Across Deserts"
+        candidate = "Why Volcanoes Create New Land"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                qualified: (0.70, DocumentaryViabilityDecision.APPROVED),
+                candidate: (0.95, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(qualified, candidate),
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+
+        result = scheduler.schedule(
+            [],
+            topic_bank_statuses={
+                qualified: "qualified",
+                candidate: "candidate",
+            },
+        )
+
+        self.assertEqual(result.selected.topic, qualified)
+        self.assertEqual(result.selected.topic_bank_status, "qualified")
+        self.assertIn("background source-coverage", "; ".join(result.selected.reasons))
+
     def test_quarantined_topic_is_not_emergency_promoted(self) -> None:
         quarantined = "How Bees Make Honey"
         scheduler = AutonomousContentScheduler(

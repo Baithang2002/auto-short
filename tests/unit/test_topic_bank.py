@@ -67,6 +67,33 @@ class TopicBankStateStoreTests(unittest.TestCase):
         self.assertEqual(record.quarantine_until, "")
         self.assertEqual(record.last_failure_reason, "")
 
+    def test_qualification_creates_ready_topic_then_success_marks_proven(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = TopicBankStateStore(Path(directory) / "topic_bank_state.json")
+            store.mark_qualified(
+                "How Sand Dunes Move",
+                coverage_ratio=1.0,
+                script_path="state/qualified_scripts/sand.json",
+                attempted_at="2026-07-18T00:00:00Z",
+            )
+            qualified = store.load()[0]
+            store.mark_success(
+                "How Sand Dunes Move",
+                attempted_at="2026-07-19T00:00:00Z",
+            )
+            proven = store.load()[0]
+
+        self.assertEqual(qualified.status.value, "qualified")
+        self.assertEqual(qualified.qualification_count, 1)
+        self.assertEqual(qualified.last_coverage_ratio, 1.0)
+        self.assertEqual(
+            qualified.qualified_script_path,
+            "state/qualified_scripts/sand.json",
+        )
+        self.assertEqual(proven.status.value, "proven")
+        self.assertEqual(proven.qualification_count, 1)
+        self.assertEqual(proven.qualified_script_path, "")
+
     def test_bootstrap_migrates_existing_history_without_overwriting_state(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             store = TopicBankStateStore(Path(directory) / "topic_bank_state.json")

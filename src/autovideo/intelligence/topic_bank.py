@@ -16,6 +16,7 @@ class TopicBankStatus(str, Enum):
     """Current production-readiness state of one topic-bank entry."""
 
     CANDIDATE = "candidate"
+    QUALIFIED = "qualified"
     PROVEN = "proven"
     QUARANTINED = "quarantined"
 
@@ -28,7 +29,11 @@ class TopicBankRecord:
     status: TopicBankStatus = TopicBankStatus.CANDIDATE
     success_count: int = 0
     failure_count: int = 0
+    qualification_count: int = 0
     last_attempt_at: str = ""
+    last_qualified_at: str = ""
+    last_coverage_ratio: float | None = None
+    qualified_script_path: str = ""
     last_success_at: str = ""
     last_failure_at: str = ""
     last_failure_reason: str = ""
@@ -55,7 +60,15 @@ class TopicBankRecord:
             status=status,
             success_count=max(0, int(raw.get("success_count", 0) or 0)),
             failure_count=max(0, int(raw.get("failure_count", 0) or 0)),
+            qualification_count=max(0, int(raw.get("qualification_count", 0) or 0)),
             last_attempt_at=str(raw.get("last_attempt_at", "")),
+            last_qualified_at=str(raw.get("last_qualified_at", "")),
+            last_coverage_ratio=(
+                float(raw["last_coverage_ratio"])
+                if raw.get("last_coverage_ratio") is not None
+                else None
+            ),
+            qualified_script_path=str(raw.get("qualified_script_path", "")),
             last_success_at=str(raw.get("last_success_at", "")),
             last_failure_at=str(raw.get("last_failure_at", "")),
             last_failure_reason=str(raw.get("last_failure_reason", "")),
@@ -174,6 +187,11 @@ class TopicBankStateStore:
             statuses[key] = _effective_status(record, current).value
         return statuses
 
+    def record_for(self, topic: str) -> TopicBankRecord | None:
+        """Return the durable record for one topic when present."""
+
+        return _find_record(self.load(), topic)
+
     def mark_success(self, topic: str, *, attempted_at: str | None = None) -> None:
         """Promote a topic after a complete successful pipeline run."""
 
@@ -185,8 +203,42 @@ class TopicBankStateStore:
             status=TopicBankStatus.PROVEN,
             success_count=(current.success_count if current else 0) + 1,
             failure_count=current.failure_count if current else 0,
+            qualification_count=current.qualification_count if current else 0,
             last_attempt_at=timestamp,
+            last_qualified_at=current.last_qualified_at if current else "",
+            last_coverage_ratio=current.last_coverage_ratio if current else None,
+            qualified_script_path="",
             last_success_at=timestamp,
+            last_failure_at=current.last_failure_at if current else "",
+            last_failure_reason="",
+            quarantine_until="",
+        )
+        self.save(_upsert(records, updated))
+
+    def mark_qualified(
+        self,
+        topic: str,
+        *,
+        coverage_ratio: float,
+        script_path: str,
+        attempted_at: str | None = None,
+    ) -> None:
+        """Place a source-covered, unused topic in the daily ready queue."""
+
+        timestamp = attempted_at or _utc_now()
+        records = self.load()
+        current = _find_record(records, topic)
+        updated = TopicBankRecord(
+            topic=topic,
+            status=TopicBankStatus.QUALIFIED,
+            success_count=current.success_count if current else 0,
+            failure_count=current.failure_count if current else 0,
+            qualification_count=(current.qualification_count if current else 0) + 1,
+            last_attempt_at=timestamp,
+            last_qualified_at=timestamp,
+            last_coverage_ratio=max(0.0, min(1.0, float(coverage_ratio))),
+            qualified_script_path=script_path,
+            last_success_at=current.last_success_at if current else "",
             last_failure_at=current.last_failure_at if current else "",
             last_failure_reason="",
             quarantine_until="",
@@ -213,7 +265,11 @@ class TopicBankStateStore:
             status=TopicBankStatus.QUARANTINED,
             success_count=current.success_count if current else 0,
             failure_count=(current.failure_count if current else 0) + 1,
+            qualification_count=current.qualification_count if current else 0,
             last_attempt_at=timestamp,
+            last_qualified_at=current.last_qualified_at if current else "",
+            last_coverage_ratio=current.last_coverage_ratio if current else None,
+            qualified_script_path="",
             last_success_at=current.last_success_at if current else "",
             last_failure_at=timestamp,
             last_failure_reason=reason,

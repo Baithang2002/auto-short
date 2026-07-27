@@ -96,6 +96,8 @@ def build_standard_parser(description: str = "auto_short + uploader orchestrator
                     help="Disable background music")
     ap.add_argument("--review-broll", action="store_true",
                     help="Review and customize b-roll queries per segment before fetching")
+    ap.add_argument("--reuse-script", action="store_true",
+                    help="Reuse output/last_script.json for deterministic scheduled generation")
     ap.add_argument("--no-interactive", action="store_true",
                     help="Disable the interactive 'enter clip path' fallback. Required for "
                          "scheduled runs - otherwise the renderer hangs on stdin if b-roll fails.")
@@ -116,6 +118,7 @@ def build_stage1_extra(args: argparse.Namespace) -> list[str]:
     if args.music_volume is not None: extra += ["--music-volume", str(args.music_volume)]
     if args.no_music:  extra += ["--no-music"]
     if args.review_broll: extra += ["--review-broll"]
+    if getattr(args, "reuse_script", False): extra += ["--reuse-script"]
     if args.no_interactive: extra += ["--no-interactive"]
     return extra
 

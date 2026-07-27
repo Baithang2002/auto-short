@@ -511,7 +511,12 @@ class AutonomousContentScheduler:
             if candidate.decision == SchedulingDecision.SELECTED
             and candidate.viability_decision == DocumentaryViabilityDecision.APPROVED.value
         ]
-        for status in (TopicBankStatus.PROVEN.value, TopicBankStatus.CANDIDATE.value, ""):
+        for status in (
+            TopicBankStatus.QUALIFIED.value,
+            TopicBankStatus.PROVEN.value,
+            TopicBankStatus.CANDIDATE.value,
+            "",
+        ):
             selected = _highest_ranked(
                 candidate for candidate in eligible if candidate.topic_bank_status == status
             )
@@ -669,6 +674,8 @@ class AutonomousContentScheduler:
                 reasons.append("coverage-proven topic receives provider-reliability bonus")
             elif topic_bank_status == TopicBankStatus.CANDIDATE.value:
                 reasons.append("topic-bank candidate is awaiting successful production burn-in")
+            elif topic_bank_status == TopicBankStatus.QUALIFIED.value:
+                reasons.append("topic passed background source-coverage qualification")
             if topic_bank_category_recent:
                 rank = _clamp(rank - self.config.topic_bank_category_diversity_penalty)
         return ScheduledCandidate(

@@ -15,6 +15,40 @@ import pipeline_daily
 
 
 class PipelineDailyTests(unittest.TestCase):
+    def test_prepare_qualified_script_seeds_exact_approved_script(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            state_dir = root / "state"
+            script_dir = state_dir / "qualified_scripts"
+            output_dir = root / "output"
+            script_dir.mkdir(parents=True)
+            approved = script_dir / "approved.json"
+            approved.write_text('{"niche": "Sand dunes"}', encoding="utf-8")
+            state_path = state_dir / "topic_bank_state.json"
+            pipeline_daily.TopicBankStateStore(state_path).mark_qualified(
+                "How Sand Dunes Move",
+                coverage_ratio=1.0,
+                script_path="state/qualified_scripts/approved.json",
+            )
+            scheduler_result = SimpleNamespace(
+                selected=SimpleNamespace(topic_bank_status="qualified"),
+            )
+
+            with patch.object(pipeline_daily, "SCRIPT_DIR", root), \
+                 patch.object(pipeline_daily, "STATE_DIR", state_dir), \
+                 patch.object(pipeline_daily, "OUT_DIR", output_dir), \
+                 patch.object(pipeline_daily, "TOPIC_BANK_STATE", state_path), \
+                 patch.object(pipeline_daily, "QUALIFIED_SCRIPT_DIR", script_dir), \
+                 patch.object(pipeline_daily, "LAST_SCRIPT", output_dir / "last_script.json"):
+                source = pipeline_daily.prepare_qualified_script(
+                    "How Sand Dunes Move",
+                    scheduler_result,
+                )
+                cached = (output_dir / "last_script.json").read_text(encoding="utf-8")
+
+        self.assertEqual(source, approved)
+        self.assertEqual(cached, '{"niche": "Sand dunes"}')
+
     def test_candidate_quality_deferred_detects_fallback_gate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             report_path = Path(directory) / "fallback_quality_report.json"

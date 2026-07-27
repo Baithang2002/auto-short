@@ -5352,6 +5352,11 @@ def main():
     parser.add_argument("--no-interactive", action="store_true",
                         help="Disable the interactive 'enter clip path' prompt when stock sources fail. "
                              "Required for scheduled/unattended runs - otherwise the renderer hangs on stdin.")
+    parser.add_argument(
+        "--coverage-preflight-only",
+        action="store_true",
+        help="Stop after source-coverage validation without voice, rendering, queue creation, or upload.",
+    )
     args = parser.parse_args()
 
     check_deps()
@@ -5366,6 +5371,7 @@ def main():
     reuse_script = args.reuse_script
     review_broll = args.review_broll
     no_interactive = args.no_interactive
+    coverage_preflight_only = args.coverage_preflight_only
     music_path = args.music or None
     music_volume = 0.0 if args.no_music else max(0.0, args.music_volume)
 
@@ -7426,6 +7432,11 @@ def main():
         ),
         PipelineStage("queue_creation", stage_queue_creation, load=load_queue_creation, validate_outputs=validate_queue_outputs),
     ]
+    if coverage_preflight_only:
+        coverage_stage_index = next(
+            index for index, stage in enumerate(stages) if stage.name == "source_coverage"
+        )
+        stages = stages[:coverage_stage_index + 1]
     orchestrator = PipelineOrchestrator(
         stages,
         PipelineStateStore(OUT_DIR / "pipeline_state.json"),
@@ -7435,6 +7446,12 @@ def main():
         resume=True,
         force=os.environ.get("AUTO_VIDEO_FORCE_RERUN", "").strip() == "1",
     )
+
+    if coverage_preflight_only:
+        report = context.values.get("source_coverage", {})
+        ratio = float(report.get("coverage_ratio", 0.0)) if isinstance(report, dict) else 0.0
+        print(f"[Qualification] Source coverage approved ({ratio:.0%}); stopping before voice generation.")
+        return
 
     final = context.values["final"]
     final_yt_safe = context.values["final_yt_safe"]
