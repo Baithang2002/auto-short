@@ -314,8 +314,18 @@ NASA_KEYWORDS = {
 
 def needs_nasa(query):
     """Return True if a query mentions space/astronomy terms NASA covers well."""
-    q = (query or "").lower()
-    return any(kw in q for kw in NASA_KEYWORDS)
+    q = re.sub(r"[^a-z0-9]+", " ", str(query or "").lower()).strip()
+    padded = f" {q} "
+    matched = {
+        keyword
+        for keyword in NASA_KEYWORDS
+        if f" {re.sub(r'[^a-z0-9]+', ' ', keyword).strip()} " in padded
+    }
+    if not matched:
+        return False
+    if matched == {"space"}:
+        return " outer space " in padded or " deep space " in padded
+    return True
 
 
 

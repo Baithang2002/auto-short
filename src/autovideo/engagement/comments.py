@@ -30,19 +30,22 @@ def generate_pinned_comment(
 
 
 def _category(topic: str, segments: Sequence[Mapping[str, object]]) -> str:
-    text = " ".join([
+    text = _normalize_for_matching(" ".join([
         topic,
         " ".join(str(segment.get("narration", "")) for segment in segments),
-    ]).lower()
-    if any(term in text for term in ("octopus", "shark", "penguin", "bee", "animal", "wildlife")):
+    ]))
+    if _contains_any(
+        text,
+        ("octopus", "shark", "penguin", "bee", "bees", "ant", "ants", "insect", "insects", "animal", "wildlife"),
+    ):
         return "nature"
-    if any(term in text for term in ("space", "planet", "saturn", "aurora", "solar", "galaxy")):
+    if _contains_any(text, ("space", "planet", "saturn", "aurora", "solar", "galaxy")):
         return "space"
-    if any(term in text for term in ("roman", "ancient", "empire", "titanic", "civilization")):
+    if _contains_any(text, ("roman", "ancient", "empire", "titanic", "civilization")):
         return "history"
-    if any(term in text for term in ("qr", "internet", "technology", "code", "computer")):
+    if _contains_any(text, ("qr", "internet", "technology", "code", "computer")):
         return "technology"
-    if any(term in text for term in ("ocean", "volcano", "lightning", "weather", "earth")):
+    if _contains_any(text, ("ocean", "volcano", "lightning", "weather", "earth")):
         return "earth_science"
     return "general"
 
@@ -122,3 +125,12 @@ def _pick(options: Sequence[str], seed: str) -> str:
 
 def _clean(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
+
+
+def _normalize_for_matching(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).strip()
+
+
+def _contains_any(text: str, terms: Sequence[str]) -> bool:
+    padded = f" {_normalize_for_matching(text)} "
+    return any(f" {_normalize_for_matching(term)} " in padded for term in terms)

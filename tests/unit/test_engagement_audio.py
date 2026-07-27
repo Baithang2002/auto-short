@@ -83,6 +83,20 @@ class EngagementAudioTests(unittest.TestCase):
         self.assertIn("should", comment.lower())
         self.assertIn("comment", comment.lower())
 
+    def test_empty_spaces_does_not_make_ant_comment_about_outer_space(self) -> None:
+        comment = generate_pinned_comment(
+            topic="How Ants Build Underground Cities",
+            segments=[
+                {
+                    "narration": "Ants avoid freshly dropped soil, creating empty spaces in the nest.",
+                }
+            ],
+            allow_emojis=False,
+        )
+
+        self.assertIn("animal", comment.lower())
+        self.assertNotIn("space topic", comment.lower())
+
     def test_uploader_engagement_report_is_best_effort(self) -> None:
         import uploader
 

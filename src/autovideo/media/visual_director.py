@@ -869,11 +869,11 @@ def _shot_type_for_index(index: int, goal: VisualGoal) -> str:
 
 def _preferred_sources(knowledge: DomainKnowledge | None, narration: str, topic: str) -> tuple[str, ...]:
     text = _normalize(f"{topic} {narration} {knowledge.id if knowledge else ''}")
-    if any(term in text for term in ("aurora", "lightning", "space", "solar", "satellite")):
+    if _contains_any_term(text, ("aurora", "lightning", "space", "solar", "satellite")):
         return ("nasa", "esa", "noaa", "wikimedia", "pexels", "pixabay")
-    if any(term in text for term in ("volcano", "ocean", "weather", "undersea")):
+    if _contains_any_term(text, ("volcano", "ocean", "weather", "undersea")):
         return ("noaa", "wikimedia", "pexels", "pixabay", "nasa")
-    if any(term in text for term in ("roman", "aqueduct", "history")):
+    if _contains_any_term(text, ("roman", "aqueduct", "history")):
         return ("wikimedia", "pixabay", "pexels")
     return ("pexels", "pixabay", "wikimedia")
 
@@ -895,9 +895,19 @@ def _action_phrase(narration: str, broll: str) -> str:
 def _environment(narration: str, broll: str, topic: str) -> str:
     text = _normalize(f"{topic} {broll} {narration}")
     for term in ("underwater", "hive", "ancient Rome", "volcano", "storm", "space", "ocean floor", "reef"):
-        if _normalize(term) in text:
+        if _contains_term(text, term):
             return term
     return ""
+
+
+def _contains_any_term(text: str, terms: tuple[str, ...]) -> bool:
+    return any(_contains_term(text, term) for term in terms)
+
+
+def _contains_term(text: str, term: str) -> bool:
+    normalized_text = f" {_normalize(text)} "
+    normalized_term = _normalize(term)
+    return bool(normalized_term) and f" {normalized_term} " in normalized_text
 
 
 def _clean_query(value: Any) -> str:

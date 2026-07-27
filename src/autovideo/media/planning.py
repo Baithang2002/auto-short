@@ -267,7 +267,7 @@ class QueryPlanner:
             if _has(text, EARTH_ROTATION_TERMS):
                 return "coriolis effect ocean current diagram"
             return _clean_query(f"{base} ocean current diagram")
-        if _has(text, SPACE_TERMS):
+        if _is_astronomy_context(text):
             return _clean_query(f"{base} NASA astronomy")
         if _has(text, OCEAN_TERMS):
             return _clean_query(f"{base} ocean current underwater")
@@ -300,7 +300,7 @@ class QueryPlanner:
             if _has(text, EARTH_ROTATION_TERMS):
                 alternates.extend(["coriolis effect water flow", "ocean current swirl diagram", "rotating water flow animation"])
             alternates.extend(["ocean current map", "global ocean circulation diagram", "water flow arrows ocean"])
-        elif _has(text, SPACE_TERMS):
+        elif _is_astronomy_context(text):
             alternates.extend(["aurora borealis timelapse", "earth atmosphere from space", "solar wind animation"])
         elif _has(text, OCEAN_TERMS):
             alternates.extend(["ocean current aerial", "waves moving ocean", "underwater ocean flow"])
@@ -316,7 +316,7 @@ class QueryPlanner:
 
     def _visual_style(self, text: str, requirements: tuple[CapabilityRequirement, ...]) -> str:
         caps = {req.capability for req in requirements}
-        if _has(text, SPACE_TERMS) and not (_has(text, OCEAN_TERMS) and {"diagrams", "illustrations"} & caps):
+        if _is_astronomy_context(text) and not (_has(text, OCEAN_TERMS) and {"diagrams", "illustrations"} & caps):
             return "real_celestial_media"
         if {"diagrams", "illustrations"} & caps:
             return "explanatory_visual"
@@ -658,6 +658,7 @@ WEATHER_TERMS = {
 WILDLIFE_TERMS = {
     "animal", "wildlife", "fox", "bear", "wolf", "lion", "tiger", "bird", "eagle", "whale",
     "dolphin", "shark", "octopus", "fish", "turtle", "bee", "bees", "honeybee", "honeybees",
+    "ant", "ants", "insect", "insects",
 }
 CITY_TERMS = {"city", "urban", "street", "traffic", "building", "skyscraper"}
 HISTORY_TERMS = {"ancient", "roman", "empire", "history", "castle", "ruins", "road", "archaeology"}
@@ -697,7 +698,7 @@ def classify_scene_type(intent: VisualIntent) -> SceneType:
         return SceneType.SATELLITE
     if _is_energy_context(text):
         return SceneType.ENERGY
-    if _has(text, SPACE_TERMS) and not _has(text, OCEAN_TERMS):
+    if _is_astronomy_context(text) and not _has(text, OCEAN_TERMS):
         return SceneType.ASTRONOMY
     if _has(text, {"volcano", "volcanoes", "volcanic", "lava", "magma", "eruption", "erupting"}):
         return SceneType.VOLCANO
@@ -739,6 +740,16 @@ def _norm(text: str) -> str:
 def _has(text: str, terms: set[str]) -> bool:
     tokens = set(_norm(text).split())
     return bool(tokens & terms)
+
+
+def _is_astronomy_context(text: str) -> bool:
+    """Reject ambiguous uses of ``space`` unless astronomy is otherwise evident."""
+
+    tokens = set(_norm(text).split())
+    if tokens & (SPACE_TERMS - {"space"}):
+        return True
+    normalized = f" {_norm(text)} "
+    return " outer space " in normalized or " deep space " in normalized
 
 
 def _is_energy_context(text: str) -> bool:

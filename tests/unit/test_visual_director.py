@@ -110,6 +110,25 @@ class VisualDirectorTests(unittest.TestCase):
         self.assertIn("octopus", queries)
         self.assertNotIn("alien", queries)
 
+    def test_empty_spaces_does_not_create_outer_space_environment(self) -> None:
+        plan = VisualDirector().plan(
+            topic="How Ants Build Underground Cities",
+            segments=[
+                {
+                    "narration": "Ants avoid freshly dropped soil, creating empty spaces in the nest.",
+                    "broll": "ants forming tunnel cross section",
+                    "broll_queries": ["ants in tunnel movement close up"],
+                }
+            ],
+        )
+
+        intent = plan.intent_for_index(0)
+        queries = " ".join(intent.search_queries).lower()
+
+        self.assertNotEqual(intent.environment, "space")
+        self.assertNotIn("ants space", queries)
+        self.assertEqual(intent.preferred_sources[0], "pexels")
+
     def test_visual_goal_is_present_for_every_intent(self) -> None:
         plan = VisualDirector().plan(
             topic="How Volcanoes Create New Land",

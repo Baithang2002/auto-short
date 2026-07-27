@@ -331,6 +331,25 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertEqual(SceneType.ASTRONOMY, strategy.query_plan.scene_type)
         self.assertLess(strategy.provider_order.index("nasa"), strategy.provider_order.index("pexels"))
 
+    def test_ants_empty_spaces_remains_wildlife_and_does_not_route_to_nasa(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Ants avoid freshly dropped soil, creating empty spaces in the nest.",
+                "broll": "ants forming tunnel cross section",
+                "broll_queries": ["ants space", "ants in tunnel movement close up"],
+            },
+            "How Ants Build Underground Cities",
+        )
+
+        strategy = SourcePlanner(
+            default_provider_capability_registry(local_enabled=False, gemini_image_enabled=False)
+        ).plan(QueryPlanner().plan(intent))
+
+        self.assertEqual(SceneType.WILDLIFE, strategy.query_plan.scene_type)
+        self.assertLess(strategy.provider_order.index("pexels"), strategy.provider_order.index("nasa"))
+        self.assertFalse(auto_short.needs_nasa("ants space"))
+        self.assertTrue(auto_short.needs_nasa("outer space stars"))
+
     def test_gemini_image_is_fallback_unless_illustration_required(self) -> None:
         registry = default_provider_capability_registry(local_enabled=False)
         stock_intent = build_visual_intent(
