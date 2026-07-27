@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "updated_at": "2026-07-27T08:19:46Z",
+  "records": [
+    {
+      "topic": "how ancient Egyptians built stone pyramids",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-22T14:20:34Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-22T14:20:34Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-05T14:20:34Z"
+    },
+    {
+      "topic": "How Bees Make Honey",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:34:36Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:34:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-10T07:34:36Z"
+    },
+    {
+      "topic": "How Camels Survive the Desert",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:37:36Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:37:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-10T07:37:36Z"
+    },
+    {
+      "topic": "how earthquakes can change a river's course",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-22T14:21:31Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-22T14:21:31Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-05T14:21:31Z"
+    },
+    {
+      "topic": "How Forests Clean the Air",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:39:16Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:39:16Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T07:39:16Z"
+    },
+    {
+      "topic": "how forests create their own rain",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-26T13:55:16Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-26T13:55:16Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-09T13:55:16Z"
+    },
+    {
+      "topic": "how glaciers shape mountains and valleys",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-25T06:32:56Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-25T06:32:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-08T06:32:56Z"
+    },
+    {
+      "topic": "How Mangrove Forests Protect Coastlines",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:39:38Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:39:38Z",
+      "last_failure_reason": "visual fallback quality gate deferred topic",
+      "quarantine_until": "2026-08-10T07:39:38Z"
+    },
+    {
+      "topic": "How Sand Dunes Move Across Deserts",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:18:01Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:18:01Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-10T08:18:01Z"
+    },
+    {
+      "topic": "how shipping containers changed world trade",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-22T14:22:22Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-22T14:22:22Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-05T14:22:22Z"
+    },
+    {
+      "topic": "how solar panels turn sunlight into electricity",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "last_attempt_at": "2026-07-24T14:23:58Z",
+      "last_success_at": "2026-07-24T14:23:58Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "How Wildfires Help Some Forests Regrow",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:41:17Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:41:17Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T07:41:17Z"
+    },
+    {
+      "topic": "why ancient cities were built beside rivers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-22T14:20:49Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-22T14:20:49Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-05T14:20:49Z"
+    },
+    {
+      "topic": "Why Butterflies Have Colorful Wings",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:18:20Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:18:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-10T08:18:20Z"
+    },
+    {
+      "topic": "Why Deserts Get So Cold at Night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:19:03Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:19:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
+      "quarantine_until": "2026-08-10T08:19:03Z"
+    },
+    {
+      "topic": "Why Glaciers Carve Valleys",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:19:46Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:19:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T08:19:46Z"
+    },
+    {
+      "topic": "Why Hurricanes Grow Over Warm Oceans",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:19:18Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:19:18Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-10T08:19:18Z"
+    },
+    {
+      "topic": "why lightning creates glass in sand",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-26T13:55:51Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-26T13:55:51Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-09T13:55:51Z"
+    },
+    {
+      "topic": "why Mars has the tallest volcano in the solar system",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-22T14:21:14Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-22T14:21:14Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-05T14:21:14Z"
+    },
+    {
+      "topic": "Why Octopuses Change Color",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T08:14:37Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T08:14:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-10T08:14:37Z"
+    },
+    {
+      "topic": "why penguins do not freeze on Antarctic ice",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "last_attempt_at": "2026-07-25T06:36:49Z",
+      "last_success_at": "2026-07-25T06:36:49Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "Why Rainforests Create Their Own Rain",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "last_attempt_at": "2026-07-27T07:37:09Z",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-27T07:37:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-10T07:37:09Z"
+    }
+  ]
+}
