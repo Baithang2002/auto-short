@@ -12,7 +12,7 @@ lives in `CHANGELOG.md`; architecture boundaries live in `ARCHITECTURE.md`.
 | **Current phase** | Era I - Autonomous YouTube Shorts reliability |
 | **Operating model** | Single channel, single format, GitHub Actions scheduled publishing |
 | **Maturity** | Production-running with strict quality gates; final reliability validation in progress |
-| **Immediate focus** | Validate energy/physics provider routing with real provider responses |
+| **Immediate focus** | Autonomous topic supply and scheduled reliability burn-in |
 
 The system can select a viable topic, generate a script and narration, retrieve and
 verify media, render a Short, apply music/captions/metadata, and upload through the
@@ -57,15 +57,16 @@ merely to create a video.
 | Reliability extensions | Documentary viability, source coverage, semantic queries, scene constraints, canonical entities, verified-media gate, publish-quality gate, and scheduler recovery | Complete |
 | Editorial Identity hotfix | Rejects topic/domain/subject drift before source coverage | Complete |
 | Energy/physics capability-routing hotfix | Routes terrestrial solar/renewable-energy scenes to stock providers while retaining NASA-first astronomy routing | Implemented; awaiting real-provider validation |
+| Autonomous topic supply | Large nature-safe topic bank, coverage-proven priority, category rotation, and exact-repeat blocking | Complete |
 
 ## Current Work
 
-### Validate Energy and Physics Coverage
+### Era I Reliability Burn-In
 
-- **Objective.** Confirm that the energy-routing hotfix allows existing Pexels and Pixabay providers to satisfy Solar Panels and comparable energy/engineering scenes.
-- **Validation.** Run `How Solar Panels Turn Sunlight into Electricity` through GitHub Actions, inspect `source_coverage_report.json`, and confirm that Pexels/Pixabay are probed before voice generation.
-- **Success criteria.** The run either renders solar-focused media or defers only after real provider candidates fail scoring. It must never fail because no provider was ranked.
-- **Non-goal.** Do not weaken source-coverage thresholds or bypass media verification.
+- **Objective.** Prove that GitHub Actions can publish fresh, correct Shorts without daily operator intervention.
+- **Validation.** Monitor scheduled runs using the topic bank, `scheduler_report.json`, `source_coverage_report.json`, `verified_media_report.json`, and `publish_quality_report.json`.
+- **Success criteria.** Runs choose non-repeated, provider-friendly topics; recover from weak candidates; upload only when quality gates pass; and leave complete diagnostics when they defer.
+- **Non-goal.** Do not weaken source-coverage thresholds, media verification, rendered QA, or publish-quality gates just to force daily output.
 
 ## Next Milestones
 

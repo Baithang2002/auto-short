@@ -13,6 +13,7 @@ from autovideo.intelligence import (
     ContentSchedulerConfig,
     DocumentaryViabilityDecision,
     JsonTopicSource,
+    SchedulingDecision,
     TextTopicSource,
     TopicCandidate,
     load_topic_sources,
@@ -36,6 +37,7 @@ class ContentSchedulerTests(unittest.TestCase):
             topic_cooldown_days=90,
             subject_cooldown_days=180,
             category_cooldown_days=7,
+            coverage_proven_topics=(),
             evergreen_topics=(),
         )
 
@@ -206,7 +208,10 @@ class ContentSchedulerTests(unittest.TestCase):
                 rejected: (0.30, DocumentaryViabilityDecision.SKIP),
                 evergreen: (0.90, DocumentaryViabilityDecision.APPROVED),
             }),
-            ContentSchedulerConfig(evergreen_topics=(evergreen,)),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(),
+                evergreen_topics=(evergreen,),
+            ),
             now=lambda: self.now,
         )
 
@@ -219,7 +224,10 @@ class ContentSchedulerTests(unittest.TestCase):
         evergreen = "How Penguins Survive Antarctica"
         scheduler = AutonomousContentScheduler(
             _ViabilityEngine({evergreen: (0.80, DocumentaryViabilityDecision.APPROVED)}),
-            ContentSchedulerConfig(evergreen_topics=(evergreen,)),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(),
+                evergreen_topics=(evergreen,),
+            ),
             now=lambda: self.now,
         )
 
@@ -228,15 +236,154 @@ class ContentSchedulerTests(unittest.TestCase):
         self.assertEqual(result.selected.topic, evergreen)
         self.assertEqual(result.selected.selection_path, "evergreen_fallback")
 
+    def test_coverage_proven_topics_are_prioritized_before_weak_source_topics(self) -> None:
+        proven = "How Bees Make Honey"
+        source = "how shipping containers changed world trade"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                proven: (0.70, DocumentaryViabilityDecision.APPROVED),
+                source: (0.90, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(proven,),
+                coverage_proven_bonus=0.25,
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+
+        result = scheduler.schedule([TopicCandidate(source, "topics.txt")])
+
+        self.assertEqual(result.selected.topic, proven)
+        self.assertEqual(result.selected.source, "coverage_proven")
+        self.assertIn("provider-reliability bonus", "; ".join(result.selected.reasons))
+
+    def test_coverage_proven_priority_still_respects_subject_cooldown(self) -> None:
+        proven = "How Bees Make Honey"
+        source = "Why Volcanoes Create New Land"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                proven: (0.95, DocumentaryViabilityDecision.APPROVED),
+                source: (0.72, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(proven,),
+                coverage_proven_bonus=0.25,
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+        history = [ContentHistoryRecord(
+            topic="Why Bees Build Wax Hives",
+            primary_subject="bee",
+            category="Wildlife",
+            documentary_angle="process",
+            viability_score=0.7,
+            decision="SELECTED",
+            status="generated",
+            reason="",
+            recorded_at="2026-07-17T00:00:00Z",
+            generated_at="2026-07-17T00:00:00Z",
+        )]
+
+        result = scheduler.schedule([TopicCandidate(source, "topics.txt")], history)
+
+        self.assertEqual(result.selected.topic, source)
+        decisions = {candidate.topic: candidate.decision for candidate in result.candidates}
+        self.assertEqual(decisions[proven], SchedulingDecision.DEFERRED)
+
+    def test_exact_generated_topic_is_never_reselected_by_emergency_fallback(self) -> None:
+        topic = "How Bees Make Honey"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({topic: (0.95, DocumentaryViabilityDecision.APPROVED)}),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(topic,),
+                evergreen_topics=(),
+                maximum_similarity_threshold=1.0,
+            ),
+            now=lambda: self.now,
+        )
+        history = [ContentHistoryRecord(
+            topic=topic,
+            primary_subject="bee",
+            category="Wildlife",
+            documentary_angle="process",
+            viability_score=0.8,
+            decision="SELECTED",
+            status="generated",
+            reason="",
+            recorded_at="2026-07-17T00:00:00Z",
+            generated_at="2026-07-17T00:00:00Z",
+        )]
+
+        result = scheduler.schedule([], history)
+
+        self.assertIsNone(result.selected)
+        self.assertEqual(result.candidates[0].decision, SchedulingDecision.REJECTED)
+        self.assertIn("exact topic was already generated", result.candidates[0].reasons)
+
+    def test_default_coverage_proven_bank_is_large_and_nature_safe(self) -> None:
+        config = ContentSchedulerConfig()
+
+        self.assertGreaterEqual(len(config.coverage_proven_topics), 100)
+        self.assertIn("How Bees Make Honey", config.coverage_proven_topics)
+        self.assertIn("How The Amazon Rainforest Makes Rain", config.coverage_proven_topics)
+        self.assertIn("How the Northern Lights Are Created", config.coverage_proven_topics)
+        self.assertIn("Why The Grand Canyon Looks So Huge", config.coverage_proven_topics)
+
+    def test_topic_bank_category_rotation_prefers_a_fresh_category(self) -> None:
+        wildlife = "How Bees Make Honey"
+        nature = "Why Volcanoes Create New Land"
+        scheduler = AutonomousContentScheduler(
+            _ViabilityEngine({
+                wildlife: (0.95, DocumentaryViabilityDecision.APPROVED),
+                nature: (0.80, DocumentaryViabilityDecision.APPROVED),
+            }),
+            ContentSchedulerConfig(
+                coverage_proven_topics=(wildlife, nature),
+                coverage_proven_bonus=0.10,
+                topic_bank_category_cooldown_days=7,
+                topic_bank_category_diversity_penalty=0.40,
+                evergreen_topics=(),
+            ),
+            now=lambda: self.now,
+        )
+        history = [ContentHistoryRecord(
+            topic="How Dolphins Use Sound to Hunt",
+            primary_subject="dolphin",
+            category="Wildlife",
+            documentary_angle="process",
+            viability_score=0.8,
+            decision="SELECTED",
+            status="generated",
+            reason="",
+            recorded_at="2026-07-17T00:00:00Z",
+            generated_at="2026-07-17T00:00:00Z",
+        )]
+
+        result = scheduler.schedule([], history)
+
+        self.assertEqual(result.selected.topic, nature)
+        wildlife_candidate = next(candidate for candidate in result.candidates if candidate.topic == wildlife)
+        self.assertEqual(wildlife_candidate.topic_bank_category, "Wildlife")
+        self.assertEqual(wildlife_candidate.topic_bank_category_diversity_score, 0.0)
+        self.assertIn("topic-bank category", "; ".join(wildlife_candidate.reasons))
+
     def test_config_reads_topic_sources_and_evergreen_pool(self) -> None:
         config = ContentSchedulerConfig.from_env({
             "AUTO_VIDEO_SCHEDULER_TOPIC_SOURCES": "ideas.json,topics.txt",
             "AUTO_VIDEO_SCHEDULER_EVERGREEN_TOPICS": "Aurora,Volcanoes",
+            "AUTO_VIDEO_SCHEDULER_COVERAGE_PROVEN_TOPICS": "Bees,Volcanoes",
+            "AUTO_VIDEO_SCHEDULER_FORBID_REPEATED_TOPICS": "true",
+            "AUTO_VIDEO_SCHEDULER_TOPIC_BANK_CATEGORY_COOLDOWN_DAYS": "4",
             "AUTO_VIDEO_SCHEDULER_MAX_CANDIDATES": "12",
         })
 
         self.assertEqual(config.topic_sources, ("ideas.json", "topics.txt"))
         self.assertEqual(config.evergreen_topics, ("Aurora", "Volcanoes"))
+        self.assertEqual(config.coverage_proven_topics, ("Bees", "Volcanoes"))
+        self.assertTrue(config.forbid_repeated_topics)
+        self.assertEqual(config.topic_bank_category_cooldown_days, 4)
         self.assertEqual(config.max_candidates, 12)
 
     def test_multiple_sources_are_deduplicated(self) -> None:

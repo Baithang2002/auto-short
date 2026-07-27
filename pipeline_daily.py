@@ -176,6 +176,9 @@ def schedule_topic(excluded_topics: set[str] | None = None) -> tuple[str | None,
     ]
     config = replace(
         config,
+        coverage_proven_topics=tuple(
+            topic for topic in config.coverage_proven_topics if topic.casefold() not in excluded
+        ),
         evergreen_topics=tuple(
             topic for topic in config.evergreen_topics if topic.casefold() not in excluded
         ),

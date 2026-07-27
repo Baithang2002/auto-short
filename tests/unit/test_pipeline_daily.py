@@ -108,6 +108,46 @@ class PipelineDailyTests(unittest.TestCase):
         ):
             self.assertEqual(pipeline_daily.max_topic_attempts(), 3)
 
+    def test_schedule_topic_excludes_attempted_proven_and_evergreen_topics(self) -> None:
+        captured = {}
+
+        class FakeScheduler:
+            def __init__(self, config):
+                captured["config"] = config
+
+            def schedule(self, _candidates, _history):
+                return SimpleNamespace(
+                    selected=SimpleNamespace(topic="Fresh proven"),
+                    write_json=lambda _path: None,
+                )
+
+        class FakeStore:
+            def __init__(self, _path):
+                pass
+
+            def load(self):
+                return []
+
+            def record_decisions(self, _result, *, run_id):
+                captured["run_id"] = run_id
+
+        config = pipeline_daily.ContentSchedulerConfig(
+            topic_sources=("topics.txt",),
+            coverage_proven_topics=("Used topic", "Fresh proven"),
+            evergreen_topics=("Used topic", "Fresh evergreen"),
+        )
+
+        with patch.object(pipeline_daily.ContentSchedulerConfig, "from_env", return_value=config), \
+             patch.object(pipeline_daily, "topic_source_for_path", return_value=SimpleNamespace()), \
+             patch.object(pipeline_daily, "load_topic_sources", return_value=[]), \
+             patch.object(pipeline_daily, "AutonomousContentScheduler", FakeScheduler), \
+             patch.object(pipeline_daily, "ContentHistoryStore", FakeStore):
+            topic, _run_id, _result = pipeline_daily.schedule_topic({"Used topic"})
+
+        self.assertEqual(topic, "Fresh proven")
+        self.assertEqual(captured["config"].coverage_proven_topics, ("Fresh proven",))
+        self.assertEqual(captured["config"].evergreen_topics, ("Fresh evergreen",))
+
 
 if __name__ == "__main__":
     unittest.main()
