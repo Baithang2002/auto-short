@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-27T12:47:12Z",
+  "updated_at": "2026-07-28T14:39:32Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -379,15 +379,15 @@
     },
     {
       "topic": "Why Flamingos Are Pink",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-27T12:47:12Z",
+      "last_attempt_at": "2026-07-28T14:39:32Z",
       "last_qualified_at": "2026-07-27T12:47:12Z",
       "last_coverage_ratio": 0.8333,
-      "qualified_script_path": "state/qualified_scripts/a85cd82dac310a72de72.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-28T14:39:32Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""

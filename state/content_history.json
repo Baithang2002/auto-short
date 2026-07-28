@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-27T09:22:35Z",
+      "recorded_at": "2026-07-28T14:34:28Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-27T09:22:35Z",
+      "recorded_at": "2026-07-28T14:34:28Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1526,6 +1526,34 @@
       "source": "coverage_proven",
       "run_id": "da2c61802317452bb41167df7cbd5eb1",
       "generated_at": "2026-07-27T09:25:54Z"
+    },
+    {
+      "topic": "How Ants Build Underground Cities",
+      "primary_subject": "ant",
+      "category": "Engineering",
+      "documentary_angle": "process",
+      "viability_score": 0.6278,
+      "decision": "REJECTED",
+      "status": "rejected",
+      "reason": "exact topic was already generated",
+      "recorded_at": "2026-07-28T14:34:28Z",
+      "source": "coverage_proven",
+      "run_id": "",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Flamingos Are Pink",
+      "primary_subject": "flamingo",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "recent topic-bank category receives a rotation penalty; topic passed background source-coverage qualification",
+      "recorded_at": "2026-07-28T14:34:28Z",
+      "source": "coverage_proven",
+      "run_id": "5788173a053040b5bdc8bf3a3a98f524",
+      "generated_at": "2026-07-28T14:39:32Z"
     }
   ]
 }
