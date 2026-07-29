@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-29T09:07:38Z",
+  "updated_at": "2026-07-29T11:51:11Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -408,6 +408,21 @@
       "quarantine_until": "2026-08-10T08:18:20Z"
     },
     {
+      "topic": "Why Coral Reefs Build Underwater Cities",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T11:50:42Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T11:50:42Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
+      "quarantine_until": "2026-08-12T11:50:42Z"
+    },
+    {
       "topic": "Why Deserts Get So Cold at Night",
       "status": "quarantined",
       "success_count": 0,
@@ -481,6 +496,21 @@
       "last_failure_at": "2026-07-27T08:19:18Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
       "quarantine_until": "2026-08-10T08:19:18Z"
+    },
+    {
+      "topic": "Why Jupiter Has a Giant Red Spot",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T11:49:30Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T11:49:30Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-12T11:49:30Z"
     },
     {
       "topic": "why lightning creates glass in sand",
@@ -586,6 +616,36 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "Why The Amazon River Is So Powerful",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-29T11:51:11Z",
+      "last_qualified_at": "2026-07-29T11:51:11Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/e60a76f138c42b20abf4.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "Why The Ocean Looks Blue",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T11:50:05Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T11:50:05Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-12T11:50:05Z"
     },
     {
       "topic": "Why Tsunamis Cross Entire Oceans",
