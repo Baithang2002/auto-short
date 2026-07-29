@@ -148,15 +148,35 @@ def append_log(line: str) -> None:
         f.write(line + "\n")
 
 
-def already_posted_today() -> bool:
-    """True if daily_runs.log shows a successful (exit=0) entry for today's date.
-    Used so a backup cron doesn't double-post when the primary cron already ran."""
+def daily_slot() -> str:
+    """Return the configured daily publish slot name.
+
+    Multiple scheduled uploads may run in one calendar day. The slot name lets
+    backup crons suppress only their own primary run instead of suppressing the
+    later planned upload.
+    """
+
+    raw = os.environ.get("AUTO_VIDEO_DAILY_SLOT", "daily").strip().lower()
+    return re.sub(r"[^a-z0-9_-]+", "-", raw).strip("-") or "daily"
+
+
+def already_posted_today(slot: str) -> bool:
+    """True if daily_runs.log shows a successful entry for today's slot.
+
+    Used so a backup cron doesn't double-post when that slot's primary cron
+    already ran. Legacy log lines without a slot are treated as the original
+    evening/daily slot only.
+    """
     if not RUN_LOG.exists():
         return False
     today = dt.datetime.now().strftime("%Y-%m-%d")
     try:
         for line in RUN_LOG.read_text(encoding="utf-8").splitlines():
-            if line.startswith(today) and "exit=0" in line:
+            if not line.startswith(today) or "exit=0" not in line:
+                continue
+            if f"slot={slot!r}" in line:
+                return True
+            if "slot=" not in line and slot in {"daily", "evening"}:
                 return True
     except OSError:
         return False
@@ -392,8 +412,9 @@ def max_topic_attempts() -> int:
 def run_daily() -> int:
     """Publish one quality-approved daily Short, recovering from weak topics."""
 
-    if already_posted_today():
-        print(f"[daily] A successful post already happened today. Skipping (backup cron).")
+    slot = daily_slot()
+    if already_posted_today(slot):
+        print(f"[daily] A successful post already happened today for slot={slot!r}. Skipping (backup cron).")
         return 0
 
     attempt_limit = max_topic_attempts()
@@ -406,11 +427,11 @@ def run_daily() -> int:
             topic, scheduler_run_id, scheduler_result = schedule_topic(attempted_topics)
         except (OSError, ValueError, RuntimeError) as exc:
             print(f"[daily] scheduler failed: {exc}")
-            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler_error={exc!r}")
+            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  slot={slot!r}  scheduler_error={exc!r}")
             return 2
         if not topic:
             print("[daily] no eligible topic remains after quality recovery.")
-            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  scheduler=no_eligible_topic")
+            append_log(f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic=None  exit=2  slot={slot!r}  scheduler=no_eligible_topic")
             return 2
         if scheduler_result is None:
             print(f"[daily] {dt.datetime.now():%Y-%m-%d %H:%M:%S}  legacy topic rotation: {topic!r}")
@@ -440,7 +461,7 @@ def run_daily() -> int:
             secs = (finished - started).total_seconds()
             append_log(
                 f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit=0  "
-                f"duration={secs:.0f}s  attempts={attempt_number}"
+                f"slot={slot!r}  duration={secs:.0f}s  attempts={attempt_number}"
             )
             print(f"[daily] done ({secs:.0f}s, exit 0). Logged to {RUN_LOG}")
             return 0
@@ -457,7 +478,7 @@ def run_daily() -> int:
                 )
             append_log(
                 f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
-                f"duration={secs:.0f}s  critical_failure=true"
+                f"slot={slot!r}  duration={secs:.0f}s  critical_failure=true"
             )
             print(f"[daily] stopped after critical failure ({secs:.0f}s, exit {proc.returncode}).")
             return proc.returncode
@@ -478,7 +499,7 @@ def run_daily() -> int:
         attempted_topics.add(topic)
         append_log(
             f"{dt.datetime.now():%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
-            f"attempt={attempt_number}/{attempt_limit}  quality_deferred={reason!r}"
+            f"slot={slot!r}  attempt={attempt_number}/{attempt_limit}  quality_deferred={reason!r}"
         )
         if attempt_number < attempt_limit:
             print(
