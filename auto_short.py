@@ -6621,6 +6621,7 @@ def main():
             if replacement is None:
                 # Never allow a rejected replacement to displace the original.
                 media_assets[idx] = original_asset
+                result = initial_result
                 if request.priority is not VerificationPriority.CRITICAL:
                     result = replace(
                         initial_result,

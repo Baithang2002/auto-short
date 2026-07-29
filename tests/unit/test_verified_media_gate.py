@@ -4,6 +4,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from tests.unit import _path  # noqa: F401
+
 from autovideo.media import (
     DownloadedMediaEvidence,
     VerificationDecision,
@@ -55,6 +57,25 @@ class VerifiedMediaGateTests(unittest.TestCase):
         )
 
         result = gate.evaluate(self._request())
+
+        self.assertEqual(VerificationDecision.VERIFIED, result.decision)
+        self.assertFalse(result.should_abort)
+
+    def test_accepts_clear_critical_entity_at_configured_threshold(self) -> None:
+        gate = VerifiedMediaGate(
+            VerifiedMediaGateConfig(
+                enabled=True,
+                critical_confidence_threshold=0.75,
+            ),
+            verifier=lambda request, sample_count: DownloadedMediaEvidence(
+                entity_match=True,
+                entity_confidence=0.75,
+                verified_entity="ants",
+                reasoning="frames clearly show ants",
+            ),
+        )
+
+        result = gate.evaluate(self._request(action=""))
 
         self.assertEqual(VerificationDecision.VERIFIED, result.decision)
         self.assertFalse(result.should_abort)
