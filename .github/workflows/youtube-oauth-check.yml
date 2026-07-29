@@ -1,0 +1,53 @@
+name: YouTube OAuth Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate YouTube OAuth refresh
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-auth requests
+          python - <<'PY'
+          import os
+          import sys
+          from google.auth.transport.requests import Request
+          from google.oauth2.credentials import Credentials
+
+          missing = [
+              name for name in ("YT_CLIENT_ID", "YT_CLIENT_SECRET", "YT_REFRESH_TOKEN")
+              if not os.environ.get(name, "").strip()
+          ]
+          if missing:
+              print(f"Missing required secrets: {', '.join(missing)}")
+              sys.exit(1)
+
+          creds = Credentials(
+              token=None,
+              refresh_token=os.environ["YT_REFRESH_TOKEN"].strip(),
+              token_uri="https://oauth2.googleapis.com/token",
+              client_id=os.environ["YT_CLIENT_ID"].strip(),
+              client_secret=os.environ["YT_CLIENT_SECRET"].strip(),
+              scopes=["https://www.googleapis.com/auth/youtube.upload"],
+          )
+          creds.refresh(Request())
+          if not creds.valid or not creds.token:
+              print("OAuth refresh completed but did not produce a valid access token")
+              sys.exit(1)
+          print("YouTube OAuth refresh OK for youtube.upload scope")
+          PY
