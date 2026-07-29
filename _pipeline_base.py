@@ -179,7 +179,7 @@ def main(engine_script: str, *,
     if not may_upload:
         print(f"[{prefix}] Upload deferred: {quality_reason}.")
         print(f"[{prefix}] Render remains in the pending queue for review.")
-        return
+        sys.exit(1)
 
     # ---- Stage 2 ----
     run_stage2(video_path, args.platforms, args.headless, prefix=prefix)

@@ -182,6 +182,47 @@ class PublishQualityGateTests(unittest.TestCase):
             check.name for check in report.checks if check.severity.value == "DEFER"
         ])
 
+    def test_configured_fallback_allows_transient_critical_rendered_frame_unavailability(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 0,
+                    "decision": "unavailable",
+                    "priority": "critical",
+                    "expected_entity": "flamingo",
+                    "reason": "429 RESOURCE_EXHAUSTED: Gemini quota exceeded",
+                }],
+            })
+            report = PublishQualityGate(PublishQualityConfig(
+                require_verified_rendered_critical=True,
+                allow_rendered_critical_when_vision_unavailable=True,
+            )).evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.APPROVED, report.verdict)
+        self.assertIn("rendered_visual_qa", [
+            check.name for check in report.checks if check.severity.value == "WARNING"
+        ])
+
+    def test_configured_fallback_does_not_allow_non_provider_critical_unavailability(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 0,
+                    "decision": "unavailable",
+                    "priority": "critical",
+                    "expected_entity": "flamingo",
+                    "reason": "sample frame could not be extracted",
+                }],
+            })
+            report = PublishQualityGate(PublishQualityConfig(
+                require_verified_rendered_critical=True,
+                allow_rendered_critical_when_vision_unavailable=True,
+            )).evaluate(artifacts)
+        self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
+
     def test_blocks_missing_caption_or_failed_decode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -211,6 +252,12 @@ class PublishQualityGateTests(unittest.TestCase):
             "AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL": "true",
         })
         self.assertTrue(config.require_verified_rendered_critical)
+
+    def test_configuration_can_allow_transient_vision_unavailability_fallback(self) -> None:
+        config = PublishQualityConfig.from_env({
+            "AUTO_VIDEO_RENDERED_VISUAL_QA_ALLOW_VISION_UNAVAILABLE": "true",
+        })
+        self.assertTrue(config.allow_rendered_critical_when_vision_unavailable)
 
     def test_upload_enforcement_uses_persisted_verdict(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

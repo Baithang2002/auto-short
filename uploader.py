@@ -958,6 +958,14 @@ def main():
                 print(f"        screenshot: {res['screenshot']}")
     print(f"\nLog -> {LOG_PATH}\n")
 
+    failed = [
+        platform
+        for platform in args.platforms
+        if results.get(platform.lower(), {}).get("status") != "ok"
+    ]
+    if failed:
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -41,6 +41,7 @@ class PublishQualityConfig:
     max_hybrid_composer_ratio: float = 0.50
     allow_clip_audio: bool = False
     require_verified_rendered_critical: bool = False
+    allow_rendered_critical_when_vision_unavailable: bool = False
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> "PublishQualityConfig":
@@ -70,6 +71,11 @@ class PublishQualityConfig:
             require_verified_rendered_critical=_env_bool(
                 values,
                 "AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL",
+                False,
+            ),
+            allow_rendered_critical_when_vision_unavailable=_env_bool(
+                values,
+                "AUTO_VIDEO_RENDERED_VISUAL_QA_ALLOW_VISION_UNAVAILABLE",
                 False,
             ),
         )
@@ -374,6 +380,18 @@ class PublishQualityGate:
             if str(scene.get("priority", "")).lower() == "critical"
         ]
         if unavailable_critical and self.config.require_verified_rendered_critical:
+            if (
+                self.config.allow_rendered_critical_when_vision_unavailable
+                and all(_is_transient_vision_unavailable(scene) for scene in unavailable_critical)
+            ):
+                return PublishQualityCheck(
+                    name="rendered_visual_qa",
+                    severity=QualitySeverity.WARNING,
+                    message="critical final-render frames could not be verified due to transient vision provider limits",
+                    metrics={
+                        "unavailable_critical_scene_count": len(unavailable_critical),
+                    },
+                )
             return _defer(
                 "rendered_visual_qa",
                 "critical final-render frames could not be verified",
@@ -486,3 +504,23 @@ def _env_float(env: Mapping[str, str], name: str, default: float) -> float:
 
 def _clamp(value: float) -> float:
     return max(0.0, min(1.0, value))
+
+
+def _is_transient_vision_unavailable(scene: Mapping[str, Any]) -> bool:
+    text = " ".join(
+        str(scene.get(key, ""))
+        for key in ("reason", "error")
+    ).lower()
+    return any(
+        token in text
+        for token in (
+            "429",
+            "503",
+            "resource_exhausted",
+            "quota",
+            "rate-limit",
+            "rate limit",
+            "unavailable",
+            "high demand",
+        )
+    )
