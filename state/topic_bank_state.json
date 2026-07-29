@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-28T14:39:32Z",
+  "updated_at": "2026-07-29T09:07:38Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -168,6 +168,36 @@
       "quarantine_until": "2026-08-10T12:45:37Z"
     },
     {
+      "topic": "How Monsoon Rains Begin",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:02:07Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:02:07Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-12T09:02:07Z"
+    },
+    {
+      "topic": "How Mountains Rise From the Earth",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:01:32Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:01:32Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-12T09:01:32Z"
+    },
+    {
       "topic": "How Roman Aqueducts Changed Civilization",
       "status": "quarantined",
       "success_count": 0,
@@ -318,6 +348,21 @@
       "quarantine_until": "2026-08-10T12:46:31Z"
     },
     {
+      "topic": "How Tides Move the Sea",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:04:30Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:04:30Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
+      "quarantine_until": "2026-08-12T09:04:30Z"
+    },
+    {
       "topic": "How Wildfires Help Some Forests Regrow",
       "status": "quarantined",
       "success_count": 0,
@@ -408,6 +453,21 @@
       "quarantine_until": "2026-08-10T08:19:46Z"
     },
     {
+      "topic": "Why Hail Forms Inside Storm Clouds",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:07:38Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:07:38Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-12T09:07:38Z"
+    },
+    {
       "topic": "Why Hurricanes Grow Over Warm Oceans",
       "status": "quarantined",
       "success_count": 0,
@@ -451,6 +511,21 @@
       "last_failure_at": "2026-07-22T14:21:14Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-05T14:21:14Z"
+    },
+    {
+      "topic": "Why Ocean Currents Shape Climate",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:02:49Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:02:49Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-12T09:02:49Z"
     },
     {
       "topic": "Why Octopuses Change Color",
@@ -511,6 +586,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "Why Tsunamis Cross Entire Oceans",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T09:03:47Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-29T09:03:47Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-12T09:03:47Z"
     },
     {
       "topic": "Why Whales Sing Across the Ocean",
