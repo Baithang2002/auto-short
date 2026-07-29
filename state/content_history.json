@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-29T09:04:30Z",
+      "recorded_at": "2026-07-29T14:31:10Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-29T09:04:30Z",
+      "recorded_at": "2026-07-29T14:31:10Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1536,7 +1536,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-29T09:04:30Z",
+      "recorded_at": "2026-07-29T14:31:10Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1564,7 +1564,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-29T09:04:30Z",
+      "recorded_at": "2026-07-29T14:31:10Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1652,6 +1652,20 @@
       "source": "coverage_proven",
       "run_id": "15ebc739c2464857b5983790f013dba7",
       "generated_at": ""
+    },
+    {
+      "topic": "How the Northern Lights Are Created",
+      "primary_subject": "northern light",
+      "category": "Space",
+      "documentary_angle": "process",
+      "viability_score": 0.7226,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "topic-bank candidate is awaiting successful production burn-in",
+      "recorded_at": "2026-07-29T14:31:10Z",
+      "source": "coverage_proven",
+      "run_id": "182a2b666b294ca092da94808bbc61d2",
+      "generated_at": "2026-07-29T14:35:51Z"
     }
   ]
 }

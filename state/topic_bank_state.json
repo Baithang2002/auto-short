@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-29T11:51:11Z",
+  "updated_at": "2026-07-29T14:35:51Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -346,6 +346,21 @@
       "last_failure_at": "2026-07-27T12:46:31Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T12:46:31Z"
+    },
+    {
+      "topic": "How the Northern Lights Are Created",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-29T14:35:51Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-29T14:35:51Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Tides Move the Sea",
