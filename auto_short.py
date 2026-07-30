@@ -6728,6 +6728,26 @@ def main():
         return Path(record.outputs.get("documentary_viability_report", "")).exists()
 
     def stage_critical_asset_discovery(ctx: PipelineContext) -> StageResult:
+        if not _env_flag("AUTO_VIDEO_CRITICAL_ASSET_ENFORCE", default="true"):
+            plan = {
+                "version": 1,
+                "topic": niche,
+                "topic_card": None,
+                "status": "SKIPPED",
+                "failure_classification": "DISABLED_FOR_TEST_RENDER",
+                "failure_reason": "critical asset discovery disabled by AUTO_VIDEO_CRITICAL_ASSET_ENFORCE",
+                "providers": [],
+                "roles": [],
+            }
+            plan_path = write_manifest(OUT_DIR / "critical_asset_plan.json", plan)
+            ctx.values["critical_asset_plan"] = plan
+            print("[Critical assets] SKIPPED classification=DISABLED_FOR_TEST_RENDER")
+            return StageResult(outputs={
+                "critical_asset_plan": str(plan_path),
+                "status": plan["status"],
+                "failure_classification": plan["failure_classification"],
+                "critical_media_files": [],
+            })
         try:
             plan = discover_critical_assets(niche, output_dir=OUT_DIR)
         except Exception as exc:

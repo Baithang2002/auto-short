@@ -136,6 +136,13 @@ jobs:
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
+            if [ "${{ github.ref_name }}" != "main" ]; then
+              export AUTO_VIDEO_CRITICAL_ASSET_ENFORCE="false"
+              export AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE="false"
+              export AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED="false"
+              export AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED="false"
+              export AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE="false"
+            fi
             python pipeline.py "${{ github.event.inputs.topic }}" --platforms youtube --no-interactive --skip-upload
           else
             python pipeline_daily.py
