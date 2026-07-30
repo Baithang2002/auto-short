@@ -17,7 +17,7 @@ permissions:
   contents: write          # needed to commit daily_state.json back after each run
 
 concurrency:
-  group: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' && format('manual-render-test-{0}', github.ref_name) || 'daily-shorts-publish' }}
+  group: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' && format('manual-render-test-{0}', github.run_id) || 'daily-shorts-publish' }}
   cancel-in-progress: false
 
 jobs:
