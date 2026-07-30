@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T06:14:19Z",
+      "recorded_at": "2026-07-30T14:29:56Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T06:14:19Z",
+      "recorded_at": "2026-07-30T14:29:56Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1536,7 +1536,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:14:19Z",
+      "recorded_at": "2026-07-30T14:29:56Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1564,7 +1564,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:14:19Z",
+      "recorded_at": "2026-07-30T14:29:56Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1676,7 +1676,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:14:19Z",
+      "recorded_at": "2026-07-30T14:29:56Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1862,6 +1862,48 @@
       "source": "coverage_proven",
       "run_id": "922cb9e82d5947b38e4c99b693e23144",
       "generated_at": "2026-07-30T06:18:05Z"
+    },
+    {
+      "topic": "Why Leaves Change Color",
+      "primary_subject": "leave",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6322,
+      "decision": "REJECTED",
+      "status": "rejected",
+      "reason": "exact topic was already generated",
+      "recorded_at": "2026-07-30T14:29:56Z",
+      "source": "coverage_proven",
+      "run_id": "",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Space Looks Black",
+      "primary_subject": "space",
+      "category": "Space",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6861,
+      "decision": "DEFERRED",
+      "status": "deferred",
+      "reason": "primary subject is inside cooldown",
+      "recorded_at": "2026-07-30T14:29:56Z",
+      "source": "coverage_proven",
+      "run_id": "",
+      "generated_at": ""
+    },
+    {
+      "topic": "How The Sun Creates Solar Flares",
+      "primary_subject": "sun",
+      "category": "Space",
+      "documentary_angle": "process",
+      "viability_score": 0.7262,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "recent category receives a diversity penalty; recent topic-bank category receives a rotation penalty; partial historical topic similarity penalized; topic passed background source-coverage qualification",
+      "recorded_at": "2026-07-30T14:29:56Z",
+      "source": "coverage_proven",
+      "run_id": "b849efa555ee44d694f00feeed9c2724",
+      "generated_at": "2026-07-30T14:34:41Z"
     }
   ]
 }

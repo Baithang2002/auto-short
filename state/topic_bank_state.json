@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-30T11:35:06Z",
+  "updated_at": "2026-07-30T14:34:41Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -514,15 +514,15 @@
     },
     {
       "topic": "How The Sun Creates Solar Flares",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-30T11:34:47Z",
+      "last_attempt_at": "2026-07-30T14:34:41Z",
       "last_qualified_at": "2026-07-30T11:34:47Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/9549b0d25384fb049633.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-30T14:34:41Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
