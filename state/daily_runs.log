@@ -108,3 +108,9 @@
 2026-07-29 09:04:30  topic='How Tides Move the Sea'  exit=1  attempt=5/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%'
 2026-07-29 09:07:38  topic='Why Hail Forms Inside Storm Clouds'  exit=1  attempt=6/6  quality_deferred='verified media gate rejected planned scene media'
 2026-07-29 14:31:10  topic='How the Northern Lights Are Created'  exit=0  slot='evening'  duration=281s  attempts=1
+2026-07-30 06:02:11  topic='Why Oceans Have Waves'  exit=1  slot='morning'  attempt=1/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%'
+2026-07-30 06:05:44  topic='How Lava Cools Into Rock'  exit=1  slot='morning'  attempt=2/6  quality_deferred='post-render publish quality gate deferred topic'
+2026-07-30 06:06:08  topic='How Icebergs Break Away From Glaciers'  exit=1  slot='morning'  attempt=3/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:07:50  topic='Why Saturn Has Rings'  exit=1  slot='morning'  attempt=4/6  quality_deferred='verified media gate rejected planned scene media'
+2026-07-30 06:07:59  topic='Why Rivers Bend Across the Land'  exit=1  slot='morning'  attempt=5/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:08:10  topic='How Earthquakes Shake the Ground'  exit=1  slot='morning'  attempt=6/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
