@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-30T06:08:10Z",
+  "updated_at": "2026-07-30T06:18:05Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -166,6 +166,21 @@
       "last_failure_at": "2026-07-30T06:06:08Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:06:08Z"
+    },
+    {
+      "topic": "How Lagoons Form Behind Reefs",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:13:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T06:13:33Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-13T06:13:33Z"
     },
     {
       "topic": "How Lava Cools Into Rock",
@@ -378,6 +393,21 @@
       "quarantine_until": "2026-08-10T09:09:29Z"
     },
     {
+      "topic": "How The Grand Canyon Was Carved",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:13:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T06:13:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T06:13:46Z"
+    },
+    {
       "topic": "How The Nile River Shaped Ancient Egypt",
       "status": "quarantined",
       "success_count": 0,
@@ -423,6 +453,36 @@
       "quarantine_until": "2026-08-12T09:04:30Z"
     },
     {
+      "topic": "How Tornadoes Spin Into Shape",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:13:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T06:13:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T06:13:59Z"
+    },
+    {
+      "topic": "How Waterfalls Shape Rock",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:14:10Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T06:14:10Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T06:14:10Z"
+    },
+    {
       "topic": "How Wildfires Help Some Forests Regrow",
       "status": "quarantined",
       "success_count": 0,
@@ -451,6 +511,21 @@
       "last_failure_at": "2026-07-22T14:20:49Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-05T14:20:49Z"
+    },
+    {
+      "topic": "Why Basalt Columns Form Perfect Shapes",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:14:19Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T06:14:19Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-13T06:14:19Z"
     },
     {
       "topic": "Why Butterflies Have Colorful Wings",
@@ -571,6 +646,21 @@
       "last_failure_at": "2026-07-29T11:49:30Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
       "quarantine_until": "2026-08-12T11:49:30Z"
+    },
+    {
+      "topic": "Why Leaves Change Color",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T06:18:05Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-30T06:18:05Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "why lightning creates glass in sand",

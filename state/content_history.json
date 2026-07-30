@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1536,7 +1536,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1564,7 +1564,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1676,7 +1676,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1704,7 +1704,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "viability engine deferred REVIEW topic",
-      "recorded_at": "2026-07-30T06:07:59Z",
+      "recorded_at": "2026-07-30T06:14:19Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1778,6 +1778,90 @@
       "source": "coverage_proven",
       "run_id": "a0ca76e1870049d9addc85ea67186acd",
       "generated_at": ""
+    },
+    {
+      "topic": "How Lagoons Form Behind Reefs",
+      "primary_subject": "lagoon",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "recorded_at": "2026-07-30T06:13:22Z",
+      "source": "coverage_proven",
+      "run_id": "d44a365ed0b04b72ba159b3071748095",
+      "generated_at": ""
+    },
+    {
+      "topic": "How The Grand Canyon Was Carved",
+      "primary_subject": "grand",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-30T06:13:33Z",
+      "source": "coverage_proven",
+      "run_id": "9f7d6fcf16e8487da12eea7c56b533b9",
+      "generated_at": ""
+    },
+    {
+      "topic": "How Tornadoes Spin Into Shape",
+      "primary_subject": "tornado",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-30T06:13:46Z",
+      "source": "coverage_proven",
+      "run_id": "917dce0c99bf4a088c14ceb31b16226b",
+      "generated_at": ""
+    },
+    {
+      "topic": "How Waterfalls Shape Rock",
+      "primary_subject": "waterfall",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-30T06:13:59Z",
+      "source": "coverage_proven",
+      "run_id": "4f08713638104c6c9e5360058f8c0646",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Basalt Columns Form Perfect Shapes",
+      "primary_subject": "basalt",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "recorded_at": "2026-07-30T06:14:10Z",
+      "source": "coverage_proven",
+      "run_id": "e3a838d4617c472b9e85e0b221fe1d90",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Leaves Change Color",
+      "primary_subject": "leave",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6322,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "recent category receives a diversity penalty; topic-bank candidate is awaiting successful production burn-in",
+      "recorded_at": "2026-07-30T06:14:19Z",
+      "source": "coverage_proven",
+      "run_id": "922cb9e82d5947b38e4c99b693e23144",
+      "generated_at": "2026-07-30T06:18:05Z"
     }
   ]
 }

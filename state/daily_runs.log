@@ -114,3 +114,9 @@
 2026-07-30 06:07:50  topic='Why Saturn Has Rings'  exit=1  slot='morning'  attempt=4/6  quality_deferred='verified media gate rejected planned scene media'
 2026-07-30 06:07:59  topic='Why Rivers Bend Across the Land'  exit=1  slot='morning'  attempt=5/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
 2026-07-30 06:08:10  topic='How Earthquakes Shake the Ground'  exit=1  slot='morning'  attempt=6/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:13:33  topic='How Lagoons Form Behind Reefs'  exit=1  slot='morning'  attempt=1/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%'
+2026-07-30 06:13:46  topic='How The Grand Canyon Was Carved'  exit=1  slot='morning'  attempt=2/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:13:59  topic='How Tornadoes Spin Into Shape'  exit=1  slot='morning'  attempt=3/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:14:10  topic='How Waterfalls Shape Rock'  exit=1  slot='morning'  attempt=4/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-30 06:14:19  topic='Why Basalt Columns Form Perfect Shapes'  exit=1  slot='morning'  attempt=5/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%'
+2026-07-30 06:13:22  topic='Why Leaves Change Color'  exit=0  slot='morning'  duration=283s  attempts=6
