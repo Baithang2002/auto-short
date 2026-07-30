@@ -805,7 +805,10 @@ Rules:
 - For a 12-segment script, use these exact story jobs in order: (1) visual shock, (2) mystery/stakes, (3) context, (4) mechanism, (5) evidence, (6) escalation, (7) unexpected detail, (8) consequence, (9) second reveal, (10) why it matters, (11) payoff, (12) short branded CTA.
 - If a non-default segment count is requested, preserve the same arc without changing the requested count.
 - Make it a connected mini-story, not twelve isolated facts.
-- First segment is the first 3-5 seconds and must be the strongest line. Use a curiosity hook like:
+- First segment is the first 2-4 seconds and must be the strongest line. It must create tension immediately with the formula:
+  "This [animal/place/event] looks [simple/beautiful/harmless]... but [danger/problem/surprising mechanism]."
+  Do not use that exact wording unless it fits naturally.
+  Use a curiosity hook like:
   "This tiny animal survives temperatures colder than your freezer."
   "Scientists still can't believe this survival trick works."
   "This animal has a winter trick almost no one notices."
@@ -813,6 +816,9 @@ Rules:
 - NEVER open with generic educational narration, greetings, rhetorical questions, "Did you know", "Meet the", "In this video", or the topic name followed by "are/have/can".
 - NEVER open with broad hype like "These facts will blow your mind" or "Space is truly bizarre".
 - Open on a concrete problem, danger, mystery, or surprising mechanism that the rest of the video proves.
+- The first segment's caption/narration must be understandable if muted and must not sound like a lesson title.
+- The first segment's visual searches must promise motion or impact immediately: animal escaping/feeding/jumping/flashing, lava/waves/storms moving, close-up eyes/teeth/claws/skin, pulsing aurora, crashing wave, lightning strike, or another topic-specific action.
+- Never make the first segment's primary b-roll a static landscape, map, satellite view, generic sky, calm wide shot, or abstract explainer graphic. Wide/context shots can appear later.
 {critical_lock_rules}
 - The title must create emotional curiosity in plain creator language. Return ONE title only. Never append academic/category labels such as "| Biology", "| Science", "- Education", or ": Facts".
 - The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
@@ -831,6 +837,7 @@ Rules:
   1 environment/wide shot (e.g. "lioness in savannah grass wide shot"),
   1 detail shot when useful (e.g. "lioness eyes close up"),
   and 1 safe exact-subject fallback (e.g. "lioness", not "nature documentary" or "nature").
+  For segment 1, the first query must be the strongest motion/action/close-up query, not the wide shot or fallback.
   For space or astronomy topics, include real-object NASA-friendly terms where useful (e.g. "aurora borealis timelapse", "earth magnetosphere", "saturn atmosphere").
   For ocean-science topics, include ocean-current and water-motion terms (e.g. "ocean current aerial", "underwater ocean flow", "waves moving ocean").
   Avoid abstract words like innovation, wisdom, mystery, or existence as visual searches.
