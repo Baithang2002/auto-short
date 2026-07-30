@@ -139,6 +139,7 @@ jobs:
               export AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED="false"
               export AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED="false"
               export AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE="false"
+              export AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO="1.0"
             fi
             python pipeline.py "${{ github.event.inputs.topic }}" --platforms youtube --no-interactive --skip-upload
           else
