@@ -12,6 +12,7 @@ from .jamendo import JamendoMusicProvider
 from .mixkit import MixkitCatalogEntry, MixkitMusicProvider
 from .pixabay import PixabayMusicProvider
 from .silence import SilenceMusicProvider
+from .youtube_audio_library import YouTubeAudioLibraryProvider
 
 __all__ = [
     "CallableMusicProvider",
@@ -27,4 +28,5 @@ __all__ = [
     "MusicTrackProvider",
     "PixabayMusicProvider",
     "SilenceMusicProvider",
+    "YouTubeAudioLibraryProvider",
 ]

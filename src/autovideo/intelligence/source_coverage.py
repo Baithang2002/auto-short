@@ -7,7 +7,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Any, Mapping, Sequence
 
 
 class SourceCoverageDecision(str, Enum):
@@ -16,6 +16,47 @@ class SourceCoverageDecision(str, Enum):
     APPROVED = "APPROVED"
     DEFERRED = "DEFERRED"
     SKIPPED = "SKIPPED"
+
+
+class ProviderProbeStatus(str, Enum):
+    """Explicit outcome of one bounded provider availability probe."""
+
+    SUCCESS = "SUCCESS"
+    NO_RESULTS = "NO_RESULTS"
+    UNCONFIGURED = "UNCONFIGURED"
+    AUTH_ERROR = "AUTH_ERROR"
+    RATE_LIMITED = "RATE_LIMITED"
+    TIMEOUT = "TIMEOUT"
+    INVALID_MEDIA = "INVALID_MEDIA"
+    PROVIDER_ERROR = "PROVIDER_ERROR"
+
+
+TECHNICAL_PROVIDER_STATUSES = frozenset({
+    ProviderProbeStatus.UNCONFIGURED,
+    ProviderProbeStatus.AUTH_ERROR,
+    ProviderProbeStatus.RATE_LIMITED,
+    ProviderProbeStatus.TIMEOUT,
+    ProviderProbeStatus.INVALID_MEDIA,
+    ProviderProbeStatus.PROVIDER_ERROR,
+})
+
+
+@dataclass(frozen=True)
+class ProviderProbeOutcome:
+    """Structured diagnostic for one provider probe."""
+
+    provider: str
+    status: ProviderProbeStatus
+    candidates_found: int = 0
+    detail: str = ""
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "provider": self.provider,
+            "status": self.status.value,
+            "candidates_found": self.candidates_found,
+            "detail": self.detail,
+        }
 
 
 @dataclass(frozen=True)
@@ -80,6 +121,7 @@ class SceneCoverage:
     accepted_candidates: int
     best_score: float | None
     covered: bool
+    provider_outcomes: tuple[ProviderProbeOutcome, ...] = ()
     reasons: tuple[str, ...] = ()
     coverage_basis: str = "authentic_media"
     required_score: float | None = None
@@ -95,6 +137,7 @@ class SceneCoverage:
 
         payload = asdict(self)
         payload["providers_attempted"] = list(self.providers_attempted)
+        payload["provider_outcomes"] = [outcome.to_dict() for outcome in self.provider_outcomes]
         payload["reasons"] = list(self.reasons)
         payload["critical"] = self.critical
         return payload
@@ -118,12 +161,45 @@ class SourceCoverageReport:
             return 0.0
         return sum(scene.covered for scene in self.scenes) / len(self.scenes)
 
+    @property
+    def provider_outcomes(self) -> tuple[ProviderProbeOutcome, ...]:
+        """Return all provider outcomes across sampled scenes."""
+
+        return tuple(
+            outcome
+            for scene in self.scenes
+            for outcome in scene.provider_outcomes
+        )
+
+    @property
+    def failure_classification(self) -> str:
+        """Separate content gaps from provider/infrastructure failures."""
+
+        if self.decision == SourceCoverageDecision.SKIPPED:
+            return "SKIPPED"
+        if self.decision != SourceCoverageDecision.DEFERRED:
+            return "NONE"
+        outcomes = self.provider_outcomes
+        if (
+            outcomes
+            and all(scene.provider_outcomes for scene in self.scenes)
+            and all(outcome.status in TECHNICAL_PROVIDER_STATUSES for outcome in outcomes)
+        ):
+            return "TECHNICAL_PROVIDER_FAILURE"
+        return "CONTENT_COVERAGE_GAP"
+
     def to_dict(self) -> dict[str, object]:
         """Serialize a stable ``source_coverage_report.json`` artifact."""
 
+        probe_summary = {
+            status.value: sum(outcome.status == status for outcome in self.provider_outcomes)
+            for status in ProviderProbeStatus
+            if any(outcome.status == status for outcome in self.provider_outcomes)
+        }
         return {
             "topic": self.topic,
             "decision": self.decision.value,
+            "failure_classification": self.failure_classification,
             "coverage_ratio": round(self.coverage_ratio, 4),
             "sampled_scene_count": len(self.scenes),
             "covered_scene_count": sum(scene.covered for scene in self.scenes),
@@ -131,6 +207,7 @@ class SourceCoverageReport:
                 scene.scene_index for scene in self.scenes if scene.critical and not scene.covered
             ],
             "reasons": list(self.reasons),
+            "provider_probe_summary": probe_summary,
             "configuration": asdict(self.config),
             "scenes": [scene.to_dict() for scene in self.scenes],
         }
@@ -187,6 +264,74 @@ class SourceCoverageEvaluator:
         )
 
 
+def verified_critical_scene_coverage(
+    intent: Any,
+    critical_asset_plan: Mapping[str, Any] | None,
+) -> SceneCoverage | None:
+    """Return coverage proven by an existing downloaded, frame-verified lock."""
+
+    if not isinstance(critical_asset_plan, Mapping):
+        return None
+    if str(critical_asset_plan.get("status") or "").upper() != "VERIFIED":
+        return None
+    scene_index = int(getattr(intent, "scene_index", 0))
+    role = next((
+        item for item in critical_asset_plan.get("roles", ())
+        if isinstance(item, Mapping)
+        and _optional_int(item.get("scene_index")) == scene_index
+        and str(item.get("status") or "").upper() == "VERIFIED"
+    ), None)
+    if role is None:
+        return None
+    selected = role.get("selected")
+    if not isinstance(selected, Mapping):
+        return None
+    verification = selected.get("verification")
+    if not isinstance(verification, Mapping):
+        return None
+    if str(verification.get("decision") or "").casefold() != "verified":
+        return None
+    local_path = Path(str(selected.get("local_path") or ""))
+    if not local_path.is_file():
+        return None
+    provider = str(selected.get("provider") or "")
+    if not provider or any(
+        marker in provider.casefold()
+        for marker in ("generated", "pollinations", "hybrid", "local_explainer")
+    ):
+        return None
+
+    expected_entity = str(
+        role.get("expected_entity")
+        or verification.get("expected_entity")
+        or verification.get("verified_entity")
+        or getattr(intent, "primary_subject", "")
+    )
+    query = str(selected.get("query") or next(iter(role.get("queries") or ()), expected_entity))
+    score = _optional_float(selected.get("score"))
+    return SceneCoverage(
+        scene_index=scene_index,
+        canonical_entity=expected_entity,
+        documentary_role=str(getattr(intent, "documentary_role", "")),
+        scene_importance=str(getattr(intent, "scene_importance", "")),
+        query=query,
+        providers_attempted=(provider,),
+        candidates_found=1,
+        accepted_candidates=1,
+        best_score=score,
+        covered=True,
+        provider_outcomes=(ProviderProbeOutcome(
+            provider=provider,
+            status=ProviderProbeStatus.SUCCESS,
+            candidates_found=1,
+            detail="downloaded critical asset passed frame verification",
+        ),),
+        reasons=("reused downloaded frame-verified critical asset lock",),
+        coverage_basis="verified_critical_asset_lock",
+        required_score=None,
+    )
+
+
 def sample_scene_indexes(total_scenes: int, maximum: int) -> tuple[int, ...]:
     """Choose evenly distributed zero-based scene indexes within a fixed budget."""
 
@@ -219,6 +364,24 @@ def _env_float(env: Mapping[str, str], name: str, default: float) -> float:
         return float(env.get(name, str(default)) or default)
     except (TypeError, ValueError):
         return default
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(str(value))
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(str(value))
+    except (TypeError, ValueError):
+        return None
 
 
 def _clamp(value: float) -> float:

@@ -55,6 +55,7 @@ from pathlib import Path
 from difflib import SequenceMatcher
 from types import SimpleNamespace
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from PIL import Image, ImageDraw, ImageFont
 
 try:
@@ -99,11 +100,13 @@ from autovideo.intelligence import (
     SourceCoverageEvaluator,
     build_topic_metadata,
     sample_scene_indexes,
+    verified_critical_scene_coverage,
     ExactSubjectAvailabilityGate,
     ExactSubjectGateConfig,
     ExactSubjectGateDecision,
     subject_definition_from_pipeline,
 )
+from autovideo.intelligence.source_coverage import ProviderProbeOutcome, ProviderProbeStatus
 from autovideo.engagement import generate_pinned_comment
 from autovideo.media import (
     CanonicalEntityReport,
@@ -119,6 +122,7 @@ from autovideo.media import (
     KnowledgePackStore,
     MediaSelectionResult,
     QueryPlanner,
+    SceneEntity,
     SceneEntityPlanner,
     SceneConstraintConfig,
     SceneConstraintPlanner,
@@ -138,6 +142,7 @@ from autovideo.media import (
     VerifiedMediaGate,
     VerifiedMediaGateConfig,
     VerifiedMediaReport,
+    VerifiedMediaSceneResult,
     HybridVisualComposer,
     ShotPlan,
     SubjectContinuityEngine,
@@ -155,6 +160,7 @@ from autovideo.media import (
     select_best_candidate,
 )
 from autovideo.music import MusicPlanner
+from autovideo.intelligence.topic_cards import TopicCard, find_topic_card
 from autovideo.providers.factory import build_music_registry
 from autovideo.providers.llm import CallableLLMProvider
 from autovideo.providers.voice import CallableVoiceProvider, ElevenLabsVoiceProvider, VoiceRequest
@@ -215,6 +221,7 @@ _MEDIA_PLANNING_DIAGNOSTICS = {}
 _ADAPTIVE_SEARCH_DIAGNOSTICS = {}
 _AUDIO_MIX_DECISIONS: list[ClipAudioDecision] = []
 _WIKIMEDIA_SEARCH_CACHE = {}
+_WIKIMEDIA_LAST_REQUEST_AT = 0.0
 
 
 def _get_gemini_client():
@@ -253,7 +260,9 @@ if env_path.exists():
     for line in env_path.read_text(encoding="utf-8").splitlines():
         if "=" in line and not line.strip().startswith("#"):
             k, v = line.split("=", 1)
-            os.environ[k.strip()] = v.strip()
+            key = k.strip()
+            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
+                os.environ[key] = v.strip()
 
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY")
 GEMINI_IMAGE_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "").strip()
@@ -267,10 +276,14 @@ PIXABAY_API_KEY    = os.environ.get("PIXABAY_API_KEY")
 SAMBANOVA_API_KEY  = os.environ.get("SAMBANOVA_API_KEY")
 MIXKIT_API_URL     = os.environ.get("MIXKIT_API_URL", "").strip()
 COVERR_API_URL     = os.environ.get("COVERR_API_URL", "").strip()
+COVERR_API_KEY     = os.environ.get("COVERR_API_KEY", "").strip()
 VIDEVO_API_KEY     = os.environ.get("VIDEVO_API_KEY", "").strip()
 VIDEVO_API_URL     = os.environ.get("VIDEVO_API_URL", "").strip()
 ARCHIVE_PROVIDERS_ENABLED = os.environ.get("ENABLE_ARCHIVE_PROVIDERS", "1").lower() not in {"0", "false", "no"}
 NOAA_API_URL       = os.environ.get("NOAA_API_URL", "").strip()
+NOAA_USER_AGENT    = os.environ.get("NOAA_USER_AGENT", "auto-short/1.0 educational video generator").strip()
+WIKIMEDIA_CONTACT  = os.environ.get("WIKIMEDIA_CONTACT", os.environ.get("CONTACT_EMAIL", "")).strip()
+WIKIMEDIA_USER_AGENT = os.environ.get("WIKIMEDIA_USER_AGENT", "").strip()
 ESA_API_URL        = os.environ.get("ESA_API_URL", "").strip()
 USGS_API_URL       = os.environ.get("USGS_API_URL", "").strip()
 SMITHSONIAN_API_URL = os.environ.get("SMITHSONIAN_API_URL", "").strip()
@@ -283,6 +296,9 @@ EUROPEANA_API_URL  = os.environ.get("EUROPEANA_API_URL", "").strip()
 EUROPEANA_API_KEY  = os.environ.get("EUROPEANA_API_KEY", "").strip()
 FLICKR_COMMONS_API_URL = os.environ.get("FLICKR_COMMONS_API_URL", "").strip()
 FLICKR_API_KEY     = os.environ.get("FLICKR_API_KEY", "").strip()
+POLLINATIONS_ENABLED = _env_flag("POLLINATIONS_ENABLED", default="0")
+POLLINATIONS_IMAGE_URL = os.environ.get("POLLINATIONS_IMAGE_URL", "https://image.pollinations.ai/prompt").strip().rstrip("/")
+POLLINATIONS_MODEL = os.environ.get("POLLINATIONS_MODEL", "").strip()
 ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "1" if ARCHIVE_PROVIDERS_ENABLED else "0").lower() not in {"0", "false", "no"}
 AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES = int(os.environ.get("AUTO_VIDEO_MIN_EXACT_SUBJECT_CANDIDATES", "5") or "5")
 AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION = _env_flag("AUTO_VIDEO_ENABLE_LANDSCAPE_EXPANSION", default="true")
@@ -292,6 +308,21 @@ AI_VISUAL_QA_PROVIDER = os.environ.get("AI_VISUAL_QA_PROVIDER", "gemini").strip(
 AI_VISUAL_QA_MIN_METADATA_CONFIDENCE = float(os.environ.get("AI_VISUAL_QA_MIN_METADATA_CONFIDENCE", "0.90") or "0.90")
 AI_VISUAL_QA_MAX_CANDIDATES = int(os.environ.get("AI_VISUAL_QA_MAX_CANDIDATES", "3") or "3")
 AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO = float(os.environ.get("AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO", "0.50") or "0.50")
+CRITICAL_ASSET_PROVIDERS = ("pexels", "pixabay", "wikimedia", "coverr", "europeana")
+CRITICAL_ASSET_TECHNICAL_FAILURES = {
+    ProviderProbeStatus.UNCONFIGURED,
+    ProviderProbeStatus.AUTH_ERROR,
+    ProviderProbeStatus.RATE_LIMITED,
+    ProviderProbeStatus.TIMEOUT,
+    ProviderProbeStatus.INVALID_MEDIA,
+    ProviderProbeStatus.PROVIDER_ERROR,
+}
+ACADEMIC_TITLE_SUFFIX_RE = re.compile(
+    r"\s*(?:\||-|:)\s*(?:earth science|ocean science|education|science|biology|"
+    r"physics|chemistry|astronomy|geography|history|technology|engineering|nature|"
+    r"wildlife|animals|ocean|space|weather|climate|environment|psychology|facts)\s*$",
+    re.IGNORECASE,
+)
 # Channel name used in end card and SEO metadata
 APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
 APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
@@ -364,6 +395,31 @@ def count_words(text):
     return len(re.findall(r"[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?", text or ""))
 
 
+def automatic_duration_for_topic(topic, card=None):
+    """Choose a conservative Shorts target without changing the hard cap."""
+
+    if isinstance(card, TopicCard):
+        return int(card.recommended_duration_sec), f"topic card {card.id}"
+    text = re.sub(r"[^a-z0-9]+", " ", str(topic or "").casefold())
+    if any(term in text for term in (
+        "shark", "jellyfish", "octopus", "lightning", "fish rain", "insect zombie",
+    )):
+        return 52, "high-retention curiosity topic fallback"
+    if any(term in text for term in (
+        "how ", "why ", "survive", "camouflage", "hover", "rotate", "forms ", "build",
+    )):
+        return 48, "mechanism topic fallback"
+    return 46, "short explainer fallback"
+
+
+def resolve_target_duration(topic, explicit_duration=None, card=None):
+    """Resolve an explicit CLI target before applying automatic policy."""
+
+    if explicit_duration is not None:
+        return int(explicit_duration), "explicit --duration override"
+    return automatic_duration_for_topic(topic, card)
+
+
 def narration_targets(target_duration, n_segments, profile: FormatProfile = _FORMAT_PROFILE):
     """Return word-count targets that usually land TTS output near target_duration.
 
@@ -386,7 +442,7 @@ def narration_targets(target_duration, n_segments, profile: FormatProfile = _FOR
     return min_total, max_total, min_segment, max_segment
 
 
-def script_quality_notes(data, n_segments, target_duration):
+def script_quality_notes(data, n_segments, target_duration, critical_asset_plan=None):
     """Return (fatal_notes, soft_notes).
 
     Fatal = will produce a broken or way-too-short video. Pipeline must reject.
@@ -401,6 +457,9 @@ def script_quality_notes(data, n_segments, target_duration):
     segments = data.get("segments") or []
     fatal_notes = []
     soft_notes  = []
+
+    if ACADEMIC_TITLE_SUFFIX_RE.search(str(data.get("title") or "")):
+        fatal_notes.append("title has an academic title suffix")
 
     if len(segments) != n_segments:
         fatal_notes.append(f"expected exactly {n_segments} segments, got {len(segments)}")
@@ -432,7 +491,80 @@ def script_quality_notes(data, n_segments, target_duration):
     if total_words > max_total:
         soft_notes.append(f"total narration is too long ({total_words} words, maximum {max_total})")
 
+    fatal_notes.extend(_critical_script_alignment_notes(data, critical_asset_plan))
+
     return fatal_notes, soft_notes
+
+
+def _critical_script_alignment_notes(data, critical_asset_plan):
+    """Check that critical B-roll text still names the entity/action already proved."""
+
+    if not isinstance(critical_asset_plan, dict) or critical_asset_plan.get("status") != "VERIFIED":
+        return []
+    segments = data.get("segments") or []
+    notes = []
+    stopwords = {
+        "against", "during", "from", "into", "over", "through", "while", "with",
+        "its", "the", "and", "that", "this", "their", "them", "then", "a", "an", "in", "on",
+    }
+    for role in critical_asset_plan.get("roles") or []:
+        if not isinstance(role, dict) or role.get("status") != "VERIFIED":
+            continue
+        scene_index = int(role.get("scene_index", -1))
+        if scene_index < 0 or scene_index >= len(segments):
+            notes.append(f"critical scene {scene_index + 1} is missing from script")
+            continue
+        segment = segments[scene_index]
+        visual_text = " ".join((
+            str(segment.get("broll") or ""),
+            " ".join(str(query) for query in segment.get("broll_queries") or ()),
+        )).casefold()
+        visual_tokens = set(re.findall(r"[a-z0-9]+", visual_text))
+        entity_tokens = {
+            token for token in re.findall(r"[a-z0-9]+", str(role.get("expected_entity") or "").casefold())
+            if token not in stopwords
+        }
+        if entity_tokens and not entity_tokens <= visual_tokens:
+            notes.append(
+                f"critical segment {scene_index + 1} broll does not name locked entity "
+                f"{role.get('expected_entity')!r}"
+            )
+        action_tokens = {
+            token for token in re.findall(r"[a-z0-9]+", str(role.get("expected_action") or "").casefold())
+            if len(token) >= 4 and token not in stopwords
+        }
+        if action_tokens and not (action_tokens & visual_tokens):
+            notes.append(
+                f"critical segment {scene_index + 1} broll does not reflect locked action "
+                f"{role.get('expected_action')!r}"
+            )
+    return notes
+
+
+def _confirmed_critical_visual_prompt(critical_asset_plan):
+    if not isinstance(critical_asset_plan, dict) or critical_asset_plan.get("status") != "VERIFIED":
+        return "No pre-verified critical visual locks are available."
+    lines = []
+    for role in critical_asset_plan.get("roles") or []:
+        selected = role.get("selected") if isinstance(role, dict) else None
+        if not isinstance(selected, dict):
+            continue
+        verification = selected.get("verification") or {}
+        confirmed_entity = verification.get("verified_entity") or role.get("expected_entity")
+        confirmed_action = verification.get("verified_action") or role.get("expected_action")
+        lines.append(
+            f"- Segment {int(role.get('scene_index', 0)) + 1} ({role.get('role')}): "
+            f"confirmed {confirmed_entity}; visible action: {confirmed_action}; "
+            f"search wording: {selected.get('query')}."
+        )
+    return "\n".join(lines) or "No pre-verified critical visual locks are available."
+
+
+def _topic_metadata_classification_text(topic):
+    """Include a card's canonical subject when its premise uses only a plural form."""
+
+    card = find_topic_card(topic)
+    return f"{topic} {card.subject}" if card is not None else topic
 
 
 def slugify(s, maxlen=40):
@@ -620,11 +752,27 @@ def parse_script_json(raw):
     return json.loads(raw)
 
 
-def generate_script(niche, n_segments, target_duration):
+def generate_script(niche, n_segments, target_duration, critical_asset_plan=None):
     min_total, max_total, min_segment, max_segment = narration_targets(target_duration, n_segments)
+    critical_visuals = _confirmed_critical_visual_prompt(critical_asset_plan)
+    if isinstance(critical_asset_plan, dict) and critical_asset_plan.get("status") == "VERIFIED":
+        critical_lock_rules = (
+            '- Segments 1 and 2 are visually locked to the CONFIRMED CRITICAL VISUALS above. '
+            'Their narration, "broll", and "broll_queries" MUST name the locked entity and only '
+            'describe the confirmed visible action. Do not invent an action, transformation, cause, '
+            'or outcome that those frames do not support.'
+        )
+    else:
+        critical_lock_rules = (
+            "- No critical visual lock applies to this legacy topic; use the normal strict "
+            "narration/B-roll alignment rules."
+        )
     prompt = f"""
 You are scripting a high-retention YouTube Short about: "{niche}".
 Target finished length: about {target_duration} seconds.
+
+CONFIRMED CRITICAL VISUALS (already downloaded and frame-verified):
+{critical_visuals}
 
 Style target:
 - Sounds like a sharp creator talking to one person, not a textbook.
@@ -636,7 +784,7 @@ Style target:
 
 Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
 {{
-  "title": "punchy 5-8 word title (no #shorts here, it is appended automatically)",
+  "title": "one punchy 5-8 word emotional-curiosity title (no #shorts or academic label)",
   "description": "2-3 sentence YouTube/Facebook description, hook + value, no hashtags inside",
   "instagram_caption": "1-2 sentence Instagram caption with a soft CTA, no hashtags inside",
   "music_mood": "one of: mysterious, inspiring, dramatic, warm, curious, urgent",
@@ -654,7 +802,9 @@ Rules:
 - EACH segment narration MUST be at least {min_segment} words and at most {max_segment} words, except the first hook may be 8-12 words if it is stronger that way.
 - Do NOT write short fragments like "Auroras dazzle." That is only 2 words. Write full sentences with subject, verb, and a specific detail.
 - Use one short sentence when possible. Use two short sentences only when it improves momentum.
-- Make it a connected mini-story with a hook, setup, escalating facts, a twist, and a satisfying closing line.
+- For a 12-segment script, use these exact story jobs in order: (1) visual shock, (2) mystery/stakes, (3) context, (4) mechanism, (5) evidence, (6) escalation, (7) unexpected detail, (8) consequence, (9) second reveal, (10) why it matters, (11) payoff, (12) short branded CTA.
+- If a non-default segment count is requested, preserve the same arc without changing the requested count.
+- Make it a connected mini-story, not twelve isolated facts.
 - First segment is the first 3-5 seconds and must be the strongest line. Use a curiosity hook like:
   "This tiny animal survives temperatures colder than your freezer."
   "Scientists still can't believe this survival trick works."
@@ -663,6 +813,8 @@ Rules:
 - NEVER open with generic educational narration, greetings, rhetorical questions, "Did you know", "Meet the", "In this video", or the topic name followed by "are/have/can".
 - NEVER open with broad hype like "These facts will blow your mind" or "Space is truly bizarre".
 - Open on a concrete problem, danger, mystery, or surprising mechanism that the rest of the video proves.
+{critical_lock_rules}
+- The title must create emotional curiosity in plain creator language. Return ONE title only. Never append academic/category labels such as "| Biology", "| Science", "- Education", or ": Facts".
 - The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
   "Subscribe to Wonders of the Nature for more."
   "Follow Wonders of the Nature for more like this."
@@ -689,7 +841,9 @@ Rules:
 
     raw = generate_script_raw(prompt)
     first_draft = parse_script_json(raw)
-    fatal, soft = script_quality_notes(first_draft, n_segments, target_duration)
+    fatal, soft = script_quality_notes(
+        first_draft, n_segments, target_duration, critical_asset_plan
+    )
 
     if not fatal:
         # First draft is acceptable (possibly with soft warnings). DO NOT repair -
@@ -712,7 +866,9 @@ Previous JSON:
 """
         try:
             repaired = parse_script_json(generate_script_raw(repair_prompt))
-            fatal2, soft2 = script_quality_notes(repaired, n_segments, target_duration)
+            fatal2, soft2 = script_quality_notes(
+                repaired, n_segments, target_duration, critical_asset_plan
+            )
         except Exception as e:
             print(f"    [Script QA] Repair attempt errored ({e}); checking if first draft is salvageable...")
             fatal2 = ["repair attempt errored"]
@@ -728,12 +884,21 @@ Previous JSON:
             # are tolerable (no empty segments, just slight undershoots).
             print(f"    [Script QA] Repair was no better; using first draft.")
             data = first_draft
-            fatal, soft = script_quality_notes(data, n_segments, target_duration)
+            fatal, soft = script_quality_notes(
+                data, n_segments, target_duration, critical_asset_plan
+            )
             if fatal:
                 # The first draft IS the better option but still has hard issues.
                 # Soften the criticism: only re-raise if every fatal issue is
                 # "0 words" or "missing broll" (truly unsalvageable).
-                unsalvageable = [f for f in fatal if "0 words" in f or "missing broll" in f]
+                unsalvageable = [
+                    note for note in fatal
+                    if "0 words" in note
+                    or "missing broll" in note
+                    or "academic title suffix" in note
+                    or "critical segment" in note
+                    or "critical scene" in note
+                ]
                 if unsalvageable:
                     raise RuntimeError("Script is unsalvageable: " + "; ".join(unsalvageable[:4]))
                 print(f"    [Script QA] Tolerating soft fatal: {'; '.join(fatal[:2])}")
@@ -765,7 +930,7 @@ Previous JSON:
         seg["broll_queries"] = queries[:4]
     data["niche"] = niche
     topic_metadata = build_topic_metadata(
-        video_topic=niche,
+        video_topic=_topic_metadata_classification_text(niche),
         title=data.get("title", niche),
         description=data.get("description", ""),
         instagram_caption=data.get("instagram_caption", ""),
@@ -776,6 +941,7 @@ Previous JSON:
     data["description"] = topic_metadata.description
     data["instagram_caption"] = topic_metadata.instagram_caption
     data["hashtags"] = list(topic_metadata.hashtags)
+    data["category_id"] = topic_metadata.category_id
     data = Script.from_legacy_dict(data, niche=niche).to_legacy_dict()
     segs = data["segments"]
 
@@ -1319,6 +1485,10 @@ def is_gemini_image_available():
     return bool(GEMINI_API_KEY and GEMINI_IMAGE_MODEL)
 
 
+def is_pollinations_image_available():
+    return bool(POLLINATIONS_ENABLED and POLLINATIONS_IMAGE_URL)
+
+
 def generate_gemini_image(prompt, idx):
     if not is_gemini_image_available():
         return None
@@ -1355,6 +1525,35 @@ def generate_gemini_image(prompt, idx):
     except Exception as e:
         print(f"    [Gemini Image] Generation failed ({e}).")
         return None
+
+
+def generate_pollinations_image(prompt, idx):
+    if not is_pollinations_image_available():
+        return None
+
+    from urllib.parse import quote, urlencode
+
+    clean_prompt = " ".join(str(prompt or "").split())
+    if not clean_prompt:
+        return None
+    full_prompt = (
+        f"{clean_prompt}, vertical 9:16 educational documentary explainer image, "
+        "clear subject, cinematic lighting, no text, no watermark"
+    )
+    params = {
+        "width": str(WIDTH),
+        "height": str(HEIGHT),
+        "nologo": "true",
+        "enhance": "true",
+    }
+    if POLLINATIONS_MODEL:
+        params["model"] = POLLINATIONS_MODEL
+    url = f"{POLLINATIONS_IMAGE_URL}/{quote(full_prompt)}?{urlencode(params)}"
+    out_path = OUT_DIR / f"pollinations_img_{idx}.jpg"
+    print(f"    [Pollinations Image] Generating for segment {idx+1} (prompt: '{clean_prompt}')...")
+    if _download_to(url, out_path, timeout=90, max_bytes=16 * 1024 * 1024):
+        return out_path
+    return None
 
 
 def _append_unique_query(queries, query):
@@ -1526,16 +1725,17 @@ def best_pexels_file(video):
     return files[0] if files else None
 
 
-def _validate_downloaded_media(path):
+def _validate_downloaded_media(path, expected_path=None):
     """Verify that the downloaded file's magic bytes are consistent with its extension.
 
     Raises RuntimeError if the file is clearly not a valid image/video (e.g. a DjVu
     document, HTML error page, or other non-media content saved with a media extension).
     """
-    ext = str(path).rsplit(".", 1)[-1].lower() if "." in str(path) else ""
+    expected_path = Path(expected_path or path)
+    ext = expected_path.suffix.lower().lstrip(".")
     try:
         with open(path, "rb") as f:
-            header = f.read(32)
+            header = f.read(512)
     except OSError:
         return  # Can't read — let downstream handle it
 
@@ -1547,8 +1747,11 @@ def _validate_downloaded_media(path):
     if header[:8] == b"AT&TFORM":
         raise RuntimeError("downloaded file is DjVu, not a valid image/video")
     # HTML error pages
-    if header.lstrip()[:5].lower() in (b"<!doc", b"<html", b"<?xml"):
-        raise RuntimeError("downloaded file is HTML/XML, not a valid image/video")
+    leading = header.lstrip().lower()
+    if leading.startswith((b"<!doctype", b"<html", b"<?xml", b"<svg", b"{", b"[")):
+        raise RuntimeError("downloaded file is an HTML/XML/JSON error payload, not media")
+    if leading.startswith((b"error", b"access denied", b"rate limit", b"too many requests")):
+        raise RuntimeError("downloaded file is a text error payload, not media")
 
     # For image extensions, verify magic bytes
     if ext in ("jpg", "jpeg"):
@@ -1562,38 +1765,176 @@ def _validate_downloaded_media(path):
             raise RuntimeError(f"file has .webp extension but is not a WebP (header: {header[:8].hex()})")
 
 
-def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
-    """Stream a URL to a file. Returns True on success."""
-    import requests
+def _retry_delay_seconds(headers, attempt, *, maximum=30.0):
+    """Return bounded exponential backoff while respecting a valid Retry-After."""
+
+    delay = min(float(2 ** max(0, attempt - 1)), maximum)
+    retry_after = str((headers or {}).get("Retry-After", "") or "").strip()
+    if not retry_after:
+        return delay
     try:
-        started = time.monotonic()
-        total = 0
-        with requests.get(
-            url,
-            stream=True,
-            timeout=(10, min(timeout, 30)),
-            headers={"User-Agent": "auto-short/1.0 educational video generator"},
-        ) as r:
-            r.raise_for_status()
-            with open(out_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=1 << 16):
-                    if chunk:
+        server_delay = max(0.0, float(retry_after))
+    except ValueError:
+        try:
+            from email.utils import parsedate_to_datetime
+
+            retry_at = parsedate_to_datetime(retry_after)
+            if retry_at.tzinfo is None:
+                retry_at = retry_at.replace(tzinfo=dt.timezone.utc)
+            server_delay = max(0.0, (retry_at - dt.datetime.now(dt.timezone.utc)).total_seconds())
+        except (TypeError, ValueError, OverflowError):
+            server_delay = 0.0
+    return min(maximum, max(delay, server_delay))
+
+
+def _normalize_downloaded_image(path, destination):
+    """Validate a raster payload and transcode it to the destination's format."""
+
+    requested = {
+        ".jpg": "JPEG",
+        ".jpeg": "JPEG",
+        ".png": "PNG",
+        ".webp": "WEBP",
+        ".bmp": "BMP",
+    }.get(Path(destination).suffix.lower())
+    if not requested:
+        return
+
+    normalized = Path(f"{path}.normalized")
+    try:
+        with Image.open(path) as image:
+            detected = str(image.format or "").upper()
+            image.load()
+            if detected not in {"JPEG", "PNG", "WEBP", "BMP"}:
+                raise RuntimeError(f"unsupported downloaded image format: {detected or 'unknown'}")
+            if image.width <= 0 or image.height <= 0:
+                raise RuntimeError("downloaded image has invalid dimensions")
+            if detected == requested:
+                return
+
+            if requested in {"JPEG", "BMP"}:
+                if image.mode in {"RGBA", "LA"} or (
+                    image.mode == "P" and "transparency" in image.info
+                ):
+                    rgba = image.convert("RGBA")
+                    flattened = Image.new("RGB", rgba.size, (255, 255, 255))
+                    flattened.paste(rgba, mask=rgba.getchannel("A"))
+                    image = flattened
+                else:
+                    image = image.convert("RGB")
+            elif requested == "WEBP" and image.mode not in {"RGB", "RGBA"}:
+                image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
+            elif requested == "PNG" and image.mode == "CMYK":
+                image = image.convert("RGB")
+
+            save_options = {"quality": 92} if requested in {"JPEG", "WEBP"} else {}
+            image.save(normalized, format=requested, **save_options)
+        with Image.open(normalized) as image:
+            image.verify()
+        normalized.replace(path)
+    except (OSError, ValueError, Image.DecompressionBombError) as exc:
+        raise RuntimeError(f"invalid downloaded image: {exc}") from exc
+    finally:
+        try:
+            normalized.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
+    """Download, validate, and atomically publish media. Returns True on success."""
+
+    import requests
+
+    out_path = Path(out_path)
+    temp_path = out_path.with_name(f".{out_path.name}.{uuid.uuid4().hex}.part")
+    retryable_statuses = {429, 500, 502, 503, 504}
+    max_attempts = 3
+    started = time.monotonic()
+    try:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            out_path.unlink()
+        except FileNotFoundError:
+            pass
+
+        for attempt in range(1, max_attempts + 1):
+            elapsed = time.monotonic() - started
+            remaining = float(timeout) - elapsed
+            if remaining <= 0:
+                raise RuntimeError(f"download exceeded {timeout}s time limit")
+            try:
+                temp_path.unlink()
+            except FileNotFoundError:
+                pass
+
+            with requests.get(
+                url,
+                stream=True,
+                timeout=(min(10.0, remaining), min(30.0, remaining)),
+                headers={"User-Agent": "auto-short/1.0 educational video generator"},
+            ) as response:
+                status = int(getattr(response, "status_code", 0) or 0)
+                if status in retryable_statuses:
+                    if attempt >= max_attempts:
+                        raise RuntimeError(f"HTTP {status} after {max_attempts} attempts")
+                    delay = _retry_delay_seconds(
+                        getattr(response, "headers", {}),
+                        attempt,
+                        maximum=min(30.0, max(1.0, float(timeout) / 2.0)),
+                    )
+                    if time.monotonic() - started + delay >= timeout:
+                        raise RuntimeError(f"HTTP {status}; retry would exceed {timeout}s time limit")
+                    time.sleep(delay)
+                    continue
+
+                response.raise_for_status()
+                headers = getattr(response, "headers", {}) or {}
+                content_type = str(headers.get("Content-Type", "") or "").split(";", 1)[0].strip().lower()
+                if (
+                    content_type.startswith("text/")
+                    or content_type in {
+                        "application/json",
+                        "application/problem+json",
+                        "application/xml",
+                        "application/xhtml+xml",
+                    }
+                ):
+                    raise RuntimeError(f"server returned non-media content type {content_type}")
+                try:
+                    content_length = int(headers.get("Content-Length", 0) or 0)
+                except (TypeError, ValueError):
+                    content_length = 0
+                if content_length > max_bytes:
+                    raise RuntimeError(f"download exceeded {max_bytes // (1024 * 1024)} MB limit")
+
+                total = 0
+                with open(temp_path, "wb") as output:
+                    for chunk in response.iter_content(chunk_size=1 << 16):
+                        if not chunk:
+                            continue
                         total += len(chunk)
                         if total > max_bytes:
                             raise RuntimeError(f"download exceeded {max_bytes // (1024 * 1024)} MB limit")
                         if time.monotonic() - started > timeout:
                             raise RuntimeError(f"download exceeded {timeout}s time limit")
-                        f.write(chunk)
-        if not out_path.exists() or out_path.stat().st_size <= 0:
-            raise RuntimeError("download produced an empty file")
-        # Validate that downloaded content matches expected file type by magic bytes
-        _validate_downloaded_media(out_path)
-        return True
+                        output.write(chunk)
+
+            if not temp_path.exists() or temp_path.stat().st_size <= 0:
+                raise RuntimeError("download produced an empty file")
+            _normalize_downloaded_image(temp_path, out_path)
+            _validate_downloaded_media(temp_path, out_path)
+            temp_path.replace(out_path)
+            return True
     except Exception as e:
-        print(f"    [download] failed for {url[:80]}...: {e}")
-        if out_path.exists():
-            try: out_path.unlink()
-            except OSError: pass
+        print(f"    [download] failed for {_safe_diagnostic(url)[:80]}...: {_safe_diagnostic(e)}")
+        for path in (temp_path, Path(f"{temp_path}.normalized"), out_path):
+            try:
+                path.unlink()
+            except FileNotFoundError:
+                pass
+            except OSError:
+                pass
         return False
 
 
@@ -1760,9 +2101,9 @@ def _gemini_visual_qa_verifier(requested_entity, candidate):
         parts = [types.Part.from_text(text=prompt)]
         for sample in samples:
             parts.append(types.Part.from_bytes(data=Path(sample).read_bytes(), mime_type="image/jpeg"))
-        response = client.models.generate_content(
-            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
-            contents=[types.Content(role="user", parts=parts)],
+        response, _model = _generate_gemini_vision_content(
+            client,
+            [types.Content(role="user", parts=parts)],
         )
         raw = str(getattr(response, "text", "") or "").strip()
         data = _extract_json_object(raw)
@@ -1791,6 +2132,26 @@ def _extract_json_object(raw):
         return json.loads(text)
     except Exception:
         return {}
+
+
+def _generate_gemini_vision_content(client, contents):
+    """Try configured Gemini vision-capable models in deterministic order."""
+
+    models = []
+    for model in (GEMINI_IMAGE_MODEL, *GEMINI_MODELS):
+        cleaned = str(model or "").strip()
+        if cleaned and cleaned not in models:
+            models.append(cleaned)
+    if not models:
+        raise RuntimeError("no Gemini vision model is configured")
+
+    failures = []
+    for model in models:
+        try:
+            return client.models.generate_content(model=model, contents=contents), model
+        except Exception as exc:
+            failures.append(f"{model}: {_safe_diagnostic(exc)}")
+    raise RuntimeError("all Gemini vision models failed: " + " | ".join(failures))
 
 
 def _representative_visual_samples(path, requested_entity, max_frames=3):
@@ -1883,13 +2244,18 @@ def _verification_request_for_asset(idx, asset, intent) -> VerificationRequest:
         or getattr(intent, "primary_subject", "")
         or ""
     )
-    action_terms = tuple(getattr(intent, "action_terms", ()) or ())
+    action_terms = tuple(
+        str(term).strip()
+        for term in (getattr(intent, "action_terms", ()) or ())
+        if str(term).strip()
+    )
+    expected_action = action_terms[0] if action_terms else str(getattr(intent, "action", "") or "")
     visual_goal = getattr(getattr(intent, "visual_goal", None), "value", None)
     return VerificationRequest(
         scene_index=idx,
         media_path=Path(asset.local_path),
         expected_entity=str(entity),
-        expected_action=str(action_terms[0]) if action_terms else "",
+        expected_action=expected_action,
         visual_goal=str(visual_goal or ""),
         priority=_verification_priority_for_intent(intent),
     )
@@ -1936,9 +2302,9 @@ def _gemini_verified_media_verifier(request, max_frames):
             parts.append(types.Part.from_bytes(
                 data=Path(sample).read_bytes(), mime_type="image/jpeg"
             ))
-        response = client.models.generate_content(
-            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
-            contents=[types.Content(role="user", parts=parts)],
+        response, _model = _generate_gemini_vision_content(
+            client,
+            [types.Content(role="user", parts=parts)],
         )
         data = _extract_json_object(str(getattr(response, "text", "") or ""))
         def as_optional_bool(value):
@@ -1993,9 +2359,9 @@ def _gemini_rendered_visual_verifier(request: RenderedSceneRequest) -> RenderedV
             "Does the visible frame clearly depict the expected entity? Return compact JSON only: "
             "match, confidence, matched_entity, reasoning. Confidence must be 0 to 1."
         )
-        response = client.models.generate_content(
-            model=GEMINI_IMAGE_MODEL or GEMINI_MODEL,
-            contents=[types.Content(role="user", parts=[
+        response, _model = _generate_gemini_vision_content(
+            client,
+            [types.Content(role="user", parts=[
                 types.Part.from_text(text=prompt),
                 types.Part.from_bytes(data=request.frame_path.read_bytes(), mime_type="image/jpeg"),
             ])],
@@ -2175,13 +2541,14 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
         pixabay_enabled=bool(PIXABAY_API_KEY and "your_pixabay" not in PIXABAY_API_KEY),
         nasa_enabled=True,
         gemini_image_enabled=is_gemini_image_available(),
+        pollinations_image_enabled=is_pollinations_image_available(),
         mixkit_enabled=bool(MIXKIT_API_URL),
         coverr_enabled=bool(COVERR_API_URL),
         videvo_enabled=bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         wikimedia_enabled=ENABLE_WIKIMEDIA_COMMONS,
-        noaa_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(NOAA_API_URL),
-        esa_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(ESA_API_URL),
-        usgs_enabled=ARCHIVE_PROVIDERS_ENABLED or bool(USGS_API_URL),
+        noaa_enabled=bool(NOAA_API_URL),
+        esa_enabled=bool(ESA_API_URL),
+        usgs_enabled=bool(USGS_API_URL),
         smithsonian_enabled=bool(SMITHSONIAN_API_URL and SMITHSONIAN_API_KEY),
         nps_enabled=bool(NPS_API_URL),
         usfws_enabled=bool(USFWS_API_URL),
@@ -2238,7 +2605,51 @@ def _select_candidate_for_provider(
     return None
 
 
-def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", per_page=10, timeout_sec=30):
+def _provider_is_configured(provider):
+    return {
+        "pexels": bool(PEXELS_API_KEY),
+        "pixabay": bool(PIXABAY_API_KEY and "your_pixabay" not in PIXABAY_API_KEY),
+        "wikimedia": bool(ENABLE_WIKIMEDIA_COMMONS),
+        "mixkit": bool(MIXKIT_API_URL),
+        "coverr": bool(COVERR_API_URL),
+        "videvo": bool(VIDEVO_API_URL and VIDEVO_API_KEY),
+        "noaa": bool(NOAA_API_URL),
+        "esa": bool(ESA_API_URL),
+        "usgs": bool(USGS_API_URL),
+        "europeana": bool(EUROPEANA_API_URL and EUROPEANA_API_KEY),
+    }.get(str(provider or "").lower(), True)
+
+
+def _classify_provider_probe_exception(exc):
+    """Map provider exceptions to stable source-coverage diagnostics."""
+
+    import requests
+
+    if isinstance(exc, (requests.exceptions.Timeout, TimeoutError)):
+        return ProviderProbeStatus.TIMEOUT
+    response = getattr(exc, "response", None)
+    status_code = int(getattr(response, "status_code", 0) or 0)
+    text = str(exc).lower()
+    if status_code in {401, 403} or any(token in text for token in ("unauthorized", "forbidden", "invalid api key")):
+        return ProviderProbeStatus.AUTH_ERROR
+    if status_code == 429 or any(token in text for token in ("rate limit", "too many requests", "quota")):
+        return ProviderProbeStatus.RATE_LIMITED
+    if "timed out" in text or "timeout" in text:
+        return ProviderProbeStatus.TIMEOUT
+    if any(token in text for token in ("invalid media", "html/xml/json error payload", "non-media content")):
+        return ProviderProbeStatus.INVALID_MEDIA
+    return ProviderProbeStatus.PROVIDER_ERROR
+
+
+def _pexels_video_candidates(
+    queries,
+    fallback="",
+    *,
+    orientation="portrait",
+    per_page=10,
+    timeout_sec=30,
+    raise_errors=False,
+):
     """Return normalized Pexels candidates without downloading them."""
 
     import requests
@@ -2264,7 +2675,9 @@ def _pexels_video_candidates(queries, fallback="", *, orientation="portrait", pe
             response.raise_for_status()
             videos = response.json().get("videos", []) or []
         except Exception as e:
-            print(f"    [Pexels] search failed for {enriched!r}: {e}")
+            print(f"    [Pexels] search failed for {enriched!r}: {_safe_diagnostic(e)}")
+            if raise_errors:
+                raise
             continue
         for video in videos:
             candidate = candidate_from_pexels_video(video, enriched)
@@ -2289,7 +2702,15 @@ def _best_pixabay_rendition(hit, *, allow_landscape=False):
     return best
 
 
-def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, per_page=20, timeout_sec=30):
+def _pixabay_video_candidates(
+    queries,
+    fallback="",
+    *,
+    allow_landscape=False,
+    per_page=20,
+    timeout_sec=30,
+    raise_errors=False,
+):
     """Return normalized Pixabay candidates without downloading them."""
 
     import requests
@@ -2314,7 +2735,9 @@ def _pixabay_video_candidates(queries, fallback="", *, allow_landscape=False, pe
             response.raise_for_status()
             hits = response.json().get("hits", []) or []
         except Exception as e:
-            print(f"    [Pixabay] search failed for {enriched!r}: {e}")
+            print(f"    [Pixabay] search failed for {enriched!r}: {_safe_diagnostic(e)}")
+            if raise_errors:
+                raise
             continue
         for hit in hits:
             rendition = _best_pixabay_rendition(hit, allow_landscape=allow_landscape)
@@ -2333,6 +2756,7 @@ def _json_stock_candidates(
     params_extra=None,
     license_name="",
     timeout_sec=30,
+    raise_errors=False,
 ):
     """Return normalized configured JSON-provider candidates without downloading."""
 
@@ -2353,7 +2777,9 @@ def _json_stock_candidates(
             response.raise_for_status()
             items = _json_items(response.json())
         except Exception as e:
-            print(f"    [{provider.title()}] search failed for {enriched!r}: {e}")
+            print(f"    [{provider.title()}] search failed for {enriched!r}: {_safe_diagnostic(e)}")
+            if raise_errors:
+                raise
             continue
         for item in items:
             normalized = _remote_item_from_provider(provider, item, enriched)
@@ -2365,21 +2791,131 @@ def _json_stock_candidates(
     return candidate_pool
 
 
-def _wikimedia_candidates(queries, *, timeout_sec=30):
-    """Return Wikimedia candidates without downloading them."""
+def _coverr_base_url():
+    base = COVERR_API_URL.rstrip("/")
+    if base.endswith("/search/videos"):
+        base = base[: -len("/search/videos")]
+    return base
+
+
+def _coverr_headers():
+    headers = {"User-Agent": "auto-short/1.0 educational video generator"}
+    if COVERR_API_KEY:
+        headers["Authorization"] = f"Bearer {COVERR_API_KEY}"
+        headers["X-API-Key"] = COVERR_API_KEY
+    return headers
+
+
+def _coverr_storage_download_url(session, base_url, base_filename, *, timeout_sec=30):
+    if not base_filename:
+        return ""
+    response = session.get(
+        f"{base_url}/storage/videos/{base_filename}",
+        headers=_coverr_headers(),
+        timeout=timeout_sec,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    if isinstance(payload, str):
+        return payload
+    if isinstance(payload, dict):
+        return str(payload.get("url") or payload.get("download_url") or payload.get("downloadUrl") or "")
+    return ""
+
+
+def _coverr_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=False):
+    import requests
+
+    base_url = _coverr_base_url()
+    if not base_url:
+        return []
+    session = requests.Session()
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = session.get(
+                f"{base_url}/search/videos",
+                headers=_coverr_headers(),
+                params={"query": enriched},
+                timeout=timeout_sec,
+            )
+            response.raise_for_status()
+            items = _json_items(response.json())
+        except Exception as e:
+            print(f"    [Coverr] search failed for {enriched!r}: {_safe_diagnostic(e)}")
+            if raise_errors:
+                raise
+            continue
+        for item in items[:8]:
+            if not isinstance(item, dict):
+                continue
+            base_filename = item.get("base_filename") or item.get("baseFilename")
+            try:
+                download_url = _coverr_storage_download_url(session, base_url, base_filename, timeout_sec=timeout_sec)
+            except Exception as e:
+                print(f"    [Coverr] signed download failed for {base_filename!r}: {_safe_diagnostic(e)}")
+                if raise_errors:
+                    raise
+                continue
+            if not download_url:
+                continue
+            is_vertical = bool(item.get("is_vertical"))
+            candidate = candidate_from_remote_item(
+                "coverr",
+                {
+                    "provider_asset_id": item.get("id") or base_filename or download_url,
+                    "title": item.get("title") or item.get("name") or "",
+                    "description": item.get("description") or "",
+                    "source_url": item.get("contributor_url") or item.get("url") or "https://coverr.co/",
+                    "download_url": download_url,
+                    "width": 1080 if is_vertical else 1920,
+                    "height": 1920 if is_vertical else 1080,
+                    "license": "Coverr License",
+                    "attribution": item.get("contributor_name") or "Coverr",
+                    "capability": "generic_stock_video",
+                },
+                enriched,
+            )
+            if candidate:
+                candidate_pool.append(candidate)
+    return candidate_pool
+
+
+def _wikimedia_user_agent():
+    if WIKIMEDIA_USER_AGENT:
+        return WIKIMEDIA_USER_AGENT
+    contact = WIKIMEDIA_CONTACT
+    if not contact:
+        match = re.search(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}", NOAA_USER_AGENT)
+        contact = match.group(0) if match else ""
+    suffix = f"; contact: {contact}" if contact else ""
+    return f"auto-short/1.0 (educational documentary media generator{suffix})"
+
+
+def _search_wikimedia_pages(query, *, timeout_sec=30, raise_errors=False):
+    """Run one cached, paced Wikimedia imageinfo search with bounded retries."""
 
     import requests
 
-    if not ENABLE_WIKIMEDIA_COMMONS:
-        return []
-    candidate_pool = []
+    global _WIKIMEDIA_LAST_REQUEST_AT
+    cache_key = " ".join(str(query).lower().split())
+    if cache_key in _WIKIMEDIA_SEARCH_CACHE:
+        return _WIKIMEDIA_SEARCH_CACHE[cache_key]
+
     session = requests.Session()
-    session.headers.update({"User-Agent": "auto-short/1.0 educational video generator"})
-    for q in queries:
-        cache_key = " ".join(str(q).lower().split())
-        pages = _WIKIMEDIA_SEARCH_CACHE.get(cache_key)
-        try:
-            if pages is None:
+    session.headers.update({"User-Agent": _wikimedia_user_agent()})
+    started = time.monotonic()
+    try:
+        for attempt in range(1, 4):
+            remaining = float(timeout_sec) - (time.monotonic() - started)
+            if remaining <= 0:
+                raise requests.exceptions.Timeout(f"Wikimedia search exceeded {timeout_sec}s")
+            pacing = 0.1 - (time.monotonic() - _WIKIMEDIA_LAST_REQUEST_AT)
+            if pacing > 0:
+                time.sleep(min(pacing, remaining))
+            response = None
+            try:
                 response = session.get(
                     "https://commons.wikimedia.org/w/api.php",
                     params={
@@ -2387,34 +2923,91 @@ def _wikimedia_candidates(queries, *, timeout_sec=30):
                         "format": "json",
                         "generator": "search",
                         "gsrnamespace": 6,
-                        "gsrsearch": q,
+                        "gsrsearch": query,
                         "gsrlimit": 8,
                         "prop": "imageinfo",
                         "iiprop": "url|mime|size|extmetadata",
+                        "iiurlwidth": 1280,
                     },
-                    timeout=timeout_sec,
+                    timeout=min(float(timeout_sec), remaining),
                 )
+                _WIKIMEDIA_LAST_REQUEST_AT = time.monotonic()
+                status = int(getattr(response, "status_code", 0) or 0)
+                if status in {429, 500, 502, 503, 504}:
+                    if attempt >= 3:
+                        response.raise_for_status()
+                        raise RuntimeError(f"Wikimedia HTTP {status} after 3 attempts")
+                    delay = _retry_delay_seconds(getattr(response, "headers", {}), attempt, maximum=10.0)
+                    if time.monotonic() - started + delay >= timeout_sec:
+                        raise requests.HTTPError(
+                            f"Wikimedia HTTP {status}; retry would exceed {timeout_sec}s",
+                            response=response,
+                        )
+                    time.sleep(delay)
+                    continue
                 response.raise_for_status()
                 pages = (response.json().get("query", {}) or {}).get("pages", {}) or {}
                 _WIKIMEDIA_SEARCH_CACHE[cache_key] = pages
-        except Exception as e:
-            print(f"    [Wikimedia] search failed for {q!r}: {e}")
-            continue
+                return pages
+            finally:
+                if response is not None:
+                    response.close()
+    except Exception as exc:
+        print(f"    [Wikimedia] search failed for {query!r}: {_safe_diagnostic(exc)}")
+        if raise_errors:
+            raise
+        return {}
+    finally:
+        session.close()
+
+
+def _wikimedia_candidates(queries, *, timeout_sec=30, raise_errors=False):
+    """Return normalized Wikimedia candidates without downloading them."""
+
+    if not ENABLE_WIKIMEDIA_COMMONS:
+        return []
+    candidate_pool = []
+    for query in queries:
+        pages = _search_wikimedia_pages(
+            query,
+            timeout_sec=timeout_sec,
+            raise_errors=raise_errors,
+        )
         for page in pages.values():
-            candidate = _wikimedia_candidate_from_page(page, q)
+            candidate = _wikimedia_candidate_from_page(page, query)
             if candidate:
                 candidate_pool.append(candidate)
     return candidate_pool
 
 
-def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=False, timeout_sec=30):
+def _adaptive_provider_candidates(
+    provider,
+    queries,
+    fallback,
+    *,
+    landscape=False,
+    timeout_sec=30,
+    probe=False,
+):
     if provider == "pexels":
         orientation = "landscape" if landscape else "portrait"
-        return _pexels_video_candidates(queries, fallback, orientation=orientation, timeout_sec=timeout_sec)
+        return _pexels_video_candidates(
+            queries,
+            fallback,
+            orientation=orientation,
+            timeout_sec=timeout_sec,
+            raise_errors=probe,
+        )
     if provider == "pixabay":
-        return _pixabay_video_candidates(queries, fallback, allow_landscape=landscape, timeout_sec=timeout_sec)
+        return _pixabay_video_candidates(
+            queries,
+            fallback,
+            allow_landscape=landscape,
+            timeout_sec=timeout_sec,
+            raise_errors=probe,
+        )
     if provider == "wikimedia":
-        return _wikimedia_candidates(queries, timeout_sec=timeout_sec)
+        return _wikimedia_candidates(queries, timeout_sec=timeout_sec, raise_errors=probe)
     if provider == "mixkit":
         return _json_stock_candidates(
             "mixkit",
@@ -2423,15 +3016,14 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             fallback=fallback,
             license_name="Mixkit License",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     if provider == "coverr":
-        return _json_stock_candidates(
-            "coverr",
-            COVERR_API_URL,
+        return _coverr_candidates(
             queries,
             fallback=fallback,
-            license_name="Coverr License",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     if provider == "videvo" and VIDEVO_API_URL and VIDEVO_API_KEY:
         return _json_stock_candidates(
@@ -2442,6 +3034,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             headers={"Authorization": f"Bearer {VIDEVO_API_KEY}"},
             license_name="Videvo license varies by clip",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     if provider == "noaa":
         return _json_stock_candidates(
@@ -2449,8 +3042,10 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             NOAA_API_URL,
             queries,
             fallback=fallback,
+            headers={"User-Agent": NOAA_USER_AGENT},
             license_name="NOAA public domain / usage varies",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     if provider == "esa":
         return _json_stock_candidates(
@@ -2460,6 +3055,7 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             fallback=fallback,
             license_name="ESA media usage guidelines",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     if provider == "usgs":
         return _json_stock_candidates(
@@ -2469,6 +3065,13 @@ def _adaptive_provider_candidates(provider, queries, fallback, *, landscape=Fals
             fallback=fallback,
             license_name="USGS public domain / usage varies",
             timeout_sec=timeout_sec,
+            raise_errors=probe,
+        )
+    if provider == "europeana":
+        return _europeana_candidates(
+            queries,
+            timeout_sec=timeout_sec,
+            raise_errors=probe,
         )
     return []
 
@@ -2483,6 +3086,473 @@ def _dedupe_candidates(candidates):
         seen.add(key)
         deduped.append(candidate)
     return deduped
+
+
+def _stable_source_url(url):
+    """Remove expiring signature material while retaining a stable source page."""
+
+    value = str(url or "").strip()
+    if not value:
+        return ""
+    try:
+        parts = urlsplit(value)
+        pairs = parse_qsl(parts.query, keep_blank_values=True)
+        signed_keys = {
+            "expires", "signature", "sig", "token", "x-amz-algorithm",
+            "x-amz-credential", "x-amz-date", "x-amz-expires", "x-amz-signature",
+            "x-amz-signedheaders",
+        }
+        if any(key.casefold() in signed_keys for key, _value in pairs):
+            return urlunsplit((parts.scheme, parts.netloc, parts.path, "", ""))
+        return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(pairs), ""))
+    except ValueError:
+        return value.split("?", 1)[0]
+
+
+def _safe_diagnostic(exc):
+    """Keep provider diagnostics useful without persisting keys or signed URLs."""
+
+    text = str(exc or "")[:500]
+    text = re.sub(
+        r"https?://[^\s]+",
+        lambda match: _stable_source_url(match.group(0)),
+        text,
+    )
+    for secret in (
+        PEXELS_API_KEY,
+        PIXABAY_API_KEY,
+        COVERR_API_KEY,
+        EUROPEANA_API_KEY,
+    ):
+        if secret:
+            text = text.replace(secret, "[REDACTED]")
+    return text[:300]
+
+
+def _stable_provider_id(provider_id):
+    value = str(provider_id or "").strip()
+    if value.casefold().startswith(("http://", "https://")):
+        return _stable_source_url(value)
+    return value
+
+
+def _critical_candidate_is_authentic(candidate):
+    provider = str(getattr(candidate, "provider", "") or "").casefold()
+    if provider not in CRITICAL_ASSET_PROVIDERS:
+        return False
+    raw = getattr(candidate, "raw_metadata", {}) or {}
+    provenance = " ".join((
+        str(raw.get("capability") or ""),
+        str(raw.get("source_type") or ""),
+        str(raw.get("provenance") or ""),
+    )).casefold()
+    return not any(marker in provenance for marker in ("generated", "composed", "synthetic"))
+
+
+def _critical_visual_intent(card: TopicCard, role, queries):
+    scene_index = 0 if role == "hook" else 1
+    intent = build_visual_intent(
+        {
+            "narration": f"{card.required_entity} {card.required_action}",
+            "broll": queries[0],
+            "broll_queries": list(queries),
+            "scene_importance": "hook" if scene_index == 0 else "main_reveal",
+            "media_mode": "prove",
+            "primary_subject": card.required_entity,
+            "scene_entity": {
+                "canonical_entity": card.required_entity,
+                "entity_type": "topic_card_required_entity",
+                "aliases": [card.subject],
+                "required_terms": [card.required_entity],
+                "optional_terms": [],
+                "forbidden_terms": [],
+            },
+        },
+        card.premise,
+    )
+    action_terms = tuple(dict.fromkeys(
+        token
+        for token in re.findall(r"[a-z0-9]+", card.required_action.casefold())
+        if len(token) >= 4 and token not in {"through", "while", "with", "into", "from", "over", "against"}
+    ))
+    return replace(intent, action_terms=action_terms)
+
+
+def _critical_candidate_record(candidate, score=None):
+    raw = candidate.raw_metadata if isinstance(candidate.raw_metadata, dict) else {}
+    return {
+        "provider": candidate.provider,
+        "provider_id": _stable_provider_id(candidate.provider_id),
+        "source_url": _stable_source_url(candidate.url or raw.get("source_url")),
+        "license": str(raw.get("license") or ""),
+        "attribution": str(raw.get("attribution") or ""),
+        "query": candidate.query,
+        "score": round(float(score.score), 3) if score is not None else None,
+        "confidence": score.confidence if score is not None else "",
+    }
+
+
+def _rank_critical_candidates(intent, candidates, used_provider_ids, maximum):
+    ranked = []
+    for candidate in _dedupe_candidates(candidates):
+        if not _critical_candidate_is_authentic(candidate):
+            continue
+        score = score_candidate(
+            intent,
+            candidate,
+            used_provider_ids=set(used_provider_ids),
+            target_duration_sec=SHORTS_SCENE_TARGET_DURATION,
+            output_width=WIDTH,
+            output_height=HEIGHT,
+            evidence_engine=EvidenceVerificationEngine(),
+        )
+        if score.quality_gate_passed and score.score >= _minimum_score_for_intent(intent):
+            ranked.append((score, candidate))
+    ranked.sort(
+        key=lambda item: (
+            item[0].score,
+            item[0].relevance_score,
+            int(not item[1].is_image),
+        ),
+        reverse=True,
+    )
+    return ranked[:maximum]
+
+
+def discover_critical_assets(
+    topic,
+    *,
+    output_dir=None,
+    card=None,
+    providers=None,
+    candidate_loader=None,
+    downloader=None,
+    verifier=None,
+    gate_config=None,
+):
+    """Discover and frame-verify TopicCard hook/reveal assets before scripting."""
+
+    matched_card = card or find_topic_card(topic)
+    if matched_card is None:
+        return {
+            "version": 1,
+            "topic": topic,
+            "topic_card": None,
+            "status": "SKIPPED",
+            "failure_classification": "SKIPPED",
+            "failure_reason": "topic does not match a structured TopicCard premise",
+            "providers": [],
+            "roles": [],
+        }
+
+    selected_providers = tuple(providers) if providers is not None else tuple(
+        provider for provider in CRITICAL_ASSET_PROVIDERS if _provider_is_configured(provider)
+    )
+    plan = {
+        "version": 1,
+        "topic": topic,
+        "topic_card": {
+            "id": matched_card.id,
+            "pillar": matched_card.pillar,
+            "subject": matched_card.subject,
+            "premise": matched_card.premise,
+        },
+        "status": "FAILED",
+        "failure_classification": "",
+        "failure_reason": "",
+        "providers": list(selected_providers),
+        "roles": [],
+    }
+    if not selected_providers:
+        plan["failure_classification"] = "TECHNICAL_PROVIDER_FAILURE"
+        plan["failure_reason"] = "no authentic critical-asset provider is configured"
+        return plan
+
+    output_root = Path(output_dir or OUT_DIR) / "critical_assets"
+    maximum = max(1, _env_int("AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES", 3))
+    provider_timeout = max(5, _env_int("AUTO_VIDEO_CRITICAL_ASSET_PROVIDER_TIMEOUT_SEC", 30))
+    download_timeout = max(10, _env_int("AUTO_VIDEO_CRITICAL_ASSET_DOWNLOAD_TIMEOUT_SEC", 90))
+    max_bytes = max(1, _env_int("AUTO_VIDEO_CRITICAL_ASSET_MAX_DOWNLOAD_MB", 120)) * 1024 * 1024
+    load_candidates = candidate_loader or (
+        lambda provider, queries, fallback: _adaptive_provider_candidates(
+            provider,
+            queries,
+            fallback,
+            landscape=WIDTH >= HEIGHT,
+            timeout_sec=provider_timeout,
+            probe=True,
+        )
+    )
+    download = downloader or _download_to
+    config = gate_config or VerifiedMediaGateConfig.from_env(os.environ)
+    config = replace(
+        config,
+        enabled=True,
+        allow_unverified_when_vision_unavailable=False,
+    )
+    gate = VerifiedMediaGate(config, verifier=verifier or _gemini_verified_media_verifier)
+    used_provider_ids = set()
+    failed_roles = []
+
+    for scene_index, (role_name, queries) in enumerate((
+        ("hook", matched_card.hook_queries),
+        ("main_reveal", matched_card.reveal_queries),
+    )):
+        intent = _critical_visual_intent(matched_card, role_name, queries)
+        role_plan = {
+            "role": role_name,
+            "scene_index": scene_index,
+            "expected_entity": matched_card.required_entity,
+            "expected_action": matched_card.required_action,
+            "queries": list(queries),
+            "status": "FAILED",
+            "selected": None,
+            "backups": [],
+            "attempts": [],
+            "provider_outcomes": [],
+            "failure_classification": "",
+            "failure_reason": "",
+        }
+        candidates = []
+        provider_failed = False
+        for provider in selected_providers:
+            try:
+                found = load_candidates(provider, tuple(queries), matched_card.subject) or []
+            except Exception as exc:
+                status = _classify_provider_probe_exception(exc)
+                provider_failed = provider_failed or status in CRITICAL_ASSET_TECHNICAL_FAILURES
+                role_plan["provider_outcomes"].append({
+                    "provider": provider,
+                    "status": status.value,
+                    "candidates_found": 0,
+                    "detail": _safe_diagnostic(exc),
+                })
+                continue
+            authentic = [candidate for candidate in found if _critical_candidate_is_authentic(candidate)]
+            candidates.extend(authentic)
+            role_plan["provider_outcomes"].append({
+                "provider": provider,
+                "status": ("SUCCESS" if authentic else "NO_RESULTS"),
+                "candidates_found": len(authentic),
+                "excluded_generated_or_composed": len(found) - len(authentic),
+                "detail": "authentic candidates returned" if authentic else "provider returned no authentic candidates",
+            })
+
+        ranked = _rank_critical_candidates(intent, candidates, used_provider_ids, maximum)
+        verifier_failed = False
+        download_failed = False
+        downloaded_candidate = False
+        for rank, (score, candidate) in enumerate(ranked, start=1):
+            attempt = {
+                **_critical_candidate_record(candidate, score),
+                "rank": rank,
+                "expected_entity": matched_card.required_entity,
+                "expected_action": matched_card.required_action,
+                "local_path": "",
+                "verification": None,
+                "status": "DOWNLOAD_FAILED",
+            }
+            out_path = output_root / (
+                f"{scene_index}_{role_name}_{rank}_{slugify(candidate.provider_id, 24)}"
+                f"{_candidate_extension(candidate)}"
+            )
+            try:
+                downloaded = download(
+                    candidate.download_url,
+                    out_path,
+                    timeout=download_timeout,
+                    max_bytes=max_bytes,
+                )
+            except Exception as exc:
+                downloaded = False
+                attempt["download_error"] = f"{type(exc).__name__}: download failed"
+            if not downloaded or not out_path.exists():
+                download_failed = True
+                role_plan["attempts"].append(attempt)
+                continue
+            downloaded_candidate = True
+            attempt["local_path"] = str(out_path)
+            request = VerificationRequest(
+                scene_index=scene_index,
+                media_path=out_path,
+                expected_entity=matched_card.required_entity,
+                expected_action=matched_card.required_action,
+                visual_goal="show" if scene_index == 0 else "reveal",
+                priority=VerificationPriority.CRITICAL,
+            )
+            try:
+                result = gate.evaluate(request, replacement_attempt=rank - 1)
+                verification = result.to_dict()
+            except Exception as exc:
+                verification = {
+                    "scene_index": scene_index,
+                    "media_path": str(out_path),
+                    "expected_entity": matched_card.required_entity,
+                    "expected_action": matched_card.required_action,
+                    "priority": VerificationPriority.CRITICAL.value,
+                    "decision": VerificationDecision.UNVERIFIED.value,
+                    "reason": "frame verifier raised an exception",
+                    "error": _safe_diagnostic(exc),
+                }
+            attempt["verification"] = verification
+            attempt["status"] = str(verification.get("decision") or "").upper()
+            role_plan["attempts"].append(attempt)
+            error_text = " ".join((
+                str(verification.get("error") or ""),
+                str(verification.get("reason") or ""),
+            )).casefold()
+            is_verifier_failure = bool(verification.get("error")) or any(
+                marker in error_text
+                for marker in ("unavailable", "quota", "rate limit", "resource_exhausted", "429", "no representative frames")
+            )
+            if is_verifier_failure:
+                verifier_failed = True
+                if role_plan["selected"] is None:
+                    break
+                continue
+            if (
+                verification.get("decision") == VerificationDecision.VERIFIED.value
+                and role_plan["selected"] is None
+            ):
+                role_plan["selected"] = attempt
+                role_plan["status"] = "VERIFIED"
+                used_provider_ids.add(candidate.dedup_key)
+
+        selected = role_plan["selected"]
+        role_plan["backups"] = [
+            attempt for attempt in role_plan["attempts"]
+            if selected is None
+            or (
+                attempt.get("provider") != selected.get("provider")
+                or attempt.get("provider_id") != selected.get("provider_id")
+            )
+        ]
+        if selected is None:
+            if verifier_failed:
+                classification = "TECHNICAL_VERIFIER_FAILURE"
+                reason = "critical frame verifier was unavailable or failed"
+            elif ranked and not downloaded_candidate and download_failed:
+                classification = "TECHNICAL_PROVIDER_FAILURE"
+                reason = "all ranked critical candidates failed to download"
+            elif candidates and not ranked:
+                classification = "CONTENT_ASSET_GAP"
+                reason = "authentic candidates were found but none passed intent/evidence scoring"
+            elif ranked:
+                classification = "CONTENT_ASSET_GAP"
+                reason = "downloaded candidates did not verify the required entity and action"
+            elif provider_failed and not any(
+                outcome.get("status") in {"SUCCESS", "NO_RESULTS"}
+                for outcome in role_plan["provider_outcomes"]
+            ):
+                classification = "TECHNICAL_PROVIDER_FAILURE"
+                reason = "all configured critical providers failed"
+            else:
+                classification = "CONTENT_ASSET_GAP"
+                reason = "configured providers returned no authentic critical candidates"
+            role_plan["failure_classification"] = classification
+            role_plan["failure_reason"] = reason
+            failed_roles.append(role_plan)
+        plan["roles"].append(role_plan)
+
+    if not failed_roles:
+        plan["status"] = "VERIFIED"
+        plan["failure_classification"] = "NONE"
+        return plan
+
+    technical = next(
+        (
+            role for role in failed_roles
+            if str(role.get("failure_classification") or "").startswith("TECHNICAL")
+        ),
+        None,
+    )
+    representative = technical or failed_roles[0]
+    plan["failure_classification"] = representative["failure_classification"]
+    plan["failure_reason"] = "; ".join(
+        f"{role['role']}: {role['failure_reason']}" for role in failed_roles
+    )
+    return plan
+
+
+def critical_asset_overrides(plan):
+    """Return verified scene-index locks from a persisted critical plan."""
+
+    if not isinstance(plan, dict) or plan.get("status") != "VERIFIED":
+        return {}
+    return {
+        int(role["scene_index"]): role["selected"]
+        for role in plan.get("roles") or []
+        if isinstance(role, dict)
+        and role.get("status") == "VERIFIED"
+        and isinstance(role.get("selected"), dict)
+    }
+
+
+def apply_topic_card_identity(shot_plan, card):
+    """Overlay an authoritative TopicCard entity and critical action on a ShotPlan."""
+
+    if not isinstance(card, TopicCard):
+        return shot_plan
+    canonical = card.required_entity.strip()
+    aliases = tuple(
+        value for value in (card.subject.strip(),)
+        if value and value.casefold() != canonical.casefold()
+    )
+    intents = []
+    for intent in shot_plan.intents:
+        source_entity = intent.scene_entity
+        scene_entity = SceneEntity(
+            canonical_entity=canonical,
+            entity_type="topic_card_required_entity",
+            aliases=aliases,
+            required_terms=(canonical,),
+            optional_terms=tuple(getattr(source_entity, "optional_terms", ())),
+            forbidden_terms=tuple(getattr(source_entity, "forbidden_terms", ())),
+            confidence=1.0,
+        )
+        critical = intent.scene_index in {0, 1}
+        intents.append(replace(
+            intent,
+            primary_subject=canonical,
+            scene_entity=scene_entity,
+            required_entities=(canonical, *aliases),
+            action=card.required_action if critical else intent.action,
+            diagnostics={
+                **intent.diagnostics,
+                "topic_card_id": card.id,
+                "topic_card_required_entity": canonical,
+                **({"topic_card_required_action": card.required_action} if critical else {}),
+            },
+        ))
+    return replace(
+        shot_plan,
+        primary_subject=canonical,
+        required_subjects=(canonical,),
+        visual_identity=tuple(dict.fromkeys((canonical, *shot_plan.visual_identity))),
+        intents=tuple(intents),
+        diagnostics={
+            **shot_plan.diagnostics,
+            "topic_card_id": card.id,
+            "topic_card_required_entity": canonical,
+        },
+    )
+
+
+def _critical_plan_outputs_valid(path, topic, *, require_reverification=False):
+    if require_reverification:
+        return False
+    try:
+        plan = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if str(plan.get("topic") or "").casefold() != str(topic or "").casefold():
+        return False
+    if plan.get("status") == "SKIPPED":
+        return True
+    return plan.get("status") == "VERIFIED" and all(
+        Path(selected.get("local_path") or "").exists()
+        for selected in critical_asset_overrides(plan).values()
+    ) and len(critical_asset_overrides(plan)) == 2
 
 
 def _select_adaptive_result(intent, candidates, used_set, target_duration):
@@ -2767,7 +3837,7 @@ def fetch_nasa_video(
             r.raise_for_status()
             return (r.json().get("collection", {}) or {}).get("items", []) or []
         except Exception as e:
-            print(f"    [NASA] search failed for {q!r}: {e}")
+            print(f"    [NASA] search failed for {q!r}: {_safe_diagnostic(e)}")
             return []
 
     def get_asset_url(nasa_id, media_type="video"):
@@ -2793,7 +3863,7 @@ def fetch_nasa_video(
             preferred = next((u for u in image_urls if "~large" in u or "~medium" in u), None)
             return preferred or image_urls[0], True
         except Exception as e:
-            print(f"    [NASA] asset lookup failed: {e}")
+            print(f"    [NASA] asset lookup failed: {_safe_diagnostic(e)}")
             return None, False
 
     intent = intent or _selection_intent(
@@ -2969,20 +4039,27 @@ def fetch_mixkit_video(
 def fetch_coverr_video(
     queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
 ):
-    """Fetch Coverr results from a configured JSON endpoint."""
+    """Fetch Coverr videos via search metadata and signed MP4 URLs."""
 
-    return _fetch_json_stock_provider(
-        "coverr",
-        COVERR_API_URL,
-        queries,
+    if not COVERR_API_URL:
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate = _select_candidate_for_provider(
+        "Coverr",
         idx,
-        used_set,
-        target_duration=target_duration,
-        fallback=fallback,
-        narration=narration,
-        license_name="Coverr License",
+        _coverr_candidates(queries, fallback=fallback),
         intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
     )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    print(f"    [Coverr] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path, timeout=90, max_bytes=120 * 1024 * 1024):
+        return out_path
+    return None
 
 
 def fetch_videvo_video(
@@ -3021,6 +4098,7 @@ def fetch_noaa_media(
         target_duration=target_duration,
         fallback=fallback,
         narration=narration,
+        headers={"User-Agent": NOAA_USER_AGENT},
         license_name="NOAA public domain / usage varies",
         intent=intent,
     )
@@ -3160,7 +4238,7 @@ def fetch_smithsonian_media(
             response.raise_for_status()
             rows = (response.json().get("response") or {}).get("rows") or []
         except Exception as e:
-            print(f"    [Smithsonian] search failed for {q!r}: {e}")
+            print(f"    [Smithsonian] search failed for {q!r}: {_safe_diagnostic(e)}")
             continue
         for row in rows[:12]:
             candidate = _smithsonian_candidate_from_row(row, q)
@@ -3272,6 +4350,46 @@ def _europeana_candidate_from_item(item, query):
     )
 
 
+def _europeana_candidates(queries, *, timeout_sec=30, raise_errors=False):
+    """Return reusable Europeana image candidates without downloading them."""
+
+    import requests
+
+    if not (EUROPEANA_API_URL and EUROPEANA_API_KEY):
+        return []
+    candidate_pool = []
+    session = requests.Session()
+    try:
+        for query in queries:
+            try:
+                response = session.get(
+                    EUROPEANA_API_URL,
+                    params={
+                        "wskey": EUROPEANA_API_KEY,
+                        "query": query,
+                        "rows": 20,
+                        "media": "true",
+                        "reusability": "open",
+                        "type": "IMAGE",
+                    },
+                    timeout=timeout_sec,
+                )
+                response.raise_for_status()
+                items = response.json().get("items") or []
+            except Exception as exc:
+                print(f"    [Europeana] search failed for {query!r}: {_safe_diagnostic(exc)}")
+                if raise_errors:
+                    raise
+                continue
+            for item in items[:12]:
+                candidate = _europeana_candidate_from_item(item, query)
+                if candidate:
+                    candidate_pool.append(candidate)
+    finally:
+        session.close()
+    return candidate_pool
+
+
 def fetch_europeana_media(
     queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
 ):
@@ -3282,36 +4400,10 @@ def fetch_europeana_media(
     Auth: wskey query parameter.
     Filters: media=true, reusability=open (CC0 / CC-BY / PDM only).
     """
-    import requests
-
     if not (EUROPEANA_API_URL and EUROPEANA_API_KEY):
         return None
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
-    candidate_pool = []
-    session = requests.Session()
-    for q in queries:
-        try:
-            response = session.get(
-                EUROPEANA_API_URL,
-                params={
-                    "wskey": EUROPEANA_API_KEY,
-                    "query": q,
-                    "rows": 20,
-                    "media": "true",
-                    "reusability": "open",
-                    "type": "IMAGE",
-                },
-                timeout=30,
-            )
-            response.raise_for_status()
-            items = response.json().get("items") or []
-        except Exception as e:
-            print(f"    [Europeana] search failed for {q!r}: {e}")
-            continue
-        for item in items[:12]:
-            candidate = _europeana_candidate_from_item(item, q)
-            if candidate:
-                candidate_pool.append(candidate)
+    candidate_pool = _europeana_candidates(queries)
     candidate = _select_candidate_for_provider(
         "Europeana",
         idx,
@@ -3414,7 +4506,7 @@ def fetch_internet_archive_media(
             search_resp.raise_for_status()
             docs = (search_resp.json().get("response") or {}).get("docs") or []
         except Exception as e:
-            print(f"    [Internet Archive] search failed for {q!r}: {e}")
+            print(f"    [Internet Archive] search failed for {q!r}: {_safe_diagnostic(e)}")
             continue
         for doc in docs[:5]:
             identifier = doc.get("identifier")
@@ -3431,7 +4523,7 @@ def fetch_internet_archive_media(
                 meta_resp.raise_for_status()
                 meta = meta_resp.json()
             except Exception as e:
-                print(f"    [Internet Archive] metadata failed for {identifier!r}: {e}")
+                print(f"    [Internet Archive] metadata failed for {identifier!r}: {_safe_diagnostic(e)}")
                 continue
             files = meta.get("files") or []
             video_file = _internet_archive_pick_video_file(files)
@@ -3567,7 +4659,7 @@ def fetch_library_of_congress_media(
             response.raise_for_status()
             results = response.json().get("results", []) or []
         except Exception as e:
-            print(f"    [LOC] search failed for {q!r}: {e}")
+            print(f"    [LOC] search failed for {q!r}: {_safe_diagnostic(e)}")
             continue
         for result in results[:12]:
             candidate = _loc_candidate_from_result(result, q)
@@ -3598,12 +4690,16 @@ def _wikimedia_candidate_from_page(page, query):
     title = str(page.get("title") or "")
     imageinfo = (page.get("imageinfo") or [{}])[0]
     mime = str(imageinfo.get("mime") or "")
-    url = str(imageinfo.get("url") or "")
-    if not title or not url or not (mime.startswith("video/") or mime.startswith("image/")):
+    original_url = str(imageinfo.get("url") or "")
+    is_image_result = mime.startswith("image/")
+    if not title or not original_url or not (mime.startswith("video/") or is_image_result):
         return None
-    media_signature = " ".join([title, mime, url]).lower()
-    if any(token in media_signature for token in ("svg", "djvu", ".djv", ".pdf")):
+    media_signature = " ".join([title, mime, original_url]).lower()
+    if any(token in media_signature for token in ("svg", "tiff", ".tif", "djvu", ".djv", ".pdf")):
         return None
+    download_url = str(imageinfo.get("thumburl") or original_url) if is_image_result else original_url
+    width = imageinfo.get("thumbwidth") or imageinfo.get("width")
+    height = imageinfo.get("thumbheight") or imageinfo.get("height")
     ext = imageinfo.get("extmetadata") or {}
 
     def ext_value(name):
@@ -3616,14 +4712,14 @@ def _wikimedia_candidate_from_page(page, query):
             "provider_asset_id": title.replace("File:", ""),
             "title": title.replace("File:", ""),
             "description": ext_value("ImageDescription"),
-            "source_url": imageinfo.get("descriptionurl") or url,
-            "download_url": url,
-            "width": imageinfo.get("width"),
-            "height": imageinfo.get("height"),
+            "source_url": imageinfo.get("descriptionurl") or original_url,
+            "download_url": download_url,
+            "width": width,
+            "height": height,
             "license": ext_value("LicenseShortName") or ext_value("UsageTerms"),
             "attribution": ext_value("Artist") or ext_value("Credit"),
-            "is_image": mime.startswith("image/"),
-            "capability": "history_images" if mime.startswith("image/") else "history_video",
+            "is_image": is_image_result,
+            "capability": "history_images" if is_image_result else "history_video",
         },
         query,
     )
@@ -3634,46 +4730,10 @@ def fetch_wikimedia_media(
 ):
     """Search Wikimedia Commons for historical, educational, or diagram media."""
 
-    import requests
-
     if not ENABLE_WIKIMEDIA_COMMONS:
         return None
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
-    candidate_pool = []
-    session = requests.Session()
-    session.headers.update({"User-Agent": "auto-short/1.0 educational video generator"})
-    for q in queries:
-        cache_key = " ".join(str(q).lower().split())
-        if cache_key in _WIKIMEDIA_SEARCH_CACHE:
-            pages = _WIKIMEDIA_SEARCH_CACHE[cache_key]
-        else:
-            pages = None
-        try:
-            if pages is None:
-                search_response = session.get(
-                    "https://commons.wikimedia.org/w/api.php",
-                    params={
-                        "action": "query",
-                        "format": "json",
-                        "generator": "search",
-                        "gsrnamespace": 6,
-                        "gsrsearch": q,
-                        "gsrlimit": 8,
-                        "prop": "imageinfo",
-                        "iiprop": "url|mime|size|extmetadata",
-                    },
-                    timeout=30,
-                )
-                search_response.raise_for_status()
-                pages = (search_response.json().get("query", {}) or {}).get("pages", {}) or {}
-                _WIKIMEDIA_SEARCH_CACHE[cache_key] = pages
-        except Exception as e:
-            print(f"    [Wikimedia] search failed for {q!r}: {e}")
-            continue
-        for page in pages.values():
-            candidate = _wikimedia_candidate_from_page(page, q)
-            if candidate:
-                candidate_pool.append(candidate)
+    candidate_pool = _wikimedia_candidates(queries, timeout_sec=30)
     candidate = _select_candidate_for_provider(
         "Wikimedia",
         idx,
@@ -4049,12 +5109,36 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                         "score_breakdown": {},
                     },
                 }
+        elif source == "pollinations_image":
+            if not is_pollinations_image_available():
+                continue
+            print(f"    [Pollinations Image] Strategy fallback for '{keyword}'...")
+            out = generate_pollinations_image(plan_queries[0] if plan_queries else keyword, idx)
+            if out:
+                _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                    **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+                    **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                    "selection": {
+                        "query": plan_queries[0] if plan_queries else keyword,
+                        "provider": "pollinations_image",
+                        "provider_id": Path(out).name,
+                        "score": None,
+                        "confidence": "fallback",
+                        "warnings": ["strategy generated-image fallback"],
+                        "rejection_reasons": [],
+                        "candidate_count": 0,
+                        "score_breakdown": {},
+                    },
+                }
         else:
             continue
         if _valid_media_path(out):
             _save_persistent_used(used_set)
             _record_post_download_visual_qa(idx, canonical_intent, out)
-            visual_grammar_engine.register_real_asset(provider=source)
+            if source in {"gemini_image", "pollinations_image"}:
+                visual_grammar_engine.register_explainer()
+            else:
+                visual_grammar_engine.register_real_asset(provider=source)
             return out
         if out:
             print(f"    [{source}] returned an unrenderable media file; trying next source.")
@@ -4123,6 +5207,29 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
             visual_grammar_engine.register_explainer()
             _save_persistent_used(used_set)
             return gemini_img
+
+    if is_pollinations_image_available():
+        print(f"    [Pollinations Image] Stock footage exhausted; generating image for '{keyword}'...")
+        pollinations_img = generate_pollinations_image(keyword, idx)
+        if pollinations_img:
+            _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+                **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+                **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+                "selection": {
+                    "query": keyword,
+                    "provider": "pollinations_image",
+                    "provider_id": Path(pollinations_img).name,
+                    "score": None,
+                    "confidence": "fallback",
+                    "warnings": ["stock footage exhausted", "generated-image fallback"],
+                    "rejection_reasons": [],
+                    "candidate_count": 0,
+                    "score_breakdown": {},
+                }
+            }
+            visual_grammar_engine.register_explainer()
+            _save_persistent_used(used_set)
+            return pollinations_img
 
     if _needs_qr_explainer_fallback(keyword, narration, fallback):
         print(f"    [QR fallback] Creating local explainer image for '{keyword}'...")
@@ -4395,6 +5502,54 @@ def _media_asset_from_path(path, *, source=MediaSource.UNKNOWN, idx=0, metadata=
     )
 
 
+def _media_asset_from_critical_lock(locked, idx):
+    """Build a render asset without losing the locked provider provenance."""
+
+    locked = dict(locked)
+    provider = str(locked.get("provider") or "")
+    provider_id = str(locked.get("provider_id") or "")
+    provenance = {
+        "source_url": locked.get("source_url", ""),
+        "license": locked.get("license", ""),
+        "attribution": locked.get("attribution", ""),
+    }
+    metadata = {
+        "critical_asset_lock": True,
+        "critical_asset": locked,
+        "provider": provider,
+        "provider_asset_id": provider_id,
+        **provenance,
+        "verified_media": locked.get("verification") or {},
+        "selection": {
+            "query": locked.get("query", ""),
+            "provider": provider,
+            "provider_id": provider_id,
+            **provenance,
+            "score": locked.get("score"),
+            "confidence": "verified",
+            "confidence_level": "VERIFIED",
+            "quality_gate_passed": True,
+            "selection_reason": "pre-script frame-verified critical asset lock",
+            "fallback_level": "critical_asset_lock",
+            "warnings": [],
+            "rejection_reasons": [],
+            "candidate_count": 1,
+            "score_breakdown": {},
+        },
+    }
+    asset = _media_asset_from_path(
+        Path(locked.get("local_path") or ""),
+        source=_media_source_from_selection(metadata),
+        idx=idx,
+        metadata=metadata,
+    )
+    return replace(
+        asset,
+        source_id=f"{provider}:{provider_id}",
+        attribution=provenance,
+    )
+
+
 def _media_source_from_selection(metadata):
     provider = ((metadata or {}).get("selection") or {}).get("provider")
     return {
@@ -4403,6 +5558,7 @@ def _media_source_from_selection(metadata):
         "pixabay": MediaSource.PIXABAY,
         "nasa": MediaSource.NASA,
         "gemini_image": MediaSource.GEMINI_IMAGE,
+        "pollinations_image": MediaSource.POLLINATIONS_IMAGE,
     }.get(provider, MediaSource.UNKNOWN)
 
 
@@ -5337,8 +6493,8 @@ def _build_subscribe_clip(channel_name: str, output_dir: Path, idx: int, duratio
 def main():
     parser = argparse.ArgumentParser(description="Auto Short Video Generator")
     parser.add_argument("topic", nargs="?", default=DEFAULT_NICHE, help="Video topic/niche")
-    parser.add_argument("--duration", type=int, default=TARGET_DURATION,
-                        help=f"Target video duration in seconds (default: {TARGET_DURATION})")
+    parser.add_argument("--duration", type=int, default=None,
+                        help="Target video duration in seconds (default: automatic topic policy)")
     parser.add_argument("--compare", action="store_true",
                         help="Enable split-screen comparison mode (pairs local media files)")
     parser.add_argument("--hybrid", action="store_true",
@@ -5372,7 +6528,10 @@ def main():
     check_deps()
     _AUDIO_MIX_DECISIONS.clear()
     niche = args.topic
-    duration = args.duration
+    topic_card = find_topic_card(niche)
+    duration, duration_reason = resolve_target_duration(niche, args.duration, topic_card)
+    if args.duration is None:
+        print(f"[i] Automatic duration policy: {duration}s ({duration_reason}).")
     compare_mode = args.compare
     hybrid = args.hybrid
     threshold = args.threshold
@@ -5425,19 +6584,20 @@ def main():
 
     def set_script_context(ctx: PipelineContext, script_payload: dict) -> None:
         topic_meta = build_topic_metadata(
-            video_topic=niche,
+            video_topic=_topic_metadata_classification_text(niche),
             title=script_payload.get("title", niche),
             description=script_payload.get("description", ""),
             instagram_caption=script_payload.get("instagram_caption", ""),
             segments=script_payload.get("segments", []),
             existing_hashtags=script_payload.get("hashtags") or (),
         )
+        script_payload["category_id"] = topic_meta.category_id
         ctx.values["script"] = script_payload
         ctx.values["topic_metadata"] = topic_meta
         ctx.values["title"] = topic_meta.title
         ctx.values["segments"] = script_payload["segments"]
 
-    def load_cached_script(*, announce: bool) -> dict:
+    def load_cached_script(*, announce: bool, critical_asset_plan=None) -> dict:
         cache_path = OUT_DIR / "last_script.json"
         if not cache_path.exists():
             die("No cached script found in output/last_script.json. Run without --reuse-script first.")
@@ -5447,7 +6607,9 @@ def main():
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["segments"] = cached.get("segments", [])[:n_segments]
             cached = Script.from_legacy_dict(cached, niche=niche).to_legacy_dict()
-            fatal, _soft = script_quality_notes(cached, n_segments, duration)
+            fatal, _soft = script_quality_notes(
+                cached, n_segments, duration, critical_asset_plan
+            )
             if duration >= SHORTS_MIN_DURATION and fatal:
                 die(
                     "Cached script is too short for a 50-60s video. "
@@ -5504,6 +6666,7 @@ def main():
         payload = {
             "topic": niche,
             "duration": duration,
+            "duration_reason": duration_reason,
             "segments": n_segments,
             "orientation": "landscape" if landscape else "portrait",
             "compare_mode": compare_mode,
@@ -5564,17 +6727,115 @@ def main():
     def validate_documentary_viability(_ctx: PipelineContext, record: StageRecord) -> bool:
         return Path(record.outputs.get("documentary_viability_report", "")).exists()
 
+    def stage_critical_asset_discovery(ctx: PipelineContext) -> StageResult:
+        try:
+            plan = discover_critical_assets(niche, output_dir=OUT_DIR)
+        except Exception as exc:
+            plan = {
+                "version": 1,
+                "topic": niche,
+                "topic_card": None,
+                "status": "FAILED",
+                "failure_classification": "TECHNICAL_PROVIDER_FAILURE",
+                "failure_reason": (
+                    f"critical discovery raised {type(exc).__name__}: {_safe_diagnostic(exc)}"
+                ),
+                "providers": [],
+                "roles": [],
+            }
+        plan_path = write_manifest(OUT_DIR / "critical_asset_plan.json", plan)
+        ctx.values["critical_asset_plan"] = plan
+        print(
+            f"[Critical assets] {plan['status']} "
+            f"classification={plan['failure_classification']}"
+        )
+        if plan["status"] == "FAILED":
+            if plan["failure_classification"] == "CONTENT_ASSET_GAP":
+                # Daily recovery already recognizes rejected verified-media rows
+                # as a content deferral. This pre-script compatibility report
+                # avoids misclassifying a healthy visual mismatch as technical.
+                scenes = []
+                for role in plan.get("roles") or []:
+                    attempts = role.get("attempts") or []
+                    verification = dict(next(
+                        (
+                            attempt.get("verification")
+                            for attempt in reversed(attempts)
+                            if isinstance(attempt.get("verification"), dict)
+                        ),
+                        None,
+                    ) or {
+                        "scene_index": role.get("scene_index"),
+                        "expected_entity": role.get("expected_entity"),
+                        "expected_action": role.get("expected_action"),
+                        "decision": VerificationDecision.REJECTED.value,
+                        "reason": role.get("failure_reason"),
+                    })
+                    verification["decision"] = VerificationDecision.REJECTED.value
+                    scenes.append(verification)
+                write_manifest(OUT_DIR / "verified_media_report.json", {
+                    "source": "critical_asset_discovery",
+                    "failure_classification": plan["failure_classification"],
+                    "scenes": scenes,
+                    "summary": {
+                        "scene_count": len(scenes),
+                        "verified_count": 0,
+                        "unverified_count": 0,
+                        "rejected_count": len(scenes),
+                        "verified_coverage": 0.0,
+                    },
+                })
+            raise RuntimeError(
+                "Critical asset discovery failed before script generation "
+                f"({plan['failure_classification']}): {plan['failure_reason']}. "
+                f"See {plan_path.name}."
+            )
+        return StageResult(outputs={
+            "critical_asset_plan": str(plan_path),
+            "status": plan["status"],
+            "failure_classification": plan["failure_classification"],
+            "critical_media_files": [
+                selected["local_path"]
+                for selected in critical_asset_overrides(plan).values()
+            ],
+        })
+
+    def load_critical_asset_discovery(ctx: PipelineContext, record: StageRecord) -> None:
+        ctx.values["critical_asset_plan"] = read_manifest(
+            Path(record.outputs["critical_asset_plan"])
+        )
+
+    def validate_critical_asset_discovery(_ctx: PipelineContext, record: StageRecord) -> bool:
+        return _critical_plan_outputs_valid(
+            record.outputs.get("critical_asset_plan", ""),
+            niche,
+            require_reverification=reuse_script and find_topic_card(niche) is not None,
+        )
+
     def stage_script_generation(ctx: PipelineContext) -> StageResult:
+        critical_plan = ctx.values.get("critical_asset_plan")
         if reuse_script:
-            script_payload = load_cached_script(announce=True)
+            script_payload = load_cached_script(
+                announce=True,
+                critical_asset_plan=critical_plan,
+            )
         else:
             print("[1/5] Writing script with Gemini...")
-            script_payload = generate_script(niche, n_segments, duration)
+            script_payload = generate_script(
+                niche,
+                n_segments,
+                duration,
+                critical_asset_plan=critical_plan,
+            )
         set_script_context(ctx, script_payload)
+        write_manifest(OUT_DIR / "last_script.json", script_payload)
         return StageResult(outputs={"script_path": str(OUT_DIR / "last_script.json")})
 
     def load_script_generation(ctx: PipelineContext, _record: StageRecord) -> None:
-        script_payload = load_cached_script(announce=False)
+        script_payload = load_cached_script(
+            announce=False,
+            critical_asset_plan=ctx.values.get("critical_asset_plan"),
+        )
         set_script_context(ctx, script_payload)
 
     def _query_generation_report(shot_plan: ShotPlan) -> dict:
@@ -5607,6 +6868,7 @@ def main():
             topic=niche,
             segments=ctx.values["segments"],
             knowledge_domains=knowledge_store.load(),
+            primary_subject_override=topic_card.required_entity if topic_card else "",
         )
         scene_entity_plan = SceneEntityPlanner().plan(
             editorial_canon=editorial_canon,
@@ -5630,6 +6892,7 @@ def main():
             segments=ctx.values["segments"],
             editorial_canon=editorial_canon,
         )
+        shot_plan = apply_topic_card_identity(shot_plan, topic_card)
         shot_plan_path = shot_plan.write_json(OUT_DIR / "shot_plan.json")
         scene_entity_report_path = write_manifest(
             OUT_DIR / "scene_entity_report.json",
@@ -5680,6 +6943,7 @@ def main():
                 topic=niche,
                 segments=ctx.values["segments"],
                 knowledge_domains=knowledge_store.load(),
+                primary_subject_override=topic_card.required_entity if topic_card else "",
             )
             ctx.values["editorial_canon"] = editorial_canon
             editorial_canon.write_json(OUT_DIR / "editorial_canon.json")
@@ -5693,7 +6957,11 @@ def main():
             write_manifest(OUT_DIR / "scene_entity_report.json", scene_entity_plan.to_report())
         shot_plan_path = Path(payload.get("shot_plan") or record.outputs.get("shot_plan", ""))
         if shot_plan_path.exists():
-            ctx.values["shot_plan"] = ShotPlan.from_dict(read_manifest(shot_plan_path))
+            ctx.values["shot_plan"] = apply_topic_card_identity(
+                ShotPlan.from_dict(read_manifest(shot_plan_path)),
+                topic_card,
+            )
+            ctx.values["shot_plan"].write_json(shot_plan_path)
             write_manifest(OUT_DIR / "scene_entity_report.json", {
                 "scenes": [
                     {
@@ -5729,7 +6997,41 @@ def main():
                 segments=ctx.values["segments"],
                 editorial_canon=ctx.values.get("editorial_canon"),
             )
+            ctx.values["shot_plan"] = apply_topic_card_identity(
+                ctx.values["shot_plan"],
+                topic_card,
+            )
             write_manifest(OUT_DIR / "query_generation_report.json", _query_generation_report(ctx.values["shot_plan"]))
+
+    def validate_media_planning(_ctx: PipelineContext, record: StageRecord) -> bool:
+        required_paths = (
+            record.outputs.get("media_planning_manifest", ""),
+            record.outputs.get("editorial_canon", ""),
+            record.outputs.get("shot_plan", ""),
+        )
+        if not all(path and Path(path).exists() for path in required_paths):
+            return False
+        if topic_card is None:
+            return True
+        try:
+            canon_payload = read_manifest(Path(record.outputs["editorial_canon"]))
+            shot_payload = read_manifest(Path(record.outputs["shot_plan"]))
+        except (OSError, ValueError, KeyError):
+            return False
+        expected = topic_card.required_entity.casefold()
+        if str(canon_payload.get("primary_subject") or "").casefold() != expected:
+            return False
+        if str(shot_payload.get("primary_subject") or "").casefold() != expected:
+            return False
+        critical_intents = [
+            item for item in shot_payload.get("intents", ())
+            if isinstance(item, dict) and item.get("scene_index") in {0, 1}
+        ]
+        return len(critical_intents) == 2 and all(
+            str((item.get("scene_entity") or {}).get("canonical_entity") or "").casefold() == expected
+            and str(item.get("action") or "").casefold() == topic_card.required_action.casefold()
+            for item in critical_intents
+        )
 
     def stage_editorial_identity(ctx: PipelineContext) -> StageResult:
         """Reject a plan whose subject no longer represents the requested topic."""
@@ -5993,7 +7295,17 @@ def main():
             idx=intent.scene_index,
             intent=visual_intent,
         )
-        supported = {"pexels", "pixabay", "wikimedia", "mixkit", "coverr", "videvo"}
+        supported = {
+            "pexels",
+            "pixabay",
+            "wikimedia",
+            "mixkit",
+            "coverr",
+            "videvo",
+            "noaa",
+            "esa",
+            "usgs",
+        }
         plans = [
             plan
             for plan in strategy.provider_plans
@@ -6004,17 +7316,34 @@ def main():
         # stock query appear impossible when the two configured stock sources
         # can still answer it.  Final provider selection remains unchanged.
         if not plans and queries:
+            fallback_providers = [
+                provider_id
+                for provider_id in ("pexels", "pixabay")
+                if _provider_is_configured(provider_id)
+            ][:config.max_providers_per_scene]
             plans = [
                 SimpleNamespace(provider_id=provider_id, queries=tuple(queries), score=0.01)
-                for provider_id in ("pexels", "pixabay")[:config.max_providers_per_scene]
+                for provider_id in fallback_providers
             ]
-            reasons = ["coverage probe used stock fallback after no provider plan was ranked"]
+            reasons = [
+                "coverage probe used stock fallback after no provider plan was ranked"
+                if plans else "no configured probe-supported provider was ranked for this scene"
+            ]
         else:
             reasons: list[str] = []
         attempted: list[str] = []
+        provider_outcomes: list[ProviderProbeOutcome] = []
         candidates = []
         for plan in plans:
             attempted.append(plan.provider_id)
+            if not _provider_is_configured(plan.provider_id):
+                provider_outcomes.append(ProviderProbeOutcome(
+                    provider=plan.provider_id,
+                    status=ProviderProbeStatus.UNCONFIGURED,
+                    detail="provider endpoint or credentials are not configured",
+                ))
+                reasons.append(f"{plan.provider_id} is not configured")
+                continue
             plan_queries = list(
                 semantic_scene.queries_for(plan.provider_id)
                 if semantic_scene else plan.queries or queries
@@ -6025,10 +7354,27 @@ def main():
                     plan_queries,
                     fallback,
                     timeout_sec=config.provider_timeout_sec,
+                    probe=True,
                 )
             except Exception as exc:
-                reasons.append(f"{plan.provider_id} probe failed: {exc}")
+                status = _classify_provider_probe_exception(exc)
+                detail = str(exc)[:300]
+                provider_outcomes.append(ProviderProbeOutcome(
+                    provider=plan.provider_id,
+                    status=status,
+                    detail=detail,
+                ))
+                reasons.append(f"{plan.provider_id} probe {status.value.lower()}: {detail}")
                 continue
+            provider_outcomes.append(ProviderProbeOutcome(
+                provider=plan.provider_id,
+                status=(
+                    ProviderProbeStatus.SUCCESS
+                    if provider_candidates else ProviderProbeStatus.NO_RESULTS
+                ),
+                candidates_found=len(provider_candidates),
+                detail=("candidates returned" if provider_candidates else "provider returned no candidates"),
+            ))
             candidates.extend(provider_candidates)
             if not provider_candidates:
                 reasons.append(f"{plan.provider_id} returned no candidates")
@@ -6076,6 +7422,7 @@ def main():
             accepted_candidates=len(accepted),
             best_score=max((score.score for score in scored), default=None),
             covered=bool(accepted),
+            provider_outcomes=tuple(provider_outcomes),
             reasons=tuple(reasons),
             coverage_basis="production_score" if critical else "availability_score",
             required_score=round(required_score, 4),
@@ -6097,8 +7444,13 @@ def main():
             for index, segment in enumerate(ctx.values["segments"])
         }
         sampled_intents = _source_coverage_intents(ctx.values["shot_plan"], config.max_scenes)
-        scenes = [
-            _probe_source_coverage_scene(
+        scenes = []
+        for intent in sampled_intents:
+            locked_coverage = verified_critical_scene_coverage(
+                intent,
+                ctx.values.get("critical_asset_plan"),
+            )
+            scenes.append(locked_coverage or _probe_source_coverage_scene(
                 intent,
                 config,
                 narrations,
@@ -6106,9 +7458,7 @@ def main():
                 ctx.values.get("semantic_query_report"),
                 ctx.values.get("scene_constraint_report"),
                 ctx.values.get("scene_visual_focus_report"),
-            )
-            for intent in sampled_intents
-        ]
+            ))
         report = SourceCoverageEvaluator(config).evaluate(niche, scenes)
         report_path = report.write_json(OUT_DIR / "source_coverage_report.json")
         ctx.values["source_coverage"] = report.to_dict()
@@ -6225,6 +7575,7 @@ def main():
         scene_visual_focus_report = ctx.values.get("scene_visual_focus_report")
         semantic_query_report = ctx.values.get("semantic_query_report")
         scene_constraint_report = ctx.values.get("scene_constraint_report")
+        critical_locks = critical_asset_overrides(ctx.values.get("critical_asset_plan"))
         visual_grammar_engine = VisualGrammarEngine(
             topic=niche,
             total_scenes=len(ctx.values["voice_items"]),
@@ -6248,6 +7599,25 @@ def main():
                 if isinstance(scene_constraint_report, SceneConstraintReport) else None
             )
             visual_grammar_decision = None
+
+            if idx in critical_locks:
+                locked = dict(critical_locks[idx])
+                locked_path = Path(locked.get("local_path") or "")
+                if not _valid_media_path(locked_path):
+                    raise RuntimeError(
+                        f"verified critical asset for segment {idx + 1} is missing or invalid"
+                    )
+                provider = str(locked.get("provider") or "")
+                provider_id = str(locked.get("provider_id") or "")
+                locked_asset = _media_asset_from_critical_lock(locked, idx)
+                _MEDIA_SELECTION_DIAGNOSTICS[idx] = locked_asset.metadata
+                media_assets.append(locked_asset)
+                visual_grammar_engine.register_real_asset(provider=provider)
+                print(
+                    f"[3/5] Segment {idx + 1}: using verified critical asset "
+                    f"{provider}:{provider_id}..."
+                )
+                continue
 
             if compare_mode:
                 a_idx = (idx * 2) % len(local_media)
@@ -6549,6 +7919,39 @@ def main():
                 canonical_report,
                 scene_visual_focus_report,
             ) if intent else None
+            asset_metadata = asset.metadata if isinstance(asset.metadata, dict) else {}
+            locked = asset_metadata.get("critical_asset")
+            if asset_metadata.get("critical_asset_lock") and isinstance(locked, dict):
+                verification = locked.get("verification") or {}
+                request = VerificationRequest(
+                    scene_index=idx,
+                    media_path=Path(asset.local_path),
+                    expected_entity=str(locked.get("expected_entity") or niche),
+                    expected_action=str(locked.get("expected_action") or ""),
+                    visual_goal="show" if idx == 0 else "reveal",
+                    priority=VerificationPriority.CRITICAL,
+                )
+                evidence = DownloadedMediaEvidence(
+                    entity_match=True,
+                    entity_confidence=float(verification.get("entity_confidence") or 1.0),
+                    action_match=(True if request.expected_action else None),
+                    action_confidence=float(verification.get("action_confidence") or 1.0),
+                    verified_entity=str(verification.get("verified_entity") or request.expected_entity),
+                    verified_action=str(verification.get("verified_action") or request.expected_action),
+                    reasoning=str(verification.get("reasoning") or "pre-script critical asset verification"),
+                    sampled_frames=tuple(verification.get("sampled_frames") or ()),
+                    provider=str(verification.get("provider") or "gemini"),
+                )
+                result = VerifiedMediaSceneResult(
+                    request=request,
+                    decision=VerificationDecision.VERIFIED,
+                    evidence=evidence,
+                    reason="reused pre-script frame-verified critical asset",
+                )
+                asset.metadata["verified_media"] = result.to_dict()
+                attempts.append(result)
+                final_results.append(result)
+                continue
             request = _verification_request_for_asset(idx, asset, provider_intent)
             if not request.expected_entity:
                 request = replace(request, expected_entity=niche)
@@ -6739,6 +8142,7 @@ def main():
             "video_path": str(OUT_DIR / "final.mp4"),
             "niche": niche,
             "segments": script_payload.get("segments", []),
+            "category_id": ctx.values["topic_metadata"].category_id,
             "orientation": "landscape" if landscape else "portrait",
             "status": "draft",
         })
@@ -6848,6 +8252,34 @@ def main():
         description_base = topic_metadata.description or title
         if title.lower() not in description_base[:150].lower():
             description_base = f"{title}\n\n{description_base}"
+        music_selection = {}
+        try:
+            music_selection = read_manifest(OUT_DIR / "music_selection.json")
+        except (OSError, ValueError):
+            pass
+        selected_track = (
+            music_selection.get("track", {})
+            if isinstance(music_selection, dict) else {}
+        )
+        license_metadata = (
+            selected_track.get("license_metadata", {})
+            if isinstance(selected_track, dict) else {}
+        )
+        music_attribution = ""
+        if (
+            isinstance(license_metadata, dict)
+            and bool(license_metadata.get("attribution_required"))
+        ):
+            music_attribution = str(
+                license_metadata.get("attribution_text")
+                or selected_track.get("attribution_text")
+                or ""
+            ).strip()
+            if not music_attribution:
+                raise RuntimeError(
+                    "Selected music requires attribution, but no attribution text is available."
+                )
+            description_base = f"{description_base}\n\nMusic: {music_attribution}"
         youtube_description = f"{description_base}\n\n{hashtag_str}"
         facebook_description = youtube_description
         instagram_caption = topic_metadata.instagram_caption or title
@@ -6875,10 +8307,14 @@ def main():
             "instagram_caption": instagram_caption,
             "hashtags": hashtags,
             "youtube_tags": youtube_tags,
+            "category_id": topic_metadata.category_id,
             "segments": script_payload.get("segments", []),
             "music_mood": script_payload.get("music_mood"),
             "music_path": str(ctx.values["music_used"]) if ctx.values.get("music_used") else None,
             "music_volume": music_volume,
+            "music_provider": selected_track.get("provider") if isinstance(selected_track, dict) else None,
+            "music_license": license_metadata if isinstance(license_metadata, dict) else {},
+            "music_attribution": music_attribution,
             "duration_sec": round(float(ctx.values["total"]), 2),
             "video_file": "video.mp4",
             "video_file_yt": "video_yt_safe.mp4",
@@ -7286,6 +8722,7 @@ def main():
             "documentary_viability_report.json": OUT_DIR / "documentary_viability_report.json",
             "editorial_identity_report.json": OUT_DIR / "editorial_identity_report.json",
             "source_coverage_report.json": OUT_DIR / "source_coverage_report.json",
+            "critical_asset_plan.json": OUT_DIR / "critical_asset_plan.json",
             "timeline.json": OUT_DIR / "timeline.json",
             "editorial_canon.json": OUT_DIR / "editorial_canon.json",
             "primary_subject_lock_report.json": OUT_DIR / "primary_subject_lock_report.json",
@@ -7341,6 +8778,7 @@ def main():
     fingerprint_payload = {
         "topic": niche,
         "duration": duration,
+        "duration_reason": duration_reason,
         "compare": compare_mode,
         "hybrid": hybrid,
         "threshold": threshold,
@@ -7373,8 +8811,19 @@ def main():
             load=load_documentary_viability,
             validate_outputs=validate_documentary_viability,
         ),
+        PipelineStage(
+            "critical_asset_discovery",
+            stage_critical_asset_discovery,
+            load=load_critical_asset_discovery,
+            validate_outputs=validate_critical_asset_discovery,
+        ),
         PipelineStage("script_generation", stage_script_generation, load=load_script_generation),
-        PipelineStage("media_planning", stage_media_planning, load=load_media_planning),
+        PipelineStage(
+            "media_planning",
+            stage_media_planning,
+            load=load_media_planning,
+            validate_outputs=validate_media_planning,
+        ),
         PipelineStage(
             "editorial_identity",
             stage_editorial_identity,

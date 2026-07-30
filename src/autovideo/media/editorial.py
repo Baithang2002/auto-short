@@ -112,8 +112,10 @@ class EditorialCanonBuilder:
         topic: str,
         segments: Sequence[Mapping[str, Any]],
         knowledge_domains: Sequence[Any] = (),
+        primary_subject_override: str = "",
     ) -> tuple[EditorialCanon, PrimarySubjectLockReport, dict[str, Any], dict[str, Any]]:
         topic_clean = _clean(topic)
+        authoritative_subject = _clean(primary_subject_override)
         domain_scores = _score_domains(topic_clean, segments, knowledge_domains)
         topic_domain_scores = [
             (score, domain)
@@ -121,13 +123,14 @@ class EditorialCanonBuilder:
             if _has_topic_evidence(topic_clean, domain)
         ]
         explicit_subject = _explicit_subject(topic_clean)
-        mode = _documentary_mode(topic_clean, explicit_subject)
+        mode = _documentary_mode(topic_clean, authoritative_subject or explicit_subject)
         primary_subject = (
-            explicit_subject
+            authoritative_subject
+            or explicit_subject
             or _best_topic_domain_subject(topic_domain_scores)
             or _topic_subject(topic_clean)
         )
-        if not explicit_subject and mode == DocumentaryMode.PLACE and "largest desert" in _norm(topic_clean):
+        if not authoritative_subject and not explicit_subject and mode == DocumentaryMode.PLACE and "largest desert" in _norm(topic_clean):
             primary_subject = "Antarctica"
 
         domain = _domain_for_subject(primary_subject, knowledge_domains)
@@ -175,9 +178,12 @@ class EditorialCanonBuilder:
             diagnostics={
                 "builder": "editorial_canon",
                 "explicit_subject": explicit_subject,
+                "primary_subject_override": authoritative_subject,
                 "matched_domain": getattr(domain, "id", "") if domain else "",
                 "primary_subject_source": (
-                    "explicit_subject"
+                    "authoritative_override"
+                    if authoritative_subject
+                    else "explicit_subject"
                     if explicit_subject
                     else "topic_supported_domain"
                     if domain
@@ -188,8 +194,9 @@ class EditorialCanonBuilder:
         lock_report = PrimarySubjectLockReport(
             primary_subject=primary_subject,
             evidence={
-                "title_weight": 100 if explicit_subject else 0,
+                "title_weight": 100 if explicit_subject or authoritative_subject else 0,
                 "topic": topic_clean,
+                "primary_subject_override": authoritative_subject,
                 "opening_narration": str(segments[0].get("narration", "")) if segments else "",
                 "knowledge_domain_scores": [
                     {"domain_id": getattr(candidate, "id", ""), "score": score}
@@ -485,11 +492,24 @@ _SUBJECT_BOUNDARY_WORDS = {
     "change",
     "changed",
     "changes",
+    "control",
+    "controlled",
+    "controlling",
+    "controls",
     "create",
     "created",
     "creates",
     "do",
     "does",
+    "drive",
+    "driven",
+    "drives",
+    "driving",
+    "drove",
+    "affect",
+    "affected",
+    "affecting",
+    "affects",
     "form",
     "forms",
     "grow",
@@ -503,8 +523,16 @@ _SUBJECT_BOUNDARY_WORDS = {
     "melts",
     "move",
     "moves",
+    "influence",
+    "influenced",
+    "influences",
+    "influencing",
     "protect",
     "protects",
+    "shape",
+    "shaped",
+    "shapes",
+    "shaping",
     "survive",
     "survives",
     "turn",

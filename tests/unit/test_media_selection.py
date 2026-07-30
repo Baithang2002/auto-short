@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
@@ -28,6 +29,63 @@ from autovideo.media import (
 
 
 class MediaSelectionTests(unittest.TestCase):
+    def test_download_transcodes_png_payload_to_requested_jpeg_atomically(self) -> None:
+        image_bytes = BytesIO()
+        Image.new("RGBA", (32, 24), (10, 20, 30, 128)).save(image_bytes, format="PNG")
+        payload = image_bytes.getvalue()
+
+        class Response:
+            status_code = 200
+            headers = {"Content-Type": "image/png", "Content-Length": str(len(payload))}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def raise_for_status(self):
+                return None
+
+            def iter_content(self, chunk_size):
+                return (payload[:17], payload[17:])
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "nasa_asset.jpg"
+            with patch("requests.get", return_value=Response()):
+                downloaded = auto_short._download_to("https://images.nasa.test/asset", destination)
+
+            self.assertTrue(downloaded)
+            self.assertEqual(b"\xff\xd8", destination.read_bytes()[:2])
+            with Image.open(destination) as image:
+                self.assertEqual("JPEG", image.format)
+            self.assertEqual([destination], list(Path(directory).iterdir()))
+
+    def test_download_exhausts_retryable_errors_and_cleans_all_paths(self) -> None:
+        class Response:
+            status_code = 503
+            headers = {"Retry-After": "1"}
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def raise_for_status(self):
+                raise AssertionError("retry statuses are handled before raise_for_status")
+
+        with tempfile.TemporaryDirectory() as directory:
+            destination = Path(directory) / "asset.jpg"
+            destination.write_bytes(b"stale")
+            with patch("requests.get", side_effect=[Response(), Response(), Response()]) as get, \
+                 patch.object(auto_short.time, "sleep"):
+                downloaded = auto_short._download_to("https://cdn.test/asset", destination)
+
+            self.assertFalse(downloaded)
+            self.assertEqual(3, get.call_count)
+            self.assertEqual([], list(Path(directory).iterdir()))
+
     def test_visual_intent_extracts_subject_action_environment_and_shot(self) -> None:
         intent = build_visual_intent(
             {
@@ -821,35 +879,29 @@ class MediaSelectionTests(unittest.TestCase):
         )
 
     def test_configured_json_provider_wrapper_downloads_selected_candidate(self) -> None:
-        response = Mock()
-        response.raise_for_status.return_value = None
-        response.json.return_value = {
-            "items": [
-                {
-                    "id": "generic",
-                    "title": "person in office",
-                    "download_url": "https://cdn/generic.mp4",
-                    "width": 1920,
-                    "height": 1080,
-                    "duration": 8,
-                },
-                {
-                    "id": "qr",
-                    "title": "qr code phone scan close up technology",
-                    "download_url": "https://cdn/qr.mp4",
-                    "width": 1080,
-                    "height": 1920,
-                    "duration": 8,
-                    "license": "Coverr License",
-                    "attribution": "Coverr",
-                },
-            ]
-        }
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = [
+            {
+                "id": "qr",
+                "base_filename": "Qr-Code-Scan",
+                "title": "qr code phone scan close up technology",
+                "description": "QR code scanning technology",
+                "is_vertical": True,
+            }
+        ]
+        storage_response = Mock()
+        storage_response.raise_for_status.return_value = None
+        storage_response.json.return_value = "https://cdn/qr.mp4"
+        session = Mock()
+        session.get.side_effect = [search_response, storage_response]
         old_url = auto_short.COVERR_API_URL
-        auto_short.COVERR_API_URL = "https://provider.test/search"
+        old_key = auto_short.COVERR_API_KEY
+        auto_short.COVERR_API_URL = "https://provider.test"
+        auto_short.COVERR_API_KEY = "coverr-key"
         auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
         try:
-            with patch("requests.get", return_value=response), patch.object(
+            with patch("requests.Session", return_value=session), patch.object(
                 auto_short,
                 "_download_to",
                 return_value=True,
@@ -864,10 +916,48 @@ class MediaSelectionTests(unittest.TestCase):
                 )
         finally:
             auto_short.COVERR_API_URL = old_url
+            auto_short.COVERR_API_KEY = old_key
 
         self.assertEqual(path, auto_short.OUT_DIR / "broll_3.mp4")
-        download.assert_called_once_with("https://cdn/qr.mp4", auto_short.OUT_DIR / "broll_3.mp4")
+        download.assert_called_once_with(
+            "https://cdn/qr.mp4",
+            auto_short.OUT_DIR / "broll_3.mp4",
+            timeout=90,
+            max_bytes=120 * 1024 * 1024,
+        )
+        session.get.assert_any_call(
+            "https://provider.test/search/videos",
+            headers={
+                "User-Agent": "auto-short/1.0 educational video generator",
+                "Authorization": "Bearer coverr-key",
+                "X-API-Key": "coverr-key",
+            },
+            params={"query": "qr code phone scan"},
+            timeout=30,
+        )
         self.assertEqual(auto_short._MEDIA_SELECTION_DIAGNOSTICS[3]["selection"]["provider"], "coverr")
+
+    def test_pollinations_image_generation_downloads_prompt_url(self) -> None:
+        old_enabled = auto_short.POLLINATIONS_ENABLED
+        old_url = auto_short.POLLINATIONS_IMAGE_URL
+        old_model = auto_short.POLLINATIONS_MODEL
+        auto_short.POLLINATIONS_ENABLED = True
+        auto_short.POLLINATIONS_IMAGE_URL = "https://image.pollinations.ai/prompt"
+        auto_short.POLLINATIONS_MODEL = "flux"
+        try:
+            with patch.object(auto_short, "_download_to", return_value=True) as download:
+                path = auto_short.generate_pollinations_image("ocean current diagram", 4)
+        finally:
+            auto_short.POLLINATIONS_ENABLED = old_enabled
+            auto_short.POLLINATIONS_IMAGE_URL = old_url
+            auto_short.POLLINATIONS_MODEL = old_model
+
+        self.assertEqual(path, auto_short.OUT_DIR / "pollinations_img_4.jpg")
+        url = download.call_args.args[0]
+        self.assertTrue(url.startswith("https://image.pollinations.ai/prompt/"))
+        self.assertIn("width=1080", url)
+        self.assertIn("height=1920", url)
+        self.assertIn("model=flux", url)
 
     def test_adaptive_retrieval_adds_landscape_exact_subject_candidates(self) -> None:
         portrait_response = Mock()
@@ -1173,10 +1263,13 @@ class MediaSelectionTests(unittest.TestCase):
                 "imageinfo": [
                     {
                         "url": "https://upload.wikimedia.org/roman.jpg",
+                        "thumburl": "https://upload.wikimedia.org/thumb/roman-1280px.jpg",
                         "descriptionurl": "https://commons.wikimedia.org/wiki/File:Roman_aqueduct.jpg",
                         "mime": "image/jpeg",
-                        "width": 1200,
-                        "height": 800,
+                        "width": 6000,
+                        "height": 4000,
+                        "thumbwidth": 1280,
+                        "thumbheight": 853,
                         "extmetadata": {
                             "LicenseShortName": {"value": "CC BY-SA 4.0"},
                             "Artist": {"value": "Example Creator"},
@@ -1189,11 +1282,45 @@ class MediaSelectionTests(unittest.TestCase):
 
         self.assertEqual(candidate.provider, "wikimedia")
         self.assertTrue(candidate.is_image)
+        self.assertEqual(candidate.download_url, "https://upload.wikimedia.org/thumb/roman-1280px.jpg")
+        self.assertEqual((candidate.width, candidate.height), (1280, 853))
+        self.assertEqual(
+            candidate.url,
+            "https://commons.wikimedia.org/wiki/File:Roman_aqueduct.jpg",
+        )
         self.assertEqual(candidate.raw_metadata["license"], "CC BY-SA 4.0")
+
+    def test_wikimedia_search_requests_practical_thumbnails_and_caches(self) -> None:
+        response = Mock()
+        response.status_code = 200
+        response.headers = {}
+        response.raise_for_status.return_value = None
+        response.json.return_value = {"query": {"pages": {}}}
+        session = Mock()
+        session.headers = {}
+        session.get.return_value = response
+        old_contact = auto_short.WIKIMEDIA_CONTACT
+        auto_short.WIKIMEDIA_CONTACT = "media@example.test"
+        auto_short._WIKIMEDIA_SEARCH_CACHE.clear()
+        auto_short._WIKIMEDIA_LAST_REQUEST_AT = 0.0
+        try:
+            with patch("requests.Session", return_value=session):
+                auto_short._search_wikimedia_pages("roman aqueduct")
+                auto_short._search_wikimedia_pages("roman aqueduct")
+        finally:
+            auto_short.WIKIMEDIA_CONTACT = old_contact
+            auto_short._WIKIMEDIA_SEARCH_CACHE.clear()
+
+        self.assertEqual(1, session.get.call_count)
+        params = session.get.call_args.kwargs["params"]
+        self.assertEqual(1280, params["iiurlwidth"])
+        self.assertIn("url", params["iiprop"])
+        self.assertIn("media@example.test", session.headers["User-Agent"])
 
     def test_wikimedia_candidate_rejects_non_raster_archive_formats(self) -> None:
         for title, mime, url in (
             ("File:Aqueduct-de-nimes.svg", "image/svg+xml", "https://upload.wikimedia.org/aqueduct.svg"),
+            ("File:Archive master.tiff", "image/tiff", "https://upload.wikimedia.org/master.tiff"),
             ("File:Vegetable Mould.djvu", "image/vnd.djvu", "https://upload.wikimedia.org/book.djvu"),
             ("File:Archive scan.pdf", "application/pdf", "https://upload.wikimedia.org/scan.pdf"),
         ):
@@ -1214,6 +1341,70 @@ class MediaSelectionTests(unittest.TestCase):
                 )
 
                 self.assertIsNone(candidate)
+
+    def test_endpoint_providers_are_disabled_without_configured_urls(self) -> None:
+        registry = Mock()
+        with patch.object(auto_short, "NOAA_API_URL", ""), \
+             patch.object(auto_short, "ESA_API_URL", ""), \
+             patch.object(auto_short, "USGS_API_URL", ""), \
+             patch.object(auto_short, "ARCHIVE_PROVIDERS_ENABLED", True), \
+             patch.object(
+                 auto_short,
+                 "default_provider_capability_registry",
+                 return_value=registry,
+             ) as build_registry, \
+             patch.object(auto_short, "SourcePlanner") as planner:
+            planner.return_value.plan.return_value = SimpleNamespace()
+            auto_short._build_search_strategy(
+                ["ocean current satellite"],
+                "Ocean currents",
+                "NOAA maps ocean currents.",
+            )
+
+        options = build_registry.call_args.kwargs
+        self.assertFalse(options["noaa_enabled"])
+        self.assertFalse(options["esa_enabled"])
+        self.assertFalse(options["usgs_enabled"])
+
+    def test_provider_probe_exception_statuses_are_explicit(self) -> None:
+        import requests
+
+        rate_response = Mock(status_code=429)
+        auth_response = Mock(status_code=401)
+
+        self.assertEqual(
+            "RATE_LIMITED",
+            auto_short._classify_provider_probe_exception(
+                requests.HTTPError("too many requests", response=rate_response)
+            ).value,
+        )
+        self.assertEqual(
+            "AUTH_ERROR",
+            auto_short._classify_provider_probe_exception(
+                requests.HTTPError("unauthorized", response=auth_response)
+            ).value,
+        )
+        self.assertEqual(
+            "TIMEOUT",
+            auto_short._classify_provider_probe_exception(
+                requests.exceptions.Timeout("request timed out")
+            ).value,
+        )
+
+    def test_verification_request_falls_back_to_shot_intent_action(self) -> None:
+        request = auto_short._verification_request_for_asset(
+            2,
+            SimpleNamespace(local_path=Path("bee.mp4")),
+            SimpleNamespace(
+                requested_entity="honeybee",
+                action_terms=(),
+                action="performing a waggle dance",
+                visual_goal=SimpleNamespace(value="prove"),
+                scene_importance="HOOK",
+            ),
+        )
+
+        self.assertEqual("performing a waggle dance", request.expected_action)
 
     def test_valid_media_path_rejects_mislabeled_image_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

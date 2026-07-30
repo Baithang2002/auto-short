@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
 
+from .topic_cards import TopicCard, load_topic_card_catalog
+
 
 @dataclass(frozen=True)
 class TopicCandidate:
@@ -15,6 +17,7 @@ class TopicCandidate:
 
     topic: str
     source: str
+    card: TopicCard | None = None
 
 
 class TopicSource(ABC):
@@ -43,7 +46,7 @@ class TextTopicSource(TopicSource):
 
 @dataclass(frozen=True)
 class JsonTopicSource(TopicSource):
-    """Read topics from a JSON list or an object containing a ``topics`` list."""
+    """Read plain topics or a structured topic-card catalog from JSON."""
 
     path: Path
 
@@ -51,6 +54,8 @@ class JsonTopicSource(TopicSource):
         if not self.path.exists():
             return ()
         payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and "cards" in payload:
+            return TopicCardSource(self.path).load()
         entries = payload.get("topics", ()) if isinstance(payload, dict) else payload
         if not isinstance(entries, list):
             raise ValueError(f"{self.path} must contain a topic list or a topics list")
@@ -58,6 +63,22 @@ class JsonTopicSource(TopicSource):
             candidate
             for item in entries
             if (candidate := _candidate_from_json(item, self.path.name)) is not None
+        )
+
+
+@dataclass(frozen=True)
+class TopicCardSource(TopicSource):
+    """Expose validated topic-card premises through the existing source interface."""
+
+    path: Path
+
+    def load(self) -> tuple[TopicCandidate, ...]:
+        if not self.path.exists():
+            return ()
+        catalog = load_topic_card_catalog(self.path)
+        return tuple(
+            TopicCandidate(topic=card.topic, source=self.path.name, card=card)
+            for card in catalog.cards
         )
 
 

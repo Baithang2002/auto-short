@@ -44,6 +44,25 @@ class TopicClassificationTests(unittest.TestCase):
 
         self.assertEqual(result.primary, TopicCategory.WILDLIFE)
 
+    def test_segment_incidental_tokens_do_not_override_focused_topic(self) -> None:
+        result = classify_topic(
+            "Red Panda Tree Climbing",
+            segments=[{
+                "narration": "Storm clouds affect ocean currents while NASA software records lightning.",
+                "broll": "space technology weather ocean",
+            }],
+        )
+
+        self.assertEqual(result.primary, TopicCategory.WILDLIFE)
+
+    def test_segments_are_not_used_as_a_subject_when_topic_is_unfocused(self) -> None:
+        result = classify_topic(
+            "A Surprising Everyday Mystery",
+            segments=[{"narration": "A snow leopard hunts an arctic fox.", "broll": "wildlife"}],
+        )
+
+        self.assertNotEqual(result.primary, TopicCategory.WILDLIFE)
+
 
 class TopicMetadataTests(unittest.TestCase):
     def test_qr_metadata_uses_technology_tags_not_channel_nature_tags(self) -> None:
@@ -54,7 +73,7 @@ class TopicMetadataTests(unittest.TestCase):
             existing_hashtags="#nature #wildlife #shorts",
         )
 
-        self.assertEqual(metadata.title, "Unlock The QR Code Secret | Technology")
+        self.assertEqual(metadata.title, "Unlock The QR Code Secret")
         self.assertIn("#technology", metadata.hashtags)
         self.assertIn("#qrcode", metadata.hashtags)
         self.assertNotIn("#nature", metadata.hashtags)
@@ -68,8 +87,9 @@ class TopicMetadataTests(unittest.TestCase):
         )
 
         self.assertIn("#space", metadata.hashtags)
-        self.assertIn("#earth", metadata.hashtags)
-        self.assertIn("#science", metadata.hashtags)
+        self.assertIn("#earthscience", metadata.hashtags)
+        self.assertNotIn("#education", metadata.hashtags)
+        self.assertEqual(metadata.category_id, "28")
 
     def test_ocean_currents_metadata_uses_ocean_science(self) -> None:
         metadata = build_topic_metadata(
@@ -109,6 +129,43 @@ class TopicMetadataTests(unittest.TestCase):
         self.assertIsInstance(metadata.youtube_tags, str)
         self.assertIn("#shorts", metadata.hashtags)
         self.assertIn("#wildlife", metadata.hashtags)
+
+    def test_wildlife_metadata_is_species_targeted_and_uses_pets_animals_category(self) -> None:
+        metadata = build_topic_metadata(
+            video_topic="How Snow Leopards Hunt on Mountain Cliffs",
+            title="The Snow Leopard's Impossible Hunt | Biology",
+            existing_hashtags="#science #education #shorts",
+        )
+
+        self.assertEqual(metadata.title, "The Snow Leopard's Impossible Hunt")
+        self.assertEqual(metadata.classification.primary, TopicCategory.WILDLIFE)
+        self.assertEqual(metadata.category_id, "15")
+        self.assertIn("#snowleopard", metadata.hashtags)
+        self.assertIn("snow leopard", metadata.youtube_tags)
+        self.assertIn("#shorts", metadata.hashtags)
+        self.assertNotIn("#science", metadata.hashtags)
+        self.assertNotIn("#education", metadata.hashtags)
+
+    def test_unknown_topic_keeps_safe_default_youtube_category(self) -> None:
+        metadata = build_topic_metadata(
+            video_topic="A Surprising Everyday Mystery",
+            title="You Will Never Guess This",
+        )
+
+        self.assertEqual(metadata.category_id, "27")
+
+    def test_known_legacy_suffixes_are_removed_without_replacement(self) -> None:
+        suffixes = (
+            "Earth Science", "Weather", "Climate", "Biology", "Chemistry", "Environment",
+            "Geography", "Physics", "Astronomy", "Education",
+        )
+        for suffix in suffixes:
+            with self.subTest(suffix=suffix):
+                metadata = build_topic_metadata(
+                    video_topic="How Lightning Forms",
+                    title=f"Lightning in Slow Motion | {suffix}",
+                )
+                self.assertEqual(metadata.title, "Lightning in Slow Motion")
 
 
 if __name__ == "__main__":

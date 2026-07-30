@@ -215,6 +215,27 @@ class VisualDirectorTests(unittest.TestCase):
         self.assertEqual(restored.intents[0].media_mode, plan.intents[0].media_mode)
         self.assertEqual(restored.intents[0].search_queries, plan.intents[0].search_queries)
 
+    def test_intent_diagnostics_preserve_original_script_visual_inputs(self) -> None:
+        segment = {
+            "narration": "Ocean currents carry warm water toward colder regions.",
+            "broll": "global ocean current map",
+            "broll_queries": ["ocean currents map aerial", "ocean circulation wide"],
+        }
+
+        plan = VisualDirector().plan(
+            topic="How Ocean Currents Shape Climate",
+            segments=[segment],
+        )
+        diagnostics = plan.intents[0].diagnostics
+
+        self.assertEqual(segment["narration"], diagnostics["narration"])
+        self.assertEqual(segment["broll"], diagnostics["original_broll"])
+        self.assertEqual(segment["broll_queries"], diagnostics["original_broll_queries"])
+        self.assertEqual(
+            diagnostics,
+            ShotPlan.from_dict(plan.to_dict()).intents[0].diagnostics,
+        )
+
     def test_scene_specific_queries_are_not_overridden_by_domain_defaults(self) -> None:
         plan = VisualDirector().plan(
             topic="mind-blowing facts about our solar system",

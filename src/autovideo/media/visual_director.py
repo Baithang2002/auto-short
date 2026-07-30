@@ -442,10 +442,12 @@ class VisualDirector:
         scene_entity_plan: SceneEntityPlan | None = None,
     ) -> ShotIntent:
         narration = str(segment.get("narration", ""))
-        broll = str(segment.get("broll", "") or topic)
+        original_broll = str(segment.get("broll", "") or "")
+        broll = original_broll or topic
         raw_queries = segment.get("broll_queries") or []
         if isinstance(raw_queries, str):
             raw_queries = [raw_queries]
+        raw_queries = [str(query) for query in raw_queries]
         visual_goal = _visual_goal(index, narration, total_segments)
         documentary_role = _documentary_role_for_index(index, visual_goal, total_segments, editorial_canon)
         shot_type = _shot_type_for_index(index, visual_goal)
@@ -490,6 +492,9 @@ class VisualDirector:
             diagnostics={
                 "knowledge_domain": knowledge.id if knowledge else "generic",
                 "bounded_query_count": sum(len(tier.queries) for tier in query_tiers),
+                "narration": narration,
+                "original_broll": original_broll,
+                "original_broll_queries": list(raw_queries),
                 "editorial_canon_primary_subject": primary_subject if editorial_canon else "",
                 "documentary_role": documentary_role,
                 "scene_entity": scene_entity.to_dict() if scene_entity else None,

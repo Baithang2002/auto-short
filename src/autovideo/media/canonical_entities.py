@@ -290,6 +290,23 @@ _ENTITY_RULES: tuple[tuple[str, tuple[str, ...], tuple[str, ...]], ...] = (
     ("penguin", ("emperor penguin", "penguin colony"), ("penguin",)),
     ("aurora borealis", ("northern lights", "aurora"), ("aurora", "northern lights")),
     ("roman ruins", ("ancient Rome", "Roman Empire"), ("roman empire", "ancient rome", "roman ruins")),
+    (
+        "ocean currents",
+        (
+            "ocean current",
+            "ocean circulation",
+            "global ocean currents",
+            "global ocean circulation",
+            "thermohaline circulation",
+        ),
+        (
+            "ocean current",
+            "ocean currents",
+            "ocean circulation",
+            "global ocean circulation",
+            "thermohaline circulation",
+        ),
+    ),
     ("deep ocean", ("deep sea", "ocean depths", "marine life"), ("deep ocean", "deep sea")),
 )
 
@@ -306,6 +323,16 @@ _DOCUMENTARY_ENTITY_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
     ("penguin", ("penguin",)),
     ("aurora borealis", ("aurora", "northern lights")),
     ("roman ruins", ("roman empire", "ancient rome", "roman ruins")),
+    (
+        "ocean currents",
+        (
+            "ocean current",
+            "ocean currents",
+            "ocean circulation",
+            "global ocean circulation",
+            "thermohaline circulation",
+        ),
+    ),
     ("deep ocean", ("deep ocean", "deep sea")),
 )
 
@@ -375,9 +402,22 @@ _STOP_WORDS = {
     "world", "worlds",
 }
 
+_PROCESS_BOUNDARY_WORDS = {
+    "affect", "affected", "affecting", "affects",
+    "control", "controlled", "controlling", "controls",
+    "drive", "driven", "drives", "driving", "drove",
+    "influence", "influenced", "influences", "influencing",
+    "shape", "shaped", "shapes", "shaping",
+}
+
 
 def _clean_fallback(value: str) -> str:
-    words = [word for word in _words(value) if word not in _STOP_WORDS]
+    words: list[str] = []
+    for word in _words(value):
+        if words and word in _PROCESS_BOUNDARY_WORDS:
+            break
+        if word not in _STOP_WORDS:
+            words.append(word)
     return " ".join(words[:3]) or "documentary subject"
 
 

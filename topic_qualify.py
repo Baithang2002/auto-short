@@ -36,6 +36,7 @@ TOPIC_BANK_STATE = STATE_DIR / "topic_bank_state.json"
 TOPIC_BANK_REPORT = OUT_DIR / "topic_bank_status_report.json"
 QUALIFICATION_REPORT = OUT_DIR / "topic_qualification_report.json"
 SOURCE_COVERAGE_REPORT = OUT_DIR / "source_coverage_report.json"
+CRITICAL_ASSET_PLAN = OUT_DIR / "critical_asset_plan.json"
 EDITORIAL_IDENTITY_REPORT = OUT_DIR / "editorial_identity_report.json"
 PIPELINE_STATE = OUT_DIR / "pipeline_state.json"
 LAST_SCRIPT = OUT_DIR / "last_script.json"
@@ -145,6 +146,20 @@ def select_qualification_candidates(
 def classify_attempt(topic: str, return_code: int) -> tuple[str, str, float | None]:
     """Classify a completed subprocess using fresh diagnostic artifacts."""
 
+    critical_plan = _read_json(CRITICAL_ASSET_PLAN)
+    if str(critical_plan.get("topic", "")).casefold() == topic.casefold():
+        status = str(critical_plan.get("status", "")).upper()
+        classification = str(critical_plan.get("failure_classification", "")).upper()
+        reason = str(critical_plan.get("failure_reason") or "").strip()
+        if status == "FAILED":
+            if classification.startswith("TECHNICAL"):
+                return (
+                    "technical_failure",
+                    reason or "critical asset provider/verifier failed",
+                    None,
+                )
+            return "deferred", reason or "critical assets did not verify", None
+
     coverage = _read_json(SOURCE_COVERAGE_REPORT)
     if str(coverage.get("topic", "")).casefold() == topic.casefold():
         decision = str(coverage.get("decision", "")).upper()
@@ -153,6 +168,8 @@ def classify_attempt(topic: str, return_code: int) -> tuple[str, str, float | No
             return "qualified", "source coverage approved", ratio
         if decision == "DEFERRED":
             reasons = "; ".join(str(item) for item in coverage.get("reasons", []) if item)
+            if str(coverage.get("failure_classification", "")).upper() == "TECHNICAL_PROVIDER_FAILURE":
+                return "technical_failure", reasons or "source provider probe failed", ratio
             return "deferred", reasons or "source coverage deferred topic", ratio
 
     editorial = _read_json(EDITORIAL_IDENTITY_REPORT)
@@ -339,7 +356,12 @@ def _write_qualification_report(
 
 
 def _clear_attempt_state() -> None:
-    for path in (SOURCE_COVERAGE_REPORT, EDITORIAL_IDENTITY_REPORT, PIPELINE_STATE):
+    for path in (
+        SOURCE_COVERAGE_REPORT,
+        CRITICAL_ASSET_PLAN,
+        EDITORIAL_IDENTITY_REPORT,
+        PIPELINE_STATE,
+    ):
         try:
             path.unlink()
         except FileNotFoundError:

@@ -28,10 +28,20 @@ from .topic_metadata import (
 from .topic_sources import (
     JsonTopicSource,
     TextTopicSource,
+    TopicCardSource,
     TopicCandidate,
     TopicSource,
     load_topic_sources,
     topic_source_for_path,
+)
+from .topic_cards import (
+    DEFAULT_TOPIC_CARD_PATH,
+    DEFAULT_TOPIC_CARD_SOURCE,
+    PILLAR_ALLOCATION,
+    TopicCard,
+    TopicCardCatalog,
+    load_topic_card_catalog,
+    load_topic_cards,
 )
 from .topic_bank import (
     TopicBankRecord,
@@ -45,6 +55,7 @@ from .source_coverage import (
     SourceCoverageEvaluator,
     SourceCoverageReport,
     sample_scene_indexes,
+    verified_critical_scene_coverage,
 )
 from .exact_subject_gate import (
     ExactSubjectAvailabilityGate,
@@ -69,6 +80,9 @@ __all__ = [
     "SchedulerResult",
     "SchedulingDecision",
     "TextTopicSource",
+    "TopicCard",
+    "TopicCardCatalog",
+    "TopicCardSource",
     "TopicCandidate",
     "TopicIdentity",
     "TopicSource",
@@ -82,6 +96,8 @@ __all__ = [
     "build_topic_metadata",
     "classify_topic",
     "load_topic_sources",
+    "load_topic_card_catalog",
+    "load_topic_cards",
     "topic_identity",
     "topic_source_for_path",
     "SceneCoverage",
@@ -90,10 +106,14 @@ __all__ = [
     "SourceCoverageEvaluator",
     "SourceCoverageReport",
     "sample_scene_indexes",
+    "verified_critical_scene_coverage",
     "ExactSubjectAvailabilityGate",
     "ExactSubjectGateConfig",
     "ExactSubjectGateDecision",
     "ExactSubjectGateReport",
     "SubjectDefinition",
     "subject_definition_from_pipeline",
+    "DEFAULT_TOPIC_CARD_PATH",
+    "DEFAULT_TOPIC_CARD_SOURCE",
+    "PILLAR_ALLOCATION",
 ]

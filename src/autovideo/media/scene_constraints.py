@@ -221,6 +221,19 @@ class SceneConstraintPlanner:
         if canonical:
             constraints.append(_constraint("subject", canonical, aliases, "canonical_scene_entity"))
 
+        diagnostics = getattr(intent, "diagnostics", {})
+        topic_card_action = str(
+            diagnostics.get("topic_card_required_action") or ""
+            if isinstance(diagnostics, Mapping) else ""
+        ).strip()
+        if topic_card_action:
+            constraints.append(_constraint(
+                "action",
+                topic_card_action,
+                (),
+                "topic_card_required_action",
+            ))
+
         corpus = " ".join(
             str(value or "")
             for value in (

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from tests.unit import _path  # noqa: F401
 
@@ -138,6 +138,65 @@ class PipelineDailyTests(unittest.TestCase):
         failed.assert_called_once_with(
             run_id="run-1",
             reason="critical technical failure exit=2",
+            status="technical_failed",
+        )
+
+    def test_provider_failure_does_not_retry_or_quarantine_topics(self) -> None:
+        scheduler_result = SimpleNamespace(
+            selected=SimpleNamespace(viability_score=0.9, ranking_score=0.8),
+            config=pipeline_daily.ContentSchedulerConfig(
+                coverage_proven_topics=("Provider outage topic",),
+                evergreen_topics=(),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            coverage_report = root / "source_coverage_report.json"
+            coverage_report.write_text(json.dumps({
+                "topic": "Provider outage topic",
+                "decision": "DEFERRED",
+                "failure_classification": "TECHNICAL_PROVIDER_FAILURE",
+                "reasons": ["wikimedia probe rate_limited: HTTP 429"],
+            }), encoding="utf-8")
+            schedule = Mock(return_value=(
+                "Provider outage topic",
+                "run-1",
+                scheduler_result,
+            ))
+
+            with patch.object(pipeline_daily, "SOURCE_COVERAGE_REPORT", coverage_report), \
+                 patch.object(pipeline_daily, "EDITORIAL_IDENTITY_REPORT", root / "editorial.json"), \
+                 patch.object(pipeline_daily, "FALLBACK_QUALITY_REPORT", root / "fallback.json"), \
+                 patch.object(pipeline_daily, "PUBLISH_QUALITY_REPORT", root / "publish.json"), \
+                 patch.object(pipeline_daily, "VERIFIED_MEDIA_REPORT", root / "verified.json"), \
+                 patch.object(pipeline_daily, "EXACT_SUBJECT_GATE_REPORT", root / "exact.json"), \
+                 patch.object(pipeline_daily, "already_posted_today", return_value=False), \
+                 patch.object(pipeline_daily, "max_topic_attempts", return_value=6), \
+                 patch.object(pipeline_daily, "schedule_topic", schedule), \
+                 patch.object(pipeline_daily, "clear_attempt_reports"), \
+                 patch.object(
+                     pipeline_daily.subprocess,
+                     "run",
+                     return_value=SimpleNamespace(returncode=1),
+                 ), \
+                 patch.object(pipeline_daily, "append_log"), \
+                 patch.object(
+                     pipeline_daily.ContentHistoryStore,
+                     "mark_deferred",
+                     return_value=True,
+                 ) as failed, \
+                 patch.object(
+                     pipeline_daily.TopicBankStateStore,
+                     "mark_failure",
+                 ) as quarantine:
+                result = pipeline_daily.run_daily()
+
+        self.assertEqual(1, result)
+        self.assertEqual(1, schedule.call_count)
+        quarantine.assert_not_called()
+        failed.assert_called_once_with(
+            run_id="run-1",
+            reason="technical/provider failure: wikimedia probe rate_limited: HTTP 429",
             status="technical_failed",
         )
 

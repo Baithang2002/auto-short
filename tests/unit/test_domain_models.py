@@ -221,6 +221,17 @@ class DomainModelTests(unittest.TestCase):
         self.assertEqual(restored["custom_legacy_field"], "kept")
         self.assertEqual(Path(restored["video_path"]), Path("videos/pending/video-1/video.mp4"))
 
+    def test_upload_metadata_round_trips_youtube_category_id(self) -> None:
+        metadata = UploadMetadata.from_legacy_dict({
+            "id": "wildlife-1",
+            "title": "Snow Leopard",
+            "video_path": "video.mp4",
+            "category_id": "15",
+        })
+
+        self.assertEqual(metadata.category_id, "15")
+        self.assertEqual(metadata.to_legacy_dict()["category_id"], "15")
+
 
 if __name__ == "__main__":
     unittest.main()

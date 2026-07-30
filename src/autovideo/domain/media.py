@@ -14,6 +14,7 @@ class MediaSource(str, Enum):
     PIXABAY = "pixabay"
     NASA = "nasa"
     GEMINI_IMAGE = "gemini_image"
+    POLLINATIONS_IMAGE = "pollinations_image"
     DALLE = "dalle"
     UNKNOWN = "unknown"
 

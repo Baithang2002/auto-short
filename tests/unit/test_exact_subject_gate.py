@@ -162,6 +162,32 @@ class ExactSubjectAvailabilityGateTests(unittest.TestCase):
         self.assertEqual(("sleeper shark",), definition.aliases)
         self.assertEqual(("Somniosus microcephalus",), definition.scientific_names)
 
+    def test_subject_definition_prefers_canonical_documentary_entity(self) -> None:
+        title = "How Ocean Currents Shape Climate"
+        canonical_report = SimpleNamespace(
+            primary_subject=title,
+            canonical_documentary_entity="ocean currents",
+            scenes=(SimpleNamespace(
+                canonical_entity="ocean currents",
+                resolved_entity=SimpleNamespace(
+                    aliases=("ocean circulation", "thermohaline circulation"),
+                ),
+            ),),
+        )
+
+        definition = subject_definition_from_pipeline(
+            editorial_canon=SimpleNamespace(
+                primary_subject=title,
+                documentary_title=title,
+            ),
+            canonical_report=canonical_report,
+            shot_plan=SimpleNamespace(primary_subject=title, intents=()),
+        )
+
+        self.assertEqual("ocean currents", definition.canonical_entity)
+        self.assertIn("ocean circulation", definition.aliases)
+        self.assertNotEqual(title, definition.canonical_entity)
+
 
 if __name__ == "__main__":
     unittest.main()

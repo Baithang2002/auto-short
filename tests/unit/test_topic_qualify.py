@@ -76,6 +76,63 @@ class TopicQualifyTests(unittest.TestCase):
         self.assertIn("without a quality decision", reason)
         self.assertIsNone(ratio)
 
+    def test_classify_attempt_uses_critical_plan_failure_classification(self) -> None:
+        cases = (
+            ("TECHNICAL_VERIFIER_FAILURE", "technical_failure"),
+            ("TECHNICAL_PROVIDER_FAILURE", "technical_failure"),
+            ("CONTENT_ASSET_GAP", "deferred"),
+        )
+        for classification, expected in cases:
+            with self.subTest(classification=classification), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                plan = root / "critical_asset_plan.json"
+                plan.write_text(json.dumps({
+                    "topic": "Beaver dams",
+                    "status": "FAILED",
+                    "failure_classification": classification,
+                    "failure_reason": "diagnostic reason",
+                }), encoding="utf-8")
+                with patch.object(topic_qualify, "CRITICAL_ASSET_PLAN", plan), patch.object(
+                    topic_qualify,
+                    "SOURCE_COVERAGE_REPORT",
+                    root / "missing-coverage.json",
+                ), patch.object(
+                    topic_qualify,
+                    "EDITORIAL_IDENTITY_REPORT",
+                    root / "missing-editorial.json",
+                ):
+                    outcome, reason, ratio = topic_qualify.classify_attempt("Beaver dams", 1)
+
+            self.assertEqual(outcome, expected)
+            self.assertEqual(reason, "diagnostic reason")
+            self.assertIsNone(ratio)
+
+    def test_coverage_provider_failure_is_technical_not_deferred(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "source_coverage_report.json"
+            report.write_text(json.dumps({
+                "topic": "Provider outage",
+                "decision": "DEFERRED",
+                "failure_classification": "TECHNICAL_PROVIDER_FAILURE",
+                "coverage_ratio": 0.0,
+                "reasons": ["Wikimedia rate limited"],
+            }), encoding="utf-8")
+            with patch.object(topic_qualify, "SOURCE_COVERAGE_REPORT", report), patch.object(
+                topic_qualify,
+                "CRITICAL_ASSET_PLAN",
+                root / "missing-critical.json",
+            ), patch.object(
+                topic_qualify,
+                "EDITORIAL_IDENTITY_REPORT",
+                root / "missing-editorial.json",
+            ):
+                outcome, reason, ratio = topic_qualify.classify_attempt("Provider outage", 1)
+
+        self.assertEqual(outcome, "technical_failure")
+        self.assertEqual(reason, "Wikimedia rate limited")
+        self.assertEqual(ratio, 0.0)
+
     def test_run_preflight_stops_before_voice_and_upload_stages(self) -> None:
         with patch.object(topic_qualify, "_clear_attempt_state"), \
              patch.object(

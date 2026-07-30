@@ -90,6 +90,29 @@ class CanonicalSceneEntityResolverTests(unittest.TestCase):
                 )
                 self.assertEqual(expected, report.scene_for_index(0).canonical_entity)
 
+    def test_ocean_currents_have_a_documentary_entity_and_retrieval_aliases(self) -> None:
+        topic = "How Ocean Currents Shape Climate"
+        report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=_plan(topic, _intent(0, "Ocean Currents")),
+        )
+
+        scene = report.scene_for_index(0)
+        self.assertEqual("ocean currents", report.canonical_documentary_entity)
+        self.assertEqual("ocean currents", scene.canonical_entity)
+        self.assertIn("ocean circulation", scene.resolved_entity.aliases)
+        self.assertNotIn("ocean currents shape", scene.canonical_entity)
+
+    def test_fallback_stops_before_process_verbs(self) -> None:
+        topic = "How Coastal Waters Shape Climate"
+        report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=_plan(topic, _intent(0, topic)),
+        )
+
+        self.assertEqual("coastal waters", report.canonical_documentary_entity)
+        self.assertEqual("coastal waters", report.scene_for_index(0).canonical_entity)
+
     def test_normalizes_pyramid_title_and_scene_entities(self) -> None:
         topic = "How Ancient Egyptians Built Stone Pyramids"
         report = CanonicalSceneEntityResolver().resolve(
