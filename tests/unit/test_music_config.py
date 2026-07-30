@@ -31,6 +31,8 @@ class MusicConfigDefaultsTests(unittest.TestCase):
         self.assertTrue(config.enable_generated)
         self.assertTrue(config.require_commercial_license)
         self.assertTrue(config.allow_attribution)
+        self.assertEqual(config.youtube_audio_library_dir, "")
+        self.assertEqual(config.youtube_audio_library_manifest, "")
 
     def test_loading_is_deterministic(self) -> None:
         env = {"AUTO_VIDEO_MUSIC_RETRIES": "4", "AUTO_VIDEO_MUSIC_PROVIDER_ORDER": "pixabay,generated"}
@@ -55,6 +57,8 @@ class MusicConfigEnvOverrideTests(unittest.TestCase):
             "AUTO_VIDEO_ENABLE_GENERATED_MUSIC": "false",
             "AUTO_VIDEO_REQUIRE_COMMERCIAL_LICENSE": "false",
             "AUTO_VIDEO_ALLOW_ATTRIBUTION": "false",
+            "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_DIR": "private/music",
+            "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_MANIFEST": "private/music/manifest.json",
         })
 
         self.assertEqual(config.provider_order, ("pixabay", "mixkit", "silence"))
@@ -68,6 +72,19 @@ class MusicConfigEnvOverrideTests(unittest.TestCase):
         self.assertFalse(config.enable_generated)
         self.assertFalse(config.require_commercial_license)
         self.assertFalse(config.allow_attribution)
+        self.assertEqual(config.youtube_audio_library_dir, "private/music")
+        self.assertEqual(config.youtube_audio_library_manifest, "private/music/manifest.json")
+
+    def test_configured_youtube_library_is_enabled_ahead_of_profile_defaults(self) -> None:
+        config = music_config_from_env(
+            {
+                "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_DIR": "private/music",
+                "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_MANIFEST": "private/music/manifest.json",
+            },
+            profile_order=("generated", "silence"),
+        )
+
+        self.assertEqual(config.provider_order, ("youtube_audio_library", "generated", "silence"))
 
     def test_profile_order_used_when_env_missing(self) -> None:
         config = music_config_from_env({}, profile_order=("generated", "silence"))

@@ -19,6 +19,7 @@ which covers daily Shorts with massive headroom.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -27,11 +28,18 @@ from typing import Optional
 
 
 # Public YouTube category IDs:
+#   15 = Pets & Animals
 #   24 = Entertainment
 #   27 = Education
 #   28 = Science & Technology
 # "Wonders of the Nature" fits Education or Science & Technology cleanly.
 DEFAULT_CATEGORY_ID = "27"
+CREDENTIALS_PATH = Path(__file__).resolve().parent / ".youtube_credentials.json"
+
+
+def _normalize_category_id(category_id: object) -> str:
+    value = str(category_id or "").strip()
+    return value if value.isdigit() and int(value) > 0 else DEFAULT_CATEGORY_ID
 
 
 def _get_creds():
@@ -40,9 +48,6 @@ def _get_creds():
     client_secret = os.environ.get("YT_CLIENT_SECRET", "").strip()
     refresh_token = os.environ.get("YT_REFRESH_TOKEN", "").strip()
 
-    if not all([client_id, client_secret, refresh_token]):
-        return None
-
     try:
         from google.oauth2.credentials import Credentials
     except ImportError:
@@ -50,12 +55,11 @@ def _get_creds():
         print("    pip install google-auth google-auth-oauthlib google-api-python-client")
         return None
 
-    return Credentials(
-        token=None,                      # will be fetched via refresh on first call
-        refresh_token=refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
+    return _credentials_from_values(
+        Credentials,
         client_id=client_id,
         client_secret=client_secret,
+        refresh_token=refresh_token,
         scopes=["https://www.googleapis.com/auth/youtube.upload"],
     )
 
@@ -66,21 +70,52 @@ def _get_comment_creds():
     client_secret = os.environ.get("YT_CLIENT_SECRET", "").strip()
     refresh_token = os.environ.get("YT_REFRESH_TOKEN", "").strip()
 
-    if not all([client_id, client_secret, refresh_token]):
-        return None
-
     try:
         from google.oauth2.credentials import Credentials
     except ImportError:
         return None
 
-    return Credentials(
-        token=None,
-        refresh_token=refresh_token,
-        token_uri="https://oauth2.googleapis.com/token",
+    return _credentials_from_values(
+        Credentials,
         client_id=client_id,
         client_secret=client_secret,
+        refresh_token=refresh_token,
         scopes=["https://www.googleapis.com/auth/youtube.force-ssl"],
+    )
+
+
+def _credentials_from_values(
+    credentials_class,
+    *,
+    client_id: str,
+    client_secret: str,
+    refresh_token: str,
+    scopes: list[str],
+):
+    values = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "token_uri": "https://oauth2.googleapis.com/token",
+    }
+    if not all((client_id, client_secret, refresh_token)):
+        try:
+            stored = json.loads(CREDENTIALS_PATH.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return None
+        values.update({
+            key: str(stored.get(key) or values[key]).strip()
+            for key in values
+        })
+    if not all(values.values()):
+        return None
+    return credentials_class(
+        token=None,
+        refresh_token=values["refresh_token"],
+        token_uri=values["token_uri"],
+        client_id=values["client_id"],
+        client_secret=values["client_secret"],
+        scopes=scopes,
     )
 
 
@@ -178,6 +213,14 @@ def post_pinned_comment_via_api(video_id: str, comment_text: str) -> dict:
             "error": f"HTTP {e.resp.status}: {e._get_reason()}",
         }
     except Exception as e:
+        if "invalid_scope" in str(e).casefold():
+            return {
+                "status": "skipped",
+                "comment_id": "",
+                "pin_success": False,
+                "retry_attempts": 1,
+                "error": "comment permission is not authorized for this YouTube account",
+            }
         return {
             "status": "error",
             "comment_id": "",
@@ -226,6 +269,7 @@ def upload_youtube_via_api(
     video_path = Path(video_path)
     if not video_path.exists():
         return {"status": "error", "error": f"Video file not found: {video_path}"}
+    category_id = _normalize_category_id(category_id)
 
     # Strip hashtags from tags list - YT tags don't use # prefix
     clean_tags = []

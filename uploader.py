@@ -49,7 +49,22 @@ SRC_DIR       = SCRIPT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+# Keep local uploads consistent with auto_short.py and CI environment variables.
+env_path = SCRIPT_DIR / ".env"
+if env_path.exists():
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        if "=" in line and not line.strip().startswith("#"):
+            key, value = line.split("=", 1)
+            key = key.strip()
+            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
+                os.environ.setdefault(key, value.strip())
+
 from autovideo.engagement import generate_pinned_comment
+from autovideo.intelligence.topic_metadata import (
+    DEFAULT_YOUTUBE_CATEGORY_ID,
+    classify_topic,
+    youtube_category_id_for,
+)
 
 try:
     from playwright.sync_api import (
@@ -502,7 +517,8 @@ def _yt_swap_audio_post_upload(page, video_url: str, mood: Optional[str]) -> dic
 
 
 def upload_youtube(context, video_path: Path, title: str, description: str, tags: str = "",
-                   music_mood: Optional[str] = None, pinned_comment: str = "") -> dict:
+                   music_mood: Optional[str] = None, pinned_comment: str = "",
+                   category_id: str = DEFAULT_YOUTUBE_CATEGORY_ID) -> dict:
     print("[YouTube] upload...")
 
     # Prefer the Data API path when credentials are configured. This is the
@@ -515,6 +531,7 @@ def upload_youtube(context, video_path: Path, title: str, description: str, tags
             tag_list = [t.strip() for t in (tags or "").split(",") if t.strip()] if tags else []
             result = yt_data_api.upload_youtube_via_api(
                 video_path, title, description, tag_list,
+                category_id=category_id,
                 privacy="public", made_for_kids=False,
             )
             return _post_upload_engagement(result, {
@@ -746,6 +763,7 @@ DISPATCH = {
         m.get("youtube_tags", ""),
         m.get("music_mood"),
         m.get("pinned_comment", ""),
+        _resolve_youtube_category_id(m),
     ),
     "instagram": lambda ctx, vp, m: upload_instagram(ctx, vp, m["instagram_caption"]),
     "facebook":  lambda ctx, vp, m: upload_facebook(ctx, vp, m["facebook_description"]),
@@ -785,6 +803,10 @@ def _resolve_metadata(args) -> dict:
             title = f"{title} #shorts"
         else:
             description = f"{description}\n\n#shorts"
+    category_source = dict(meta)
+    category_source["title"] = meta.get("title") or title
+    category_source["youtube_title"] = meta.get("youtube_title") or title
+    category_id = _resolve_youtube_category_id(category_source)
     return {
         "title": title,
         "youtube_title":         meta.get("youtube_title") or title,
@@ -792,11 +814,25 @@ def _resolve_metadata(args) -> dict:
         "facebook_description":  meta.get("facebook_description") or description,
         "instagram_caption":     meta.get("instagram_caption") or title,
         "youtube_tags":          meta.get("youtube_tags", ""),
+        "category_id":           category_id,
         "music_mood":            meta.get("music_mood"),
         "video_path_yt":         meta.get("video_path_yt"),
         "pinned_comment":        meta.get("pinned_comment", ""),
         "segments":              meta.get("segments", []),
     }
+
+
+def _resolve_youtube_category_id(metadata: dict) -> str:
+    explicit = str(metadata.get("category_id") or metadata.get("youtube_category_id") or "").strip()
+    if explicit.isdigit() and int(explicit) > 0:
+        return explicit
+
+    title = str(metadata.get("youtube_title") or metadata.get("title") or "").strip()
+    topic = str(metadata.get("niche") or title).strip()
+    if not topic:
+        return DEFAULT_YOUTUBE_CATEGORY_ID
+    classification = classify_topic(topic, title=title)
+    return youtube_category_id_for(classification, topic=topic, title=title)
 
 
 def run_uploads(video_path: Path, platforms: list, metadata: dict, *, headless: bool) -> dict:

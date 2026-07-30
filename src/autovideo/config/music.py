@@ -14,7 +14,9 @@ from typing import TYPE_CHECKING, Mapping
 if TYPE_CHECKING:
     from autovideo.config.settings import Settings
 
-SUPPORTED_MUSIC_PROVIDERS: tuple[str, ...] = ("jamendo", "pixabay", "mixkit", "generated", "silence")
+SUPPORTED_MUSIC_PROVIDERS: tuple[str, ...] = (
+    "youtube_audio_library", "jamendo", "pixabay", "mixkit", "generated", "silence",
+)
 _TEST_ONLY_PROVIDERS: tuple[str, ...] = ("mock",)
 _DEPRECATED_PROVIDERS: tuple[str, ...] = ("local",)
 
@@ -40,6 +42,8 @@ class MusicConfig:
     enable_generated: bool = True
     require_commercial_license: bool = True
     allow_attribution: bool = True
+    youtube_audio_library_dir: str = ""
+    youtube_audio_library_manifest: str = ""
 
     def __post_init__(self) -> None:
         _validate_order(self.provider_order)
@@ -154,7 +158,14 @@ def music_config_from_env(
         base_order = parse_provider_order(",".join(profile_order), default=DEFAULT_MUSIC_PROVIDER_ORDER)
     else:
         base_order = DEFAULT_MUSIC_PROVIDER_ORDER
-    order = parse_provider_order(env.get("AUTO_VIDEO_MUSIC_PROVIDER_ORDER", ""), default=base_order)
+    raw_order = env.get("AUTO_VIDEO_MUSIC_PROVIDER_ORDER", "")
+    youtube_library_dir = env.get("AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_DIR", "").strip()
+    youtube_library_manifest = env.get("AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_MANIFEST", "").strip()
+    if not raw_order.strip() and youtube_library_dir and youtube_library_manifest:
+        base_order = ("youtube_audio_library",) + tuple(
+            name for name in base_order if name != "youtube_audio_library"
+        )
+    order = parse_provider_order(raw_order, default=base_order)
     enable_generated = _env_bool(env, "AUTO_VIDEO_ENABLE_GENERATED_MUSIC", True)
     return MusicConfig(
         provider_order=order,
@@ -168,6 +179,8 @@ def music_config_from_env(
         enable_generated=enable_generated,
         require_commercial_license=_env_bool(env, "AUTO_VIDEO_REQUIRE_COMMERCIAL_LICENSE", True),
         allow_attribution=_env_bool(env, "AUTO_VIDEO_ALLOW_ATTRIBUTION", True),
+        youtube_audio_library_dir=youtube_library_dir,
+        youtube_audio_library_manifest=youtube_library_manifest,
     )
 
 

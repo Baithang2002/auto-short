@@ -1,0 +1,28 @@
+{
+  "tracks": [
+    {
+      "id": "replace-with-library-track-id",
+      "file": "replace-with-private-file.mp3",
+      "title": "Replace With Track Title",
+      "artist": "Replace With Artist",
+      "duration_sec": 120,
+      "moods": [
+        "curious",
+        "mysterious"
+      ],
+      "source_url": "https://studio.youtube.com/channel/UC/music",
+      "platform": {
+        "name": "youtube",
+        "library": "YouTube Audio Library"
+      },
+      "license": {
+        "name": "YouTube Audio Library",
+        "commercial_use": true,
+        "derivatives_allowed": true,
+        "attribution_required": false,
+        "attribution_text": "",
+        "verified": true
+      }
+    }
+  ]
+}

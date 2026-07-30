@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -14,6 +15,7 @@ from autovideo.intelligence import (
     SourceCoverageEvaluator,
     sample_scene_indexes,
 )
+from autovideo.intelligence.source_coverage import ProviderProbeOutcome, ProviderProbeStatus
 import pipeline_daily
 
 
@@ -83,6 +85,37 @@ class SourceCoverageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = report.write_json(Path(directory) / "source_coverage_report.json")
             self.assertIn('"decision": "APPROVED"', path.read_text(encoding="utf-8"))
+
+    def test_all_provider_probe_failures_are_classified_as_technical(self) -> None:
+        scene = _scene(0, covered=False, importance="HOOK")
+        scene = replace(
+            scene,
+            provider_outcomes=(
+                ProviderProbeOutcome("pexels", ProviderProbeStatus.RATE_LIMITED),
+                ProviderProbeOutcome("wikimedia", ProviderProbeStatus.TIMEOUT),
+            ),
+        )
+
+        report = SourceCoverageEvaluator().evaluate("Rainforests", [scene])
+
+        self.assertEqual("TECHNICAL_PROVIDER_FAILURE", report.failure_classification)
+        self.assertEqual(
+            {"RATE_LIMITED": 1, "TIMEOUT": 1},
+            report.to_dict()["provider_probe_summary"],
+        )
+
+    def test_healthy_no_results_remains_a_content_coverage_gap(self) -> None:
+        scene = _scene(0, covered=False, importance="HOOK")
+        scene = replace(
+            scene,
+            provider_outcomes=(
+                ProviderProbeOutcome("wikimedia", ProviderProbeStatus.NO_RESULTS),
+            ),
+        )
+
+        report = SourceCoverageEvaluator().evaluate("Rainforests", [scene])
+
+        self.assertEqual("CONTENT_COVERAGE_GAP", report.failure_classification)
 
     def test_daily_recovery_recognizes_matching_deferred_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

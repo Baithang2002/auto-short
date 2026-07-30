@@ -48,13 +48,25 @@ jobs:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          DEFAULT_NICHE: "strange animal survival, wildlife behavior, oceans, and visually demonstrable natural phenomena"
+          COVERR_API_KEY: ${{ secrets.COVERR_API_KEY }}
+          COVERR_API_URL: "https://api.coverr.co"
+          EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
+          EUROPEANA_API_URL: "https://api.europeana.eu/record/v2/search.json"
+          DEFAULT_NICHE: "hidden science behind nature, Earth, animals, oceans, weather, and space"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
           AUTO_VIDEO_TOPIC_QUALIFICATION_TARGET_BUFFER: "6"
           AUTO_VIDEO_TOPIC_QUALIFICATION_MAX_ATTEMPTS: "12"
           AUTO_VIDEO_TOPIC_QUALIFICATION_TIMEOUT_SEC: "300"
           AUTO_VIDEO_TOPIC_QUALIFICATION_QUARANTINE_DAYS: "14"
+          AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"
+          AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_CONFIDENCE: "0.75"
+          AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_ACTION_CONFIDENCE: "0.75"
+          AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES: "3"
+          AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE: "false"
+          AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES: "3"
+          AUTO_VIDEO_CRITICAL_ASSET_PROVIDER_TIMEOUT_SEC: "30"
+          AUTO_VIDEO_CRITICAL_ASSET_DOWNLOAD_TIMEOUT_SEC: "90"
         run: python topic_qualify.py
 
       - name: Persist qualification state
@@ -81,6 +93,7 @@ jobs:
             output/topic_qualification_report.json
             output/topic_bank_status_report.json
             output/source_coverage_report.json
+            output/critical_asset_plan.json
             output/editorial_identity_report.json
             output/shot_plan.json
             output/query_generation_report.json

@@ -345,7 +345,7 @@ _GENERIC_SUBJECTS = {
     "penguin", "penguins", "rainforest", "rainforests", "shark", "sharks", "storm",
     "storms", "volcano", "volcanoes", "weather", "wildlife",
 }
-_NON_AUTHENTIC_MARKERS = ("broad_fallback", "gemini_image", "hybrid_composer", "local_explainer")
+_NON_AUTHENTIC_MARKERS = ("broad_fallback", "gemini_image", "pollinations_image", "hybrid_composer", "local_explainer")
 
 
 def subject_definition_from_pipeline(
@@ -357,7 +357,8 @@ def subject_definition_from_pipeline(
     """Build the gate's identity definition from existing planning artifacts."""
 
     canonical = str(
-        _asset_value(editorial_canon, "primary_subject")
+        _asset_value(canonical_report, "canonical_documentary_entity")
+        or _asset_value(editorial_canon, "primary_subject")
         or _asset_value(canonical_report, "primary_subject")
         or _asset_value(shot_plan, "primary_subject")
         or ""
@@ -399,7 +400,7 @@ def _identity_defining(canonical: str, editorial_canon: Any | None, shot_plan: A
         for intent in tuple(_asset_value(shot_plan, "intents") or ())
         if _norm(str(_asset_value(_asset_value(intent, "scene_entity"), "canonical_entity") or "")) == normalized
     }
-    if entity_types & {"species", "landmark", "place"}:
+    if entity_types & {"species", "landmark", "place", "topic_card_required_entity"}:
         return True, "scene entity type identifies a specific species, landmark, or place"
     if len(normalized.split()) >= 2:
         return True, "multi-word canonical subject is identity-defining"

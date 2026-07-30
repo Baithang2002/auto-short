@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -16,6 +17,7 @@ from autovideo.providers.music import (
     MusicQuery,
     PixabayMusicProvider,
     SilenceMusicProvider,
+    YouTubeAudioLibraryProvider,
 )
 
 
@@ -74,6 +76,11 @@ class JamendoProviderTests(unittest.TestCase):
         for key in ("provider", "provider_track_id", "title", "artist", "duration",
                     "license", "commercial_use", "attribution_required", "verified", "source_url"):
             self.assertIn(key, payload)
+        self.assertEqual(payload["platform"], "jamendo")
+        self.assertEqual(
+            payload["license_metadata"]["attribution_text"],
+            "Skyward by Nova (Jamendo, CC-BY-SA-3.0)",
+        )
 
     def test_noncommercial_license_is_marked_not_commercial(self) -> None:
         results = [{
@@ -82,7 +89,7 @@ class JamendoProviderTests(unittest.TestCase):
             "artist_name": "A",
             "duration": 90,
             "audiodownload": "https://jamendo.example/dl/7.mp3",
-            "license_ccurl": "https://creativecommons.org/licenses/by-nc-nd/3.0/",
+            "license_ccurl": "https://creativecommons.org/licenses/by-nc/3.0/",
         }]
         with tempfile.TemporaryDirectory() as tmp:
             track = self._provider(tmp, results).fetch_track(QUERY)
@@ -106,6 +113,31 @@ class JamendoProviderTests(unittest.TestCase):
             with self.assertRaises(ProviderExecutionError):
                 provider.fetch_track(QUERY)
         self.assertTrue(all(call.get("ccnc") == "false" for call in calls))
+        self.assertTrue(all(call.get("ccnd") == "false" for call in calls))
+
+    def test_no_derivatives_tracks_are_skipped(self) -> None:
+        results = [
+            {
+                "id": "nd",
+                "name": "No Edit",
+                "artist_name": "A",
+                "duration": 120,
+                "audiodownload": "https://jamendo.example/dl/nd.mp3",
+                "license_ccurl": "https://creativecommons.org/licenses/by-nd/4.0/",
+            },
+            {
+                "id": "safe",
+                "name": "Safe Edit",
+                "artist_name": "B",
+                "duration": 120,
+                "audiodownload": "https://jamendo.example/dl/safe.mp3",
+                "license_ccurl": "https://creativecommons.org/licenses/by/4.0/",
+            },
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            track = self._provider(tmp, results).fetch_track(QUERY)
+
+        self.assertEqual(track.provider_track_id, "safe")
 
     def test_selection_key_varies_eligible_track_without_key_changing_legacy_pick(self) -> None:
         results = [
@@ -150,6 +182,80 @@ class JamendoProviderTests(unittest.TestCase):
         self.assertEqual(legacy.provider_track_id, "1")
         self.assertGreater(len(varied), 1)
 
+
+class YouTubeAudioLibraryProviderTests(unittest.TestCase):
+    def _write_library(self, root: Path, tracks: list[dict]) -> tuple[Path, Path]:
+        assets = root / "private_audio"
+        assets.mkdir()
+        for track in tracks:
+            file_name = track.get("file", "")
+            if file_name and ".." not in file_name:
+                (assets / file_name).write_bytes(b"local audio")
+        manifest = root / "youtube_audio_library.json"
+        manifest.write_text(json.dumps({"tracks": tracks}), encoding="utf-8")
+        return manifest, assets
+
+    def test_local_manifest_track_preserves_structured_provenance(self) -> None:
+        tracks = [{
+            "id": "ytal-42",
+            "title": "Quiet Discovery",
+            "artist": "Example Artist",
+            "file": "quiet-discovery.mp3",
+            "duration_sec": 92,
+            "moods": ["inspiring", "warm"],
+            "license": {
+                "name": "YouTube Audio Library License",
+                "commercial_use": True,
+                "attribution_required": True,
+                "attribution_text": "Quiet Discovery by Example Artist",
+                "source_url": "https://support.google.com/youtube/answer/3376882",
+                "verified": True,
+                "derivatives_allowed": True,
+            },
+            "platform": {
+                "name": "youtube",
+                "track_id": "ytal-42",
+                "source_url": "https://studio.youtube.com/channel/example/music",
+            },
+        }]
+        with tempfile.TemporaryDirectory() as tmp:
+            manifest, assets = self._write_library(Path(tmp), tracks)
+            track = YouTubeAudioLibraryProvider(manifest, assets).fetch_track(QUERY)
+
+        self.assertEqual(track.provider, "youtube_audio_library")
+        self.assertEqual(track.platform, "youtube")
+        self.assertEqual(track.provider_track_id, "ytal-42")
+        self.assertTrue(track.license.attribution_required)
+        self.assertEqual(track.license.attribution_text, "Quiet Discovery by Example Artist")
+        self.assertEqual(track.metadata["platform"]["library"], "YouTube Audio Library")
+        payload = track.to_dict()
+        self.assertEqual(payload["license_metadata"]["derivatives_allowed"], True)
+        self.assertEqual(payload["attribution"]["text"], "Quiet Discovery by Example Artist")
+        self.assertEqual(payload["platform_metadata"]["library"], "YouTube Audio Library")
+
+    def test_provider_is_unavailable_without_local_configuration(self) -> None:
+        with self.assertRaises(ProviderUnavailableError):
+            YouTubeAudioLibraryProvider(None, None).fetch_track(QUERY)
+
+    def test_manifest_cannot_escape_private_asset_directory(self) -> None:
+        tracks = [{
+            "id": "outside",
+            "title": "Outside",
+            "file": "../outside.mp3",
+            "duration_sec": 90,
+            "license": {
+                "name": "YouTube Audio Library License",
+                "commercial_use": True,
+                "verified": True,
+                "derivatives_allowed": True,
+            },
+        }]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "outside.mp3").write_bytes(b"outside")
+            manifest, assets = self._write_library(root, tracks)
+            with self.assertRaises(ProviderExecutionError):
+                YouTubeAudioLibraryProvider(manifest, assets).fetch_track(QUERY)
 
 class PixabayProviderTests(unittest.TestCase):
     def test_fetch_returns_verified_attribution_free_license(self) -> None:
@@ -311,6 +417,7 @@ class MusicRegistryTests(unittest.TestCase):
         names = registry.provider_names("music")
         self.assertNotIn("jamendo", names)
         self.assertNotIn("pixabay", names)
+        self.assertNotIn("youtube_audio_library", names)
         self.assertIn("mixkit", names)
         self.assertIn("generated", names)
         self.assertIn("silence", names)
@@ -328,6 +435,27 @@ class MusicRegistryTests(unittest.TestCase):
 
         names = registry.provider_names("music")
         self.assertEqual(names[-1], "silence")
+
+    def test_configured_youtube_audio_library_is_registered_offline(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            assets = root / "private_audio"
+            assets.mkdir()
+            (assets / "track.mp3").write_bytes(b"audio")
+            manifest = root / "manifest.json"
+            manifest.write_text(json.dumps({"tracks": []}), encoding="utf-8")
+            settings = Settings.from_project_root(root, env={
+                "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_DIR": str(assets),
+                "AUTO_VIDEO_YOUTUBE_AUDIO_LIBRARY_MANIFEST": str(manifest),
+            })
+            config = AppConfig.from_settings(settings)
+            registry = build_music_registry(
+                config,
+                generated_synthesizer=None,
+                include_real_providers=False,
+            )
+
+        self.assertEqual(registry.provider_names("music")[0], "youtube_audio_library")
 
 
 if __name__ == "__main__":

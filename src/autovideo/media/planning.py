@@ -402,7 +402,7 @@ class SourcePlanner:
         queries = list(query_plan.all_queries)
         if provider_id in {"nasa", "esa", "noaa", "wikimedia", "usgs", "smithsonian", "nps", "usfws", "loc", "europeana", "flickr_commons", "internet_archive"}:
             queries = [_strip_stock_words(query) for query in queries]
-        elif provider_id == "gemini_image":
+        elif provider_id in {"gemini_image", "pollinations_image"}:
             queries = [f"{query} cinematic explanatory image" for query in queries]
         return tuple(_dedupe_queries(queries))[:5]
 
@@ -414,6 +414,7 @@ def default_provider_capability_registry(
     pixabay_enabled: bool = True,
     nasa_enabled: bool = True,
     gemini_image_enabled: bool = True,
+    pollinations_image_enabled: bool = False,
     mixkit_enabled: bool = False,
     coverr_enabled: bool = False,
     videvo_enabled: bool = False,
@@ -627,6 +628,16 @@ def default_provider_capability_registry(
         media_types=("image",),
         base_priority=90,
         enabled=gemini_image_enabled,
+    ))
+    registry.register(ProviderCapability(
+        "pollinations_image",
+        ("diagrams", "illustrations", "abstract_concepts", "animation", "generic_image"),
+        media_types=("image",),
+        base_priority=92,
+        enabled=pollinations_image_enabled,
+        domains=("generated", "explainer"),
+        licensing="Pollinations generated image",
+        confidence=0.35,
     ))
     return registry
 

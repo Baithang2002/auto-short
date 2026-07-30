@@ -82,6 +82,7 @@ class MediaPlanningTests(unittest.TestCase):
             noaa_enabled=True,
             esa_enabled=True,
             wikimedia_enabled=True,
+            pollinations_image_enabled=True,
         )
 
         self.assertIn("pexels", {provider.provider_id for provider in registry.all()})
@@ -91,8 +92,10 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertIn("wikimedia", {provider.provider_id for provider in registry.all()})
         self.assertIn("noaa", {provider.provider_id for provider in registry.all()})
         self.assertIn("esa", {provider.provider_id for provider in registry.all()})
+        self.assertIn("pollinations_image", {provider.provider_id for provider in registry.all()})
         self.assertIn("astronomy", registry.get("nasa").capabilities)
         self.assertIn("illustrations", registry.get("gemini_image").capabilities)
+        self.assertIn("illustrations", registry.get("pollinations_image").capabilities)
         nasa = registry.get("nasa")
         self.assertIn("image", nasa.media_types)
         self.assertIn("space", nasa.domains)

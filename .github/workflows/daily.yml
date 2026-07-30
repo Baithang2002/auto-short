@@ -79,6 +79,13 @@ jobs:
           # Stock sources
           PEXELS_API_KEY:      ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:     ${{ secrets.PIXABAY_API_KEY }}
+          COVERR_API_KEY:      ${{ secrets.COVERR_API_KEY }}
+          COVERR_API_URL:      "https://api.coverr.co"
+          EUROPEANA_API_KEY:   ${{ secrets.EUROPEANA_API_KEY }}
+          EUROPEANA_API_URL:   "https://api.europeana.eu/record/v2/search.json"
+          NOAA_USER_AGENT:     "auto-short/1.0, vincentreang23@gmail.com"
+          POLLINATIONS_ENABLED: ${{ vars.POLLINATIONS_ENABLED }}
+          POLLINATIONS_IMAGE_URL: "https://image.pollinations.ai/prompt"
 
           # Music (chain: jamendo -> pixabay -> mixkit -> generated -> silence)
           JAMENDO_CLIENT_ID:   ${{ secrets.JAMENDO_CLIENT_ID }}
@@ -109,6 +116,9 @@ jobs:
           AUTO_VIDEO_VERIFIED_MEDIA_MAX_REPLACEMENTS: "2"
           AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES: "3"
           AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_POLICY: "abort"
+          AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES: "3"
+          AUTO_VIDEO_CRITICAL_ASSET_PROVIDER_TIMEOUT_SEC: "30"
+          AUTO_VIDEO_CRITICAL_ASSET_DOWNLOAD_TIMEOUT_SEC: "90"
           # An unavailable external vision model must not turn a valid render
           # into a failed daily run. Its outcome remains auditable as UNVERIFIED.
           AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE: "true"
@@ -126,7 +136,7 @@ jobs:
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then
-            python pipeline.py "${{ github.event.inputs.topic }}" --platforms youtube --no-interactive
+            python pipeline.py "${{ github.event.inputs.topic }}" --platforms youtube --no-interactive --skip-upload
           else
             python pipeline_daily.py
           fi
@@ -166,6 +176,7 @@ jobs:
             output/topic_bank_status_report.json
             output/editorial_identity_report.json
             output/source_coverage_report.json
+            output/critical_asset_plan.json
             output/verified_media_report.json
             output/evidence_verification_report.json
             output/rendered_visual_qa_report.json

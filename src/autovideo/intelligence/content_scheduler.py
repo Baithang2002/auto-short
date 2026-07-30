@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -17,6 +17,7 @@ from .documentary_viability import (
     DocumentaryViabilityReport,
 )
 from .topic_metadata import TopicCategory, classify_topic
+from .topic_cards import DEFAULT_TOPIC_CARD_SOURCE, TopicCard
 from .topic_sources import TopicCandidate
 from .topic_bank import TopicBankStatus
 
@@ -78,7 +79,11 @@ class ContentSchedulerConfig:
     """Configuration for deterministic autonomous topic selection."""
 
     enabled: bool = True
-    topic_sources: tuple[str, ...] = ("topics.txt", "topics.json")
+    topic_sources: tuple[str, ...] = (
+        "topics.txt",
+        "topics.json",
+        DEFAULT_TOPIC_CARD_SOURCE,
+    )
     max_candidates: int = 50
     topic_cooldown_days: int = 90
     subject_cooldown_days: int = 180
@@ -109,7 +114,10 @@ class ContentSchedulerConfig:
         values = env or os.environ
         source_value = values.get(
             "AUTO_VIDEO_SCHEDULER_TOPIC_SOURCES",
-            values.get("AUTO_VIDEO_SCHEDULER_TOPIC_SOURCE", "topics.txt,topics.json"),
+            values.get(
+                "AUTO_VIDEO_SCHEDULER_TOPIC_SOURCE",
+                f"topics.txt,topics.json,{DEFAULT_TOPIC_CARD_SOURCE}",
+            ),
         )
         sources = tuple(item.strip() for item in source_value.split(",") if item.strip())
         evergreen = tuple(
@@ -131,7 +139,7 @@ class ContentSchedulerConfig:
         )
         return cls(
             enabled=_env_bool(values, "AUTO_VIDEO_AUTONOMOUS_SCHEDULER_ENABLED", True),
-            topic_sources=sources or ("topics.txt",),
+            topic_sources=sources or ("topics.txt", DEFAULT_TOPIC_CARD_SOURCE),
             max_candidates=max(1, _env_int(values, "AUTO_VIDEO_SCHEDULER_MAX_CANDIDATES", 50)),
             topic_cooldown_days=max(0, _env_int(values, "AUTO_VIDEO_SCHEDULER_TOPIC_COOLDOWN_DAYS", 90)),
             subject_cooldown_days=max(0, _env_int(values, "AUTO_VIDEO_SCHEDULER_SUBJECT_COOLDOWN_DAYS", 180)),
@@ -217,6 +225,10 @@ class ContentHistoryRecord:
     source: str = ""
     run_id: str = ""
     generated_at: str = ""
+    card_id: str = ""
+    card_pillar: str = ""
+    card_subject: str = ""
+    card_premise: str = ""
 
     def to_dict(self) -> dict[str, object]:
         """Serialize history while retaining backward-readable JSON."""
@@ -240,6 +252,10 @@ class ContentHistoryRecord:
             source=str(raw.get("source", "")),
             run_id=str(raw.get("run_id", "")),
             generated_at=str(raw.get("generated_at", "")),
+            card_id=str(raw.get("card_id", "")),
+            card_pillar=str(raw.get("card_pillar", "")),
+            card_subject=str(raw.get("card_subject", "")),
+            card_premise=str(raw.get("card_premise", "")),
         )
 
 
@@ -265,6 +281,7 @@ class ScheduledCandidate:
     topic_bank_status: str = ""
     selection_path: str = ""
     reasons: tuple[str, ...] = ()
+    topic_card: TopicCard | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Serialize a candidate ranking for scheduler diagnostics."""
@@ -443,15 +460,18 @@ class AutonomousContentScheduler:
             )
             for topic, status in (topic_bank_statuses or {}).items()
         }
-        source_candidates = _merge_coverage_proven_candidates(
-            tuple(candidates),
-            self.config,
+        source_candidates = _prioritize_before_truncation(
+            _merge_coverage_proven_candidates(
+                tuple(candidates),
+                self.config,
+                bank_statuses,
+            ),
             bank_statuses,
         )[:self.config.max_candidates]
         evaluated: list[ScheduledCandidate] = []
         for candidate in source_candidates:
             viability = self.viability_engine.evaluate(candidate.topic)
-            identity = topic_identity(candidate.topic)
+            identity = _identity_for_candidate(candidate)
             evaluated.append(
                 self._evaluate_candidate(
                     candidate,
@@ -491,11 +511,13 @@ class AutonomousContentScheduler:
                     config=self.config,
                     evaluated_at=timestamp,
                 )
-            selected = _promote(
-                _highest_ranked(emergency_candidates),
-                "emergency_source_fallback",
-                "fallback: evergreen pool is empty; selected the strongest available source topic",
-            )
+            selected = _highest_ranked(emergency_candidates)
+            if selected is not None:
+                selected = _promote(
+                    selected,
+                    "emergency_source_fallback",
+                    "fallback: evergreen pool is empty; selected the strongest available source topic",
+                )
         if selected:
             evaluated = [
                 selected if candidate.topic == selected.topic and candidate.source == selected.source else candidate
@@ -552,7 +574,7 @@ class AutonomousContentScheduler:
             evaluated.append(
                 self._evaluate_candidate(
                     candidate,
-                    topic_identity(candidate.topic),
+                    _identity_for_candidate(candidate),
                     viability,
                     history,
                     topic_bank_status=topic_bank_statuses.get(
@@ -585,8 +607,10 @@ class AutonomousContentScheduler:
     ) -> ScheduledCandidate:
         active_history = [record for record in history if record.status in {"scheduled", "generated"}]
         similarity = max((_topic_similarity(identity.topic_tokens, _tokens(record.topic)) for record in active_history), default=0.0)
+        subject_identity = _candidate_subject_identity(candidate, identity)
         subject_match = any(
-            identity.primary_subject and identity.primary_subject == record.primary_subject
+            subject_identity
+            and _normalise(subject_identity) == _normalise(_history_subject_identity(record))
             for record in active_history
         )
         topic_cooldown = _within_cooldown(
@@ -597,11 +621,11 @@ class AutonomousContentScheduler:
             lambda record: record.topic,
         )
         subject_cooldown = _within_cooldown(
-            identity.primary_subject,
+            subject_identity,
             active_history,
             self.config.subject_cooldown_days,
             self._now(),
-            lambda record: record.primary_subject,
+            _history_subject_identity,
         )
         category_recent = _within_cooldown(
             identity.category,
@@ -696,6 +720,7 @@ class AutonomousContentScheduler:
             ranking_score=round(rank, 4) if rank is not None else None,
             decision=decision,
             reasons=tuple(reasons),
+            topic_card=candidate.card,
         )
 
 
@@ -737,6 +762,29 @@ def topic_identity(topic: str) -> TopicIdentity:
         subject_tokens=tuple(meaningful),
         topic_tokens=tuple(tokens),
     )
+
+
+def _identity_for_candidate(candidate: TopicCandidate) -> TopicIdentity:
+    identity = topic_identity(candidate.topic)
+    if candidate.card is None:
+        return identity
+    return replace(
+        identity,
+        primary_subject=candidate.card.subject,
+        category=candidate.card.pillar,
+    )
+
+
+def _candidate_subject_identity(candidate: TopicCandidate, identity: TopicIdentity) -> str:
+    if candidate.card is None:
+        return identity.primary_subject
+    return f"{candidate.card.subject} {candidate.card.premise}"
+
+
+def _history_subject_identity(record: ContentHistoryRecord) -> str:
+    if record.card_subject and record.card_premise:
+        return f"{record.card_subject} {record.card_premise}"
+    return record.primary_subject
 
 
 def _subject_tokens(tokens: Sequence[str], meaningful: Sequence[str]) -> list[str]:
@@ -795,6 +843,7 @@ def _merge_coverage_proven_candidates(
     if not config.prefer_coverage_proven_topics or not config.coverage_proven_topics:
         return tuple(candidates)
 
+    supplied = {_normalise(candidate.topic): candidate for candidate in candidates}
     seen: set[str] = set()
     merged: list[TopicCandidate] = []
     for topic in config.coverage_proven_topics:
@@ -804,7 +853,11 @@ def _merge_coverage_proven_candidates(
         if (topic_bank_statuses or {}).get(key) == TopicBankStatus.QUARANTINED.value:
             continue
         seen.add(key)
-        merged.append(TopicCandidate(topic=topic, source="coverage_proven"))
+        merged.append(TopicCandidate(
+            topic=topic,
+            source="coverage_proven",
+            card=supplied[key].card if key in supplied else None,
+        ))
 
     for candidate in candidates:
         key = _normalise(candidate.topic)
@@ -813,6 +866,27 @@ def _merge_coverage_proven_candidates(
         seen.add(key)
         merged.append(candidate)
     return tuple(merged)
+
+
+def _prioritize_before_truncation(
+    candidates: Sequence[TopicCandidate],
+    topic_bank_statuses: Mapping[str, str],
+) -> tuple[TopicCandidate, ...]:
+    """Keep ready topics ahead of candidates before applying the request bound."""
+
+    priority = {
+        TopicBankStatus.QUALIFIED.value: 0,
+        TopicBankStatus.PROVEN.value: 0,
+        TopicBankStatus.QUARANTINED.value: 2,
+    }
+    ordered = sorted(
+        enumerate(candidates),
+        key=lambda item: (
+            priority.get(topic_bank_statuses.get(_normalise(item[1].topic), ""), 1),
+            item[0],
+        ),
+    )
+    return tuple(candidate for _index, candidate in ordered)
 
 
 def _topic_was_generated(topic: str, records: Sequence[ContentHistoryRecord]) -> bool:
@@ -892,6 +966,10 @@ def _history_record(candidate: ScheduledCandidate, recorded_at: str, *, run_id: 
         recorded_at=recorded_at,
         source=candidate.source,
         run_id=run_id,
+        card_id=candidate.topic_card.id if candidate.topic_card else "",
+        card_pillar=candidate.topic_card.pillar if candidate.topic_card else "",
+        card_subject=candidate.topic_card.subject if candidate.topic_card else "",
+        card_premise=candidate.topic_card.premise if candidate.topic_card else "",
     )
 
 
@@ -936,25 +1014,20 @@ def _highest_ranked(candidates: Iterable[ScheduledCandidate]) -> ScheduledCandid
 
 
 def _promote(candidate: ScheduledCandidate, selection_path: str, reason: str) -> ScheduledCandidate:
-    return ScheduledCandidate(
-        **{
-            **candidate.to_dict(),
-            "decision": SchedulingDecision.SELECTED,
-            "selection_path": selection_path,
-            "ranking_score": candidate.ranking_score or candidate.viability_score,
-            "reasons": tuple((*candidate.reasons, reason)),
-        },
+    return replace(
+        candidate,
+        decision=SchedulingDecision.SELECTED,
+        selection_path=selection_path,
+        ranking_score=candidate.ranking_score or candidate.viability_score,
+        reasons=tuple((*candidate.reasons, reason)),
     )
 
 
 def _with_selection_path(candidate: ScheduledCandidate, selection_path: str, reason: str) -> ScheduledCandidate:
-    return ScheduledCandidate(
-        **{
-            **candidate.to_dict(),
-            "decision": candidate.decision,
-            "selection_path": selection_path,
-            "reasons": tuple((*candidate.reasons, reason)),
-        },
+    return replace(
+        candidate,
+        selection_path=selection_path,
+        reasons=tuple((*candidate.reasons, reason)),
     )
 
 

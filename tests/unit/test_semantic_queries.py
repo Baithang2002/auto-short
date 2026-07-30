@@ -8,9 +8,12 @@ from tests.unit import _path  # noqa: F401
 
 from autovideo.media import (
     CanonicalSceneEntityResolver,
+    EditorialCanonBuilder,
+    SceneConstraintPlanner,
     SceneEntity,
     SemanticQueryConfig,
     SemanticVisualQueryEngine,
+    VisualDirector,
 )
 
 
@@ -132,6 +135,49 @@ class SemanticVisualQueryEngineTests(unittest.TestCase):
         self.assertTrue(scene.provider_queries)
         self.assertTrue(all(topic.casefold() not in query.casefold() for query in scene.provider_queries))
         self.assertTrue(all("stone blocks" in query.lower() for query in scene.provider_queries))
+
+    def test_constraint_safe_original_ocean_current_queries_survive(self) -> None:
+        topic = "How Ocean Currents Shape Climate"
+        original_queries = (
+            "ocean currents satellite map wide",
+            "ocean circulation climate map aerial",
+        )
+        segments = [{
+            "narration": "Ocean currents carry warm water toward colder regions.",
+            "broll": "ocean currents climate map",
+            "broll_queries": list(original_queries),
+        }]
+        canon, _lock, _roles, _domain = EditorialCanonBuilder().build(
+            topic=topic,
+            segments=segments,
+        )
+        plan = VisualDirector().plan(
+            topic=topic,
+            segments=segments,
+            editorial_canon=canon,
+        )
+        canonical_report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=plan,
+        )
+        constraints = SceneConstraintPlanner().plan(
+            documentary_topic=topic,
+            shot_plan=plan,
+            canonical_report=canonical_report,
+        )
+
+        scene = SemanticVisualQueryEngine().plan(
+            documentary_topic="",
+            shot_plan=plan,
+            constraint_report=constraints,
+        ).scene_for_index(0)
+
+        self.assertEqual("ocean currents", scene.canonical_visual_entity)
+        self.assertTrue(set(original_queries).issubset(scene.provider_queries))
+        self.assertTrue(any(query not in original_queries for query in scene.provider_queries))
+        self.assertLessEqual(len(scene.provider_queries), 4)
+        self.assertTrue(all(len(queries) <= 4 for queries in scene.provider_variants.values()))
+        self.assertNotIn("ocean currents shape", " ".join(scene.provider_queries).lower())
 
 
 if __name__ == "__main__":

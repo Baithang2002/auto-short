@@ -1803,7 +1803,7 @@ def _authentic_media_gate(
 
 
 def _is_authentic_candidate(candidate: StockCandidate) -> bool:
-    if candidate.provider in {"hybrid_composer", "gemini_image", "broad_fallback"}:
+    if candidate.provider in {"hybrid_composer", "gemini_image", "pollinations_image", "broad_fallback"}:
         return False
     local_name = str(candidate.local_path or "").lower()
     if "local_explainer" in local_name or "hybrid_visual" in local_name:

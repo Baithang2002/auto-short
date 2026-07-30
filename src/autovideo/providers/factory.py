@@ -12,6 +12,7 @@ from autovideo.providers.music.jamendo import JamendoMusicProvider
 from autovideo.providers.music.mixkit import MixkitMusicProvider
 from autovideo.providers.music.pixabay import PixabayMusicProvider
 from autovideo.providers.music.silence import SilenceMusicProvider
+from autovideo.providers.music.youtube_audio_library import YouTubeAudioLibraryProvider
 from autovideo.providers.voice import EdgeTTSVoiceProvider, ElevenLabsVoiceProvider, MockVoiceProvider, SpeechifyVoiceProvider
 
 
@@ -119,6 +120,28 @@ def build_music_registry(
 
     if "mock" in priority and mock_provider_factory is not None:
         register("mock", mock_provider_factory())
+
+    def local_config_path(raw: str) -> Path | None:
+        if not raw:
+            return None
+        path = Path(raw).expanduser()
+        return path if path.is_absolute() else config.settings.project_root / path
+
+    youtube_assets = local_config_path(music.youtube_audio_library_dir)
+    youtube_manifest = local_config_path(music.youtube_audio_library_manifest)
+    youtube_library_enabled = bool(
+        "youtube_audio_library" in priority
+        and youtube_assets is not None
+        and youtube_manifest is not None
+        and youtube_assets.is_dir()
+        and youtube_manifest.is_file()
+    )
+    register(
+        "youtube_audio_library",
+        YouTubeAudioLibraryProvider(youtube_manifest, youtube_assets),
+        enabled=youtube_library_enabled,
+        health_message="missing YouTube Audio Library manifest or private asset directory",
+    )
 
     if include_real_providers:
         jamendo_key = config.api_keys.get("jamendo", "")

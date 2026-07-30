@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -37,6 +38,20 @@ class MusicLicense:
     attribution_text: str = ""
     source_url: str = ""
     verified: bool = False
+    derivatives_allowed: bool | None = None
+
+    @property
+    def no_derivatives(self) -> bool:
+        if self.derivatives_allowed is False:
+            return True
+        normalized = re.sub(
+            r"[_\s]+",
+            "-",
+            " ".join((self.license, self.source_url)).strip().upper(),
+        )
+        return ("NODERIVATIVES" in normalized or "NO-DERIVATIVES" in normalized) or bool(
+            re.search(r"(?:^|[-/])ND(?:$|[-/.])", normalized)
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -52,6 +67,7 @@ class MusicLicense:
             attribution_text=str(data.get("attribution_text", "")),
             source_url=str(data.get("source_url", "")),
             verified=bool(data.get("verified", False)),
+            derivatives_allowed=data.get("derivatives_allowed"),
         )
 
 
@@ -72,6 +88,7 @@ class MusicTrack:
     source_url: str = ""
     license: MusicLicense = field(default_factory=MusicLicense)
     mood: str = ""
+    platform: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -79,6 +96,10 @@ class MusicTrack:
         return self.local_path is None
 
     def to_dict(self) -> dict[str, Any]:
+        platform = self.platform or self.provider
+        platform_metadata = self.metadata.get("platform")
+        if not isinstance(platform_metadata, dict):
+            platform_metadata = {"name": platform}
         return {
             "provider": self.provider,
             "provider_track_id": self.provider_track_id,
@@ -88,9 +109,18 @@ class MusicTrack:
             "local_path": str(self.local_path) if self.local_path else None,
             "source_url": self.source_url,
             "license": self.license.license,
+            "license_metadata": self.license.to_dict(),
             "commercial_use": self.license.commercial_use,
             "attribution_required": self.license.attribution_required,
+            "attribution_text": self.license.attribution_text,
+            "attribution": {
+                "required": self.license.attribution_required,
+                "text": self.license.attribution_text,
+            },
             "verified": self.license.verified,
+            "derivatives_allowed": self.license.derivatives_allowed,
+            "platform": platform,
+            "platform_metadata": dict(platform_metadata),
             "mood": self.mood,
             "metadata": dict(self.metadata),
         }

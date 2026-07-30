@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Any
 
 
+DEFAULT_CATEGORY_ID = "27"
+
+
 @dataclass(frozen=True)
 class UploadMetadata:
     id: str
@@ -20,6 +23,7 @@ class UploadMetadata:
     instagram_caption: str = ""
     hashtags: list[str] = field(default_factory=list)
     youtube_tags: str = ""
+    category_id: str = DEFAULT_CATEGORY_ID
     duration_sec: float = 0.0
     orientation: str = "portrait"
     status: str = "pending"
@@ -47,7 +51,7 @@ class UploadMetadata:
             "youtube_description", "pinned_comment", "facebook_description", "instagram_caption",
             "hashtags", "youtube_tags", "duration_sec", "orientation", "status",
             "video_file", "video_file_yt", "video_path_yt", "music_mood",
-            "music_path", "music_volume", "segments",
+            "music_path", "music_volume", "segments", "category_id", "youtube_category_id",
         }
         extra = {k: v for k, v in data.items() if k not in known and not k.startswith("_")}
         video_path = data.get("video_path") or data.get("path") or ""
@@ -68,6 +72,7 @@ class UploadMetadata:
             instagram_caption=str(data.get("instagram_caption", "")),
             hashtags=list(hashtags),
             youtube_tags=str(data.get("youtube_tags", "")),
+            category_id=_safe_category_id(data.get("category_id") or data.get("youtube_category_id")),
             duration_sec=float(data.get("duration_sec", 0.0) or 0.0),
             orientation=str(data.get("orientation", "portrait")),
             status=str(data.get("status", "pending")),
@@ -80,3 +85,8 @@ class UploadMetadata:
             segments=list(segments),
             extra=extra,
         )
+
+
+def _safe_category_id(value: object) -> str:
+    category_id = str(value or "").strip()
+    return category_id if category_id.isdigit() and int(category_id) > 0 else DEFAULT_CATEGORY_ID

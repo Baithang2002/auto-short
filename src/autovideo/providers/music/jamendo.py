@@ -59,6 +59,7 @@ def _license_from_ccurl(ccurl: str) -> MusicLicense:
         attribution_required=True,  # every non-CC0 Creative Commons license requires attribution
         source_url=ccurl,
         verified=bool(ccurl),
+        derivatives_allowed="-nd" not in lowered,
     )
 
 
@@ -139,6 +140,7 @@ class JamendoMusicProvider:
         }
         if self.require_commercial:
             params["ccnc"] = "false"  # exclude NonCommercial licenses at the API
+        params["ccnd"] = "false"  # edited video is a derivative work
         payload = self._http_get(JAMENDO_TRACKS_URL, params, self.timeout_sec)
         return list(payload.get("results", []) or [])
 
@@ -154,6 +156,8 @@ class JamendoMusicProvider:
                 continue
             if not track.get("license_ccurl"):
                 continue  # only keep tracks with explicit license metadata
+            if _license_from_ccurl(str(track["license_ccurl"])).no_derivatives:
+                continue
             eligible.append(track)
         return _stable_pick(eligible, query.selection_key)
 
@@ -194,8 +198,10 @@ class JamendoMusicProvider:
                 attribution_text=f"{title} by {artist} (Jamendo, {license_info.license})",
                 source_url=ccurl,
                 verified=license_info.verified,
+                derivatives_allowed=license_info.derivatives_allowed,
             ),
             mood=query.mood,
+            platform="jamendo",
         )
 
 

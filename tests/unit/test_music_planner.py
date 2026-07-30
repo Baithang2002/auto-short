@@ -163,9 +163,42 @@ class MusicPlannerLicenseTests(unittest.TestCase):
 
         self.assertTrue(result.is_silence)
 
+    def test_no_derivatives_license_is_always_rejected(self) -> None:
+        no_derivatives = MusicLicense(
+            license="CC-BY-ND-4.0",
+            commercial_use=True,
+            attribution_required=True,
+            attribution_text="Track by Example Artist, CC BY-ND 4.0",
+            verified=True,
+        )
+        outcome = validate_license(
+            _track("nd", license_info=no_derivatives),
+            LicensePolicy(require_commercial_use=True, allow_attribution=True),
+        )
+
+        self.assertFalse(outcome.ok)
+        self.assertTrue(any("derivative" in reason for reason in outcome.reasons))
+
+    def test_required_attribution_without_usable_text_is_rejected(self) -> None:
+        missing_attribution = MusicLicense(
+            license="CC-BY-4.0",
+            commercial_use=True,
+            attribution_required=True,
+            attribution_text="  ",
+            verified=True,
+        )
+        outcome = validate_license(
+            _track("missing-credit", license_info=missing_attribution),
+            LicensePolicy(require_commercial_use=True, allow_attribution=True),
+        )
+
+        self.assertFalse(outcome.ok)
+        self.assertTrue(any("attribution text" in reason for reason in outcome.reasons))
+
     def test_validate_license_reports_reasons(self) -> None:
         track = _track("x", license_info=MusicLicense(
-            license="CC-BY-NC-3.0", commercial_use=False, attribution_required=True, verified=True,
+            license="CC-BY-NC-3.0", commercial_use=False, attribution_required=True,
+            attribution_text="Example Track by Example Artist", verified=True,
         ))
         outcome = validate_license(track, LicensePolicy(require_commercial_use=True, allow_attribution=False))
 

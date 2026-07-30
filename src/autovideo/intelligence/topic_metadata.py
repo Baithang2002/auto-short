@@ -52,6 +52,7 @@ class TopicMetadata:
     instagram_caption: str
     hashtags: tuple[str, ...]
     keywords: tuple[str, ...]
+    category_id: str = "27"
 
     @property
     def youtube_tags(self) -> str:
@@ -73,7 +74,13 @@ _CATEGORY_TERMS: dict[TopicCategory, set[str]] = {
     },
     TopicCategory.WILDLIFE: {
         "fox", "animal", "animals", "wildlife", "bear", "wolf", "lion", "tiger", "bird",
-        "eagle", "whale", "dolphin", "shark", "octopus", "arctic",
+        "eagle", "whale", "dolphin", "shark", "octopus", "alligator",
+        "antelope", "badger", "bat", "beaver", "bison", "bobcat", "buffalo", "cheetah",
+        "chimpanzee", "coyote", "crocodile", "deer", "elephant", "falcon", "giraffe",
+        "gorilla", "hare", "hawk", "hippo", "hippopotamus", "jaguar", "kangaroo",
+        "koala", "leopard", "lynx", "moose", "orangutan", "otter", "owl", "panda",
+        "penguin", "rabbit", "raccoon", "rhino", "rhinoceros", "seal", "snake",
+        "turtle", "walrus", "wolverine", "zebra",
     },
     TopicCategory.OCEAN_SCIENCE: {
         "ocean", "oceans", "current", "currents", "sea", "marine", "gulf", "stream",
@@ -113,51 +120,91 @@ _CATEGORY_TERMS: dict[TopicCategory, set[str]] = {
     TopicCategory.ENVIRONMENT: {
         "environment", "ecosystem", "pollution", "conservation", "forest", "habitat", "nature",
     },
-    TopicCategory.NATURE: {"nature", "forest", "mountain", "river", "plant", "plants", "earth"},
+    TopicCategory.NATURE: {
+        "nature", "forest", "mountain", "river", "plant", "plants", "earth", "canyon",
+        "cave", "desert", "geyser", "glacier", "rainforest", "volcano", "waterfall",
+        "wetland", "wildflower",
+    },
 }
 
 _CATEGORY_HASHTAGS: dict[TopicCategory, tuple[str, ...]] = {
-    TopicCategory.TECHNOLOGY: ("#technology", "#innovation", "#qrcode", "#science"),
-    TopicCategory.HISTORY: ("#history", "#civilization", "#ancientrome", "#education"),
-    TopicCategory.ENGINEERING: ("#engineering", "#architecture", "#infrastructure", "#science"),
-    TopicCategory.WILDLIFE: ("#wildlife", "#nature", "#animals", "#arctic"),
-    TopicCategory.NATURE: ("#nature", "#earth", "#science", "#didyouknow"),
-    TopicCategory.EARTH_SCIENCE: ("#earth", "#earthscience", "#science", "#planetearth"),
-    TopicCategory.OCEAN_SCIENCE: ("#ocean", "#oceanscience", "#earth", "#science"),
-    TopicCategory.SPACE: ("#space", "#science", "#earth", "#nasa"),
-    TopicCategory.ASTRONOMY: ("#astronomy", "#space", "#science", "#cosmos"),
-    TopicCategory.WEATHER: ("#weather", "#earth", "#science", "#atmosphere"),
-    TopicCategory.CLIMATE: ("#climate", "#earth", "#science", "#environment"),
-    TopicCategory.GEOGRAPHY: ("#geography", "#earth", "#maps", "#education"),
-    TopicCategory.PSYCHOLOGY: ("#psychology", "#brain", "#science", "#mind"),
-    TopicCategory.BIOLOGY: ("#biology", "#science", "#life", "#nature"),
-    TopicCategory.PHYSICS: ("#physics", "#science", "#energy", "#learn"),
-    TopicCategory.CHEMISTRY: ("#chemistry", "#science", "#learn", "#education"),
-    TopicCategory.ENVIRONMENT: ("#environment", "#earth", "#nature", "#science"),
+    TopicCategory.TECHNOLOGY: ("#technology", "#innovation", "#qrcode"),
+    TopicCategory.HISTORY: ("#history", "#civilization", "#ancientrome"),
+    TopicCategory.ENGINEERING: ("#engineering", "#architecture", "#infrastructure"),
+    TopicCategory.WILDLIFE: ("#wildlife", "#animals", "#wildanimals"),
+    TopicCategory.NATURE: ("#nature", "#naturalworld", "#planetearth"),
+    TopicCategory.EARTH_SCIENCE: ("#earthscience", "#planetearth", "#geology"),
+    TopicCategory.OCEAN_SCIENCE: ("#ocean", "#oceanscience", "#marinelife"),
+    TopicCategory.SPACE: ("#space", "#spaceexploration", "#nasa"),
+    TopicCategory.ASTRONOMY: ("#astronomy", "#space", "#cosmos"),
+    TopicCategory.WEATHER: ("#weather", "#atmosphere", "#meteorology"),
+    TopicCategory.CLIMATE: ("#climate", "#climatescience", "#environment"),
+    TopicCategory.GEOGRAPHY: ("#geography", "#maps", "#worldgeography"),
+    TopicCategory.PSYCHOLOGY: ("#psychology", "#brain", "#mind"),
+    TopicCategory.BIOLOGY: ("#biology", "#life", "#lifescience"),
+    TopicCategory.PHYSICS: ("#physics", "#energy", "#physicalscience"),
+    TopicCategory.CHEMISTRY: ("#chemistry", "#chemicalreaction", "#molecules"),
+    TopicCategory.ENVIRONMENT: ("#environment", "#conservation", "#ecosystem"),
 }
 
 _CATEGORY_KEYWORDS: dict[TopicCategory, tuple[str, ...]] = {
-    TopicCategory.TECHNOLOGY: ("technology", "innovation", "qr code", "science"),
-    TopicCategory.HISTORY: ("history", "ancient rome", "civilization", "education"),
-    TopicCategory.ENGINEERING: ("engineering", "architecture", "infrastructure", "science"),
-    TopicCategory.WILDLIFE: ("wildlife", "nature", "animals", "arctic"),
-    TopicCategory.NATURE: ("nature", "earth", "science", "facts"),
-    TopicCategory.EARTH_SCIENCE: ("earth", "earth science", "science", "planet earth"),
-    TopicCategory.OCEAN_SCIENCE: ("ocean", "ocean science", "earth", "science"),
-    TopicCategory.SPACE: ("space", "science", "earth", "nasa"),
-    TopicCategory.ASTRONOMY: ("astronomy", "space", "science", "cosmos"),
-    TopicCategory.WEATHER: ("weather", "earth", "science", "atmosphere"),
-    TopicCategory.CLIMATE: ("climate", "earth", "science", "environment"),
-    TopicCategory.GEOGRAPHY: ("geography", "earth", "maps", "education"),
-    TopicCategory.PSYCHOLOGY: ("psychology", "brain", "science", "mind"),
-    TopicCategory.BIOLOGY: ("biology", "science", "life", "nature"),
-    TopicCategory.PHYSICS: ("physics", "science", "energy", "learn"),
-    TopicCategory.CHEMISTRY: ("chemistry", "science", "learn", "education"),
-    TopicCategory.ENVIRONMENT: ("environment", "earth", "nature", "science"),
+    TopicCategory.TECHNOLOGY: ("technology", "innovation", "qr code"),
+    TopicCategory.HISTORY: ("history", "ancient rome", "civilization"),
+    TopicCategory.ENGINEERING: ("engineering", "architecture", "infrastructure"),
+    TopicCategory.WILDLIFE: ("wildlife", "wild animals", "animal behavior"),
+    TopicCategory.NATURE: ("nature", "natural world", "planet earth"),
+    TopicCategory.EARTH_SCIENCE: ("earth science", "planet earth", "geology"),
+    TopicCategory.OCEAN_SCIENCE: ("ocean", "ocean science", "marine science"),
+    TopicCategory.SPACE: ("space", "space exploration", "nasa"),
+    TopicCategory.ASTRONOMY: ("astronomy", "space", "cosmos"),
+    TopicCategory.WEATHER: ("weather", "atmosphere", "meteorology"),
+    TopicCategory.CLIMATE: ("climate", "climate science", "environment"),
+    TopicCategory.GEOGRAPHY: ("geography", "maps", "world geography"),
+    TopicCategory.PSYCHOLOGY: ("psychology", "brain", "mind"),
+    TopicCategory.BIOLOGY: ("biology", "life science", "living things"),
+    TopicCategory.PHYSICS: ("physics", "energy", "physical science"),
+    TopicCategory.CHEMISTRY: ("chemistry", "chemical reactions", "molecules"),
+    TopicCategory.ENVIRONMENT: ("environment", "conservation", "ecosystem"),
 }
 
-_GENERAL_HASHTAGS = ("#shorts", "#facts", "#didyouknow", "#science", "#education")
-_GENERAL_KEYWORDS = ("shorts", "facts", "did you know", "science", "education")
+_GENERAL_HASHTAGS = ("#shorts",)
+_GENERAL_KEYWORDS = ("shorts",)
+_TARGETED_TOPIC_PHRASES: tuple[tuple[str, str], ...] = (
+    ("arctic fox", "arcticfox"),
+    ("red fox", "redfox"),
+    ("polar bear", "polarbear"),
+    ("red panda", "redpanda"),
+    ("snow leopard", "snowleopard"),
+    ("whale shark", "whaleshark"),
+    ("northern lights", "northernlights"),
+    ("ocean current", "oceancurrents"),
+    ("roman aqueduct", "romanaqueducts"),
+    ("qr code", "qrcode"),
+)
+_TOPIC_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "behind", "by", "for", "from", "how",
+    "in", "inside", "is", "it", "of", "on", "or", "the", "their", "these", "this", "to",
+    "was", "were", "what", "when", "where", "why", "with",
+}
+_KNOWN_TITLE_SUFFIXES = tuple(category.value for category in TopicCategory) + (
+    "Animals",
+    "Ocean",
+    "Facts",
+    "Education",
+)
+DEFAULT_YOUTUBE_CATEGORY_ID = "27"
+YOUTUBE_PETS_ANIMALS_CATEGORY_ID = "15"
+YOUTUBE_SCIENCE_TECHNOLOGY_CATEGORY_ID = "28"
+_YOUTUBE_SCIENCE_CATEGORIES = {
+    TopicCategory.NATURE,
+    TopicCategory.EARTH_SCIENCE,
+    TopicCategory.OCEAN_SCIENCE,
+    TopicCategory.SPACE,
+    TopicCategory.ASTRONOMY,
+    TopicCategory.WEATHER,
+    TopicCategory.CLIMATE,
+    TopicCategory.ENVIRONMENT,
+}
 _ALLOWED_SECONDARY: dict[TopicCategory, set[TopicCategory]] = {
     TopicCategory.HISTORY: {TopicCategory.ENGINEERING, TopicCategory.GEOGRAPHY},
     TopicCategory.SPACE: {TopicCategory.EARTH_SCIENCE, TopicCategory.ASTRONOMY, TopicCategory.PHYSICS},
@@ -182,11 +229,9 @@ def classify_topic(
 ) -> TopicClassification:
     """Classify a video topic into primary and secondary metadata categories."""
 
-    text_parts = [topic, title]
-    for segment in segments or ():
-        text_parts.append(str(segment.get("narration", "")))
-        text_parts.append(str(segment.get("broll", "")))
-    tokens = set(_tokens(" ".join(text_parts)))
+    # The public topic and title define the video's subject. Segment text often
+    # mentions incidental places, animals, or mechanisms and must not override it.
+    tokens = set(_tokens(" ".join((topic, _strip_known_suffixes(title)))))
     scores: dict[TopicCategory, int] = {}
     for category, terms in _CATEGORY_TERMS.items():
         score = len(tokens & terms)
@@ -221,12 +266,19 @@ def build_topic_metadata(
 
     classification = classify_topic(video_topic, title=title, segments=segments)
     clean_title = _topic_title(title or video_topic, classification)
+    focus_text = " ".join((video_topic, clean_title))
     hashtags = _dedupe_hashtags(
         _GENERAL_HASHTAGS
         + _category_hashtags(classification)
+        + _topic_hashtags(focus_text)
         + _filter_existing_hashtags(_coerce_hashtags(existing_hashtags), classification)
     )
-    keywords = _dedupe_keywords(_GENERAL_KEYWORDS + _category_keywords(classification) + _topic_keywords(video_topic))
+    keywords = _dedupe_keywords(
+        _GENERAL_KEYWORDS
+        + _category_keywords(classification)
+        + _matched_topic_phrases(focus_text)
+        + _topic_keywords(video_topic)
+    )
     description_text = _description_for(
         video_topic=video_topic,
         title=clean_title,
@@ -245,7 +297,30 @@ def build_topic_metadata(
         instagram_caption=caption_text,
         hashtags=hashtags[:15],
         keywords=keywords[:15],
+        category_id=youtube_category_id_for(
+            classification,
+            topic=video_topic,
+            title=title,
+        ),
     )
+
+
+def youtube_category_id_for(
+    classification: TopicClassification,
+    *,
+    topic: str = "",
+    title: str = "",
+) -> str:
+    """Map focused topic classifications to public YouTube category IDs."""
+    if classification.primary == TopicCategory.WILDLIFE:
+        return YOUTUBE_PETS_ANIMALS_CATEGORY_ID
+    if classification.primary not in _YOUTUBE_SCIENCE_CATEGORIES:
+        return DEFAULT_YOUTUBE_CATEGORY_ID
+    if classification.primary == TopicCategory.NATURE:
+        focus_tokens = set(_tokens(" ".join((topic, _strip_known_suffixes(title)))))
+        if not focus_tokens & _CATEGORY_TERMS[TopicCategory.NATURE]:
+            return DEFAULT_YOUTUBE_CATEGORY_ID
+    return YOUTUBE_SCIENCE_TECHNOLOGY_CATEGORY_ID
 
 
 def _apply_category_boosts(
@@ -267,24 +342,24 @@ def _apply_category_boosts(
     if "roman" in tokens or "aqueduct" in tokens or "aqueducts" in tokens:
         boosted[TopicCategory.HISTORY] = boosted.get(TopicCategory.HISTORY, 0) + 5
         boosted[TopicCategory.ENGINEERING] = boosted.get(TopicCategory.ENGINEERING, 0) + 3
-    if "fox" in tokens or "wildlife" in tokens:
+    if tokens & _CATEGORY_TERMS[TopicCategory.WILDLIFE]:
         boosted[TopicCategory.WILDLIFE] = boosted.get(TopicCategory.WILDLIFE, 0) + 4
     return boosted
 
 
 def _topic_title(title: str, classification: TopicClassification) -> str:
-    clean = _strip_known_suffixes(title)
-    category_label = classification.primary.value
-    if category_label.lower() in clean.lower():
-        return clean
-    candidate = f"{clean} | {category_label}"
-    return candidate if len(candidate) <= 95 else clean
+    del classification
+    return _strip_known_suffixes(title)
 
 
 def _strip_known_suffixes(title: str) -> str:
     clean = str(title or "").strip()
+    suffixes = "|".join(
+        re.escape(suffix)
+        for suffix in sorted(_KNOWN_TITLE_SUFFIXES, key=len, reverse=True)
+    )
     return re.sub(
-        r"\s*\|\s*(Nature|Wildlife|Animals|Space|Ocean|History|Facts|Technology)\s*$",
+        rf"(?:\s*\|\s*(?:{suffixes}))+\s*$",
         "",
         clean,
         flags=re.IGNORECASE,
@@ -332,9 +407,37 @@ def _category_keywords(classification: TopicClassification) -> tuple[str, ...]:
 
 
 def _topic_keywords(topic: str) -> tuple[str, ...]:
-    words = [word for word in _tokens(topic) if len(word) > 2]
-    phrases = [" ".join(words[:3])] if len(words) >= 2 else []
+    normalized = " ".join(_tokens(topic))
+    words = [word for word in _tokens(topic) if len(word) > 2 and word not in _TOPIC_STOPWORDS]
+    phrases = [normalized] if normalized else []
+    phrases.extend(
+        phrase
+        for phrase, _hashtag in _TARGETED_TOPIC_PHRASES
+        if _contains_phrase(normalized, phrase)
+    )
     return tuple(phrases + words)
+
+
+def _topic_hashtags(topic: str) -> tuple[str, ...]:
+    normalized = " ".join(_tokens(topic))
+    return tuple(
+        f"#{hashtag}"
+        for phrase, hashtag in _TARGETED_TOPIC_PHRASES
+        if _contains_phrase(normalized, phrase)
+    )
+
+
+def _matched_topic_phrases(text: str) -> tuple[str, ...]:
+    normalized = " ".join(_tokens(text))
+    return tuple(
+        phrase
+        for phrase, _hashtag in _TARGETED_TOPIC_PHRASES
+        if _contains_phrase(normalized, phrase)
+    )
+
+
+def _contains_phrase(text: str, phrase: str) -> bool:
+    return bool(re.search(rf"(?:^|\s){re.escape(phrase)}(?:s)?(?:\s|$)", text))
 
 
 def _dedupe_hashtags(tags: Iterable[str]) -> tuple[str, ...]:
@@ -372,10 +475,21 @@ def _filter_existing_hashtags(
         "#energy": TopicCategory.PHYSICS,
         "#technology": TopicCategory.TECHNOLOGY,
         "#qrcode": TopicCategory.TECHNOLOGY,
+        "#weather": TopicCategory.WEATHER,
+        "#climate": TopicCategory.CLIMATE,
+        "#geography": TopicCategory.GEOGRAPHY,
+        "#psychology": TopicCategory.PSYCHOLOGY,
+        "#biology": TopicCategory.BIOLOGY,
+        "#chemistry": TopicCategory.CHEMISTRY,
+        "#environment": TopicCategory.ENVIRONMENT,
+        "#engineering": TopicCategory.ENGINEERING,
     }
+    generic_academic = {"#education", "#learn", "#science"}
     filtered: list[str] = []
     for tag in tags:
         normalized = _normalize_hashtag(tag)
+        if normalized in generic_academic:
+            continue
         category = broad_map.get(normalized)
         if category is not None and category not in allowed_categories:
             continue

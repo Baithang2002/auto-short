@@ -298,20 +298,31 @@ def remove_consumed_qualified_script(path: Path | None) -> None:
         return
 
 
-def source_coverage_deferred(topic: str) -> tuple[bool, str]:
-    """Return whether the latest run deferred this exact topic before voice generation."""
+def source_coverage_failure(topic: str) -> tuple[str, str]:
+    """Return the matching coverage failure classification and reason."""
 
     if not SOURCE_COVERAGE_REPORT.exists():
-        return False, ""
+        return "", ""
     try:
         report = json.loads(SOURCE_COVERAGE_REPORT.read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return False, ""
+        return "", ""
     if str(report.get("topic", "")).casefold() != topic.casefold():
-        return False, ""
+        return "", ""
     if str(report.get("decision", "")).upper() != "DEFERRED":
-        return False, ""
-    return True, "; ".join(str(item) for item in report.get("reasons", []) if item)
+        return "", ""
+    classification = str(
+        report.get("failure_classification") or "CONTENT_COVERAGE_GAP"
+    ).upper()
+    reason = "; ".join(str(item) for item in report.get("reasons", []) if item)
+    return classification, reason
+
+
+def source_coverage_deferred(topic: str) -> tuple[bool, str]:
+    """Return whether source coverage represents a content-specific deferral."""
+
+    classification, reason = source_coverage_failure(topic)
+    return classification == "CONTENT_COVERAGE_GAP", reason
 
 
 def editorial_identity_deferred(topic: str) -> tuple[bool, str]:
@@ -471,15 +482,24 @@ def run_daily() -> int:
         if not deferred:
             finished = dt.datetime.now()
             secs = (finished - started).total_seconds()
+            coverage_classification, coverage_reason = source_coverage_failure(topic)
+            if coverage_classification == "TECHNICAL_PROVIDER_FAILURE":
+                technical_reason = (
+                    f"technical/provider failure: {coverage_reason}"
+                    if coverage_reason else "technical/provider failure during source coverage"
+                )
+            else:
+                technical_reason = f"critical technical failure exit={proc.returncode}"
             if scheduler_result is not None:
                 ContentHistoryStore(CONTENT_HISTORY).mark_deferred(
                     run_id=scheduler_run_id,
-                    reason=f"critical technical failure exit={proc.returncode}",
+                    reason=technical_reason,
                     status="technical_failed",
                 )
             append_log(
                 f"{started:%Y-%m-%d %H:%M:%S}  topic={topic!r}  exit={proc.returncode}  "
-                f"slot={slot!r}  duration={secs:.0f}s  critical_failure=true"
+                f"slot={slot!r}  duration={secs:.0f}s  critical_failure=true  "
+                f"reason={technical_reason!r}"
             )
             print(f"[daily] stopped after critical failure ({secs:.0f}s, exit {proc.returncode}).")
             return proc.returncode

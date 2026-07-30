@@ -10,6 +10,35 @@ from autovideo.media import (
 
 
 class EditorialCanonTests(unittest.TestCase):
+    def test_process_title_verbs_end_the_primary_subject_phrase(self) -> None:
+        variants = (
+            "Shape", "Shapes", "Shaped", "Shaping",
+            "Control", "Controls", "Controlled", "Controlling",
+            "Drive", "Drives", "Drove", "Driven", "Driving",
+            "Affect", "Affects", "Affected", "Affecting",
+            "Influence", "Influences", "Influenced", "Influencing",
+        )
+
+        for verb in variants:
+            with self.subTest(verb=verb):
+                canon, _lock, _roles, _domain = EditorialCanonBuilder().build(
+                    topic=f"How Ocean Currents {verb} Climate",
+                    segments=[],
+                )
+                self.assertEqual("Ocean Currents", canon.primary_subject)
+                self.assertEqual(DocumentaryMode.PROCESS, canon.documentary_mode)
+
+    def test_authoritative_topic_card_subject_overrides_process_title(self) -> None:
+        canon, lock, _roles, _domain = EditorialCanonBuilder().build(
+            topic="How hummingbirds hover while feeding",
+            segments=[],
+            primary_subject_override="hummingbird",
+        )
+
+        self.assertEqual("hummingbird", canon.primary_subject)
+        self.assertEqual("authoritative_override", canon.diagnostics["primary_subject_source"])
+        self.assertEqual("hummingbird", lock.evidence["primary_subject_override"])
+
     def test_octopus_title_locks_subject_even_when_sharks_are_supporting(self) -> None:
         segments = [
             {

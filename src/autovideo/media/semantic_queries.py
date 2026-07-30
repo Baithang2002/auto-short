@@ -205,10 +205,21 @@ class SemanticVisualQueryEngine:
         queries = _build_queries(entities, descriptors, self.config.max_queries_per_scene)
         rejected: tuple[dict[str, str], ...] = ()
         if constraints and constraints.constraints:
-            queries = _dedupe((*constraints.query_seeds, *queries))
-            queries, rejected = constraints.filter_queries(queries)
+            originals, original_rejections = constraints.filter_queries(
+                _original_concrete_queries(intent)
+            )
+            synthesized, synthesized_rejections = constraints.filter_queries(
+                _dedupe((*constraints.query_seeds, *queries))
+            )
+            original_limit = self.config.max_queries_per_scene
+            if synthesized and self.config.max_queries_per_scene > 1:
+                original_limit -= 1
+            queries = _dedupe((*originals[:original_limit], *synthesized))[
+                :self.config.max_queries_per_scene
+            ]
+            rejected = (*original_rejections, *synthesized_rejections)
             if not queries:
-                queries = constraints.query_seeds
+                queries = constraints.query_seeds[:self.config.max_queries_per_scene]
             decisions = (*decisions, "preserved mandatory scene visual constraints")
         if not self.config.enabled:
             queries = tuple(getattr(intent, "search_queries", ())[:self.config.max_queries_per_scene])
@@ -216,7 +227,14 @@ class SemanticVisualQueryEngine:
         variants = _provider_variants(canonical, aliases, descriptors, queries) if self.config.provider_specific_variants else {}
         if constraints and constraints.constraints:
             variants = {
-                provider: constraints.filter_queries(provider_queries)[0] or queries
+                provider: (
+                    constraints.filter_queries(provider_queries)[0] or queries
+                )[:self.config.max_queries_per_scene]
+                for provider, provider_queries in variants.items()
+            }
+        else:
+            variants = {
+                provider: provider_queries[:self.config.max_queries_per_scene]
                 for provider, provider_queries in variants.items()
             }
         provider_entity = SceneEntity(
@@ -255,6 +273,13 @@ _ENTITY_ALIASES: Mapping[str, tuple[str, ...]] = {
     "octopus": ("common octopus", "mimic octopus", "cephalopod"),
     "honeybee": ("honey bee", "bee colony", "worker bee"),
     "aurora borealis": ("northern lights", "aurora", "aurora sky"),
+    "ocean currents": (
+        "ocean current",
+        "ocean circulation",
+        "global ocean currents",
+        "global ocean circulation",
+        "thermohaline circulation",
+    ),
 }
 
 
@@ -300,6 +325,20 @@ def _build_queries(entities: Sequence[str], descriptors: Sequence[str], maximum:
     for entity in entities:
         queries.append(entity)
     return _dedupe(queries)[:maximum]
+
+
+def _original_concrete_queries(intent: Any) -> tuple[str, ...]:
+    diagnostics = getattr(intent, "diagnostics", {})
+    if not isinstance(diagnostics, Mapping):
+        diagnostics = {}
+    raw_queries = diagnostics.get("original_broll_queries", ())
+    if isinstance(raw_queries, str):
+        raw_queries = (raw_queries,)
+    return _dedupe((
+        *(str(query) for query in raw_queries),
+        str(diagnostics.get("original_broll", "")),
+        *(str(query) for query in getattr(intent, "search_queries", ())),
+    ))
 
 
 def _provider_variants(
