@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-30T06:18:05Z",
+  "updated_at": "2026-07-30T11:35:06Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -31,6 +31,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How Arctic Foxes Survive Winter",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:35:06Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:35:06Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:35:06Z"
     },
     {
       "topic": "How Beavers Build Dams",
@@ -258,6 +273,36 @@
       "quarantine_until": "2026-08-12T09:01:32Z"
     },
     {
+      "topic": "How Penguins Survive Antarctica",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-30T11:34:08Z",
+      "last_qualified_at": "2026-07-30T11:34:08Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/8db38ab06e19631cdfb1.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "How Rainbows Form After Rain",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:34:56Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:34:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-13T11:34:56Z"
+    },
+    {
       "topic": "How Roman Aqueducts Changed Civilization",
       "status": "quarantined",
       "success_count": 0,
@@ -286,6 +331,21 @@
       "last_failure_at": "2026-07-27T08:18:01Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T08:18:01Z"
+    },
+    {
+      "topic": "How Sea Turtles Find Their Birth Beach",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:34:19Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:34:19Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:34:19Z"
     },
     {
       "topic": "How Sharks Hunt in the Ocean",
@@ -408,6 +468,21 @@
       "quarantine_until": "2026-08-13T06:13:46Z"
     },
     {
+      "topic": "How The Milky Way Looks From Earth",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:33:22Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:33:22Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:33:22Z"
+    },
+    {
       "topic": "How The Nile River Shaped Ancient Egypt",
       "status": "quarantined",
       "success_count": 0,
@@ -436,6 +511,36 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How The Sun Creates Solar Flares",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-30T11:34:47Z",
+      "last_qualified_at": "2026-07-30T11:34:47Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/9549b0d25384fb049633.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "How Thunderstorms Build in the Sky",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:33:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:33:35Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-13T11:33:35Z"
     },
     {
       "topic": "How Tides Move the Sea",
@@ -496,6 +601,21 @@
       "last_failure_at": "2026-07-27T07:41:17Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T07:41:17Z"
+    },
+    {
+      "topic": "how woodpeckers avoid brain damage",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:34:38Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:34:38Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:34:38Z"
     },
     {
       "topic": "why ancient cities were built beside rivers",
@@ -693,6 +813,36 @@
       "quarantine_until": "2026-08-05T14:21:14Z"
     },
     {
+      "topic": "why medieval castles had moats",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:33:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:33:57Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:33:57Z"
+    },
+    {
+      "topic": "Why Meteor Showers Light Up the Sky",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:34:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:34:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:34:29Z"
+    },
+    {
       "topic": "Why Ocean Currents Shape Climate",
       "status": "quarantined",
       "success_count": 0,
@@ -798,6 +948,21 @@
       "quarantine_until": "2026-08-13T06:07:50Z"
     },
     {
+      "topic": "Why Stars Twinkle at Night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:32:10Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:32:10Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:32:10Z"
+    },
+    {
       "topic": "Why The Amazon River Is So Powerful",
       "status": "qualified",
       "success_count": 0,
@@ -811,6 +976,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "Why The Danube River Connects Europe",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-30T11:33:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-30T11:33:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-13T11:33:46Z"
     },
     {
       "topic": "Why The Ocean Looks Blue",
