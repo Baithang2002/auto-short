@@ -146,7 +146,7 @@ jobs:
           fi
 
       - name: Persist rotation state back to repo
-        if: always()
+        if: ${{ always() && !(github.event_name == 'workflow_dispatch' && github.ref_name != 'main') }}
         run: |
           # pipeline_daily.py writes state/ directly before rendering. Keep
           # output/ as a fallback for older runs, then commit the tracked state
