@@ -133,6 +133,12 @@ jobs:
           # still stop upload.
           AUTO_VIDEO_RENDERED_VISUAL_QA_REQUIRE_VERIFIED_CRITICAL: "true"
           AUTO_VIDEO_RENDERED_VISUAL_QA_ALLOW_VISION_UNAVAILABLE: "true"
+          # Source-clip audio can add premium nature ambience, but it is opt-in
+          # because stock/archive clips may contain speech, music, or licensing
+          # baggage. Enable only after a manual review pass.
+          AUTO_VIDEO_USE_CLIP_AUDIO: "false"
+          AUTO_VIDEO_CLIP_AUDIO_VOLUME: "0.18"
+          AUTO_VIDEO_PUBLISH_QUALITY_ALLOW_CLIP_AUDIO: "false"
         run: |
           # CI never has stdin attached. Always use --no-interactive.
           if [ -n "${{ github.event.inputs.topic }}" ]; then

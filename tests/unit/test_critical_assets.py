@@ -496,6 +496,10 @@ class CriticalAssetTests(unittest.TestCase):
             self.assertIn(beat, prompt)
         self.assertIn("confirmed beaver; visible action: carrying a branch", prompt)
         self.assertIn("Return ONE title only", prompt)
+        self.assertIn("This [animal/place/event] looks [simple/beautiful/harmless]", prompt)
+        self.assertIn("first segment's visual searches must promise motion or impact", prompt)
+        self.assertIn("Never make the first segment's primary b-roll a static landscape", prompt)
+        self.assertIn("For segment 1, the first query must be the strongest motion/action/close-up query", prompt)
         self.assertEqual(len(script["segments"]), 12)
         self.assertEqual(script["category_id"], "15")
 
