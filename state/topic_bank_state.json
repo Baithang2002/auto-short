@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31T06:31:40Z",
+  "updated_at": "2026-07-31T11:48:14Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -108,6 +108,36 @@
       "quarantine_until": "2026-08-14T06:26:38Z"
     },
     {
+      "topic": "How Dolphins Use Sound to Hunt",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:12Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:12Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T11:47:12Z"
+    },
+    {
+      "topic": "How Earth Looks From Space",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:46:41Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:46:41Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-14T11:46:41Z"
+    },
+    {
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
@@ -136,6 +166,21 @@
       "last_failure_at": "2026-07-30T06:08:10Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:08:10Z"
+    },
+    {
+      "topic": "How fireflies make cold light to signal at night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:26Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:26Z",
+      "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
+      "quarantine_until": "2026-08-14T11:47:26Z"
     },
     {
       "topic": "How Forests Clean the Air",
@@ -423,6 +468,21 @@
       "quarantine_until": "2026-08-10T09:09:10Z"
     },
     {
+      "topic": "how solar eclipses turn day into night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:48:04Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:48:04Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T11:48:04Z"
+    },
+    {
       "topic": "how solar panels turn sunlight into electricity",
       "status": "proven",
       "success_count": 1,
@@ -511,6 +571,21 @@
       "last_failure_at": "2026-07-31T06:27:31Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
       "quarantine_until": "2026-08-14T06:27:31Z"
+    },
+    {
+      "topic": "How The International Space Station Orbits Earth",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:48:14Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:48:14Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T11:48:14Z"
     },
     {
       "topic": "How The Milky Way Looks From Earth",
@@ -721,6 +796,21 @@
       "last_failure_at": "2026-07-27T08:18:20Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-10T08:18:20Z"
+    },
+    {
+      "topic": "Why Clouds Float in the Sky",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T11:47:46Z"
     },
     {
       "topic": "Why Coral Reefs Build Underwater Cities",
@@ -1068,6 +1158,51 @@
       "quarantine_until": "2026-08-13T11:33:46Z"
     },
     {
+      "topic": "Why The Dead Sea Is So Salty",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:22Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:22Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-14T11:47:22Z"
+    },
+    {
+      "topic": "Why The Maldives Are Built From Coral",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:46:53Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:46:53Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-14T11:46:53Z"
+    },
+    {
+      "topic": "Why The Mekong River Feeds Millions",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:02Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:02Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T11:47:02Z"
+    },
+    {
       "topic": "Why The Ocean Looks Blue",
       "status": "quarantined",
       "success_count": 0,
@@ -1083,6 +1218,36 @@
       "quarantine_until": "2026-08-12T11:50:05Z"
     },
     {
+      "topic": "Why The Serengeti Has So Many Animals",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-07-31T11:47:55Z",
+      "last_qualified_at": "2026-07-31T11:47:55Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/01f0f38616e250fb2691.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
+      "topic": "Why The Sun Rises in the East",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:47:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:47:35Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-14T11:47:35Z"
+    },
+    {
       "topic": "Why Tsunamis Cross Entire Oceans",
       "status": "quarantined",
       "success_count": 0,
@@ -1096,6 +1261,21 @@
       "last_failure_at": "2026-07-29T09:03:47Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-12T09:03:47Z"
+    },
+    {
+      "topic": "Why Venus Shines So Bright",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T11:46:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T11:46:33Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
+      "quarantine_until": "2026-08-14T11:46:33Z"
     },
     {
       "topic": "Why Whales Sing Across the Ocean",
