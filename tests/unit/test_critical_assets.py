@@ -489,13 +489,14 @@ class CriticalAssetTests(unittest.TestCase):
 
         prompt = prompts[0]
         for beat in (
-            "visual shock", "mystery/stakes", "context", "mechanism", "evidence",
-            "escalation", "unexpected detail", "consequence", "second reveal",
-            "why it matters", "payoff", "short branded CTA",
+            "opening image", "subject's need", "obstacle or tension", "first attempt",
+            "visible mechanism", "cost or stakes", "escalation", "intimate detail",
+            "reveal", "consequence", "quiet visual payoff", "existing short branded CTA",
         ):
             self.assertIn(beat, prompt)
         self.assertIn("confirmed beaver; visible action: carrying a branch", prompt)
         self.assertIn("Return ONE title only", prompt)
+        self.assertIn("curious declarative statement", prompt)
         self.assertIn("This [animal/place/event] looks [simple/beautiful/harmless]", prompt)
         self.assertIn("first segment's visual searches must promise motion or impact", prompt)
         self.assertIn("Never make the first segment's primary b-roll a static landscape", prompt)

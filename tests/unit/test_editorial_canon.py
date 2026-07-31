@@ -28,6 +28,24 @@ class EditorialCanonTests(unittest.TestCase):
                 self.assertEqual("Ocean Currents", canon.primary_subject)
                 self.assertEqual(DocumentaryMode.PROCESS, canon.documentary_mode)
 
+    def test_wildlife_process_verbs_do_not_pollute_primary_subjects(self) -> None:
+        examples = {
+            "How Bats Fly in Total Darkness": "Bats",
+            "How Cheetahs Run So Fast": "Cheetahs",
+            "How Giraffes Drink With Long Necks": "Giraffes",
+            "How Seahorses Carry Their Babies": "Seahorses",
+            "How Spiders Spin Strong Silk": "Spiders",
+        }
+
+        for topic, expected in examples.items():
+            with self.subTest(topic=topic):
+                canon, _lock, _roles, _domain = EditorialCanonBuilder().build(
+                    topic=topic,
+                    segments=[],
+                )
+                self.assertEqual(expected, canon.primary_subject)
+                self.assertNotIn(" ", canon.primary_subject.strip())
+
     def test_authoritative_topic_card_subject_overrides_process_title(self) -> None:
         canon, lock, _roles, _domain = EditorialCanonBuilder().build(
             topic="How hummingbirds hover while feeding",

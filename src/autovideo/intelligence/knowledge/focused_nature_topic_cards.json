@@ -19,7 +19,7 @@
       "reveal_queries": ["Arctic fox white winter coat camouflage", "Arctic fox seasonal coat change"],
       "supporting_queries": ["Arctic tundra winter landscape", "Arctic fox brown summer coat"],
       "fallback_visuals": ["snow-covered tundra", "animal tracks in snow"],
-      "title_angles": ["The fox that changes with the seasons", "Why this fox turns white"],
+      "title_angles": ["The fox that changes with the seasons", "Winter Paints This Fox White"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 50
     },
@@ -34,7 +34,7 @@
       "reveal_queries": ["beaver placing branches dam", "active beaver dam stream"],
       "supporting_queries": ["beaver lodge pond", "forest stream before dam"],
       "fallback_visuals": ["beaver dam across stream", "pond behind stick dam"],
-      "title_angles": ["The animal that reroutes rivers", "How one dam transforms a habitat"],
+      "title_angles": ["The animal that reroutes rivers", "One Dam Transforms a Habitat"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 50
     },
@@ -49,7 +49,7 @@
       "reveal_queries": ["hummingbird wing motion slow motion", "hummingbird feeding while hovering"],
       "supporting_queries": ["hummingbird approaching flowers", "hummingbird perched close up"],
       "fallback_visuals": ["nectar-rich flowers", "small bird silhouette in flight"],
-      "title_angles": ["The bird that flies in place", "How hummingbirds stop in midair"],
+      "title_angles": ["The bird that flies in place", "A Hummingbird Uses Air as a Perch"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 48
     },
@@ -64,7 +64,7 @@
       "reveal_queries": ["firefly abdomen bioluminescence macro", "firefly light signal night"],
       "supporting_queries": ["fireflies over meadow night", "summer meadow at dusk"],
       "fallback_visuals": ["glowing insects over grass", "dark meadow at dusk"],
-      "title_angles": ["The insect with a living lantern", "How fireflies glow without heat"],
+      "title_angles": ["The insect with a living lantern", "A Tiny Lantern Switches On at Dusk"],
       "source_difficulty": "moderate",
       "recommended_duration_sec": 46
     },
@@ -79,7 +79,7 @@
       "reveal_queries": ["chameleon color change macro", "chameleon skin structure animation"],
       "supporting_queries": ["chameleon climbing branch", "chameleon eye close up"],
       "fallback_visuals": ["reptile scales macro", "green chameleon on branch"],
-      "title_angles": ["What really changes a chameleon's color", "The hidden structure in chameleon skin"],
+      "title_angles": ["The Hidden Structure in Chameleon Skin", "Color Moves Beneath These Scales"],
       "source_difficulty": "moderate",
       "recommended_duration_sec": 48
     },
@@ -94,7 +94,7 @@
       "reveal_queries": ["octopus skin texture camouflage close up", "octopus chromatophore color change"],
       "supporting_queries": ["octopus moving over coral reef", "rocky seafloor close up"],
       "fallback_visuals": ["coral reef textures", "rocky ocean floor"],
-      "title_angles": ["The ocean's instant disguise", "How an octopus vanishes in plain sight"],
+      "title_angles": ["The Ocean's Instant Disguise", "An Octopus Vanishes Against the Seafloor"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 52
     },
@@ -109,7 +109,7 @@
       "reveal_queries": ["bubble net underwater school fish", "humpback whale bubble feeding breach"],
       "supporting_queries": ["humpback whale underwater", "school of herring underwater"],
       "fallback_visuals": ["bubble ring underwater", "dense school of fish"],
-      "title_angles": ["The whales that hunt with bubbles", "How whales build a net from air"],
+      "title_angles": ["The whales that hunt with bubbles", "A Bubble Ring Becomes a Trap"],
       "source_difficulty": "moderate",
       "recommended_duration_sec": 54
     },
@@ -124,7 +124,7 @@
       "reveal_queries": ["supercell rotating updraft timelapse", "wind shear storm diagram"],
       "supporting_queries": ["storm clouds building timelapse", "winds at different altitudes animation"],
       "fallback_visuals": ["shelf cloud over plains", "dark storm base timelapse"],
-      "title_angles": ["What makes a storm begin to spin", "Inside a rotating supercell"],
+      "title_angles": ["A Storm Begins to Spin", "Inside a Rotating Supercell"],
       "source_difficulty": "moderate",
       "recommended_duration_sec": 50
     },
@@ -139,7 +139,7 @@
       "reveal_queries": ["lava ocean cooling new rock", "fresh lava delta coastline"],
       "supporting_queries": ["molten lava close up", "black volcanic coastline"],
       "fallback_visuals": ["fresh basalt shoreline", "steam above volcanic coast"],
-      "title_angles": ["Watch the coastline grow", "How fire becomes new land"],
+      "title_angles": ["Watch the Coastline Grow", "Fire Becomes New Land at the Shore"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 50
     },
@@ -154,7 +154,7 @@
       "reveal_queries": ["Moon shadow crossing Earth animation", "solar eclipse alignment diagram"],
       "supporting_queries": ["partial solar eclipse progression", "eclipse viewers landscape"],
       "fallback_visuals": ["solar corona during totality", "Sun Moon Earth alignment graphic"],
-      "title_angles": ["The shadow that turns day into night", "Why total eclipses trace a narrow path"],
+      "title_angles": ["The Shadow That Turns Day Into Night", "Totality Follows a Narrow Path"],
       "source_difficulty": "easy",
       "recommended_duration_sec": 48
     }

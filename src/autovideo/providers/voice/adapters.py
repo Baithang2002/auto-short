@@ -42,5 +42,6 @@ class CallableVoiceProvider:
                 "unit": request.unit.value,
                 "chapter_id": request.chapter_id,
                 "scene_id": request.scene_id,
+                "voice_id": voice_id,
             },
         )

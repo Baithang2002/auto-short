@@ -18,7 +18,7 @@ from autovideo.format import (
 
 
 class TestShortsVerticalValues(unittest.TestCase):
-    """The shorts_vertical profile must match pre-PR module constants exactly."""
+    """The shorts_vertical profile keeps the deliberate cinematic pacing values."""
 
     def setUp(self) -> None:
         self.profile = get_format_profile("shorts_vertical")
@@ -47,28 +47,26 @@ class TestShortsVerticalValues(unittest.TestCase):
         assert self.profile.transition_duration_sec == 0.22
 
     def test_preferred_narration_tempo_matches_module_constant(self) -> None:
-        # Was auto_short.py: SHORTS_PREFERRED_NARRATION_TEMPO = 1.06
-        assert self.profile.preferred_narration_tempo == 1.06
+        assert self.profile.preferred_narration_tempo == 1.03
 
     def test_narration_max_retime_tempo_matches_inline_value(self) -> None:
-        # Was inline in normalize_voice_timing: tempo = min(1.30, raw_tempo)
-        assert self.profile.narration_max_retime_tempo == 1.30
+        assert self.profile.narration_max_retime_tempo == 1.05
 
     def test_narration_min_retime_tempo_matches_inline_value(self) -> None:
         # Was inline in normalize_voice_timing: tempo = max(0.90, raw_tempo)
         assert self.profile.narration_min_retime_tempo == 0.90
 
     def test_narration_words_per_sec_min_matches_inline_value(self) -> None:
-        # Was inline in narration_targets: round(target_duration * 2.25)
-        assert self.profile.narration_words_per_sec_min == 2.25
+        assert self.profile.narration_words_per_sec_min == 2.00
 
     def test_narration_words_per_sec_max_matches_inline_value(self) -> None:
-        # Was inline in narration_targets: round(target_duration * 2.55)
-        assert self.profile.narration_words_per_sec_max == 2.55
+        assert self.profile.narration_words_per_sec_max == 2.25
 
     def test_narration_words_per_segment_min_matches_inline_value(self) -> None:
-        # Was inline in narration_targets: max(n_segments * 10, ...)
-        assert self.profile.narration_words_per_segment_min == 10
+        assert self.profile.narration_words_per_segment_min == 8
+
+    def test_narration_retime_ceiling_is_safe_for_natural_delivery(self) -> None:
+        assert self.profile.narration_max_retime_tempo <= 1.05
 
 
 class TestRegistryLookup(unittest.TestCase):

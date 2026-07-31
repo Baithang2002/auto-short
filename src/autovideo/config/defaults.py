@@ -29,6 +29,7 @@ class ProviderDefaults:
     )
     gemini_image_model: str = "gemini-3.5-flash"
     edge_tts_voice: str = "en-US-AndrewNeural"
+    edge_tts_rate: str = "-5%"
     speechify_voice_id: str = "george"
     elevenlabs_model: str = "eleven_multilingual_v2"
     elevenlabs_voice_id: str = ""

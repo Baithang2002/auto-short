@@ -78,10 +78,17 @@ class AutoShortQualityTests(unittest.TestCase):
     def test_narration_targets_provide_enough_words_without_long_scenes(self) -> None:
         min_total, max_total, min_segment, max_segment = auto_short.narration_targets(55, 11)
 
-        self.assertGreaterEqual(min_total, 120)
-        self.assertLessEqual(min_segment, 13)
-        self.assertLessEqual(max_segment, 17)
+        self.assertGreaterEqual(min_total, 110)
+        self.assertLessEqual(min_segment, 11)
+        self.assertLessEqual(max_segment, 15)
         self.assertGreater(max_total, min_total)
+
+    def test_title_style_requires_a_curious_declarative_statement(self) -> None:
+        self.assertTrue(any("question-led" in note for note in auto_short._title_style_notes("Why Fireflies Glow")))
+        self.assertTrue(any("question mark" in note for note in auto_short._title_style_notes("Fireflies Glow?")))
+        self.assertTrue(any("absolute" in note for note in auto_short._title_style_notes("Fireflies Never Stop Glowing")))
+        self.assertTrue(any("absolute" in note for note in auto_short._title_style_notes("A Beaver Completely Rewrites a River")))
+        self.assertEqual([], auto_short._title_style_notes("A Tiny Lantern Switches On at Dusk"))
 
 
 if __name__ == "__main__":

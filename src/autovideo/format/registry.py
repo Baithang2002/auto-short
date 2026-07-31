@@ -19,12 +19,12 @@ _SHORTS_VERTICAL = FormatProfile(
     max_duration_sec=58,
     scene_target_duration_sec=5.0,
     transition_duration_sec=0.22,
-    preferred_narration_tempo=1.06,
-    narration_max_retime_tempo=1.30,
+    preferred_narration_tempo=1.03,
+    narration_max_retime_tempo=1.05,
     narration_min_retime_tempo=0.90,
-    narration_words_per_sec_min=2.25,
-    narration_words_per_sec_max=2.55,
-    narration_words_per_segment_min=10,
+    narration_words_per_sec_min=2.00,
+    narration_words_per_sec_max=2.25,
+    narration_words_per_segment_min=8,
 )
 
 _REGISTRY: dict[str, FormatProfile] = {

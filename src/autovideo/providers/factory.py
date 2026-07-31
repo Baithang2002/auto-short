@@ -57,7 +57,11 @@ def build_voice_registry(config: AppConfig, *, include_real_providers: bool = Tr
         )
         register(
             "edge_tts",
-            EdgeTTSVoiceProvider(voice_id=config.edge_tts_voice, retry_attempts=config.retry_attempts),
+            EdgeTTSVoiceProvider(
+                voice_id=config.edge_tts_voice,
+                retry_attempts=config.retry_attempts,
+                rate=config.edge_tts_rate,
+            ),
             enabled="edge_tts" in priority,
         )
         register(

@@ -323,6 +323,16 @@ ACADEMIC_TITLE_SUFFIX_RE = re.compile(
     r"wildlife|animals|ocean|space|weather|climate|environment|psychology|facts)\s*$",
     re.IGNORECASE,
 )
+DECLARATIVE_TITLE_START_RE = re.compile(
+    r"^\s*(?:why|how|what|does|did|can|could|is|are|will|when|where|which)\b",
+    re.IGNORECASE,
+)
+TITLE_QUESTION_RE = re.compile(r"\?")
+TITLE_UNSUPPORTED_ABSOLUTE_RE = re.compile(
+    r"\b(?:never|always|impossible|no one|nobody|nothing|everyone|"
+    r"completely|entirely|perfectly|ultimate|only)\b",
+    re.IGNORECASE,
+)
 # Channel name used in end card and SEO metadata
 APP_SETTINGS       = Settings.from_project_root(SCRIPT_DIR)
 APP_CONFIG         = AppConfig.from_settings(APP_SETTINGS)
@@ -458,8 +468,10 @@ def script_quality_notes(data, n_segments, target_duration, critical_asset_plan=
     fatal_notes = []
     soft_notes  = []
 
-    if ACADEMIC_TITLE_SUFFIX_RE.search(str(data.get("title") or "")):
+    title = str(data.get("title") or "").strip()
+    if ACADEMIC_TITLE_SUFFIX_RE.search(title):
         fatal_notes.append("title has an academic title suffix")
+    fatal_notes.extend(_title_style_notes(title))
 
     if len(segments) != n_segments:
         fatal_notes.append(f"expected exactly {n_segments} segments, got {len(segments)}")
@@ -494,6 +506,21 @@ def script_quality_notes(data, n_segments, target_duration, critical_asset_plan=
     fatal_notes.extend(_critical_script_alignment_notes(data, critical_asset_plan))
 
     return fatal_notes, soft_notes
+
+
+def _title_style_notes(title: str) -> list[str]:
+    """Require curious, declarative titles instead of question-led explainers."""
+
+    if not title:
+        return []
+    notes = []
+    if DECLARATIVE_TITLE_START_RE.search(title):
+        notes.append("title is question-led; use a curious declarative statement")
+    if TITLE_QUESTION_RE.search(title):
+        notes.append("title contains a question mark")
+    if TITLE_UNSUPPORTED_ABSOLUTE_RE.search(title):
+        notes.append("title contains an unsupported absolute")
+    return notes
 
 
 def _critical_script_alignment_notes(data, critical_asset_plan):
@@ -774,17 +801,18 @@ Target finished length: about {target_duration} seconds.
 CONFIRMED CRITICAL VISUALS (already downloaded and frame-verified):
 {critical_visuals}
 
-Style target:
-- Sounds like a sharp creator talking to one person, not a textbook.
-- Short sentences. One idea per sentence. No Wikipedia introductions.
-- Every line should create curiosity, reveal a concrete visual fact, or move the story forward.
-- Use simple spoken words. Avoid formal phrases like "highly adaptable", "diverse habitats", "evolved strategies", or "provide shelter".
-- Build one clear story: problem -> hidden mechanism -> visible proof -> surprising consequence -> closing payoff.
-- Avoid generic hype like "will blow your mind", "amazing facts", "truly bizarre", or "you won't believe".
+    Style target:
+    - Sound like a cinematic nature documentary, not a textbook or a list of facts.
+    - Write for one human listener. Use simple, spoken words and natural pauses.
+    - Build one connected short film: opening image -> subject's need -> obstacle or tension -> action and mechanism -> cost or stakes -> reveal -> quiet visual payoff.
+    - Let each segment feel like the next shot in the same story. Do not reset the topic or announce another fact.
+    - Keep scientific details inside the action: explain only what the viewer needs to understand what is happening on screen.
+    - Never invent material properties, precise measurements, motives, or biological claims that are not established by the topic. Prefer a careful observation over a dramatic certainty.
+    - Use concrete sensory images, restrained emotion, and measured suspense. Avoid generic hype like "will blow your mind", "amazing facts", "truly bizarre", or "you won't believe".
 
 Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
 {{
-  "title": "one punchy 5-8 word emotional-curiosity title (no #shorts or academic label)",
+  "title": "one punchy 5-8 word curious declarative statement (no question, #shorts, or academic label)",
   "description": "2-3 sentence YouTube/Facebook description, hook + value, no hashtags inside",
   "instagram_caption": "1-2 sentence Instagram caption with a soft CTA, no hashtags inside",
   "music_mood": "one of: mysterious, inspiring, dramatic, warm, curious, urgent",
@@ -800,18 +828,18 @@ Rules:
 - Exactly {n_segments} segments.
 - LENGTH IS NON-NEGOTIABLE. Total narration MUST be {min_total}-{max_total} words across all segments. Below {min_total} the video is too short and gets rejected.
 - EACH segment narration MUST be at least {min_segment} words and at most {max_segment} words, except the first hook may be 8-12 words if it is stronger that way.
-- Do NOT write short fragments like "Auroras dazzle." That is only 2 words. Write full sentences with subject, verb, and a specific detail.
-- Use one short sentence when possible. Use two short sentences only when it improves momentum.
-- For a 12-segment script, use these exact story jobs in order: (1) visual shock, (2) mystery/stakes, (3) context, (4) mechanism, (5) evidence, (6) escalation, (7) unexpected detail, (8) consequence, (9) second reveal, (10) why it matters, (11) payoff, (12) short branded CTA.
-- If a non-default segment count is requested, preserve the same arc without changing the requested count.
-- Make it a connected mini-story, not twelve isolated facts.
-- First segment is the first 2-4 seconds and must be the strongest line. It must create tension immediately with the formula:
+    - Do NOT write short fragments like "Auroras dazzle." Write complete spoken sentences with a subject, verb, and visual detail.
+    - Use one or two short sentences per segment. Use punctuation to create breathing room instead of packing in extra facts.
+    - For a 12-segment script, use these story jobs in order: (1) opening image, (2) subject's need, (3) obstacle or tension, (4) first attempt, (5) visible mechanism, (6) cost or stakes, (7) escalation, (8) intimate detail, (9) reveal, (10) consequence, (11) quiet visual payoff, (12) the existing short branded CTA.
+    - If a non-default segment count is requested, preserve this same story arc without changing the requested count.
+    - Make it a connected short film, never a sequence of isolated facts.
+    - First segment is the first 2-4 seconds and must be the strongest visual line. It must create tension immediately with the formula:
   "This [animal/place/event] looks [simple/beautiful/harmless]... but [danger/problem/surprising mechanism]."
   Do not use that exact wording unless it fits naturally.
   Use a curiosity hook like:
   "This tiny animal survives temperatures colder than your freezer."
-  "Scientists still can't believe this survival trick works."
-  "This animal has a winter trick almost no one notices."
+  "A quiet survival trick appears in plain sight."
+  "The smallest detail changes the whole scene."
   Do not copy these exactly unless they fit the topic.
 - NEVER open with generic educational narration, greetings, rhetorical questions, "Did you know", "Meet the", "In this video", or the topic name followed by "are/have/can".
 - NEVER open with broad hype like "These facts will blow your mind" or "Space is truly bizarre".
@@ -820,13 +848,14 @@ Rules:
 - The first segment's visual searches must promise motion or impact immediately: animal escaping/feeding/jumping/flashing, lava/waves/storms moving, close-up eyes/teeth/claws/skin, pulsing aurora, crashing wave, lightning strike, or another topic-specific action.
 - Never make the first segment's primary b-roll a static landscape, map, satellite view, generic sky, calm wide shot, or abstract explainer graphic. Wide/context shots can appear later.
 {critical_lock_rules}
-- The title must create emotional curiosity in plain creator language. Return ONE title only. Never append academic/category labels such as "| Biology", "| Science", "- Education", or ": Facts".
+    - The title must be a curious statement, not a question. Return ONE title only. Never begin it with Why, How, What, Does, Can, or similar question-led wording. Never use a question mark, unsupported absolute claims such as "never" or "impossible", or academic/category labels such as "| Biology", "| Science", "- Education", or ": Facts".
 - The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
   "Subscribe to Wonders of the Nature for more."
   "Follow Wonders of the Nature for more like this."
   "Stay curious - Wonders of the Nature posts daily."
   Do NOT invent a different channel name. Do NOT say "Celestial Wonders" or any other variant. Do NOT use "smash the bell", "hit subscribe", or other creator-speak.
-- Do not write isolated fact fragments. Every segment must feel like the next beat in the same story.
+    - Do not write isolated fact fragments. Every segment must feel like the next shot in the same story.
+    - Do not claim that an animal uses "almost zero energy", or use "always", "never", "impossible", "no one", "every", or "completely" unless the claim is directly supported by the topic's established science.
 - Choose "music_mood" to match the emotional feel of the story.
 - Narration is plain spoken English, no emojis, no hashtags, no stage directions.
 - "broll" must be something Pexels stock video would actually have
@@ -903,6 +932,9 @@ Previous JSON:
                     if "0 words" in note
                     or "missing broll" in note
                     or "academic title suffix" in note
+                    or "title is question-led" in note
+                    or "title contains a question mark" in note
+                    or "title contains an unsupported absolute" in note
                     or "critical segment" in note
                     or "critical scene" in note
                 ]
@@ -970,7 +1002,11 @@ Previous JSON:
 # ----------------------------------------------------------------------------
 async def _tts(text, out_path, voice_id=None):
     import edge_tts
-    await edge_tts.Communicate(text, voice_id or VOICE).save(str(out_path))
+    await edge_tts.Communicate(
+        text,
+        voice_id or VOICE,
+        rate=APP_CONFIG.edge_tts_rate,
+    ).save(str(out_path))
 
 
 async def _tts_with_retry_async(text, out_path, tries=3, voice_id=None):
@@ -1173,13 +1209,10 @@ def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile 
         action = "speeding up"
 
     if profile.min_duration_sec <= total <= profile.max_duration_sec:
-        transition_allowance = max(0, len(voice_items) - 1) * profile.transition_duration_sec
-        minimum_voice_total = profile.min_duration_sec + transition_allowance + 0.5
-        tempo = min(profile.preferred_narration_tempo, total / minimum_voice_total)
-        if tempo <= 1.005:
-            return voice_items
-        desired = total / tempo
-        action = "speeding up"
+        # Once the natural narration already fits the Shorts window, preserve
+        # its delivery. The timeline follows the voice instead of tightening
+        # pauses to match an earlier target estimate.
+        return voice_items
 
     effective_target = total / tempo if tempo else desired
     print(f"[i] Voiceover is {total:.1f}s; {action} narration slightly for a ~{effective_target:.0f}s Short.")

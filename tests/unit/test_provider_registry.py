@@ -139,6 +139,30 @@ class ProviderRegistryTests(unittest.TestCase):
             self.assertEqual(config.elevenlabs_voice_index, 1)
             self.assertEqual(config.elevenlabs_voice_id, "voice-2")
 
+    def test_voice_mix_rotates_provider_by_run_number(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={
+                "AUTO_VIDEO_VOICE_MIX": "elevenlabs,edge_tts",
+                "GITHUB_RUN_NUMBER": "5",
+            })
+
+            config = AppConfig.from_settings(settings)
+
+            self.assertEqual(config.voice_rotation_provider, "edge_tts")
+            self.assertEqual(config.provider_priority["voice"][0], "edge_tts")
+
+    def test_voice_mix_can_force_the_first_provider_for_local_review(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={
+                "AUTO_VIDEO_VOICE_MIX": "elevenlabs,edge_tts",
+                "ELEVENLABS_VOICE_ROTATION_INDEX": "0",
+            })
+
+            config = AppConfig.from_settings(settings)
+
+            self.assertEqual(config.voice_rotation_provider, "elevenlabs")
+            self.assertEqual(config.provider_priority["voice"][0], "elevenlabs")
+
     def test_single_elevenlabs_voice_id_still_works(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             settings = Settings.from_project_root(tmp, env={"ELEVENLABS_VOICE_ID": "voice-1"})

@@ -63,10 +63,12 @@ class AppConfig:
     channel_name: str
     default_niche: str
     edge_tts_voice: str
+    edge_tts_rate: str
     speechify_voice_id: str
     elevenlabs_voice_id: str
     elevenlabs_voice_ids: tuple[str, ...]
     elevenlabs_voice_index: int
+    voice_rotation_provider: str
     elevenlabs_model: str
     clip_audio: ClipAudioConfig = field(default_factory=ClipAudioConfig)
     music: MusicConfig = field(default_factory=MusicConfig)
@@ -84,6 +86,14 @@ class AppConfig:
             requested = tuple(p.strip().lower() for p in voice_override.split(",") if p.strip())
             if requested:
                 voice_priority = requested + tuple(p for p in voice_priority if p not in requested)
+        voice_rotation_provider = ""
+        voice_mix = _provider_mix(settings.env("AUTO_VIDEO_VOICE_MIX"))
+        if not voice_override and voice_mix:
+            mix_index = _voice_rotation_index(settings, len(voice_mix))
+            voice_rotation_provider = voice_mix[mix_index]
+            voice_priority = (voice_rotation_provider,) + tuple(
+                p for p in voice_priority if p != voice_rotation_provider
+            )
 
         allow_external = settings.env_bool("AUTO_VIDEO_ALLOW_EXTERNAL_API_CALLS", profile.allow_external_api_calls)
         mock_uploads = settings.env_bool("AUTO_VIDEO_MOCK_UPLOADS", profile.mock_uploads)
@@ -139,10 +149,12 @@ class AppConfig:
             channel_name=settings.env("CHANNEL_NAME", DEFAULTS.channel.channel_name),
             default_niche=settings.env("DEFAULT_NICHE", DEFAULTS.channel.default_niche),
             edge_tts_voice=settings.env("EDGE_TTS_VOICE", DEFAULTS.providers.edge_tts_voice),
+            edge_tts_rate=settings.env("EDGE_TTS_RATE", DEFAULTS.providers.edge_tts_rate),
             speechify_voice_id=settings.env("SPEECHIFY_VOICE_ID", DEFAULTS.providers.speechify_voice_id),
             elevenlabs_voice_id=selected_elevenlabs_voice_id,
             elevenlabs_voice_ids=elevenlabs_voice_ids,
             elevenlabs_voice_index=elevenlabs_voice_index,
+            voice_rotation_provider=voice_rotation_provider,
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
             clip_audio=clip_audio_config,
             music=music_config,
@@ -153,6 +165,12 @@ def _voice_id_list(raw: str) -> tuple[str, ...]:
     """Parse one or more ElevenLabs voice ids from environment text."""
 
     return tuple(item.strip() for item in str(raw or "").split(",") if item.strip())
+
+
+def _provider_mix(raw: str) -> tuple[str, ...]:
+    """Parse the optional per-run voice provider rotation list."""
+
+    return tuple(item.strip().lower() for item in str(raw or "").split(",") if item.strip())
 
 
 def _voice_rotation_index(settings: Settings, voice_count: int) -> int:
