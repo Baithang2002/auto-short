@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31T14:38:11Z",
+  "updated_at": "2026-07-31T15:09:59Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -48,6 +48,21 @@
       "quarantine_until": "2026-08-13T11:35:06Z"
     },
     {
+      "topic": "How Bats Fly in Total Darkness",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:03Z"
+    },
+    {
       "topic": "How Beavers Build Dams",
       "status": "quarantined",
       "success_count": 0,
@@ -91,6 +106,21 @@
       "last_failure_at": "2026-07-27T07:37:36Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T07:37:36Z"
+    },
+    {
+      "topic": "How Cheetahs Run So Fast",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:13Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:13Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:13Z"
     },
     {
       "topic": "How Crocodiles Wait Underwater",
@@ -228,6 +258,21 @@
       "quarantine_until": "2026-08-14T06:27:01Z"
     },
     {
+      "topic": "How Giraffes Drink With Long Necks",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:23Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:23Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:23Z"
+    },
+    {
       "topic": "how glaciers shape mountains and valleys",
       "status": "quarantined",
       "success_count": 0,
@@ -348,6 +393,21 @@
       "quarantine_until": "2026-08-12T09:01:32Z"
     },
     {
+      "topic": "How Owls Fly Almost Silently",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:37Z"
+    },
+    {
       "topic": "How Penguins Survive Antarctica",
       "status": "qualified",
       "success_count": 0,
@@ -423,6 +483,21 @@
       "quarantine_until": "2026-08-13T11:34:19Z"
     },
     {
+      "topic": "How Seahorses Carry Their Babies",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:49Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:49Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:49Z"
+    },
+    {
       "topic": "How Sharks Hunt in the Ocean",
       "status": "quarantined",
       "success_count": 0,
@@ -496,6 +571,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How Spiders Spin Strong Silk",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:09:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:09:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:09:59Z"
     },
     {
       "topic": "How The Black Forest Got Its Name",
