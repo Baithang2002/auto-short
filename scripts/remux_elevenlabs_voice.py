@@ -41,10 +41,9 @@ def main() -> None:
     if not narration:
         raise SystemExit("No segment narration found in upload_metadata.json")
 
-    api_key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
     raw_voice_ids = os.environ.get("ELEVENLABS_VOICE_IDS", "") or os.environ.get("ELEVENLABS_VOICE_ID", "")
     voice_ids = [item.strip() for item in raw_voice_ids.split(",") if item.strip()]
-    if not api_key:
+    if not os.environ.get("ELEVENLABS_API_KEY", "").strip():
         raise SystemExit("ELEVENLABS_API_KEY is not configured")
     if not voice_ids:
         raise SystemExit("ELEVENLABS_VOICE_IDS or ELEVENLABS_VOICE_ID is not configured")
@@ -52,11 +51,11 @@ def main() -> None:
     voice_index = (max(1, args.voice_slot) - 1) % len(voice_ids)
     voice_id = voice_ids[voice_index]
     print(f"[voice-remux] Using ElevenLabs voice slot {voice_index + 1}/{len(voice_ids)}")
+    accounts = elevenlabs_accounts(primary_voice_id=voice_id)
 
     voice_path = artifact_dir / f"remux_voice_slot_{voice_index + 1}.mp3"
-    generate_elevenlabs_audio(
-        api_key=api_key,
-        voice_id=voice_id,
+    account_index, generated_voice_id = generate_elevenlabs_audio(
+        accounts=accounts,
         text=narration,
         output_path=voice_path,
         model=os.environ.get("ELEVENLABS_MODEL", "eleven_multilingual_v2").strip() or "eleven_multilingual_v2",
@@ -89,6 +88,8 @@ def main() -> None:
         "output_video": str(output_path.name),
         "voice_slot": voice_index + 1,
         "voice_count": len(voice_ids),
+        "account_slot": account_index + 1,
+        "generated_voice_id": generated_voice_id,
         "video_duration_sec": round(video_duration, 3),
         "generated_voice_duration_sec": round(voice_duration, 3),
         "tempo": round(tempo, 5),
@@ -113,32 +114,61 @@ def load_local_env(path: Path) -> None:
             os.environ[key] = value
 
 
-def generate_elevenlabs_audio(*, api_key: str, voice_id: str, text: str, output_path: Path, model: str) -> None:
-    response = requests.post(
-        f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
-        headers={
-            "xi-api-key": api_key,
-            "Content-Type": "application/json",
-            "Accept": "audio/mpeg",
-        },
-        json={
-            "text": text,
-            "model_id": model,
-            "voice_settings": {
-                "stability": 0.45,
-                "similarity_boost": 0.75,
+def elevenlabs_accounts(*, primary_voice_id: str) -> list[tuple[str, str]]:
+    accounts: list[tuple[str, str]] = []
+    for index in range(1, 11):
+        if index == 1:
+            api_key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+            voice_id = primary_voice_id.strip()
+        else:
+            api_key = os.environ.get(f"ELEVENLABS_API_KEY_{index}", "").strip()
+            voice_id = os.environ.get(f"ELEVENLABS_VOICE_ID_{index}", "").strip()
+        if not api_key and not voice_id:
+            break
+        if api_key and voice_id:
+            accounts.append((api_key, voice_id))
+    return accounts
+
+
+def generate_elevenlabs_audio(
+    *,
+    accounts: list[tuple[str, str]],
+    text: str,
+    output_path: Path,
+    model: str,
+) -> tuple[int, str]:
+    if not accounts:
+        raise SystemExit("No complete ElevenLabs account + voice pairs are configured")
+    errors: list[str] = []
+    for account_index, (api_key, voice_id) in enumerate(accounts):
+        response = requests.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            headers={
+                "xi-api-key": api_key,
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg",
             },
-        },
-        timeout=120,
-    )
-    try:
-        response.raise_for_status()
-    except requests.HTTPError as exc:
-        detail = response.text[:300].replace(api_key, "[REDACTED]").replace(voice_id, "[REDACTED]")
-        raise SystemExit(
-            f"ElevenLabs request failed with HTTP {response.status_code}: {detail}"
-        ) from exc
-    output_path.write_bytes(response.content)
+            json={
+                "text": text,
+                "model_id": model,
+                "voice_settings": {
+                    "stability": 0.45,
+                    "similarity_boost": 0.75,
+                },
+            },
+            timeout=120,
+        )
+        try:
+            response.raise_for_status()
+        except requests.HTTPError:
+            detail = response.text[:300].replace(api_key, "[REDACTED]").replace(voice_id, "[REDACTED]")
+            errors.append(f"account {account_index + 1}/{len(accounts)} HTTP {response.status_code}: {detail}")
+            if response.status_code in {401, 402, 429}:
+                continue
+            break
+        output_path.write_bytes(response.content)
+        return account_index, voice_id
+    raise SystemExit("ElevenLabs request failed for all accounts: " + "; ".join(errors))
 
 
 def media_duration(path: Path) -> float:

@@ -51,9 +51,10 @@ def build_voice_registry(config: AppConfig, *, include_real_providers: bool = Tr
                 voice_id=config.elevenlabs_voice_id,
                 model=config.elevenlabs_model,
                 timeout_sec=config.download_timeout_sec,
+                accounts=config.elevenlabs_accounts,
             ),
-            enabled=bool("elevenlabs" in priority and config.api_keys["elevenlabs"].strip() and config.elevenlabs_voice_id.strip()),
-            health_message="missing ELEVENLABS_API_KEY or ELEVENLABS_VOICE_ID",
+            enabled=bool("elevenlabs" in priority and config.elevenlabs_accounts),
+            health_message="missing complete ElevenLabs account + voice pair",
         )
         register(
             "edge_tts",

@@ -1092,9 +1092,10 @@ def _voice_provider_registry() -> ProviderRegistry:
             voice_id=APP_CONFIG.elevenlabs_voice_id,
             model=APP_CONFIG.elevenlabs_model,
             timeout_sec=APP_CONFIG.download_timeout_sec,
+            accounts=APP_CONFIG.elevenlabs_accounts,
         ),
         priority=priorities.get("elevenlabs", 100),
-        enabled=bool("elevenlabs" in priorities and APP_CONFIG.api_keys["elevenlabs"].strip() and APP_CONFIG.elevenlabs_voice_id.strip()),
+        enabled=bool("elevenlabs" in priorities and APP_CONFIG.elevenlabs_accounts),
         profiles=(profile,),
         features=("whole_narration", "chapter_narration", "scene_narration"),
     )

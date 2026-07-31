@@ -3,13 +3,27 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+
+import requests
 
 from tests.unit import _path  # noqa: F401
 from autovideo.config import AppConfig, ProviderRegistry, Settings, resolve_render_profile
-from autovideo.providers.base import ProviderError, ProviderFallbackError, ProviderHealth, ProviderHealthStatus
+from autovideo.providers.base import ProviderError, ProviderExecutionError, ProviderFallbackError, ProviderHealth, ProviderHealthStatus
 from autovideo.providers.factory import build_voice_registry
 from autovideo.providers.llm import CallableLLMProvider, MockLLMProvider
-from autovideo.providers.voice import MockVoiceProvider, VoiceRequest
+from autovideo.providers.voice import ElevenLabsVoiceProvider, MockVoiceProvider, VoiceRequest
+
+
+class _FakeElevenLabsResponse:
+    def __init__(self, status_code: int, content: bytes = b"audio") -> None:
+        self.status_code = status_code
+        self.content = content
+        self.text = f"status {status_code}"
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise requests.HTTPError(f"HTTP {self.status_code}")
 
 
 class ProviderRegistryTests(unittest.TestCase):
@@ -138,6 +152,57 @@ class ProviderRegistryTests(unittest.TestCase):
             self.assertEqual(config.elevenlabs_voice_ids, ("voice-1", "voice-2", "voice-3", "voice-4"))
             self.assertEqual(config.elevenlabs_voice_index, 1)
             self.assertEqual(config.elevenlabs_voice_id, "voice-2")
+
+    def test_elevenlabs_accounts_include_numbered_fallback_pairs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={
+                "ELEVENLABS_API_KEY": "primary-key",
+                "ELEVENLABS_VOICE_IDS": "voice-1, voice-2",
+                "ELEVENLABS_VOICE_ROTATION_INDEX": "1",
+                "ELEVENLABS_API_KEY_2": "backup-key",
+                "ELEVENLABS_VOICE_ID_2": "backup-voice",
+            })
+
+            config = AppConfig.from_settings(settings)
+
+            self.assertEqual(
+                config.elevenlabs_accounts,
+                (("primary-key", "voice-2"), ("backup-key", "backup-voice")),
+            )
+
+    def test_elevenlabs_account_fallback_uses_second_account_on_quota_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "voice.mp3"
+            provider = ElevenLabsVoiceProvider(
+                model="eleven_multilingual_v2",
+                accounts=(("primary-key", "primary-voice"), ("backup-key", "backup-voice")),
+            )
+
+            with patch("requests.post", side_effect=[
+                _FakeElevenLabsResponse(429),
+                _FakeElevenLabsResponse(200, b"backup-audio"),
+            ]) as post:
+                result = provider.synthesize(VoiceRequest(text="hello", output_path=output, scene_id="1"))
+
+            self.assertEqual(output.read_bytes(), b"backup-audio")
+            self.assertEqual(dict(result.metadata or {}).get("voice_id"), "backup-voice")
+            self.assertIn("primary-voice", post.call_args_list[0].args[0])
+            self.assertIn("backup-voice", post.call_args_list[1].args[0])
+
+    def test_elevenlabs_account_fallback_errors_after_all_accounts_fail(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "voice.mp3"
+            provider = ElevenLabsVoiceProvider(
+                model="eleven_multilingual_v2",
+                accounts=(("primary-key", "primary-voice"), ("backup-key", "backup-voice")),
+            )
+
+            with patch("requests.post", side_effect=[
+                _FakeElevenLabsResponse(402),
+                _FakeElevenLabsResponse(429),
+            ]):
+                with self.assertRaises(ProviderExecutionError):
+                    provider.synthesize(VoiceRequest(text="hello", output_path=output, scene_id="1"))
 
     def test_voice_mix_rotates_provider_by_run_number(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

@@ -68,6 +68,7 @@ class AppConfig:
     elevenlabs_voice_id: str
     elevenlabs_voice_ids: tuple[str, ...]
     elevenlabs_voice_index: int
+    elevenlabs_accounts: tuple[tuple[str, str], ...]
     voice_rotation_provider: str
     elevenlabs_model: str
     clip_audio: ClipAudioConfig = field(default_factory=ClipAudioConfig)
@@ -108,6 +109,10 @@ class AppConfig:
             elevenlabs_voice_ids[elevenlabs_voice_index]
             if elevenlabs_voice_ids
             else DEFAULTS.providers.elevenlabs_voice_id
+        )
+        elevenlabs_accounts = _elevenlabs_accounts_from_env(
+            settings,
+            primary_voice_id=selected_elevenlabs_voice_id,
         )
 
         return cls(
@@ -154,6 +159,7 @@ class AppConfig:
             elevenlabs_voice_id=selected_elevenlabs_voice_id,
             elevenlabs_voice_ids=elevenlabs_voice_ids,
             elevenlabs_voice_index=elevenlabs_voice_index,
+            elevenlabs_accounts=elevenlabs_accounts,
             voice_rotation_provider=voice_rotation_provider,
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
             clip_audio=clip_audio_config,
@@ -165,6 +171,34 @@ def _voice_id_list(raw: str) -> tuple[str, ...]:
     """Parse one or more ElevenLabs voice ids from environment text."""
 
     return tuple(item.strip() for item in str(raw or "").split(",") if item.strip())
+
+
+def _elevenlabs_accounts_from_env(
+    settings: Settings,
+    *,
+    primary_voice_id: str,
+) -> tuple[tuple[str, str], ...]:
+    """Build (api_key, voice_id) accounts from numbered environment pairs.
+
+    The primary account is ``ELEVENLABS_API_KEY`` + the rotated primary voice.
+    Fallback accounts use ``ELEVENLABS_API_KEY_2`` + ``ELEVENLABS_VOICE_ID_2``,
+    ``_3``, and so on. Scanning stops at the first gap so an unconfigured
+    fallback account is harmless until its credentials are added.
+    """
+
+    accounts: list[tuple[str, str]] = []
+    for index in range(1, 11):
+        if index == 1:
+            key = settings.env("ELEVENLABS_API_KEY").strip()
+            voice_id = primary_voice_id.strip()
+        else:
+            key = settings.env(f"ELEVENLABS_API_KEY_{index}").strip()
+            voice_id = settings.env(f"ELEVENLABS_VOICE_ID_{index}").strip()
+        if not key and not voice_id:
+            break
+        if key and voice_id:
+            accounts.append((key, voice_id))
+    return tuple(accounts)
 
 
 def _provider_mix(raw: str) -> tuple[str, ...]:
