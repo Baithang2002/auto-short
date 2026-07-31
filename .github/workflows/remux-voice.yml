@@ -1,0 +1,63 @@
+name: Remux Render Voice
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "GitHub Actions run ID containing the render artifact"
+        required: true
+      artifact_name:
+        description: "Render artifact name"
+        required: true
+        default: "render-135"
+      voice_slot:
+        description: "1-based slot from ELEVENLABS_VOICE_IDS"
+        required: true
+        default: "1"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  remux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Download source render artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "${{ github.event.inputs.source_run_id }}" -n "${{ github.event.inputs.artifact_name }}" --dir voice-remux-input
+
+      - name: Remux selected ElevenLabs voice
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          ELEVENLABS_VOICE_IDS: ${{ secrets.ELEVENLABS_VOICE_IDS }}
+        run: python scripts/remux_elevenlabs_voice.py --artifact-dir "voice-remux-input/${{ github.event.inputs.artifact_name }}" --voice-slot "${{ github.event.inputs.voice_slot }}"
+
+      - name: Upload remuxed artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voice-remux-${{ github.event.inputs.artifact_name }}-slot-${{ github.event.inputs.voice_slot }}
+          path: |
+            voice-remux-input/${{ github.event.inputs.artifact_name }}/final_remuxed_voice.mp4
+            voice-remux-input/${{ github.event.inputs.artifact_name }}/voice_remux_report.json
+          retention-days: 7
+          if-no-files-found: error
