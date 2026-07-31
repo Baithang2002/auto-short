@@ -126,3 +126,7 @@
 2026-07-31 06:27:20  topic='Why Peacocks Show Their Feathers'  exit=1  slot='morning'  attempt=3/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
 2026-07-31 06:27:31  topic='How The Great Barrier Reef Was Built'  exit=1  slot='morning'  attempt=4/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%'
 2026-07-31 06:26:12  topic="Why Antarctica Is the World's Largest Desert"  exit=0  slot='morning'  duration=328s  attempts=5
+2026-07-31 14:33:10  topic='Why The Amazon River Is So Powerful'  exit=1  slot='evening'  attempt=1/6  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-07-31 14:35:06  topic='Why The Serengeti Has So Many Animals'  exit=1  slot='evening'  attempt=2/6  quality_deferred='verified media gate rejected planned scene media'
+2026-07-31 14:38:11  topic='How The Congo Rainforest Stores Carbon'  exit=1  slot='evening'  attempt=3/6  quality_deferred='verified media gate rejected planned scene media'
+2026-07-31 14:33:06  topic='How Bats Fly in Total Darkness'  exit=1  slot='evening'  duration=311s  critical_failure=true  reason='critical technical failure exit=1'

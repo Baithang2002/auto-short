@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31T11:48:14Z",
+  "updated_at": "2026-07-31T14:38:11Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -514,18 +514,18 @@
     },
     {
       "topic": "How The Congo Rainforest Stores Carbon",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-27T09:09:38Z",
+      "last_attempt_at": "2026-07-31T14:38:11Z",
       "last_qualified_at": "2026-07-27T09:09:38Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/9e7174e44071d242760f.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-07-31T14:38:11Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-14T14:38:11Z"
     },
     {
       "topic": "How The Galapagos Shaped Evolution",
@@ -1129,18 +1129,18 @@
     },
     {
       "topic": "Why The Amazon River Is So Powerful",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-29T11:51:11Z",
+      "last_attempt_at": "2026-07-31T14:33:10Z",
       "last_qualified_at": "2026-07-29T11:51:11Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/e60a76f138c42b20abf4.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-07-31T14:33:10Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-14T14:33:10Z"
     },
     {
       "topic": "Why The Danube River Connects Europe",
@@ -1219,18 +1219,18 @@
     },
     {
       "topic": "Why The Serengeti Has So Many Animals",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-31T11:47:55Z",
+      "last_attempt_at": "2026-07-31T14:35:06Z",
       "last_qualified_at": "2026-07-31T11:47:55Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/01f0f38616e250fb2691.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-07-31T14:35:06Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-14T14:35:06Z"
     },
     {
       "topic": "Why The Sun Rises in the East",
