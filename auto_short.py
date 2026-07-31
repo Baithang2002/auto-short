@@ -261,7 +261,7 @@ if env_path.exists():
         if "=" in line and not line.strip().startswith("#"):
             k, v = line.split("=", 1)
             key = k.strip()
-            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key):
+            if re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", key) and key not in os.environ:
                 os.environ[key] = v.strip()
 
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY")
