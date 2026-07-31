@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-30T14:34:41Z",
+  "updated_at": "2026-07-31T06:31:40Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -93,6 +93,21 @@
       "quarantine_until": "2026-08-10T07:37:36Z"
     },
     {
+      "topic": "How Crocodiles Wait Underwater",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T06:26:38Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T06:26:38Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T06:26:38Z"
+    },
+    {
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
@@ -151,6 +166,21 @@
       "last_failure_at": "2026-07-26T13:55:16Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-09T13:55:16Z"
+    },
+    {
+      "topic": "How Frogs Survive the Dry Season",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T06:27:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T06:27:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
+      "quarantine_until": "2026-08-14T06:27:01Z"
     },
     {
       "topic": "how glaciers shape mountains and valleys",
@@ -468,6 +498,21 @@
       "quarantine_until": "2026-08-13T06:13:46Z"
     },
     {
+      "topic": "How The Great Barrier Reef Was Built",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T06:27:31Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T06:27:31Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
+      "quarantine_until": "2026-08-14T06:27:31Z"
+    },
+    {
       "topic": "How The Milky Way Looks From Earth",
       "status": "quarantined",
       "success_count": 0,
@@ -631,6 +676,21 @@
       "last_failure_at": "2026-07-22T14:20:49Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-05T14:20:49Z"
+    },
+    {
+      "topic": "Why Antarctica Is the World's Largest Desert",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T06:31:40Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-07-31T06:31:40Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Basalt Columns Form Perfect Shapes",
@@ -886,6 +946,21 @@
       "last_failure_at": "2026-07-27T08:14:37Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T08:14:37Z"
+    },
+    {
+      "topic": "Why Peacocks Show Their Feathers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T06:27:20Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T06:27:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T06:27:20Z"
     },
     {
       "topic": "why penguins do not freeze on Antarctic ice",

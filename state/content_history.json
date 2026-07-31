@@ -598,7 +598,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1326,7 +1326,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1536,7 +1536,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1564,7 +1564,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1676,7 +1676,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1872,7 +1872,7 @@
       "decision": "REJECTED",
       "status": "rejected",
       "reason": "exact topic was already generated",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1886,7 +1886,7 @@
       "decision": "DEFERRED",
       "status": "deferred",
       "reason": "primary subject is inside cooldown",
-      "recorded_at": "2026-07-30T14:29:56Z",
+      "recorded_at": "2026-07-31T06:27:31Z",
       "source": "coverage_proven",
       "run_id": "",
       "generated_at": ""
@@ -1904,6 +1904,104 @@
       "source": "coverage_proven",
       "run_id": "b849efa555ee44d694f00feeed9c2724",
       "generated_at": "2026-07-30T14:34:41Z"
+    },
+    {
+      "topic": "How The Sun Creates Solar Flares",
+      "primary_subject": "sun",
+      "category": "Space",
+      "documentary_angle": "process",
+      "viability_score": 0.7262,
+      "decision": "REJECTED",
+      "status": "rejected",
+      "reason": "exact topic was already generated",
+      "recorded_at": "2026-07-31T06:27:31Z",
+      "source": "coverage_proven",
+      "run_id": "",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why The Sun Rises in the East",
+      "primary_subject": "sun",
+      "category": "Space",
+      "documentary_angle": "explanation",
+      "viability_score": 0.7038,
+      "decision": "DEFERRED",
+      "status": "deferred",
+      "reason": "primary subject is inside cooldown",
+      "recorded_at": "2026-07-31T06:27:31Z",
+      "source": "coverage_proven",
+      "run_id": "",
+      "generated_at": ""
+    },
+    {
+      "topic": "How Crocodiles Wait Underwater",
+      "primary_subject": "crocodile",
+      "category": "Ocean Science",
+      "documentary_angle": "process",
+      "viability_score": 0.6234,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-31T06:26:12Z",
+      "source": "coverage_proven",
+      "run_id": "e6722b9d114e4156937efd43d9ef250d",
+      "generated_at": ""
+    },
+    {
+      "topic": "How Frogs Survive the Dry Season",
+      "primary_subject": "frog",
+      "category": "Nature",
+      "documentary_angle": "process",
+      "viability_score": 0.6546,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
+      "recorded_at": "2026-07-31T06:26:38Z",
+      "source": "coverage_proven",
+      "run_id": "dfe48aba58304be3af253b00978e3ff5",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Peacocks Show Their Feathers",
+      "primary_subject": "peacock",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.6454,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "recorded_at": "2026-07-31T06:27:01Z",
+      "source": "coverage_proven",
+      "run_id": "3220427c6c0248e8a0c87eb2d621b8da",
+      "generated_at": ""
+    },
+    {
+      "topic": "How The Great Barrier Reef Was Built",
+      "primary_subject": "great",
+      "category": "Engineering",
+      "documentary_angle": "process",
+      "viability_score": 0.6634,
+      "decision": "SELECTED",
+      "status": "quality_deferred",
+      "reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
+      "recorded_at": "2026-07-31T06:27:20Z",
+      "source": "coverage_proven",
+      "run_id": "ac68651c553248dd96625dfb57e1c253",
+      "generated_at": ""
+    },
+    {
+      "topic": "Why Antarctica Is the World's Largest Desert",
+      "primary_subject": "antarctica",
+      "category": "Nature",
+      "documentary_angle": "explanation",
+      "viability_score": 0.673,
+      "decision": "SELECTED",
+      "status": "generated",
+      "reason": "recent category receives a diversity penalty; topic-bank candidate is awaiting successful production burn-in",
+      "recorded_at": "2026-07-31T06:27:31Z",
+      "source": "coverage_proven",
+      "run_id": "a0381ed6910b443c840cb2122d2ac4d8",
+      "generated_at": "2026-07-31T06:31:40Z"
     }
   ]
 }

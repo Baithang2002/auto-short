@@ -121,3 +121,8 @@
 2026-07-30 06:14:19  topic='Why Basalt Columns Form Perfect Shapes'  exit=1  slot='morning'  attempt=5/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%'
 2026-07-30 06:13:22  topic='Why Leaves Change Color'  exit=0  slot='morning'  duration=283s  attempts=6
 2026-07-30 14:29:56  topic='How The Sun Creates Solar Flares'  exit=0  slot='evening'  duration=284s  attempts=1
+2026-07-31 06:26:38  topic='How Crocodiles Wait Underwater'  exit=1  slot='morning'  attempt=1/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-31 06:27:01  topic='How Frogs Survive the Dry Season'  exit=1  slot='morning'  attempt=2/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%'
+2026-07-31 06:27:20  topic='Why Peacocks Show Their Feathers'  exit=1  slot='morning'  attempt=3/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%'
+2026-07-31 06:27:31  topic='How The Great Barrier Reef Was Built'  exit=1  slot='morning'  attempt=4/6  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%'
+2026-07-31 06:26:12  topic="Why Antarctica Is the World's Largest Desert"  exit=0  slot='morning'  duration=328s  attempts=5
