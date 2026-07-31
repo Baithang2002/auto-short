@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31T15:09:59Z",
+  "updated_at": "2026-07-31T16:00:52Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -918,6 +918,21 @@
       "quarantine_until": "2026-08-12T11:50:42Z"
     },
     {
+      "topic": "Why Crabs Walk Sideways",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:59:15Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:59:15Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:59:15Z"
+    },
+    {
       "topic": "Why Deserts Get So Cold at Night",
       "status": "quarantined",
       "success_count": 0,
@@ -931,6 +946,51 @@
       "last_failure_at": "2026-07-27T08:19:03Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-10T08:19:03Z"
+    },
+    {
+      "topic": "Why Eagles See So Far",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:59:25Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:59:25Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-14T15:59:25Z"
+    },
+    {
+      "topic": "Why Elephants Never Forget Paths",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T15:59:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T15:59:36Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T15:59:36Z"
+    },
+    {
+      "topic": "Why Fireflies Glow at Night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T16:00:09Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T16:00:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T16:00:09Z"
     },
     {
       "topic": "Why Flamingos Are Pink",
@@ -1008,6 +1068,21 @@
       "quarantine_until": "2026-08-12T11:49:30Z"
     },
     {
+      "topic": "Why Koalas Sleep So Much",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T16:00:44Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T16:00:44Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T16:00:44Z"
+    },
+    {
       "topic": "Why Leaves Change Color",
       "status": "proven",
       "success_count": 1,
@@ -1036,6 +1111,21 @@
       "last_failure_at": "2026-07-26T13:55:51Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-09T13:55:51Z"
+    },
+    {
+      "topic": "Why Lions Roar at Night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-07-31T16:00:52Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-07-31T16:00:52Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-14T16:00:52Z"
     },
     {
       "topic": "why Mars has the tallest volcano in the solar system",
