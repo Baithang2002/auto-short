@@ -1103,12 +1103,14 @@ def _make_voice_track(text, idx):
         raise RuntimeError(f"All voice providers failed: {e}") from e
 
     result_path = result.value
+    result_metadata = dict(result.metadata or {})
     return VoiceTrack(
         audio_path=result_path,
         duration_sec=media_duration(result_path),
         provider=result.provider,
+        voice_id=str(result_metadata.get("voice_id", "")),
         scene_id=str(idx),
-        metadata=dict(result.metadata or {}),
+        metadata=result_metadata,
     )
 
 
@@ -1199,6 +1201,11 @@ def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile 
 def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
     voice_items = []
     print("[2/5] Generating voiceovers...")
+    if APP_CONFIG.elevenlabs_voice_ids:
+        print(
+            f"    [elevenlabs] Voice rotation slot "
+            f"{APP_CONFIG.elevenlabs_voice_index + 1}/{len(APP_CONFIG.elevenlabs_voice_ids)} selected."
+        )
     for idx, seg in enumerate(segments):
         voice_track = _make_voice_track(seg["narration"], idx)
         voice_items.append(voice_track.to_legacy_item(index=idx, segment=seg))

@@ -44,4 +44,8 @@ class ElevenLabsVoiceProvider:
             request.output_path.write_bytes(response.content)
         except Exception as e:
             raise ProviderExecutionError(self.name, str(e)) from e
-        return ProviderResult(provider=self.name, value=request.output_path, metadata={"unit": request.unit.value})
+        return ProviderResult(
+            provider=self.name,
+            value=request.output_path,
+            metadata={"unit": request.unit.value, "voice_id": voice_id},
+        )

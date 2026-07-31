@@ -74,6 +74,7 @@ jobs:
           # automatically when a secret is absent)
           ELEVENLABS_API_KEY:  ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
+          ELEVENLABS_VOICE_IDS: ${{ secrets.ELEVENLABS_VOICE_IDS }}
           SPEECHIFY_API_KEY:   ${{ secrets.SPEECHIFY_API_KEY }}
 
           # Stock sources

@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import datetime as dt
+import hashlib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Mapping
@@ -63,6 +65,8 @@ class AppConfig:
     edge_tts_voice: str
     speechify_voice_id: str
     elevenlabs_voice_id: str
+    elevenlabs_voice_ids: tuple[str, ...]
+    elevenlabs_voice_index: int
     elevenlabs_model: str
     clip_audio: ClipAudioConfig = field(default_factory=ClipAudioConfig)
     music: MusicConfig = field(default_factory=MusicConfig)
@@ -85,6 +89,16 @@ class AppConfig:
         mock_uploads = settings.env_bool("AUTO_VIDEO_MOCK_UPLOADS", profile.mock_uploads)
         music_config = music_config_from_settings(settings, profile_order=profile.music_provider_priority)
         clip_audio_config = clip_audio_config_from_env(settings.env_values)
+        elevenlabs_voice_ids = _voice_id_list(
+            settings.env("ELEVENLABS_VOICE_IDS")
+            or settings.env("ELEVENLABS_VOICE_ID", DEFAULTS.providers.elevenlabs_voice_id)
+        )
+        elevenlabs_voice_index = _voice_rotation_index(settings, len(elevenlabs_voice_ids))
+        selected_elevenlabs_voice_id = (
+            elevenlabs_voice_ids[elevenlabs_voice_index]
+            if elevenlabs_voice_ids
+            else DEFAULTS.providers.elevenlabs_voice_id
+        )
 
         return cls(
             settings=settings,
@@ -126,8 +140,38 @@ class AppConfig:
             default_niche=settings.env("DEFAULT_NICHE", DEFAULTS.channel.default_niche),
             edge_tts_voice=settings.env("EDGE_TTS_VOICE", DEFAULTS.providers.edge_tts_voice),
             speechify_voice_id=settings.env("SPEECHIFY_VOICE_ID", DEFAULTS.providers.speechify_voice_id),
-            elevenlabs_voice_id=settings.env("ELEVENLABS_VOICE_ID", DEFAULTS.providers.elevenlabs_voice_id),
+            elevenlabs_voice_id=selected_elevenlabs_voice_id,
+            elevenlabs_voice_ids=elevenlabs_voice_ids,
+            elevenlabs_voice_index=elevenlabs_voice_index,
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
             clip_audio=clip_audio_config,
             music=music_config,
         )
+
+
+def _voice_id_list(raw: str) -> tuple[str, ...]:
+    """Parse one or more ElevenLabs voice ids from environment text."""
+
+    return tuple(item.strip() for item in str(raw or "").split(",") if item.strip())
+
+
+def _voice_rotation_index(settings: Settings, voice_count: int) -> int:
+    """Resolve the per-video ElevenLabs voice rotation index."""
+
+    if voice_count <= 1:
+        return 0
+    explicit = settings.env("ELEVENLABS_VOICE_ROTATION_INDEX")
+    if explicit.strip():
+        return int(explicit) % voice_count
+    seed = (
+        settings.env("AUTO_VIDEO_VOICE_ROTATION_SEED")
+        or settings.env("GITHUB_RUN_NUMBER")
+        or settings.env("GITHUB_RUN_ID")
+    )
+    if seed.strip():
+        try:
+            return int(seed) % voice_count
+        except ValueError:
+            digest = hashlib.sha256(seed.encode("utf-8")).hexdigest()
+            return int(digest[:8], 16) % voice_count
+    return dt.datetime.now(dt.timezone.utc).toordinal() % voice_count
