@@ -50,14 +50,14 @@ jobs:
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
           ELEVENLABS_VOICE_IDS: ${{ secrets.ELEVENLABS_VOICE_IDS }}
-        run: python scripts/remux_elevenlabs_voice.py --artifact-dir "voice-remux-input/${{ github.event.inputs.artifact_name }}" --voice-slot "${{ github.event.inputs.voice_slot }}"
+        run: python scripts/remux_elevenlabs_voice.py --artifact-dir "voice-remux-input" --voice-slot "${{ github.event.inputs.voice_slot }}"
 
       - name: Upload remuxed artifact
         uses: actions/upload-artifact@v4
         with:
           name: voice-remux-${{ github.event.inputs.artifact_name }}-slot-${{ github.event.inputs.voice_slot }}
           path: |
-            voice-remux-input/${{ github.event.inputs.artifact_name }}/final_remuxed_voice.mp4
-            voice-remux-input/${{ github.event.inputs.artifact_name }}/voice_remux_report.json
+            voice-remux-input/final_remuxed_voice.mp4
+            voice-remux-input/voice_remux_report.json
           retention-days: 7
           if-no-files-found: error

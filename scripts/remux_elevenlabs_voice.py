@@ -19,6 +19,8 @@ def main() -> None:
     parser.add_argument("--output", default="final_remuxed_voice.mp4")
     args = parser.parse_args()
 
+    load_local_env(Path(__file__).resolve().parents[1] / ".env")
+
     artifact_dir = Path(args.artifact_dir)
     metadata_path = artifact_dir / "upload_metadata.json"
     video_path = artifact_dir / "final_yt_safe.mp4"
@@ -95,6 +97,22 @@ def main() -> None:
     print(f"[voice-remux] Wrote {output_path} ({video_duration:.1f}s)")
 
 
+def load_local_env(path: Path) -> None:
+    """Load simple KEY=VALUE lines for local remux runs without printing secrets."""
+
+    if not path.exists():
+        return
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
 def generate_elevenlabs_audio(*, api_key: str, voice_id: str, text: str, output_path: Path, model: str) -> None:
     response = requests.post(
         f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
@@ -113,7 +131,13 @@ def generate_elevenlabs_audio(*, api_key: str, voice_id: str, text: str, output_
         },
         timeout=120,
     )
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as exc:
+        detail = response.text[:300].replace(api_key, "[REDACTED]").replace(voice_id, "[REDACTED]")
+        raise SystemExit(
+            f"ElevenLabs request failed with HTTP {response.status_code}: {detail}"
+        ) from exc
     output_path.write_bytes(response.content)
 
 
