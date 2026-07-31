@@ -126,6 +126,28 @@ class ProviderRegistryTests(unittest.TestCase):
 
             self.assertEqual(registry.provider_names("voice", profile="production")[:2], ("elevenlabs", "edge_tts"))
 
+    def test_elevenlabs_voice_ids_rotate_by_github_run_number(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={
+                "ELEVENLABS_VOICE_IDS": "voice-1, voice-2, voice-3, voice-4",
+                "GITHUB_RUN_NUMBER": "5",
+            })
+
+            config = AppConfig.from_settings(settings)
+
+            self.assertEqual(config.elevenlabs_voice_ids, ("voice-1", "voice-2", "voice-3", "voice-4"))
+            self.assertEqual(config.elevenlabs_voice_index, 1)
+            self.assertEqual(config.elevenlabs_voice_id, "voice-2")
+
+    def test_single_elevenlabs_voice_id_still_works(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={"ELEVENLABS_VOICE_ID": "voice-1"})
+
+            config = AppConfig.from_settings(settings)
+
+            self.assertEqual(config.elevenlabs_voice_ids, ("voice-1",))
+            self.assertEqual(config.elevenlabs_voice_id, "voice-1")
+
     def test_development_voice_registry_prefers_elevenlabs_when_configured(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             settings = Settings.from_project_root(tmp, env={
