@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-01T13:57:02Z",
+  "updated_at": "2026-08-01T14:19:29Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -166,6 +166,21 @@
       "last_failure_at": "2026-07-27T07:37:36Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T07:37:36Z"
+    },
+    {
+      "topic": "how caves grow giant crystal formations",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:11:56Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:11:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-15T14:11:56Z"
     },
     {
       "topic": "How chameleons shift color through microscopic skin structures",
@@ -1053,6 +1068,21 @@
       "quarantine_until": "2026-08-10T07:41:17Z"
     },
     {
+      "topic": "how wind shapes giant rock arches",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:19:16Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:19:16Z",
+      "last_failure_reason": "Editorial Canon primary subject has no topic-level lexical anchor",
+      "quarantine_until": "2026-08-15T14:19:16Z"
+    },
+    {
       "topic": "how woodpeckers avoid brain damage",
       "status": "quarantined",
       "success_count": 0,
@@ -1353,6 +1383,21 @@
       "quarantine_until": "2026-08-10T08:19:18Z"
     },
     {
+      "topic": "why icebergs look blue",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:11:44Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:11:44Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T14:11:44Z"
+    },
+    {
       "topic": "Why Jupiter Has a Giant Red Spot",
       "status": "quarantined",
       "success_count": 0,
@@ -1473,6 +1518,21 @@
       "quarantine_until": "2026-08-13T11:34:29Z"
     },
     {
+      "topic": "Why Mudslides Move So Fast",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:16:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:16:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T14:16:36Z"
+    },
+    {
       "topic": "Why Ocean Currents Shape Climate",
       "status": "quarantined",
       "success_count": 0,
@@ -1516,6 +1576,21 @@
       "last_failure_at": "2026-07-27T08:14:37Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T08:14:37Z"
+    },
+    {
+      "topic": "why owls can hunt in complete darkness",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:19:10Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:19:10Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T14:19:10Z"
     },
     {
       "topic": "Why Peacocks Show Their Feathers",
@@ -1621,6 +1696,21 @@
       "last_failure_at": "2026-07-31T16:55:08Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-14T16:55:08Z"
+    },
+    {
+      "topic": "why some clouds look like flying saucers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T14:19:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T14:19:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T14:19:29Z"
     },
     {
       "topic": "Why Space Looks Black",
