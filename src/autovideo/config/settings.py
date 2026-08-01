@@ -71,6 +71,8 @@ class AppConfig:
     elevenlabs_accounts: tuple[tuple[str, str], ...]
     voice_rotation_provider: str
     elevenlabs_model: str
+    audiolab_voice_id: str
+    audiolab_model: str
     clip_audio: ClipAudioConfig = field(default_factory=ClipAudioConfig)
     music: MusicConfig = field(default_factory=MusicConfig)
 
@@ -141,6 +143,7 @@ class AppConfig:
                 "pixabay": settings.env("PIXABAY_API_KEY"),
                 "sambanova": settings.env("SAMBANOVA_API_KEY"),
                 "elevenlabs": settings.env("ELEVENLABS_API_KEY"),
+                "audiolab": settings.env("AUDIOLAB_API_KEY"),
             },
             feature_flags={
                 "allow_external_api_calls": allow_external,
@@ -162,6 +165,8 @@ class AppConfig:
             elevenlabs_accounts=elevenlabs_accounts,
             voice_rotation_provider=voice_rotation_provider,
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
+            audiolab_voice_id=settings.env("AUDIOLAB_VOICE", DEFAULTS.providers.audiolab_voice_id),
+            audiolab_model=settings.env("AUDIOLAB_MODEL", DEFAULTS.providers.audiolab_model),
             clip_audio=clip_audio_config,
             music=music_config,
         )

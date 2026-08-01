@@ -13,7 +13,13 @@ from autovideo.providers.music.mixkit import MixkitMusicProvider
 from autovideo.providers.music.pixabay import PixabayMusicProvider
 from autovideo.providers.music.silence import SilenceMusicProvider
 from autovideo.providers.music.youtube_audio_library import YouTubeAudioLibraryProvider
-from autovideo.providers.voice import EdgeTTSVoiceProvider, ElevenLabsVoiceProvider, MockVoiceProvider, SpeechifyVoiceProvider
+from autovideo.providers.voice import (
+    AudioLabVoiceProvider,
+    EdgeTTSVoiceProvider,
+    ElevenLabsVoiceProvider,
+    MockVoiceProvider,
+    SpeechifyVoiceProvider,
+)
 
 
 def _priority_map(names: tuple[str, ...]) -> dict[str, int]:
@@ -55,6 +61,17 @@ def build_voice_registry(config: AppConfig, *, include_real_providers: bool = Tr
             ),
             enabled=bool("elevenlabs" in priority and config.elevenlabs_accounts),
             health_message="missing complete ElevenLabs account + voice pair",
+        )
+        register(
+            "audiolab",
+            AudioLabVoiceProvider(
+                api_key=config.api_keys["audiolab"],
+                voice_id=config.audiolab_voice_id,
+                model=config.audiolab_model,
+                timeout_sec=config.download_timeout_sec,
+            ),
+            enabled=bool("audiolab" in priority and config.api_keys["audiolab"].strip()),
+            health_message="missing AUDIOLAB_API_KEY",
         )
         register(
             "edge_tts",

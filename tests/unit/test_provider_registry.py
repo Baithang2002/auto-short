@@ -9,10 +9,10 @@ import requests
 
 from tests.unit import _path  # noqa: F401
 from autovideo.config import AppConfig, ProviderRegistry, Settings, resolve_render_profile
-from autovideo.providers.base import ProviderError, ProviderExecutionError, ProviderFallbackError, ProviderHealth, ProviderHealthStatus
+from autovideo.providers.base import ProviderError, ProviderExecutionError, ProviderFallbackError, ProviderHealth, ProviderHealthStatus, ProviderUnavailableError
 from autovideo.providers.factory import build_voice_registry
 from autovideo.providers.llm import CallableLLMProvider, MockLLMProvider
-from autovideo.providers.voice import ElevenLabsVoiceProvider, MockVoiceProvider, VoiceRequest
+from autovideo.providers.voice import AudioLabVoiceProvider, ElevenLabsVoiceProvider, MockVoiceProvider, VoiceRequest
 
 
 class _FakeElevenLabsResponse:
@@ -260,6 +260,49 @@ class ProviderRegistryTests(unittest.TestCase):
             names = registry.provider_names("voice", profile="development")
             self.assertEqual(names[0], "edge_tts")
             self.assertNotIn("elevenlabs", names)
+
+    def test_voice_registry_orders_audiolab_after_elevenlabs_when_configured(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings.from_project_root(tmp, env={
+                "AUTO_VIDEO_RENDER_PROFILE": "production",
+                "ELEVENLABS_API_KEY": "test-key",
+                "ELEVENLABS_VOICE_ID": "voice-1",
+                "AUDIOLAB_API_KEY": "audiolab-key",
+            })
+            config = AppConfig.from_settings(settings)
+
+            registry = build_voice_registry(config)
+
+            names = registry.provider_names("voice", profile="production")
+            self.assertEqual(names[:3], ("elevenlabs", "audiolab", "edge_tts"))
+
+    def test_audiolab_provider_writes_raw_audio_bytes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "voice.mp3"
+            provider = AudioLabVoiceProvider(api_key="audiolab-key", voice_id="auto", model="tts/auto")
+
+            with patch("requests.post", return_value=_FakeElevenLabsResponse(200, b"mp3-audio")) as post:
+                result = provider.synthesize(VoiceRequest(text="hello", output_path=output, scene_id="1"))
+
+            self.assertEqual(output.read_bytes(), b"mp3-audio")
+            self.assertEqual(result.provider, "audiolab")
+            self.assertEqual(post.call_args.args[0], "https://api.tryaudiolab.ai/v1/audio/speech")
+            self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer audiolab-key")
+            self.assertEqual(post.call_args.kwargs["json"]["model"], "tts/auto")
+            self.assertEqual(post.call_args.kwargs["json"]["input"], "hello")
+
+    def test_audiolab_marks_quota_error_and_becomes_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "voice.mp3"
+            provider = AudioLabVoiceProvider(api_key="audiolab-key")
+
+            with patch("requests.post", return_value=_FakeElevenLabsResponse(402)):
+                with self.assertRaises(ProviderExecutionError):
+                    provider.synthesize(VoiceRequest(text="hello", output_path=output, scene_id="1"))
+
+            with self.assertRaises(ProviderUnavailableError):
+                provider.synthesize(VoiceRequest(text="hello", output_path=output, scene_id="1"))
+
 
     def test_mock_voice_provider_supports_scene_requests(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

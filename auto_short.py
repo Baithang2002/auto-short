@@ -163,7 +163,12 @@ from autovideo.music import MusicPlanner
 from autovideo.intelligence.topic_cards import TopicCard, find_topic_card
 from autovideo.providers.factory import build_music_registry
 from autovideo.providers.llm import CallableLLMProvider
-from autovideo.providers.voice import CallableVoiceProvider, ElevenLabsVoiceProvider, VoiceRequest
+from autovideo.providers.voice import (
+    AudioLabVoiceProvider,
+    CallableVoiceProvider,
+    ElevenLabsVoiceProvider,
+    VoiceRequest,
+)
 from autovideo.pipeline import (
     PipelineContext,
     PipelineOrchestrator,
@@ -1096,6 +1101,20 @@ def _voice_provider_registry() -> ProviderRegistry:
         ),
         priority=priorities.get("elevenlabs", 100),
         enabled=bool("elevenlabs" in priorities and APP_CONFIG.elevenlabs_accounts),
+        profiles=(profile,),
+        features=("whole_narration", "chapter_narration", "scene_narration"),
+    )
+    registry.register(
+        "voice",
+        "audiolab",
+        AudioLabVoiceProvider(
+            api_key=APP_CONFIG.api_keys["audiolab"],
+            voice_id=APP_CONFIG.audiolab_voice_id,
+            model=APP_CONFIG.audiolab_model,
+            timeout_sec=APP_CONFIG.download_timeout_sec,
+        ),
+        priority=priorities.get("audiolab", 100),
+        enabled=bool("audiolab" in priorities and APP_CONFIG.api_keys["audiolab"].strip()),
         profiles=(profile,),
         features=("whole_narration", "chapter_narration", "scene_narration"),
     )

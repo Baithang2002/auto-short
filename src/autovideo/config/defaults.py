@@ -33,6 +33,8 @@ class ProviderDefaults:
     speechify_voice_id: str = "george"
     elevenlabs_model: str = "eleven_multilingual_v2"
     elevenlabs_voice_id: str = ""
+    audiolab_model: str = "tts/auto"
+    audiolab_voice_id: str = "auto"
     request_timeout_sec: int = 30
     download_timeout_sec: int = 120
     retry_attempts: int = 3

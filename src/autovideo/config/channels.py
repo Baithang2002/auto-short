@@ -20,7 +20,7 @@ class RenderProfile:
     fps: int = 30
     max_duration_sec: int | None = None
     caption_style: str = "default"
-    voice_provider_priority: tuple[str, ...] = ("elevenlabs", "edge_tts", "speechify")
+    voice_provider_priority: tuple[str, ...] = ("elevenlabs", "audiolab", "edge_tts", "speechify")
     llm_provider_priority: tuple[str, ...] = ("gemini", "sambanova", "groq", "openai")
     stock_provider_priority: tuple[str, ...] = ("pexels", "pixabay", "nasa")
     music_provider_priority: tuple[str, ...] = ("jamendo", "pixabay", "mixkit", "generated", "silence")
@@ -50,7 +50,7 @@ def default_render_profiles() -> dict[str, RenderProfile]:
             height=1920,
             fps=30,
             max_duration_sec=58,
-            voice_provider_priority=("elevenlabs", "edge_tts", "speechify"),
+            voice_provider_priority=("elevenlabs", "audiolab", "edge_tts", "speechify"),
             allow_external_api_calls=True,
             mock_uploads=True,
             fast_render=True,
@@ -63,7 +63,7 @@ def default_render_profiles() -> dict[str, RenderProfile]:
             height=1920,
             fps=30,
             max_duration_sec=58,
-            voice_provider_priority=("elevenlabs", "edge_tts", "speechify"),
+            voice_provider_priority=("elevenlabs", "audiolab", "edge_tts", "speechify"),
             allow_external_api_calls=True,
             mock_uploads=False,
             fast_render=False,

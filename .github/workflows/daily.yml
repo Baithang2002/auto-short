@@ -70,13 +70,14 @@ jobs:
           OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
           SAMBANOVA_API_KEY:   ${{ secrets.SAMBANOVA_API_KEY }}
 
-          # Voice providers (ElevenLabs > Edge-TTS > Speechify; falls back
-          # automatically when a secret is absent)
+          # Voice providers (ElevenLabs > AudioLab > Edge-TTS > Speechify;
+          # falls back automatically when a secret is absent)
           ELEVENLABS_API_KEY:  ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID }}
           ELEVENLABS_VOICE_IDS: ${{ secrets.ELEVENLABS_VOICE_IDS }}
           ELEVENLABS_API_KEY_2: ${{ secrets.ELEVENLABS_API_KEY_2 }}
           ELEVENLABS_VOICE_ID_2: ${{ secrets.ELEVENLABS_VOICE_ID_2 }}
+          AUDIOLAB_API_KEY:    ${{ secrets.AUDIOLAB_API_KEY }}
           SPEECHIFY_API_KEY:   ${{ secrets.SPEECHIFY_API_KEY }}
 
           # Stock sources
