@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-01T11:14:35Z",
+  "updated_at": "2026-08-01T13:57:02Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -76,6 +76,21 @@
       "last_failure_at": "2026-07-31T15:09:03Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:03Z"
+    },
+    {
+      "topic": "how bats navigate in total darkness",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:54:56Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:54:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T13:54:56Z"
     },
     {
       "topic": "How Beavers Build Dams",
@@ -196,6 +211,21 @@
       "last_failure_at": "2026-07-31T06:26:38Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T06:26:38Z"
+    },
+    {
+      "topic": "how crows remember human faces",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:55:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:55:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T13:55:03Z"
     },
     {
       "topic": "How Dolphins Use Sound to Hunt",
@@ -436,6 +466,21 @@
       "last_failure_at": "2026-07-27T07:39:38Z",
       "last_failure_reason": "visual fallback quality gate deferred topic",
       "quarantine_until": "2026-08-10T07:39:38Z"
+    },
+    {
+      "topic": "how mangrove forests protect coastlines from storms",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:54:49Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:54:49Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T13:54:49Z"
     },
     {
       "topic": "How Mars Got Its Red Color",
@@ -918,6 +963,21 @@
       "quarantine_until": "2026-08-13T11:33:35Z"
     },
     {
+      "topic": "how tides move entire oceans",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:55:30Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:55:30Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
+      "quarantine_until": "2026-08-15T13:55:30Z"
+    },
+    {
       "topic": "How Tides Move the Sea",
       "status": "quarantined",
       "success_count": 0,
@@ -946,6 +1006,21 @@
       "last_failure_at": "2026-07-30T06:13:59Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:13:59Z"
+    },
+    {
+      "topic": "how waterfalls carve through solid rock",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:55:42Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:55:42Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T13:55:42Z"
     },
     {
       "topic": "How Waterfalls Shape Rock",
@@ -1156,6 +1231,21 @@
       "last_failure_at": "2026-07-31T15:59:25Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
       "quarantine_until": "2026-08-14T15:59:25Z"
+    },
+    {
+      "topic": "why elephants can hear through their feet",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T13:57:02Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T13:57:02Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T13:57:02Z"
     },
     {
       "topic": "Why Elephants Never Forget Paths",
