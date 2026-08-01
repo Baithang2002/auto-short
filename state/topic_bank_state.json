@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-07-31T16:59:52Z",
+  "updated_at": "2026-08-01T06:21:04Z",
   "records": [
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -76,6 +76,21 @@
       "last_failure_at": "2026-07-27T12:46:17Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
       "quarantine_until": "2026-08-10T12:46:17Z"
+    },
+    {
+      "topic": "how beavers reshape entire rivers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:20:11Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:20:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T06:20:11Z"
     },
     {
       "topic": "How Bees Make Honey",
@@ -513,6 +528,21 @@
       "quarantine_until": "2026-08-13T11:34:19Z"
     },
     {
+      "topic": "how sea turtles find their way home",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:19:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:19:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T06:19:36Z"
+    },
+    {
       "topic": "How Seahorses Carry Their Babies",
       "status": "quarantined",
       "success_count": 0,
@@ -616,6 +646,21 @@
       "last_failure_at": "2026-07-31T15:09:59Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:59Z"
+    },
+    {
+      "topic": "How Starfish Regrow Lost Arms",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:14:58Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:14:58Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T06:14:58Z"
     },
     {
       "topic": "How The Black Forest Got Its Name",
@@ -1068,6 +1113,21 @@
       "quarantine_until": "2026-08-12T09:07:38Z"
     },
     {
+      "topic": "why hummingbirds can fly backward",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:21:04Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:21:04Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-15T06:21:04Z"
+    },
+    {
       "topic": "Why Hurricanes Grow Over Warm Oceans",
       "status": "quarantined",
       "success_count": 0,
@@ -1383,6 +1443,21 @@
       "quarantine_until": "2026-08-14T14:33:10Z"
     },
     {
+      "topic": "Why The Arctic Ocean Freezes",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:15:18Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:15:18Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T06:15:18Z"
+    },
+    {
       "topic": "Why The Danube River Connects Europe",
       "status": "quarantined",
       "success_count": 0,
@@ -1456,6 +1531,21 @@
       "last_failure_at": "2026-07-29T11:50:05Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-12T11:50:05Z"
+    },
+    {
+      "topic": "Why The Red Sea Looks So Blue",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-01T06:15:08Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-01T06:15:08Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-15T06:15:08Z"
     },
     {
       "topic": "Why The Serengeti Has So Many Animals",
