@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-02T10:43:28Z",
+  "updated_at": "2026-08-02T11:07:34Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -291,16 +291,16 @@
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 2,
+      "failure_count": 3,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:10:16Z",
+      "last_attempt_at": "2026-08-02T11:06:41Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:10:16Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
-      "quarantine_until": "2026-08-15T11:10:16Z"
+      "last_failure_at": "2026-08-02T11:06:41Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-16T11:06:41Z"
     },
     {
       "topic": "How Earthquakes Shake the Ground",
@@ -906,16 +906,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:06:01Z",
+      "last_attempt_at": "2026-08-02T11:06:19Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:06:01Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-15T11:06:01Z"
+      "last_failure_at": "2026-08-02T11:06:19Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-16T11:06:19Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -961,6 +961,21 @@
       "last_failure_at": "2026-07-30T11:33:22Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T11:33:22Z"
+    },
+    {
+      "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T11:06:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T11:06:03Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-08-16T11:06:03Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -1128,6 +1143,21 @@
       "quarantine_until": "2026-08-15T14:19:16Z"
     },
     {
+      "topic": "How wind shear can make a supercell thunderstorm rotate",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T11:07:34Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T11:07:34Z",
+      "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
+      "quarantine_until": "2026-08-16T11:07:34Z"
+    },
+    {
       "topic": "how wind turbines turn wind into electricity",
       "status": "quarantined",
       "success_count": 0,
@@ -1186,6 +1216,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "Why Astronauts Float in Space",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T11:07:17Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T11:07:17Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-16T11:07:17Z"
     },
     {
       "topic": "Why Basalt Columns Form Perfect Shapes",
@@ -2101,6 +2146,21 @@
       "last_failure_at": "2026-07-31T11:46:33Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
       "quarantine_until": "2026-08-14T11:46:33Z"
+    },
+    {
+      "topic": "Why Volcanoes Create New Land",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-02T11:06:52Z",
+      "last_qualified_at": "2026-08-02T11:06:52Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/0802c404a1ffbb5f49f6.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Whales Sing Across the Ocean",
