@@ -180,3 +180,4 @@
 2026-08-02 11:09:03  topic='How hummingbirds hover while feeding'  exit=0  slot='manual'  duration=397s  attempts=2
 2026-08-02 14:41:36  topic='Why Iceland Has So Many Volcanoes'  exit=1  slot='evening'  attempt=1/4  quality_deferred='post-render publish quality gate deferred topic'
 2026-08-02 13:52:09  topic='How an octopus changes color and texture to disappear on the seafloor'  exit=1  slot='evening'  duration=3194s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-02 14:46:21  topic='How an octopus changes color and texture to disappear on the seafloor'  exit=1  slot='evening'  duration=156s  critical_failure=true  reason='critical technical failure exit=1'
