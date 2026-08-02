@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-02T06:22:05Z",
+  "updated_at": "2026-08-02T10:43:28Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -813,6 +813,21 @@
       "quarantine_until": "2026-08-15T06:14:58Z"
     },
     {
+      "topic": "How The Amazon Rainforest Makes Rain",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T10:43:28Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T10:43:28Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-16T10:43:28Z"
+    },
+    {
       "topic": "How The Black Forest Got Its Name",
       "status": "quarantined",
       "success_count": 0,
@@ -1111,6 +1126,21 @@
       "last_failure_at": "2026-08-01T14:19:16Z",
       "last_failure_reason": "Editorial Canon primary subject has no topic-level lexical anchor",
       "quarantine_until": "2026-08-15T14:19:16Z"
+    },
+    {
+      "topic": "how wind turbines turn wind into electricity",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T10:43:15Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T10:43:15Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-16T10:43:15Z"
     },
     {
       "topic": "how woodpeckers avoid brain damage",
@@ -1623,6 +1653,21 @@
       "quarantine_until": "2026-08-10T08:14:37Z"
     },
     {
+      "topic": "why old maps look so strange",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T10:37:48Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T10:37:48Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-16T10:37:48Z"
+    },
+    {
       "topic": "why owls can hunt in complete darkness",
       "status": "quarantined",
       "success_count": 0,
@@ -1951,6 +1996,21 @@
       "last_failure_at": "2026-07-29T11:50:05Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-12T11:50:05Z"
+    },
+    {
+      "topic": "Why The Pacific Ring of Fire Has So Many Volcanoes",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T10:37:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T10:37:35Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-16T10:37:35Z"
     },
     {
       "topic": "Why The Red Sea Looks So Blue",
