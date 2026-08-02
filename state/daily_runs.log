@@ -176,3 +176,5 @@
 2026-08-02 10:37:48  topic='why old maps look so strange'  exit=1  slot='manual'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
 2026-08-02 10:43:15  topic='how wind turbines turn wind into electricity'  exit=1  slot='manual'  attempt=3/4  quality_deferred='post-render publish quality gate deferred topic'
 2026-08-02 10:43:28  topic='How The Amazon Rainforest Makes Rain'  exit=1  slot='manual'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-02 11:09:22  topic='how paper changed the world'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)'
+2026-08-02 11:09:03  topic='How hummingbirds hover while feeding'  exit=0  slot='manual'  duration=397s  attempts=2

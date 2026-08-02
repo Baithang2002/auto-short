@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-02T11:07:34Z",
+  "updated_at": "2026-08-02T11:15:39Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -423,6 +423,21 @@
       "quarantine_until": "2026-08-14T16:57:43Z"
     },
     {
+      "topic": "How hummingbirds hover while feeding",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T11:15:39Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-02T11:15:39Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Icebergs Break Away From Glaciers",
       "status": "quarantined",
       "success_count": 0,
@@ -571,6 +586,21 @@
       "last_failure_at": "2026-07-31T15:09:37Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:37Z"
+    },
+    {
+      "topic": "how paper changed the world",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T11:09:22Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T11:09:22Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-16T11:09:22Z"
     },
     {
       "topic": "How Penguins Survive Antarctica",
