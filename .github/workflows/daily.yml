@@ -11,7 +11,7 @@ on:
   workflow_dispatch:       # also allow manual trigger from the Actions tab
     inputs:
       topic:
-        description: 'Override topic (leave blank to use topics.txt rotation)'
+        description: 'Render-only topic override (leave blank on main for the production rotation)'
         required: false
         default: ''
 
@@ -30,8 +30,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref_name != 'main' && github.ref || 'main' }}
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate manual dispatch policy
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TOPIC: ${{ github.event.inputs.topic }}
+        run: |
+          if [ "$GITHUB_REF_NAME" != "main" ] && [ -z "$TOPIC" ]; then
+            echo "A non-main manual run requires a topic and is always render-only."
+            exit 2
+          fi
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -57,17 +68,17 @@ jobs:
           mkdir -p output
           [ -f state/daily_state.json ] && cp state/daily_state.json output/daily_state.json || true
           [ -f state/daily_runs.log ]   && cp state/daily_runs.log   output/daily_runs.log   || true
-          [ -f state/used_videos.json ] && cp state/used_videos.json used_videos.json        || true
           echo "--- state restored ---"
-          ls -la output/daily_state.json output/daily_runs.log used_videos.json 2>/dev/null || true
+          ls -la output/daily_state.json output/daily_runs.log state/used_videos.json 2>/dev/null || true
 
       - name: Render + upload daily video
         timeout-minutes: 75
         env:
           # Script providers
+          AUTO_VIDEO_RENDER_PROFILE: "production"
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
-          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
+          GROQ_VISION_MODELS:  "qwen/qwen3.6-27b"
           SAMBANOVA_API_KEY:   ${{ secrets.SAMBANOVA_API_KEY }}
 
           # Voice providers (ElevenLabs > AudioLab > Edge-TTS > Speechify;
@@ -78,12 +89,15 @@ jobs:
           ELEVENLABS_API_KEY_2: ${{ secrets.ELEVENLABS_API_KEY_2 }}
           ELEVENLABS_VOICE_ID_2: ${{ secrets.ELEVENLABS_VOICE_ID_2 }}
           AUDIOLAB_API_KEY:    ${{ secrets.AUDIOLAB_API_KEY }}
+          AUDIOLAB_VOICE_ID:   ${{ vars.AUDIOLAB_VOICE_ID }}
+          AUDIOLAB_MODEL:      ${{ vars.AUDIOLAB_MODEL }}
           SPEECHIFY_API_KEY:   ${{ secrets.SPEECHIFY_API_KEY }}
 
           # Stock sources
           PEXELS_API_KEY:      ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:     ${{ secrets.PIXABAY_API_KEY }}
           COVERR_API_KEY:      ${{ secrets.COVERR_API_KEY }}
+          COVERR_APP_ID:       ${{ secrets.COVERR_APP_ID }}
           COVERR_API_URL:      "https://api.coverr.co"
           EUROPEANA_API_KEY:   ${{ secrets.EUROPEANA_API_KEY }}
           EUROPEANA_API_URL:   "https://api.europeana.eu/record/v2/search.json"
@@ -99,8 +113,8 @@ jobs:
           YT_CLIENT_ID:        ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET:    ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN:    ${{ secrets.YT_REFRESH_TOKEN }}
-          YT_MUSIC:            "true"
-          AUTO_VIDEO_DAILY_SLOT: ${{ contains(fromJSON('["17 3 * * *", "47 3 * * *"]'), github.event.schedule) && 'morning' || 'evening' }}
+          YT_MUSIC:            "false"
+          AUTO_VIDEO_DAILY_SLOT: ${{ github.event_name == 'workflow_dispatch' && 'manual' || (contains(fromJSON('["17 3 * * *", "47 3 * * *"]'), github.event.schedule) && 'morning' || 'evening') }}
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
           # Supporting scenes are an availability probe. Hooks and main
@@ -108,7 +122,7 @@ jobs:
           AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
           # Try several different viable topics when a topic-specific quality
           # gate defers one. Technical failures still stop immediately.
-          AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "6"
+          AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "4"
           # Final downloaded-media verification. A critical scene that cannot
           # be proved from sampled frames stops before rendering/uploading.
           AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"
@@ -143,10 +157,31 @@ jobs:
           AUTO_VIDEO_USE_CLIP_AUDIO: "false"
           AUTO_VIDEO_CLIP_AUDIO_VOLUME: "0.18"
           AUTO_VIDEO_PUBLISH_QUALITY_ALLOW_CLIP_AUDIO: "false"
+          TOPIC: ${{ github.event.inputs.topic }}
         run: |
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$SAMBANOVA_API_KEY" ] && [ -z "$GROQ_API_KEY" ]; then
+            echo "No script LLM secret is configured."
+            exit 2
+          fi
+          if [ "$GITHUB_REF_NAME" = "main" ] && [ -z "$GEMINI_API_KEY" ] && [ -z "$GROQ_API_KEY" ]; then
+            echo "No supported vision secret is configured (Gemini or Groq)."
+            exit 2
+          fi
+          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$COVERR_API_KEY" ]; then
+            echo "No keyed stock-video provider is configured."
+            exit 2
+          fi
+          if [ -z "$TOPIC" ]; then
+            for name in YT_CLIENT_ID YT_CLIENT_SECRET YT_REFRESH_TOKEN; do
+              if [ -z "${!name}" ]; then
+                echo "Missing required YouTube secret: $name"
+                exit 2
+              fi
+            done
+          fi
           # CI never has stdin attached. Always use --no-interactive.
-          if [ -n "${{ github.event.inputs.topic }}" ]; then
-            if [ "${{ github.ref_name }}" != "main" ]; then
+          if [ -n "$TOPIC" ]; then
+            if [ "$GITHUB_REF_NAME" != "main" ]; then
               export AUTO_VIDEO_CRITICAL_ASSET_ENFORCE="false"
               export AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE="false"
               export AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED="false"
@@ -154,7 +189,7 @@ jobs:
               export AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE="false"
               export AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO="1.0"
             fi
-            python pipeline.py "${{ github.event.inputs.topic }}" --platforms youtube --no-interactive --skip-upload
+            python pipeline.py "$TOPIC" --platforms youtube --no-interactive --skip-upload
           else
             python pipeline_daily.py
           fi
@@ -170,7 +205,6 @@ jobs:
           mkdir -p state
           [ -f state/daily_state.json ] || { [ -f output/daily_state.json ] && cp output/daily_state.json state/daily_state.json; }
           [ -f state/daily_runs.log ]   || { [ -f output/daily_runs.log ]   && cp output/daily_runs.log   state/daily_runs.log; }
-          [ -f used_videos.json ]        && cp used_videos.json        state/used_videos.json
           git add state/ || true
           if git diff --staged --quiet; then
             echo "No state changes to commit."
@@ -190,6 +224,11 @@ jobs:
             output/final.mp4
             output/final_yt_safe.mp4
             output/upload_metadata.json
+            output/upload_log.json
+            output/youtube_engagement_report.json
+            output/pipeline_state.json
+            output/ffprobe.json
+            output/contact_sheet.jpg
             output/scheduler_report.json
             output/topic_bank_status_report.json
             output/editorial_identity_report.json
@@ -200,6 +239,7 @@ jobs:
             output/rendered_visual_qa_report.json
             output/publish_quality_report.json
             output/daily_runs.log
+            state/
             output/screenshots/
           retention-days: 7
           if-no-files-found: ignore

@@ -35,11 +35,74 @@ from typing import Optional
 # "Wonders of the Nature" fits Education or Science & Technology cleanly.
 DEFAULT_CATEGORY_ID = "27"
 CREDENTIALS_PATH = Path(__file__).resolve().parent / ".youtube_credentials.json"
+_PUBLISH_KEY_PATTERN = re.compile(r"^AutoShort-Publish-Key:\s*(\S+)\s*$", re.MULTILINE)
 
 
 def _normalize_category_id(category_id: object) -> str:
     value = str(category_id or "").strip()
     return value if value.isdigit() and int(value) > 0 else DEFAULT_CATEGORY_ID
+
+
+def _publish_key(description: str) -> str:
+    match = _PUBLISH_KEY_PATTERN.search(str(description or ""))
+    return match.group(1) if match else ""
+
+
+def _bounded_description(description: str, limit: int = 4900) -> str:
+    """Truncate user-facing text without dropping the upload idempotency marker."""
+
+    text = str(description or "")
+    publish_key = _publish_key(text)
+    if not publish_key:
+        return text[:limit]
+    marker = f"AutoShort-Publish-Key: {publish_key}"
+    visible = _PUBLISH_KEY_PATTERN.sub("", text).strip()
+    visible_limit = max(0, limit - len(marker) - 2)
+    visible = visible[:visible_limit].rstrip()
+    return f"{visible}\n\n{marker}" if visible else marker
+
+
+def _find_existing_upload(youtube, publish_key: str) -> dict | None:
+    """Return a recent channel upload carrying the deterministic publish key."""
+
+    if not publish_key:
+        return None
+    channels = youtube.channels().list(part="contentDetails", mine=True).execute()
+    channel_items = channels.get("items") or []
+    if not channel_items:
+        return None
+    uploads_playlist = (
+        channel_items[0].get("contentDetails", {})
+        .get("relatedPlaylists", {})
+        .get("uploads", "")
+    )
+    if not uploads_playlist:
+        return None
+    playlist = youtube.playlistItems().list(
+        part="contentDetails",
+        playlistId=uploads_playlist,
+        maxResults=25,
+    ).execute()
+    video_ids = [
+        str(item.get("contentDetails", {}).get("videoId") or "")
+        for item in (playlist.get("items") or [])
+    ]
+    video_ids = [video_id for video_id in video_ids if video_id]
+    if not video_ids:
+        return None
+    videos = youtube.videos().list(
+        part="snippet,status",
+        id=",".join(video_ids),
+    ).execute()
+    marker = f"AutoShort-Publish-Key: {publish_key}"
+    return next(
+        (
+            item
+            for item in (videos.get("items") or [])
+            if marker in str(item.get("snippet", {}).get("description") or "")
+        ),
+        None,
+    )
 
 
 def _get_creds():
@@ -60,7 +123,10 @@ def _get_creds():
         client_id=client_id,
         client_secret=client_secret,
         refresh_token=refresh_token,
-        scopes=["https://www.googleapis.com/auth/youtube.upload"],
+        scopes=[
+            "https://www.googleapis.com/auth/youtube.upload",
+            "https://www.googleapis.com/auth/youtube.readonly",
+        ],
     )
 
 
@@ -281,10 +347,13 @@ def upload_youtube_via_api(
     while clean_tags and sum(len(t) + 2 for t in clean_tags) > 480:
         clean_tags.pop()
 
+    publish_key = _publish_key(description)
+    upload_description = _bounded_description(description)
+
     body = {
         "snippet": {
             "title":       title[:100],          # YT title cap is 100
-            "description": description[:4900],   # YT description cap is 5000
+            "description": upload_description,  # Preserve room below YT's 5000-char cap
             "tags":        clean_tags,
             "categoryId":  category_id,
             "defaultLanguage": "en",
@@ -300,6 +369,26 @@ def upload_youtube_via_api(
 
     try:
         youtube = build("youtube", "v3", credentials=creds, cache_discovery=False)
+        if publish_key:
+            try:
+                existing = _find_existing_upload(youtube, publish_key)
+            except Exception as exc:
+                return {
+                    "status": "error",
+                    "error": f"Idempotency check failed: {type(exc).__name__}: {exc}",
+                    "uploader": "data_api",
+                }
+            if existing:
+                video_id = str(existing.get("id") or "")
+                url = f"https://youtu.be/{video_id}"
+                print(f"    [YT API] Existing slot upload found -> {url}")
+                return {
+                    "status": "ok",
+                    "url": url,
+                    "video_id": video_id,
+                    "uploader": "data_api",
+                    "duplicate_prevented": True,
+                }
         media = MediaFileUpload(
             str(video_path),
             mimetype="video/*",

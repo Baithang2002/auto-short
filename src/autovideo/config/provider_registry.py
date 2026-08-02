@@ -100,9 +100,13 @@ class ProviderRegistry:
         *,
         profile: str | None = None,
         feature: str | None = None,
+        preferred_name: str | None = None,
     ) -> T:
         errors: dict[str, ProviderError] = {}
-        for item in self.providers(capability, profile=profile, feature=feature):
+        providers = list(self.providers(capability, profile=profile, feature=feature))
+        if preferred_name:
+            providers.sort(key=lambda item: item.name != preferred_name)
+        for item in providers:
             try:
                 return operation(item.provider)
             except ProviderError as e:

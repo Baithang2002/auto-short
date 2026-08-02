@@ -130,13 +130,11 @@ class AppConfig:
             model_defaults={
                 "gemini": DEFAULTS.providers.gemini_models,
                 "groq": DEFAULTS.providers.groq_models,
-                "openai": DEFAULTS.providers.openai_models,
                 "sambanova": DEFAULTS.providers.sambanova_models,
             },
             api_keys={
                 "gemini": settings.env("GEMINI_API_KEY"),
                 "pexels": settings.env("PEXELS_API_KEY"),
-                "openai": settings.env("OPENAI_API_KEY"),
                 "groq": settings.env("GROQ_API_KEY"),
                 "speechify": settings.env("SPEECHIFY_API_KEY"),
                 "jamendo": settings.env("JAMENDO_CLIENT_ID"),
@@ -165,7 +163,10 @@ class AppConfig:
             elevenlabs_accounts=elevenlabs_accounts,
             voice_rotation_provider=voice_rotation_provider,
             elevenlabs_model=settings.env("ELEVENLABS_MODEL", DEFAULTS.providers.elevenlabs_model),
-            audiolab_voice_id=settings.env("AUDIOLAB_VOICE", DEFAULTS.providers.audiolab_voice_id),
+            audiolab_voice_id=(
+                settings.env("AUDIOLAB_VOICE_ID")
+                or settings.env("AUDIOLAB_VOICE", DEFAULTS.providers.audiolab_voice_id)
+            ),
             audiolab_model=settings.env("AUDIOLAB_MODEL", DEFAULTS.providers.audiolab_model),
             clip_audio=clip_audio_config,
             music=music_config,

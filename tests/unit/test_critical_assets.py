@@ -153,6 +153,31 @@ class CriticalAssetTests(unittest.TestCase):
         self.assertNotIn("pollinations", json.dumps(plan))
         self.assertTrue(all(len(role["attempts"]) == 2 for role in plan["roles"]))
 
+    def test_discovery_ranking_receives_persistent_provider_ids(self) -> None:
+        seen_used_ids = []
+
+        def score(intent, candidate, **kwargs):
+            seen_used_ids.append(set(kwargs.get("used_provider_ids") or ()))
+            return _score(intent, candidate, **kwargs)
+
+        with tempfile.TemporaryDirectory() as directory, patch.object(
+            auto_short, "_load_persistent_used", return_value={"pexels:historical"}
+        ), patch.object(auto_short, "score_candidate", side_effect=score):
+            auto_short.discover_critical_assets(
+                _card().premise,
+                output_dir=Path(directory),
+                card=_card(),
+                providers=("pexels",),
+                candidate_loader=lambda _provider, queries, _fallback: [
+                    _candidate(f"fresh-{queries[0]}", queries[0])
+                ],
+                downloader=_download,
+                verifier=_verified_or_mismatch,
+            )
+
+        self.assertTrue(seen_used_ids)
+        self.assertTrue(all("pexels:historical" in used for used in seen_used_ids))
+
     def test_provider_outage_is_technical_but_healthy_no_results_is_content(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             technical = auto_short.discover_critical_assets(

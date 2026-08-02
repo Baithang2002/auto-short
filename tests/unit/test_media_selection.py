@@ -5,7 +5,7 @@ import unittest
 from io import BytesIO
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import ANY, Mock, patch
 
 from PIL import Image
 
@@ -61,7 +61,7 @@ class MediaSelectionTests(unittest.TestCase):
                 self.assertEqual("JPEG", image.format)
             self.assertEqual([destination], list(Path(directory).iterdir()))
 
-    def test_download_exhausts_retryable_errors_and_cleans_all_paths(self) -> None:
+    def test_download_failure_preserves_existing_destination(self) -> None:
         class Response:
             status_code = 503
             headers = {"Retry-After": "1"}
@@ -84,7 +84,8 @@ class MediaSelectionTests(unittest.TestCase):
 
             self.assertFalse(downloaded)
             self.assertEqual(3, get.call_count)
-            self.assertEqual([], list(Path(directory).iterdir()))
+            self.assertEqual(b"stale", destination.read_bytes())
+            self.assertEqual([destination], list(Path(directory).iterdir()))
 
     def test_visual_intent_extracts_subject_action_environment_and_shot(self) -> None:
         intent = build_visual_intent(
@@ -888,17 +889,19 @@ class MediaSelectionTests(unittest.TestCase):
                 "title": "qr code phone scan close up technology",
                 "description": "QR code scanning technology",
                 "is_vertical": True,
+                "urls": {
+                    "mp4": "https://cdn/qr-view.mp4",
+                    "mp4_download": "https://cdn/qr-download.mp4",
+                },
             }
         ]
-        storage_response = Mock()
-        storage_response.raise_for_status.return_value = None
-        storage_response.json.return_value = "https://cdn/qr.mp4"
         session = Mock()
-        session.get.side_effect = [search_response, storage_response]
+        session.get.return_value = search_response
         old_url = auto_short.COVERR_API_URL
         old_key = auto_short.COVERR_API_KEY
         auto_short.COVERR_API_URL = "https://provider.test"
         auto_short.COVERR_API_KEY = "coverr-key"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
         auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
         try:
             with patch("requests.Session", return_value=session), patch.object(
@@ -917,25 +920,224 @@ class MediaSelectionTests(unittest.TestCase):
         finally:
             auto_short.COVERR_API_URL = old_url
             auto_short.COVERR_API_KEY = old_key
+            auto_short._PROVIDER_RUN_FAILURES.clear()
 
         self.assertEqual(path, auto_short.OUT_DIR / "broll_3.mp4")
         download.assert_called_once_with(
-            "https://cdn/qr.mp4",
+            "https://cdn/qr-download.mp4",
             auto_short.OUT_DIR / "broll_3.mp4",
             timeout=90,
             max_bytes=120 * 1024 * 1024,
         )
         session.get.assert_any_call(
-            "https://provider.test/search/videos",
-            headers={
-                "User-Agent": "auto-short/1.0 educational video generator",
-                "Authorization": "Bearer coverr-key",
-                "X-API-Key": "coverr-key",
-            },
-            params={"query": "qr code phone scan"},
+            "https://provider.test/videos",
+            headers=ANY,
+            params={"query": "qr code phone scan", "urls": "true", "page_size": 8},
             timeout=30,
         )
+        headers = session.get.call_args_list[0].kwargs["headers"]
+        self.assertEqual(headers["Authorization"], "Bearer coverr-key")
+        self.assertEqual(headers["X-API-Key"], "coverr-key")
         self.assertEqual(auto_short._MEDIA_SELECTION_DIAGNOSTICS[3]["selection"]["provider"], "coverr")
+
+    def test_coverr_hard_failure_disables_provider_for_run(self) -> None:
+        import requests
+
+        old_url = auto_short.COVERR_API_URL
+        old_key = auto_short.COVERR_API_KEY
+        auto_short.COVERR_API_URL = "https://provider.test"
+        auto_short.COVERR_API_KEY = "coverr-key"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        response = Mock(status_code=404)
+        error = requests.HTTPError("404 Client Error")
+        error.response = response
+        session = Mock()
+        session.get.side_effect = error
+        try:
+            with patch("requests.Session", return_value=session):
+                with self.assertRaises(requests.HTTPError):
+                    auto_short._coverr_candidates(["ocean turtle"], raise_errors=True)
+
+                self.assertIn("coverr", auto_short._PROVIDER_RUN_FAILURES)
+                self.assertEqual([], auto_short._coverr_candidates(["ocean turtle"]))
+                self.assertEqual(1, session.get.call_count)
+        finally:
+            auto_short.COVERR_API_URL = old_url
+            auto_short.COVERR_API_KEY = old_key
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_coverr_rate_limit_stops_remaining_queries_for_run(self) -> None:
+        import requests
+
+        old_url = auto_short.COVERR_API_URL
+        old_key = auto_short.COVERR_API_KEY
+        auto_short.COVERR_API_URL = "https://provider.test"
+        auto_short.COVERR_API_KEY = "coverr-key"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        response = Mock(status_code=429)
+        error = requests.HTTPError("429 Too Many Requests")
+        error.response = response
+        session = Mock()
+        session.get.side_effect = error
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._coverr_candidates(["ocean", "waves"])
+
+            self.assertEqual([], candidates)
+            self.assertEqual(1, session.get.call_count)
+            self.assertIn("coverr", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.COVERR_API_URL = old_url
+            auto_short.COVERR_API_KEY = old_key
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_coverr_keeps_earlier_candidates_when_later_query_is_rate_limited(self) -> None:
+        import requests
+
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "hits": [{
+                "id": "waves",
+                "title": "Ocean waves",
+                "urls": {"mp4_download": "https://cdn/ocean.mp4"},
+                "duration": 8,
+            }],
+        }
+        rate_limit = requests.HTTPError("429 Too Many Requests")
+        rate_limit.response = Mock(status_code=429)
+        session = Mock()
+        session.get.side_effect = [search_response, rate_limit]
+        old_url = auto_short.COVERR_API_URL
+        auto_short.COVERR_API_URL = "https://provider.test"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._coverr_candidates(
+                    ["ocean", "waves"], raise_errors=True
+                )
+
+            self.assertEqual(["waves"], [candidate.provider_id for candidate in candidates])
+            self.assertIn("coverr", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.COVERR_API_URL = old_url
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_coverr_stale_detail_404_does_not_disable_provider(self) -> None:
+        import requests
+
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "hits": [
+                {"id": "stale", "title": "Stale ocean clip"},
+                {"id": "healthy", "title": "Ocean waves"},
+            ],
+        }
+        stale_error = requests.HTTPError("404 Client Error")
+        stale_error.response = Mock(status_code=404)
+        detail_response = Mock()
+        detail_response.raise_for_status.return_value = None
+        detail_response.json.return_value = {
+            "urls": {"mp4_download": "https://cdn/ocean-download.mp4"},
+            "duration": 12,
+        }
+        session = Mock()
+        session.get.side_effect = [search_response, stale_error, detail_response]
+        old_url = auto_short.COVERR_API_URL
+        old_key = auto_short.COVERR_API_KEY
+        auto_short.COVERR_API_URL = "https://provider.test"
+        auto_short.COVERR_API_KEY = "coverr-key"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._coverr_candidates(["ocean waves"])
+
+            self.assertEqual(1, len(candidates))
+            self.assertEqual("healthy", candidates[0].provider_id)
+            self.assertNotIn("coverr", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.COVERR_API_URL = old_url
+            auto_short.COVERR_API_KEY = old_key
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_groq_vision_requests_structured_json(self) -> None:
+        response = Mock()
+        response.raise_for_status.return_value = None
+        response.json.return_value = {
+            "choices": [{"message": {"content": '{"match": true}'}}],
+        }
+        old_key = auto_short.GROQ_API_KEY
+        old_models = auto_short.GROQ_VISION_MODELS
+        auto_short.GROQ_API_KEY = "groq-key"
+        auto_short.GROQ_VISION_MODELS = ["qwen/qwen3.6-27b"]
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                sample = Path(directory) / "sample.jpg"
+                sample.write_bytes(b"jpeg")
+                with patch("requests.post", return_value=response) as post:
+                    raw, provider = auto_short._groq_vision_content("Return JSON", [sample])
+        finally:
+            auto_short.GROQ_API_KEY = old_key
+            auto_short.GROQ_VISION_MODELS = old_models
+
+        self.assertEqual("groq", provider)
+        self.assertEqual('{"match": true}', raw)
+        self.assertEqual(
+            {"type": "json_object"},
+            post.call_args.kwargs["json"]["response_format"],
+        )
+
+    def test_vision_json_rejects_missing_result_fields(self) -> None:
+        with self.assertRaises(RuntimeError):
+            auto_short._require_vision_json('{"reasoning": "unclear"}', "match", "entity_match")
+
+    def test_malformed_gemini_vision_output_falls_back_to_groq(self) -> None:
+        old_quota_dead = auto_short._GEMINI_QUOTA_DEAD
+        auto_short._GEMINI_QUOTA_DEAD = False
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                sample = Path(directory) / "sample.jpg"
+                sample.write_bytes(b"jpeg")
+                response = Mock(text='{"reasoning": "unclear"}')
+                with patch.object(auto_short, "_get_gemini_client", return_value=Mock()), patch.object(
+                    auto_short,
+                    "_generate_gemini_vision_content",
+                    return_value=(response, "gemini-test"),
+                ), patch.object(
+                    auto_short,
+                    "_groq_vision_content",
+                    return_value=('{"match": true}', "groq"),
+                ) as groq:
+                    raw, provider = auto_short._vision_completion("Return JSON", [sample])
+        finally:
+            auto_short._GEMINI_QUOTA_DEAD = old_quota_dead
+
+        self.assertEqual("groq", provider)
+        self.assertEqual('{"match": true}', raw)
+        groq.assert_called_once()
+
+    def test_persistent_dedup_state_keeps_only_stable_provider_ids(self) -> None:
+        old_path = auto_short.PERSISTENT_USED_PATH
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "used_videos.json"
+                auto_short.PERSISTENT_USED_PATH = path
+                path.write_text('["pexels:older"]', encoding="utf-8")
+                auto_short._save_persistent_used({
+                    "pexels:123",
+                    "coverr:abc",
+                    "local:clip.mp4",
+                    "/home/runner/work/output/broll_1.mp4",
+                    r"C:\\temp\\broll_2.mp4",
+                })
+
+                self.assertEqual(
+                    {"coverr:abc", "pexels:123", "pexels:older"},
+                    auto_short._load_persistent_used(),
+                )
+        finally:
+            auto_short.PERSISTENT_USED_PATH = old_path
 
     def test_pollinations_image_generation_downloads_prompt_url(self) -> None:
         old_enabled = auto_short.POLLINATIONS_ENABLED

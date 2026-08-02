@@ -21,7 +21,7 @@ class RenderProfile:
     max_duration_sec: int | None = None
     caption_style: str = "default"
     voice_provider_priority: tuple[str, ...] = ("elevenlabs", "audiolab", "edge_tts", "speechify")
-    llm_provider_priority: tuple[str, ...] = ("gemini", "sambanova", "groq", "openai")
+    llm_provider_priority: tuple[str, ...] = ("gemini", "sambanova", "groq")
     stock_provider_priority: tuple[str, ...] = ("pexels", "pixabay", "nasa")
     music_provider_priority: tuple[str, ...] = ("jamendo", "pixabay", "mixkit", "generated", "silence")
     upload_provider_priority: tuple[str, ...] = ("youtube", "instagram", "facebook")

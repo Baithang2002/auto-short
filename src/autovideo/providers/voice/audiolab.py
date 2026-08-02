@@ -17,6 +17,16 @@ _QUOTA_STATUS_CODES = frozenset({401, 402, 429})
 _AUDIOLAB_SPEECH_URL = "https://api.tryaudiolab.ai/v1/audio/speech"
 
 
+def _looks_like_mp3(content: bytes) -> bool:
+    if content.startswith(b"ID3"):
+        return True
+    sample = content[:4096]
+    return any(
+        sample[index] == 0xFF and sample[index + 1] & 0xE0 == 0xE0
+        for index in range(max(0, len(sample) - 1))
+    )
+
+
 class AudioLabVoiceProvider:
     name = "audiolab"
 
@@ -58,7 +68,23 @@ class AudioLabVoiceProvider:
                 timeout=self.timeout_sec,
             )
             response.raise_for_status()
-            request.output_path.write_bytes(response.content)
+            content = bytes(response.content or b"")
+            content_type = str(
+                (getattr(response, "headers", {}) or {}).get("Content-Type", "")
+            ).split(";", 1)[0].strip().lower()
+            if not content:
+                raise ProviderExecutionError(self.name, "AudioLab returned an empty response")
+            if content_type and not (
+                content_type.startswith("audio/")
+                or content_type == "application/octet-stream"
+            ):
+                raise ProviderExecutionError(
+                    self.name,
+                    f"AudioLab returned non-audio content type {content_type}",
+                )
+            if not _looks_like_mp3(content):
+                raise ProviderExecutionError(self.name, "AudioLab returned invalid MP3 data")
+            request.output_path.write_bytes(content)
         except Exception as exc:
             err_str = str(exc)
             if "401" in err_str or "402" in err_str or "429" in err_str or "Unauthorized" in err_str:
@@ -69,5 +95,5 @@ class AudioLabVoiceProvider:
         return ProviderResult(
             provider=self.name,
             value=request.output_path,
-            metadata={"unit": request.unit.value, "voice": request.voice_id or self.voice_id},
+            metadata={"unit": request.unit.value, "voice_id": request.voice_id or self.voice_id},
         )

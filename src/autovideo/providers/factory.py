@@ -49,7 +49,7 @@ def build_voice_registry(config: AppConfig, *, include_real_providers: bool = Tr
     if "mock" in priority:
         register("mock", MockVoiceProvider(), enabled=not config.feature_flags["allow_external_api_calls"])
 
-    if include_real_providers:
+    if include_real_providers and config.feature_flags["allow_external_api_calls"]:
         register(
             "elevenlabs",
             ElevenLabsVoiceProvider(

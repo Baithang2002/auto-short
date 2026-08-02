@@ -10,5 +10,5 @@ google-auth-oauthlib>=1.0
 google-auth-httplib2>=0.2
 google-api-python-client>=2.100
 
-# Optional: OpenAI script fallback (used only when Gemini + SambaNova + Groq all fail)
+# OpenAI-compatible client used for SambaNova's API surface
 openai>=1.10

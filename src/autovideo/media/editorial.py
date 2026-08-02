@@ -489,6 +489,9 @@ _SUBJECT_BOUNDARY_WORDS = {
     "build",
     "built",
     "can",
+    "that",
+    "which",
+    "who",
     "change",
     "changed",
     "changes",
@@ -529,11 +532,17 @@ _SUBJECT_BOUNDARY_WORDS = {
     "is",
     "live",
     "lives",
+    "keep",
+    "keeps",
+    "keeping",
+    "kept",
     "make",
     "makes",
     "melt",
     "melts",
     "move",
+    "moved",
+    "moving",
     "moves",
     "influence",
     "influenced",
@@ -543,6 +552,18 @@ _SUBJECT_BOUNDARY_WORDS = {
     "protects",
     "regrow",
     "regrows",
+    "rebuild",
+    "rebuilds",
+    "rebuilding",
+    "rebuilt",
+    "recreate",
+    "recreates",
+    "recreating",
+    "recreated",
+    "reshape",
+    "reshapes",
+    "reshaping",
+    "reshaped",
     "roar",
     "roars",
     "run",
@@ -586,7 +607,7 @@ def _topic_subject(topic: str) -> str:
         words.pop(0)
     subject_words: list[str] = []
     for word in words:
-        if word.lower() in _SUBJECT_BOUNDARY_WORDS:
+        if subject_words and word.lower() in _SUBJECT_BOUNDARY_WORDS:
             break
         subject_words.append(word)
     return " ".join(subject_words[:5]) or _clean(topic)

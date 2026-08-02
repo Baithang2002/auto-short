@@ -108,7 +108,7 @@ def _write_youtube_engagement_report(report: dict) -> Path:
 
 def _post_upload_engagement(result: dict, metadata: dict) -> dict:
     """Generate/post a YouTube pinned-comment candidate after successful upload."""
-    if result.get("status") != "ok":
+    if result.get("status") != "ok" or result.get("duplicate_prevented"):
         return result
     comment = (
         metadata.get("pinned_comment")

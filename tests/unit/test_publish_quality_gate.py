@@ -223,6 +223,46 @@ class PublishQualityGateTests(unittest.TestCase):
             )).evaluate(artifacts)
         self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
 
+    def test_generic_unavailable_word_does_not_count_as_transient_provider_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 0,
+                    "decision": "unavailable",
+                    "priority": "critical",
+                    "expected_entity": "flamingo",
+                    "reason": "representative rendered frame is unavailable",
+                }],
+            })
+            report = PublishQualityGate(PublishQualityConfig(
+                require_verified_rendered_critical=True,
+                allow_rendered_critical_when_vision_unavailable=True,
+            )).evaluate(artifacts)
+
+        self.assertEqual(PublishQualityVerdict.DEFERRED, report.verdict)
+
+    def test_configured_fallback_allows_explicit_vision_network_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            artifacts = self.make_artifacts(root)
+            self.write_json(artifacts.rendered_visual_qa_path, {
+                "scenes": [{
+                    "scene_index": 0,
+                    "decision": "unavailable",
+                    "priority": "critical",
+                    "expected_entity": "flamingo",
+                    "reason": "ConnectionError: HTTPSConnectionPool max retries exceeded",
+                }],
+            })
+            report = PublishQualityGate(PublishQualityConfig(
+                require_verified_rendered_critical=True,
+                allow_rendered_critical_when_vision_unavailable=True,
+            )).evaluate(artifacts)
+
+        self.assertEqual(PublishQualityVerdict.APPROVED, report.verdict)
+
     def test_blocks_missing_caption_or_failed_decode(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

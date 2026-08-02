@@ -158,6 +158,34 @@ class VerifiedMediaGateTests(unittest.TestCase):
         self.assertFalse(result.should_abort)
         self.assertIn("verification unavailable", result.reason)
 
+    def test_generic_verifier_unavailability_does_not_soft_pass_critical_asset(self) -> None:
+        gate = VerifiedMediaGate(
+            self.config,
+            verifier=lambda request, sample_count: DownloadedMediaEvidence(
+                entity_match=False,
+                error="vision provider unavailable after malformed response",
+            ),
+        )
+
+        result = gate.evaluate(self._request())
+
+        self.assertEqual(VerificationDecision.REJECTED, result.decision)
+        self.assertTrue(result.should_abort)
+
+    def test_explicit_network_failure_preserves_critical_asset_as_unverified(self) -> None:
+        gate = VerifiedMediaGate(
+            self.config,
+            verifier=lambda request, sample_count: DownloadedMediaEvidence(
+                entity_match=False,
+                error="ConnectionError: HTTPSConnectionPool max retries exceeded",
+            ),
+        )
+
+        result = gate.evaluate(self._request())
+
+        self.assertEqual(VerificationDecision.UNVERIFIED, result.decision)
+        self.assertFalse(result.should_abort)
+
     def test_report_records_replacement_attempts(self) -> None:
         rejected = VerifiedMediaGate(
             self.config,

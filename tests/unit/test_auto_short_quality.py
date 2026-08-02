@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import Mock, patch
 
 from tests.unit import _path  # noqa: F401
 
@@ -8,6 +9,54 @@ import auto_short
 
 
 class AutoShortQualityTests(unittest.TestCase):
+    def test_dependency_check_accepts_non_gemini_llm_fallback(self) -> None:
+        old_values = (
+            auto_short.GEMINI_API_KEY,
+            auto_short.SAMBANOVA_API_KEY,
+            auto_short.GROQ_API_KEY,
+            auto_short.PEXELS_API_KEY,
+        )
+        auto_short.GEMINI_API_KEY = ""
+        auto_short.SAMBANOVA_API_KEY = "sambanova-key"
+        auto_short.GROQ_API_KEY = ""
+        auto_short.PEXELS_API_KEY = ""
+        try:
+            with patch.object(auto_short.shutil, "which", return_value="ffmpeg"):
+                auto_short.check_deps()
+        finally:
+            (
+                auto_short.GEMINI_API_KEY,
+                auto_short.SAMBANOVA_API_KEY,
+                auto_short.GROQ_API_KEY,
+                auto_short.PEXELS_API_KEY,
+            ) = old_values
+
+    def test_voice_registry_is_reused_for_all_segments(self) -> None:
+        registry = object()
+        first_track = Mock(provider="audiolab")
+        second_track = Mock(provider="audiolab")
+        for track in (first_track, second_track):
+            track.to_legacy_item.side_effect = lambda index, segment, current=track: {
+                "idx": index,
+                "segment": segment,
+                "voice": f"voice-{index}.mp3",
+                "duration": 1.0,
+                "voice_track": current,
+            }
+        segments = [{"narration": "one"}, {"narration": "two"}]
+
+        with patch.object(auto_short, "_voice_provider_registry", return_value=registry), patch.object(
+            auto_short,
+            "_make_voice_track",
+            side_effect=[first_track, second_track],
+        ) as make_track:
+            auto_short.make_all_voices(segments, target_duration=1)
+
+        self.assertEqual(2, make_track.call_count)
+        self.assertTrue(all(call.kwargs["registry"] is registry for call in make_track.call_args_list))
+        self.assertEqual("", make_track.call_args_list[0].kwargs["preferred_provider"])
+        self.assertEqual("audiolab", make_track.call_args_list[1].kwargs["preferred_provider"])
+
     def test_broll_query_list_adds_shot_variety(self) -> None:
         queries = auto_short.broll_query_list(
             {

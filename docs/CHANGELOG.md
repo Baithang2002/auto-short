@@ -12,13 +12,25 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 
 ### Fixed
 
+- Daily and qualification workflows now check out the current `main` tip after acquiring their shared concurrency lock and explicitly select the production render profile, preventing queued backup runs from restoring stale scheduler state or inheriting development defaults. Non-main blank manual dispatches are rejected, and manual topics are passed through environment variables instead of shell interpolation.
+- Workflow attempt and per-topic timeout budgets now fit inside their job limits, leaving time to persist scheduler state and diagnostics after failures.
+- Coverr search now uses the supported `/videos` endpoint with signed URLs in the list response, prefers the required download URL, records attribution, stops after hard/rate-limit failures, and avoids per-result detail requests that could exhaust the demo quota.
+- Gemini vision now falls back to Groq's active `qwen/qwen3.6-27b` multimodal model with structured JSON validation. Malformed verifier output is treated as unavailable rather than as a false visual mismatch.
+- Source-coverage failures are classified as technical only when provider failures leave an uncovered scene inconclusive. Healthy candidates rejected by production scoring remain a content gap so the scheduler can rotate topics.
+- Voice provider registries are reused for the full narration run, preserving AudioLab and ElevenLabs circuit/fallback state across segments. AudioLab now rejects empty/non-audio responses and records its selected voice ID.
+- Media downloads preserve the accepted destination until a replacement is fully downloaded, and rejected verified-media replacements restore the original clip.
+- Generic "unavailable" text no longer bypasses critical rendered-frame verification; only explicit transient quota, rate-limit, or provider-503 signals can use the configured warning path.
+- Editorial subject parsing now recognizes process verbs such as `reshape`, `rebuild`, `keep`, and `move` without misclassifying leading nouns or participles.
+- Persisted clip deduplication now uses `state/used_videos.json` as its single canonical path, retains stable provider IDs, and drops ephemeral runner paths; provider IDs lost during the AudioLab merge were restored.
+- Scheduled uploads carry a deterministic date-and-slot publish key. Before inserting a video, the YouTube Data API checks recent channel uploads for that key so backup runs do not duplicate an upload whose prior workflow lost its final state update.
+- Scheduled YouTube uploads now use the generated no-music variant by default, avoiding Content ID failures from embedded stock music while preserving narration and captions.
 - Solar-panel and other terrestrial renewable-energy scenes are now classified as energy rather than astronomy. Source coverage can rank existing Pexels and Pixabay capabilities for those scenes instead of incorrectly requiring NASA astronomy media.
 - Solar-wind and other space scenes remain astronomy-routed and retain NASA-first planning.
 - Source coverage now distinguishes strict critical-scene proof from supporting-scene availability. A missing capability ranking also falls back to a bounded Pexels/Pixabay availability probe, so viable documentaries are not deferred solely by a narrow provider-routing decision.
 - A positive downloaded-media frame rejection now defers unattended publishing through the existing publish-quality gate. Transient vision-provider unavailability remains an auditable warning rather than an upload-blocking failure.
 - GitHub production runs also sample up to four final rendered SHOW/REVEAL/PROVE frames. This catches portrait crops and compositions that hide or replace the required visual entity after rendering; a confirmed mismatch defers upload and triggers normal daily-topic recovery.
 - The FFmpeg crossfade stitch now has a bounded scene-count-aware timeout instead of the generic 120-second command limit. This preserves protection against hung processes without rejecting healthy multi-scene 1080p renders on slower machines.
-- Direct CLI runs now enforce source-coverage deferrals by default, matching scheduled production behavior. GitHub production also requires final-frame verification for critical scenes; when Gemini vision is unavailable, the run defers rather than uploading an unverified hook or main reveal.
+- Direct CLI runs now enforce source-coverage deferrals by default, matching scheduled production behavior. GitHub production also requires final-frame verification for critical scenes; when both Gemini and Groq vision are unavailable, the run defers rather than uploading an unverified hook or main reveal unless the failure is an explicitly allowed transient provider limit.
 
 ### Compatibility
 
@@ -298,7 +310,7 @@ Three architectural milestones — *Foundation Layer*, *Storage Abstraction*, an
 
 ### Added — configuration and secrets
 
-- **Environment-based configuration** via `.env` for local runs, with corresponding GitHub Secrets for CI runs. Recognized variables include: `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `SAMBANOVA_API_KEY`, `PEXELS_API_KEY`, `PIXABAY_API_KEY`, `JAMENDO_CLIENT_ID`, `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`, `YT_MUSIC`, `SPEECHIFY_API_KEY`.
+- **Environment-based configuration** via `.env` for local runs, with corresponding GitHub Secrets for CI runs. Recognized variables include: `GEMINI_API_KEY`, `GROQ_API_KEY`, `SAMBANOVA_API_KEY`, `PEXELS_API_KEY`, `PIXABAY_API_KEY`, `COVERR_API_KEY`, `COVERR_APP_ID`, `COVERR_API_URL`, `JAMENDO_CLIENT_ID`, `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`, `YT_MUSIC`, `SPEECHIFY_API_KEY`.
 - **`.gitignore` covering** credentials (`.env`, `oauth_client.json`, `.youtube_credentials.json`), runtime state (`output/`, `videos/`), operator libraries (`input_clips/`, `music/`), and browser session data (`browser_session/`, `browser_session_test/`).
 
 ### Added — long-form variant

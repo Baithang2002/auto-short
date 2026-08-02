@@ -620,10 +620,10 @@ The end-to-end data flow for one video looks like this:
      [Intent]                 topic, format, profile
         │
         ▼
-     Script stage             ─→ Providers.script (Gemini → SambaNova → Groq → OpenAI)
+     Script stage             ─→ Providers.script (Gemini → SambaNova → Groq)
         │                     Persists: Script + metadata
         ▼
-     Voice stage              ─→ Providers.voice (Edge-TTS → Speechify → ElevenLabs)
+     Voice stage              ─→ Providers.voice (ElevenLabs → AudioLab → Edge-TTS → Speechify)
         │                     Persists: list[VoiceTrack]
         ▼
      Media stage              ─→ Providers.stock (Pexels → Pixabay → NASA)
@@ -700,7 +700,7 @@ The migration is ordered by dependency direction. Lower layers move first becaus
 1. **Foundation.** Extract cross-cutting utilities from `auto_short.py` and other modules into `platform/foundation/`. This is pure refactor — no behavior change.
 2. **Storage.** Introduce `ArtifactStore` and route existing artifact-writing calls through it. Legacy paths continue to work.
 3. **Provider interfaces.** Define the six provider ABCs in `platform/providers/base/`. Implement one provider (Pexels) as the reference. Legacy code continues.
-4. **Provider migrations.** One provider per PR: Pexels first, then Pixabay, NASA, Gemini, SambaNova, Groq, OpenAI, Edge-TTS, Speechify, Jamendo, YouTube API, browser uploaders. Each migration is a two-step: add the new implementation, then switch the caller.
+4. **Provider migrations.** One provider per PR: Pexels first, then Pixabay, NASA, Gemini, SambaNova, Groq, ElevenLabs, AudioLab, Edge-TTS, Speechify, Jamendo, YouTube API, browser uploaders. Each migration is a two-step: add the new implementation, then switch the caller.
 5. **Domain models.** Introduce typed models (`Script`, `Timeline`, etc.). Adapt legacy code to consume the new types.
 6. **Pipeline stages.** Split `auto_short.py`'s `main()` into typed stages. This is the biggest single change and will span multiple PRs.
 7. **Interface.** Move CLI entry points into `platform/interface/cli/`. Legacy entry points continue to work as thin shims.

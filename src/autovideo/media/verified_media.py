@@ -257,9 +257,20 @@ def _is_transient_verifier_error(error: str) -> bool:
         "429",
         "timeout",
         "timed out",
-        "network",
-        "unavailable",
-        "connection",
+        "503",
+        "high demand",
+        "connectionerror",
+        "connecttimeout",
+        "readtimeout",
+        "nameresolutionerror",
+        "name resolution",
+        "max retries exceeded",
+        "httpsconnectionpool",
+        "connection reset",
+        "connection refused",
+        "remote disconnected",
+        "dns error",
+        "dns failure",
     ))
 
 

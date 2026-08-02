@@ -122,6 +122,18 @@ class EngagementAudioTests(unittest.TestCase):
             self.assertEqual(payload["comment_id"], "comment-1")
             self.assertFalse(payload["pin_success"])
 
+    def test_duplicate_prevented_upload_does_not_post_another_comment(self) -> None:
+        import uploader
+
+        with patch("yt_data_api.post_pinned_comment_via_api") as post_comment:
+            result = uploader._post_upload_engagement(
+                {"status": "ok", "video_id": "abc123", "duplicate_prevented": True},
+                {"title": "Octopus", "pinned_comment": "What animal should I cover next?"},
+            )
+
+        self.assertTrue(result["duplicate_prevented"])
+        post_comment.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

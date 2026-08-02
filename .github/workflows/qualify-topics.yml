@@ -20,7 +20,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          ref: main
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python 3.11
@@ -42,13 +43,15 @@ jobs:
       - name: Qualify unused topics
         timeout-minutes: 35
         env:
+          AUTO_VIDEO_RENDER_PROFILE: "production"
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GROQ_VISION_MODELS: "qwen/qwen3.6-27b"
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
           COVERR_API_KEY: ${{ secrets.COVERR_API_KEY }}
+          COVERR_APP_ID: ${{ secrets.COVERR_APP_ID }}
           COVERR_API_URL: "https://api.coverr.co"
           EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
           EUROPEANA_API_URL: "https://api.europeana.eu/record/v2/search.json"
@@ -56,8 +59,8 @@ jobs:
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
           AUTO_VIDEO_TOPIC_QUALIFICATION_TARGET_BUFFER: "6"
-          AUTO_VIDEO_TOPIC_QUALIFICATION_MAX_ATTEMPTS: "12"
-          AUTO_VIDEO_TOPIC_QUALIFICATION_TIMEOUT_SEC: "300"
+          AUTO_VIDEO_TOPIC_QUALIFICATION_MAX_ATTEMPTS: "7"
+          AUTO_VIDEO_TOPIC_QUALIFICATION_TIMEOUT_SEC: "240"
           AUTO_VIDEO_TOPIC_QUALIFICATION_QUARANTINE_DAYS: "14"
           AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"
           AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_CONFIDENCE: "0.75"
@@ -67,7 +70,20 @@ jobs:
           AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES: "3"
           AUTO_VIDEO_CRITICAL_ASSET_PROVIDER_TIMEOUT_SEC: "30"
           AUTO_VIDEO_CRITICAL_ASSET_DOWNLOAD_TIMEOUT_SEC: "90"
-        run: python topic_qualify.py
+        run: |
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$SAMBANOVA_API_KEY" ] && [ -z "$GROQ_API_KEY" ]; then
+            echo "No script LLM secret is configured."
+            exit 2
+          fi
+          if [ -z "$GEMINI_API_KEY" ] && [ -z "$GROQ_API_KEY" ]; then
+            echo "No supported vision secret is configured (Gemini or Groq)."
+            exit 2
+          fi
+          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$COVERR_API_KEY" ]; then
+            echo "No keyed stock-video provider is configured."
+            exit 2
+          fi
+          python topic_qualify.py
 
       - name: Persist qualification state
         if: always()

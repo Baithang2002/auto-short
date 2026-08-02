@@ -15,17 +15,13 @@ class ProviderDefaults:
     )
     groq_models: tuple[str, ...] = (
         "llama-3.3-70b-versatile",
-        "llama-3.1-70b-versatile",
+        "qwen/qwen3.6-27b",
         "llama-3.1-8b-instant",
-        "mixtral-8x7b-32768",
     )
-    openai_models: tuple[str, ...] = ("gpt-4o-mini", "gpt-4o")
     sambanova_models: tuple[str, ...] = (
-        "Meta-Llama-3.1-405B-Instruct",
-        "DeepSeek-R1-Distill-Llama-70B",
+        "DeepSeek-V3.2",
         "Meta-Llama-3.3-70B-Instruct",
-        "Meta-Llama-3.1-70B-Instruct",
-        "Qwen2.5-72B-Instruct",
+        "gemma-4-31B-it",
     )
     gemini_image_model: str = "gemini-3.5-flash"
     edge_tts_voice: str = "en-US-AndrewNeural"

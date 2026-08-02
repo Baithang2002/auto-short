@@ -17,6 +17,8 @@ class EditorialCanonTests(unittest.TestCase):
             "Drive", "Drives", "Drove", "Driven", "Driving",
             "Affect", "Affects", "Affected", "Affecting",
             "Influence", "Influences", "Influenced", "Influencing",
+            "Keep", "Keeps", "Kept", "Keeping",
+            "Move", "Moves", "Moved", "Moving",
         )
 
         for verb in variants:
@@ -35,6 +37,8 @@ class EditorialCanonTests(unittest.TestCase):
             "How Giraffes Drink With Long Necks": "Giraffes",
             "How Seahorses Carry Their Babies": "Seahorses",
             "How Spiders Spin Strong Silk": "Spiders",
+            "How Beavers Reshape Entire Rivers": "Beavers",
+            "How Corals Rebuild a Reef": "Corals",
         }
 
         for topic, expected in examples.items():
@@ -56,6 +60,21 @@ class EditorialCanonTests(unittest.TestCase):
         self.assertEqual("hummingbird", canon.primary_subject)
         self.assertEqual("authoritative_override", canon.diagnostics["primary_subject_source"])
         self.assertEqual("hummingbird", lock.evidence["primary_subject_override"])
+
+    def test_leading_boundary_words_can_still_be_subject_terms(self) -> None:
+        examples = {
+            "How Moving Water Shapes Canyons": "Moving Water",
+            "The Keep That Survived the Siege": "Keep",
+            "How Rebuilt Wetlands Protect Coasts": "Rebuilt Wetlands",
+        }
+
+        for topic, expected in examples.items():
+            with self.subTest(topic=topic):
+                canon, _lock, _roles, _domain = EditorialCanonBuilder().build(
+                    topic=topic,
+                    segments=[],
+                )
+                self.assertEqual(expected, canon.primary_subject)
 
     def test_octopus_title_locks_subject_even_when_sharks_are_supporting(self) -> None:
         segments = [

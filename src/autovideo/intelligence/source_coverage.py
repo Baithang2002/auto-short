@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from dataclasses import asdict, dataclass, field
 from enum import Enum
@@ -66,7 +67,7 @@ class SourceCoverageConfig:
     enabled: bool = True
     minimum_scene_coverage_ratio: float = 0.67
     max_scenes: int = 6
-    max_providers_per_scene: int = 2
+    max_providers_per_scene: int = 3
     max_queries_per_scene: int = 1
     provider_timeout_sec: float = 6.0
     supporting_scene_score_ratio: float = 0.65
@@ -87,7 +88,7 @@ class SourceCoverageConfig:
             max_providers_per_scene=max(1, _env_int(
                 values,
                 "AUTO_VIDEO_SOURCE_COVERAGE_MAX_PROVIDERS_PER_SCENE",
-                2,
+                3,
             )),
             max_queries_per_scene=max(1, _env_int(
                 values,
@@ -173,18 +174,46 @@ class SourceCoverageReport:
 
     @property
     def failure_classification(self) -> str:
-        """Separate content gaps from provider/infrastructure failures."""
+        """Separate content gaps from provider/infrastructure failures.
+
+        A scene is technically inconclusive only when no provider completed a
+        healthy probe. Successful probes and explicit NO_RESULTS outcomes are
+        enough to classify the topic as a content gap and rotate candidates;
+        authentication, quota, timeout, or provider failures remain terminal
+        when they are the only evidence available for an uncovered scene.
+        """
 
         if self.decision == SourceCoverageDecision.SKIPPED:
             return "SKIPPED"
         if self.decision != SourceCoverageDecision.DEFERRED:
             return "NONE"
         outcomes = self.provider_outcomes
-        if (
-            outcomes
-            and all(scene.provider_outcomes for scene in self.scenes)
-            and all(outcome.status in TECHNICAL_PROVIDER_STATUSES for outcome in outcomes)
-        ):
+        if not outcomes:
+            return "CONTENT_COVERAGE_GAP"
+        uncovered = [scene for scene in self.scenes if not scene.covered]
+        if not uncovered:
+            return "CONTENT_COVERAGE_GAP"
+        technically_inconclusive = [
+            scene
+            for scene in uncovered
+            if any(
+                outcome.status in TECHNICAL_PROVIDER_STATUSES
+                for outcome in scene.provider_outcomes
+            )
+            and not any(
+                outcome.status in {
+                    ProviderProbeStatus.SUCCESS,
+                    ProviderProbeStatus.NO_RESULTS,
+                }
+                for outcome in scene.provider_outcomes
+            )
+        ]
+        if not technically_inconclusive:
+            return "CONTENT_COVERAGE_GAP"
+        critical_uncovered = [scene for scene in uncovered if scene.critical]
+        if critical_uncovered and any(scene in technically_inconclusive for scene in critical_uncovered):
+            return "TECHNICAL_PROVIDER_FAILURE"
+        if len(technically_inconclusive) == len(uncovered):
             return "TECHNICAL_PROVIDER_FAILURE"
         return "CONTENT_COVERAGE_GAP"
 
@@ -245,15 +274,21 @@ class SourceCoverageEvaluator:
                 config=self.config,
                 reasons=("no scenes were available for source coverage probing",),
             )
-        ratio = sum(scene.covered for scene in scenes) / len(scenes)
+        covered_count = sum(scene.covered for scene in scenes)
+        ratio = covered_count / len(scenes)
         critical = [scene for scene in scenes if scene.critical and not scene.covered]
         reasons: list[str] = []
         if critical:
             reasons.append("critical scenes lack acceptable authentic-media candidates")
-        if ratio < self.config.minimum_scene_coverage_ratio:
+        # Compare and report counts, not only rounded percentages: with 6 scenes
+        # and a 0.67 policy, 4/6 == 66.67% must fail while 5/6 == 83.3% must
+        # pass. The old message rounded both sides and printed the confusing
+        # "67% is below required 67%" diagnostic.
+        minimum_covered = math.ceil(self.config.minimum_scene_coverage_ratio * len(scenes))
+        if covered_count < minimum_covered:
             reasons.append(
-                f"scene coverage {ratio:.0%} is below required "
-                f"{self.config.minimum_scene_coverage_ratio:.0%}"
+                f"scene coverage {covered_count}/{len(scenes)} ({ratio:.0%}) is below required "
+                f"{minimum_covered}/{len(scenes)} ({self.config.minimum_scene_coverage_ratio:.0%})"
             )
         return SourceCoverageReport(
             topic=topic,

@@ -161,14 +161,9 @@ from autovideo.media import (
 )
 from autovideo.music import MusicPlanner
 from autovideo.intelligence.topic_cards import TopicCard, find_topic_card
-from autovideo.providers.factory import build_music_registry
+from autovideo.providers.factory import build_music_registry, build_voice_registry
 from autovideo.providers.llm import CallableLLMProvider
-from autovideo.providers.voice import (
-    AudioLabVoiceProvider,
-    CallableVoiceProvider,
-    ElevenLabsVoiceProvider,
-    VoiceRequest,
-)
+from autovideo.providers.voice import VoiceRequest
 from autovideo.pipeline import (
     PipelineContext,
     PipelineOrchestrator,
@@ -211,7 +206,8 @@ WIDTH, HEIGHT        = DEFAULTS.render.width, DEFAULTS.render.height            
 FPS                  = DEFAULTS.render.fps
 OUT_DIR              = SCRIPT_DIR / "output"
 PENDING_DIR          = SCRIPT_DIR / "videos" / "pending"   # review queue input
-PERSISTENT_USED_PATH = SCRIPT_DIR / "used_videos.json"     # cross-run clip dedup
+PERSISTENT_USED_PATH = SCRIPT_DIR / "state" / "used_videos.json"  # cross-run clip dedup
+LEGACY_PERSISTENT_USED_PATH = SCRIPT_DIR / "used_videos.json"
 INPUT_DIR            = SCRIPT_DIR / "input_clips"   # drop your own .mp4/.mov clips here
 MUSIC_DIR            = SCRIPT_DIR / "music"          # drop royalty-free .mp3/.wav/.m4a tracks here
 VIDEO_EXTENSIONS     = {".mp4", ".mov", ".avi", ".mkv", ".webm"}
@@ -272,7 +268,6 @@ if env_path.exists():
 GEMINI_API_KEY  = os.environ.get("GEMINI_API_KEY")
 GEMINI_IMAGE_MODEL = os.environ.get("GEMINI_IMAGE_MODEL", "").strip()
 PEXELS_API_KEY  = os.environ.get("PEXELS_API_KEY")
-OPENAI_API_KEY  = os.environ.get("OPENAI_API_KEY")
 GROQ_API_KEY    = os.environ.get("GROQ_API_KEY")
 SPEECHIFY_API_KEY = os.environ.get("SPEECHIFY_API_KEY")
 SPEECHIFY_VOICE_ID = os.environ.get("SPEECHIFY_VOICE_ID", "george")
@@ -282,6 +277,7 @@ SAMBANOVA_API_KEY  = os.environ.get("SAMBANOVA_API_KEY")
 MIXKIT_API_URL     = os.environ.get("MIXKIT_API_URL", "").strip()
 COVERR_API_URL     = os.environ.get("COVERR_API_URL", "").strip()
 COVERR_API_KEY     = os.environ.get("COVERR_API_KEY", "").strip()
+COVERR_APP_ID      = os.environ.get("COVERR_APP_ID", "").strip()
 VIDEVO_API_KEY     = os.environ.get("VIDEVO_API_KEY", "").strip()
 VIDEVO_API_URL     = os.environ.get("VIDEVO_API_URL", "").strip()
 ARCHIVE_PROVIDERS_ENABLED = os.environ.get("ENABLE_ARCHIVE_PROVIDERS", "1").lower() not in {"0", "false", "no"}
@@ -302,6 +298,8 @@ EUROPEANA_API_KEY  = os.environ.get("EUROPEANA_API_KEY", "").strip()
 FLICKR_COMMONS_API_URL = os.environ.get("FLICKR_COMMONS_API_URL", "").strip()
 FLICKR_API_KEY     = os.environ.get("FLICKR_API_KEY", "").strip()
 POLLINATIONS_ENABLED = _env_flag("POLLINATIONS_ENABLED", default="0")
+
+_PROVIDER_RUN_FAILURES: dict[str, str] = {}
 POLLINATIONS_IMAGE_URL = os.environ.get("POLLINATIONS_IMAGE_URL", "https://image.pollinations.ai/prompt").strip().rstrip("/")
 POLLINATIONS_MODEL = os.environ.get("POLLINATIONS_MODEL", "").strip()
 ENABLE_WIKIMEDIA_COMMONS = os.environ.get("ENABLE_WIKIMEDIA_COMMONS", "1" if ARCHIVE_PROVIDERS_ENABLED else "0").lower() not in {"0", "false", "no"}
@@ -617,10 +615,11 @@ def check_deps():
                     if shutil.which(tool):
                         continue
             die(f"'{tool}' not found on PATH. Install ffmpeg first (see header).")
-    if not GEMINI_API_KEY or not GEMINI_API_KEY.strip():
-        die("GEMINI_API_KEY is not configured. Please add your real key to the .env file.")
-    if not PEXELS_API_KEY or not PEXELS_API_KEY.strip():
-        die("PEXELS_API_KEY is not configured. Please add your real key to the .env file.")
+    if not any(
+        str(key or "").strip()
+        for key in (GEMINI_API_KEY, SAMBANOVA_API_KEY, GROQ_API_KEY)
+    ):
+        die("No script LLM is configured. Set GEMINI_API_KEY, SAMBANOVA_API_KEY, or GROQ_API_KEY.")
 
 
 
@@ -632,19 +631,34 @@ def check_deps():
 # Multiple Groq models so a single deprecated model doesn't kill the run.
 GEMINI_MODELS = list(DEFAULTS.providers.gemini_models)
 GROQ_MODELS = list(DEFAULTS.providers.groq_models)
-OPENAI_MODELS = list(DEFAULTS.providers.openai_models)
+GROQ_VISION_MODELS = [
+    model.strip()
+    for model in os.environ.get(
+        "GROQ_VISION_MODELS",
+        "qwen/qwen3.6-27b",
+    ).split(",")
+    if model.strip()
+]
 # SambaNova Cloud models (https://cloud.sambanova.ai). OpenAI-compatible API.
 # Ordered by JSON-following reliability + capability. First success wins.
 SAMBANOVA_MODELS = list(DEFAULTS.providers.sambanova_models)
 
 
 def _try_gemini(prompt):
+    global _GEMINI_QUOTA_DEAD
+
+    if _GEMINI_QUOTA_DEAD:
+        print("    [LLM Fallback] Gemini skipped because quota is exhausted; trying SambaNova/Groq.")
+        return None, None
     if not GEMINI_API_KEY:
+        print("    [LLM Fallback] GEMINI_API_KEY missing; trying next LLM provider.")
         return None, None
     client = _get_gemini_client()
     if client is None:
+        print("    [LLM Fallback] Gemini client unavailable; trying next LLM provider.")
         return None, Exception("Failed to initialize Gemini client")
     last_err = None
+    failures = []
     for model in GEMINI_MODELS:
         try:
             resp = client.models.generate_content(model=model, contents=prompt)
@@ -652,7 +666,15 @@ def _try_gemini(prompt):
             return resp.text.strip(), None
         except Exception as e:
             last_err = e
+            failures.append(str(e))
             print(f"    [Gemini] {model} failed: {str(e)[:120]}")
+    if failures and all(
+        "429" in failure or "RESOURCE_EXHAUSTED" in failure or "quota" in failure.lower()
+        for failure in failures
+    ):
+        _GEMINI_QUOTA_DEAD = True
+        print("    [Gemini quota] all configured Gemini models exhausted; disabling Gemini for rest of run.")
+    print("    [LLM Fallback] Gemini could not produce script JSON; trying SambaNova/Groq.")
     return None, last_err
 
 
@@ -661,11 +683,13 @@ def _try_sambanova(prompt):
     with rate limits. Sits between Gemini and Groq in the chain so a Gemini
     outage routes to SambaNova's multi-provider library first."""
     if not SAMBANOVA_API_KEY or "your_sambanova" in SAMBANOVA_API_KEY:
+        print("    [LLM Fallback] SAMBANOVA_API_KEY missing; trying Groq.")
         return None, None
     try:
         from openai import OpenAI
     except Exception as e:
         return None, e
+    print("    [LLM Fallback] Trying SambaNova models.")
     client = OpenAI(api_key=SAMBANOVA_API_KEY, base_url="https://api.sambanova.ai/v1")
     last_err = None
     for model in SAMBANOVA_MODELS:
@@ -685,8 +709,10 @@ def _try_sambanova(prompt):
 
 def _try_groq(prompt):
     if not GROQ_API_KEY or "your_groq" in GROQ_API_KEY:
+        print("    [LLM Fallback] GROQ_API_KEY missing; no script LLM provider remains.")
         return None, None
     import requests
+    print("    [LLM Fallback] Trying Groq models.")
     last_err = None
     for model in GROQ_MODELS:
         try:
@@ -710,31 +736,6 @@ def _try_groq(prompt):
             print(f"    [Groq] {model} failed: {msg}")
     return None, last_err
 
-
-def _try_openai(prompt):
-    if not OPENAI_API_KEY or "your_openai" in OPENAI_API_KEY:
-        return None, None
-    try:
-        from openai import OpenAI
-    except Exception as e:
-        return None, e
-    client = OpenAI(api_key=OPENAI_API_KEY)
-    last_err = None
-    for model in OPENAI_MODELS:
-        try:
-            resp = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"},
-            )
-            print(f"    [OpenAI] {model} - OK")
-            return resp.choices[0].message.content.strip(), None
-        except Exception as e:
-            last_err = e
-            print(f"    [OpenAI] {model} failed: {str(e)[:120]}")
-    return None, last_err
-
-
 def _llm_provider_registry() -> ProviderRegistry:
     registry = ProviderRegistry()
     priorities = {name: idx for idx, name in enumerate(APP_CONFIG.provider_priority["llm"])}
@@ -742,7 +743,6 @@ def _llm_provider_registry() -> ProviderRegistry:
         "gemini": CallableLLMProvider("gemini", _try_gemini, models=tuple(GEMINI_MODELS)),
         "sambanova": CallableLLMProvider("sambanova", _try_sambanova, models=tuple(SAMBANOVA_MODELS)),
         "groq": CallableLLMProvider("groq", _try_groq, models=tuple(GROQ_MODELS)),
-        "openai": CallableLLMProvider("openai", _try_openai, models=tuple(OPENAI_MODELS)),
     }
     for name, provider in providers.items():
         registry.register(
@@ -1085,63 +1085,12 @@ def _synthesize_speechify(text, out_path, voice_id):
 
 
 def _voice_provider_registry() -> ProviderRegistry:
-    registry = ProviderRegistry()
-    priorities = {name: idx for idx, name in enumerate(APP_CONFIG.provider_priority["voice"])}
-    profile = APP_CONFIG.render_profile.name
-
-    registry.register(
-        "voice",
-        "elevenlabs",
-        ElevenLabsVoiceProvider(
-            api_key=APP_CONFIG.api_keys["elevenlabs"],
-            voice_id=APP_CONFIG.elevenlabs_voice_id,
-            model=APP_CONFIG.elevenlabs_model,
-            timeout_sec=APP_CONFIG.download_timeout_sec,
-            accounts=APP_CONFIG.elevenlabs_accounts,
-        ),
-        priority=priorities.get("elevenlabs", 100),
-        enabled=bool("elevenlabs" in priorities and APP_CONFIG.elevenlabs_accounts),
-        profiles=(profile,),
-        features=("whole_narration", "chapter_narration", "scene_narration"),
-    )
-    registry.register(
-        "voice",
-        "audiolab",
-        AudioLabVoiceProvider(
-            api_key=APP_CONFIG.api_keys["audiolab"],
-            voice_id=APP_CONFIG.audiolab_voice_id,
-            model=APP_CONFIG.audiolab_model,
-            timeout_sec=APP_CONFIG.download_timeout_sec,
-        ),
-        priority=priorities.get("audiolab", 100),
-        enabled=bool("audiolab" in priorities and APP_CONFIG.api_keys["audiolab"].strip()),
-        profiles=(profile,),
-        features=("whole_narration", "chapter_narration", "scene_narration"),
-    )
-    registry.register(
-        "voice",
-        "edge_tts",
-        CallableVoiceProvider("edge_tts", _synthesize_edge_tts, default_voice_id=APP_CONFIG.edge_tts_voice),
-        priority=priorities.get("edge_tts", 100),
-        enabled="edge_tts" in priorities,
-        profiles=(profile,),
-        features=("whole_narration", "chapter_narration", "scene_narration"),
-    )
-    registry.register(
-        "voice",
-        "speechify",
-        CallableVoiceProvider("speechify", _synthesize_speechify, enabled=not _SPEECHIFY_DEAD, default_voice_id=SPEECHIFY_VOICE_ID),
-        priority=priorities.get("speechify", 100),
-        enabled=bool("speechify" in priorities and not _SPEECHIFY_DEAD and SPEECHIFY_API_KEY and SPEECHIFY_API_KEY.strip()),
-        profiles=(profile,),
-        features=("whole_narration", "chapter_narration", "scene_narration"),
-    )
-    return registry
+    return build_voice_registry(APP_CONFIG)
 
 
-def _make_voice_track(text, idx):
+def _make_voice_track(text, idx, registry=None, preferred_provider=""):
     out_path = OUT_DIR / f"voice_{idx}.mp3"
-    registry = _voice_provider_registry()
+    registry = registry or _voice_provider_registry()
     provider_names = registry.provider_names("voice", profile=APP_CONFIG.render_profile.name)
     display_name = provider_names[0] if provider_names else "voice"
     label = "Edge-TTS" if display_name == "edge_tts" else display_name
@@ -1154,6 +1103,7 @@ def _make_voice_track(text, idx):
             ),
             profile=APP_CONFIG.render_profile.name,
             feature="scene_narration",
+            preferred_name=preferred_provider or None,
         )
     except Exception as e:
         raise RuntimeError(f"All voice providers failed: {e}") from e
@@ -1253,6 +1203,8 @@ def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile 
 
 def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
     voice_items = []
+    registry = _voice_provider_registry()
+    preferred_provider = ""
     print("[2/5] Generating voiceovers...")
     if APP_CONFIG.elevenlabs_voice_ids:
         print(
@@ -1260,7 +1212,13 @@ def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_
             f"{APP_CONFIG.elevenlabs_voice_index + 1}/{len(APP_CONFIG.elevenlabs_voice_ids)} selected."
         )
     for idx, seg in enumerate(segments):
-        voice_track = _make_voice_track(seg["narration"], idx)
+        voice_track = _make_voice_track(
+            seg["narration"],
+            idx,
+            registry=registry,
+            preferred_provider=preferred_provider,
+        )
+        preferred_provider = voice_track.provider
         voice_items.append(voice_track.to_legacy_item(index=idx, segment=seg))
     return normalize_voice_timing(voice_items, target_duration, profile)
 
@@ -1920,10 +1878,6 @@ def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
     started = time.monotonic()
     try:
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            out_path.unlink()
-        except FileNotFoundError:
-            pass
 
         for attempt in range(1, max_attempts + 1):
             elapsed = time.monotonic() - started
@@ -1995,7 +1949,7 @@ def _download_to(url, out_path, timeout=120, max_bytes=250 * 1024 * 1024):
             return True
     except Exception as e:
         print(f"    [download] failed for {_safe_diagnostic(url)[:80]}...: {_safe_diagnostic(e)}")
-        for path in (temp_path, Path(f"{temp_path}.normalized"), out_path):
+        for path in (temp_path, Path(f"{temp_path}.normalized")):
             try:
                 path.unlink()
             except FileNotFoundError:
@@ -2158,32 +2112,18 @@ def _gemini_visual_qa_verifier(requested_entity, candidate):
             "Does this image/frame primarily depict the requested entity?\n\n"
             "Return compact JSON with: match, matched_entity, confidence, brief_reasoning."
         )
-        client = _get_gemini_client()
-        if client is None:
-            return None
-        # The installed google-genai versions differ across environments. Keep
-        # this optional call defensive so vision unavailability never fails.
-        from google.genai import types
-
-        parts = [types.Part.from_text(text=prompt)]
-        for sample in samples:
-            parts.append(types.Part.from_bytes(data=Path(sample).read_bytes(), mime_type="image/jpeg"))
-        response, _model = _generate_gemini_vision_content(
-            client,
-            [types.Content(role="user", parts=parts)],
-        )
-        raw = str(getattr(response, "text", "") or "").strip()
-        data = _extract_json_object(raw)
+        raw, provider = _vision_completion(prompt, samples)
+        data = _require_vision_json(raw, "match", "entity_match")
         confidence = float(data.get("confidence", 0.0) or 0.0)
         return VisionVerificationResult(
             match=bool(data.get("match")),
             matched_entity=str(data.get("matched_entity") or ""),
             confidence=max(0.0, min(1.0, confidence)),
             reasoning=str(data.get("brief_reasoning") or data.get("reasoning") or "")[:240],
-            provider="gemini",
+            provider=provider,
         )
     except Exception as exc:
-        return VisionVerificationResult(match=False, provider="gemini", error=str(exc)[:240])
+        return VisionVerificationResult(match=False, provider="vision_fallback", error=str(exc)[:240])
 
 
 def _extract_json_object(raw):
@@ -2199,6 +2139,13 @@ def _extract_json_object(raw):
         return json.loads(text)
     except Exception:
         return {}
+
+
+def _require_vision_json(raw, *result_keys):
+    data = _extract_json_object(raw)
+    if not isinstance(data, dict) or not data or not any(key in data for key in result_keys):
+        raise RuntimeError("vision provider returned malformed or incomplete JSON")
+    return data
 
 
 def _generate_gemini_vision_content(client, contents):
@@ -2219,6 +2166,97 @@ def _generate_gemini_vision_content(client, contents):
         except Exception as exc:
             failures.append(f"{model}: {_safe_diagnostic(exc)}")
     raise RuntimeError("all Gemini vision models failed: " + " | ".join(failures))
+
+
+def _looks_like_quota_error(error_text):
+    text = str(error_text or "")
+    return "429" in text or "RESOURCE_EXHAUSTED" in text or "quota" in text.lower()
+
+
+def _groq_vision_content(prompt, samples):
+    """Return raw JSON-ish vision output from Groq's free-tier vision models."""
+
+    if not GROQ_API_KEY or "your_groq" in GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is not configured for vision fallback")
+    if not GROQ_VISION_MODELS:
+        raise RuntimeError("no Groq vision model is configured")
+
+    import base64
+    import requests
+
+    content = [{"type": "text", "text": prompt}]
+    for sample in samples:
+        encoded = base64.b64encode(Path(sample).read_bytes()).decode("ascii")
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/jpeg;base64,{encoded}"},
+        })
+
+    failures = []
+    for model in GROQ_VISION_MODELS:
+        try:
+            response = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": content}],
+                    "temperature": 0,
+                    "max_tokens": 512,
+                    "response_format": {"type": "json_object"},
+                },
+                timeout=45,
+            )
+            response.raise_for_status()
+            raw = response.json()["choices"][0]["message"]["content"]
+            print(f"    [Groq Vision] {model} - OK")
+            return str(raw or "").strip(), "groq"
+        except Exception as exc:
+            failures.append(f"{model}: {_safe_diagnostic(exc)}")
+            print(f"    [Groq Vision] {model} failed: {str(exc)[:120]}")
+    raise RuntimeError("all Groq vision models failed: " + " | ".join(failures))
+
+
+def _vision_completion(prompt, samples):
+    """Try Gemini vision first, then Groq vision as the free fallback."""
+
+    global _GEMINI_QUOTA_DEAD
+
+    if not _GEMINI_QUOTA_DEAD:
+        client = _get_gemini_client()
+        if client is not None:
+            try:
+                from google.genai import types
+
+                parts = [types.Part.from_text(text=prompt)]
+                for sample in samples:
+                    parts.append(types.Part.from_bytes(
+                        data=Path(sample).read_bytes(), mime_type="image/jpeg"
+                    ))
+                response, model = _generate_gemini_vision_content(
+                    client,
+                    [types.Content(role="user", parts=parts)],
+                )
+                raw = str(getattr(response, "text", "") or "").strip()
+                _require_vision_json(raw, "match", "entity_match")
+                print(f"    [Gemini Vision] {model} - OK")
+                return raw, "gemini"
+            except Exception as exc:
+                diagnostic = _safe_diagnostic(exc)
+                if _looks_like_quota_error(diagnostic):
+                    _GEMINI_QUOTA_DEAD = True
+                    print("    [Vision Fallback] Gemini vision quota exhausted; using Groq vision for rest of run.")
+                else:
+                    print(f"    [Vision Fallback] Gemini vision failed ({diagnostic}); trying Groq vision.")
+        else:
+            print("    [Vision Fallback] Gemini client unavailable; trying Groq vision.")
+    else:
+        print("    [Vision Fallback] Gemini skipped because quota is already exhausted; trying Groq vision.")
+
+    return _groq_vision_content(prompt, samples)
 
 
 def _representative_visual_samples(path, requested_entity, max_frames=3):
@@ -2341,19 +2379,9 @@ def _gemini_verified_media_verifier(request, max_frames):
             return DownloadedMediaEvidence(
                 entity_match=False,
                 sampled_frames=(),
-                provider="gemini",
+                provider="vision_fallback",
                 error="no representative frames could be sampled",
             )
-        client = _get_gemini_client()
-        if client is None:
-            return DownloadedMediaEvidence(
-                entity_match=False,
-                sampled_frames=tuple(str(sample) for sample in samples),
-                provider="gemini",
-                error="Gemini visual verifier is unavailable",
-            )
-        from google.genai import types
-
         prompt = (
             "Evaluate only the supplied frames, not their filenames or any search query.\n\n"
             f"Expected entity: {request.expected_entity or 'not specified'}\n"
@@ -2364,16 +2392,8 @@ def _gemini_verified_media_verifier(request, max_frames):
             "entity_match, entity_confidence, verified_entity, action_match, "
             "action_confidence, verified_action, reasoning. Confidence values must be 0 to 1."
         )
-        parts = [types.Part.from_text(text=prompt)]
-        for sample in samples:
-            parts.append(types.Part.from_bytes(
-                data=Path(sample).read_bytes(), mime_type="image/jpeg"
-            ))
-        response, _model = _generate_gemini_vision_content(
-            client,
-            [types.Content(role="user", parts=parts)],
-        )
-        data = _extract_json_object(str(getattr(response, "text", "") or ""))
+        raw, provider = _vision_completion(prompt, samples)
+        data = _require_vision_json(raw, "entity_match", "match")
         def as_optional_bool(value):
             if isinstance(value, bool):
                 return value
@@ -2400,12 +2420,12 @@ def _gemini_verified_media_verifier(request, max_frames):
             verified_action=str(data.get("verified_action") or ""),
             reasoning=str(data.get("reasoning") or data.get("brief_reasoning") or "")[:300],
             sampled_frames=tuple(str(sample) for sample in samples),
-            provider="gemini",
+            provider=provider,
         )
     except Exception as exc:
         return DownloadedMediaEvidence(
             entity_match=False,
-            provider="gemini",
+            provider="vision_fallback",
             error=str(exc)[:300],
         )
 
@@ -2414,11 +2434,6 @@ def _gemini_rendered_visual_verifier(request: RenderedSceneRequest) -> RenderedV
     """Verify one final-render frame without relying on file names or queries."""
 
     try:
-        client = _get_gemini_client()
-        if client is None:
-            return RenderedVisualEvidence(False, provider="gemini", error="Gemini visual verifier is unavailable")
-        from google.genai import types
-
         prompt = (
             "Evaluate only this rendered video frame. Do not infer anything from file names or search terms.\n\n"
             f"Expected entity: {request.expected_entity}\n"
@@ -2426,14 +2441,8 @@ def _gemini_rendered_visual_verifier(request: RenderedSceneRequest) -> RenderedV
             "Does the visible frame clearly depict the expected entity? Return compact JSON only: "
             "match, confidence, matched_entity, reasoning. Confidence must be 0 to 1."
         )
-        response, _model = _generate_gemini_vision_content(
-            client,
-            [types.Content(role="user", parts=[
-                types.Part.from_text(text=prompt),
-                types.Part.from_bytes(data=request.frame_path.read_bytes(), mime_type="image/jpeg"),
-            ])],
-        )
-        data = _extract_json_object(str(getattr(response, "text", "") or ""))
+        raw, provider = _vision_completion(prompt, [request.frame_path])
+        data = _require_vision_json(raw, "match", "entity_match")
         match = data.get("match", data.get("entity_match", False))
         if isinstance(match, str):
             match = match.strip().lower() in {"true", "yes", "match"}
@@ -2442,10 +2451,10 @@ def _gemini_rendered_visual_verifier(request: RenderedSceneRequest) -> RenderedV
             confidence=max(0.0, min(1.0, float(data.get("confidence", data.get("entity_confidence", 0.0)) or 0.0))),
             matched_entity=str(data.get("matched_entity") or data.get("verified_entity") or ""),
             reasoning=str(data.get("reasoning") or data.get("brief_reasoning") or "")[:300],
-            provider="gemini",
+            provider=provider,
         )
     except Exception as exc:
-        return RenderedVisualEvidence(False, provider="gemini", error=str(exc)[:300])
+        return RenderedVisualEvidence(False, provider="vision_fallback", error=str(exc)[:300])
 
 
 def _extract_rendered_scene_frame(video_path: Path, timestamp_sec: float, scene_index: int) -> Path:
@@ -2610,7 +2619,7 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
         gemini_image_enabled=is_gemini_image_available(),
         pollinations_image_enabled=is_pollinations_image_available(),
         mixkit_enabled=bool(MIXKIT_API_URL),
-        coverr_enabled=bool(COVERR_API_URL),
+        coverr_enabled=bool(COVERR_API_URL and COVERR_API_KEY),
         videvo_enabled=bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         wikimedia_enabled=ENABLE_WIKIMEDIA_COMMONS,
         noaa_enabled=bool(NOAA_API_URL),
@@ -2678,13 +2687,32 @@ def _provider_is_configured(provider):
         "pixabay": bool(PIXABAY_API_KEY and "your_pixabay" not in PIXABAY_API_KEY),
         "wikimedia": bool(ENABLE_WIKIMEDIA_COMMONS),
         "mixkit": bool(MIXKIT_API_URL),
-        "coverr": bool(COVERR_API_URL),
+        "coverr": bool(COVERR_API_URL and COVERR_API_KEY),
         "videvo": bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         "noaa": bool(NOAA_API_URL),
         "esa": bool(ESA_API_URL),
         "usgs": bool(USGS_API_URL),
         "europeana": bool(EUROPEANA_API_URL and EUROPEANA_API_KEY),
     }.get(str(provider or "").lower(), True)
+
+
+def _provider_failure_detail(provider):
+    return _PROVIDER_RUN_FAILURES.get(str(provider or "").lower(), "")
+
+
+def _provider_is_available(provider):
+    provider_id = str(provider or "").lower()
+    return _provider_is_configured(provider_id) and not _provider_failure_detail(provider_id)
+
+
+def _mark_provider_run_failure(provider, detail):
+    provider_id = str(provider or "").lower()
+    if not provider_id:
+        return
+    message = str(detail or "hard provider failure")[:240]
+    if provider_id not in _PROVIDER_RUN_FAILURES:
+        print(f"    [{provider_id}] hard failure; disabling provider for this run: {message}")
+    _PROVIDER_RUN_FAILURES[provider_id] = message
 
 
 def _classify_provider_probe_exception(exc):
@@ -2862,6 +2890,8 @@ def _coverr_base_url():
     base = COVERR_API_URL.rstrip("/")
     if base.endswith("/search/videos"):
         base = base[: -len("/search/videos")]
+    if base.endswith("/videos"):
+        base = base[: -len("/videos")]
     return base
 
 
@@ -2870,31 +2900,32 @@ def _coverr_headers():
     if COVERR_API_KEY:
         headers["Authorization"] = f"Bearer {COVERR_API_KEY}"
         headers["X-API-Key"] = COVERR_API_KEY
+    if COVERR_APP_ID:
+        headers["X-App-ID"] = COVERR_APP_ID
+        headers["X-API-ID"] = COVERR_APP_ID
     return headers
 
 
-def _coverr_storage_download_url(session, base_url, base_filename, *, timeout_sec=30):
-    if not base_filename:
-        return ""
-    response = session.get(
-        f"{base_url}/storage/videos/{base_filename}",
-        headers=_coverr_headers(),
-        timeout=timeout_sec,
-    )
-    response.raise_for_status()
-    payload = response.json()
-    if isinstance(payload, str):
-        return payload
-    if isinstance(payload, dict):
-        return str(payload.get("url") or payload.get("download_url") or payload.get("downloadUrl") or "")
-    return ""
+def _coverr_download_url(item):
+    urls = item.get("urls") if isinstance(item.get("urls"), dict) else {}
+    for key in ("mp4_download", "mp4", "mp4_preview"):
+        if urls.get(key):
+            return str(urls[key])
+    variant = item.get("default_variant") if isinstance(item.get("default_variant"), dict) else {}
+    renditions = variant.get("renditions") if isinstance(variant.get("renditions"), list) else []
+    free_renditions = [rendition for rendition in renditions if isinstance(rendition, dict) and not rendition.get("is_plus")]
+    if free_renditions:
+        picked = max(free_renditions, key=lambda rendition: int(rendition.get("height") or 0))
+        if picked.get("url"):
+            return str(picked["url"])
+    return str(item.get("download_url") or item.get("video_url") or "")
 
 
 def _coverr_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=False):
     import requests
 
     base_url = _coverr_base_url()
-    if not base_url:
+    if not base_url or _provider_failure_detail("coverr"):
         return []
     session = requests.Session()
     candidate_pool = []
@@ -2902,29 +2933,51 @@ def _coverr_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=Fal
         enriched = _qualify_query(q, fallback)
         try:
             response = session.get(
-                f"{base_url}/search/videos",
+                f"{base_url}/videos",
                 headers=_coverr_headers(),
-                params={"query": enriched},
+                params={"query": enriched, "urls": "true", "page_size": 8},
                 timeout=timeout_sec,
             )
             response.raise_for_status()
             items = _json_items(response.json())
         except Exception as e:
             print(f"    [Coverr] search failed for {enriched!r}: {_safe_diagnostic(e)}")
-            if raise_errors:
+            response = getattr(e, "response", None)
+            status_code = int(getattr(response, "status_code", 0) or 0)
+            hard_failure = status_code in {401, 403, 404, 429}
+            if hard_failure:
+                _mark_provider_run_failure("coverr", f"HTTP {status_code}: {_safe_diagnostic(e)}")
+            if raise_errors and not candidate_pool:
                 raise
+            if hard_failure:
+                return candidate_pool
             continue
         for item in items[:8]:
             if not isinstance(item, dict):
                 continue
             base_filename = item.get("base_filename") or item.get("baseFilename")
-            try:
-                download_url = _coverr_storage_download_url(session, base_url, base_filename, timeout_sec=timeout_sec)
-            except Exception as e:
-                print(f"    [Coverr] signed download failed for {base_filename!r}: {_safe_diagnostic(e)}")
-                if raise_errors:
-                    raise
-                continue
+            download_url = _coverr_download_url(item)
+            if not download_url and (item.get("id") or item.get("objectID") or item.get("video_id")):
+                try:
+                    detail_response = session.get(
+                        f"{base_url}/videos/{item.get('id') or item.get('objectID') or item.get('video_id')}",
+                        headers=_coverr_headers(),
+                        timeout=timeout_sec,
+                    )
+                    detail_response.raise_for_status()
+                    item = {**item, **detail_response.json()}
+                    download_url = _coverr_download_url(item)
+                except Exception as e:
+                    print(f"    [Coverr] video detail failed for {base_filename!r}: {_safe_diagnostic(e)}")
+                    detail_response = getattr(e, "response", None)
+                    status_code = int(getattr(detail_response, "status_code", 0) or 0)
+                    if status_code in {401, 403, 429}:
+                        _mark_provider_run_failure("coverr", f"HTTP {status_code}: {_safe_diagnostic(e)}")
+                    if raise_errors and not candidate_pool:
+                        raise
+                    if status_code in {401, 403, 429}:
+                        return candidate_pool
+                    continue
             if not download_url:
                 continue
             is_vertical = bool(item.get("is_vertical"))
@@ -2933,9 +2986,18 @@ def _coverr_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=Fal
                 {
                     "provider_asset_id": item.get("id") or base_filename or download_url,
                     "title": item.get("title") or item.get("name") or "",
-                    "description": item.get("description") or "",
-                    "source_url": item.get("contributor_url") or item.get("url") or "https://coverr.co/",
+                    "description": " ".join([
+                        str(item.get("description") or ""),
+                        " ".join(str(tag) for tag in (item.get("tags") or [])),
+                    ]).strip(),
+                    "source_url": (
+                        item.get("contributor_url")
+                        or item.get("url")
+                        or (f"https://coverr.co/videos/{item.get('slug')}" if item.get("slug") else "")
+                        or "https://coverr.co/"
+                    ),
                     "download_url": download_url,
+                    "duration_sec": item.get("duration"),
                     "width": 1080 if is_vertical else 1920,
                     "height": 1920 if is_vertical else 1080,
                     "license": "Coverr License",
@@ -3358,7 +3420,7 @@ def discover_critical_assets(
         allow_unverified_when_vision_unavailable=False,
     )
     gate = VerifiedMediaGate(config, verifier=verifier or _gemini_verified_media_verifier)
-    used_provider_ids = set()
+    used_provider_ids = _load_persistent_used()
     failed_roles = []
 
     for scene_index, (role_name, queries) in enumerate((
@@ -4108,7 +4170,7 @@ def fetch_coverr_video(
 ):
     """Fetch Coverr videos via search metadata and signed MP4 URLs."""
 
-    if not COVERR_API_URL:
+    if not (COVERR_API_URL and COVERR_API_KEY):
         return None
     intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
     candidate = _select_candidate_for_provider(
@@ -4824,16 +4886,50 @@ def fetch_wikimedia_media(
 def _load_persistent_used():
     """Load cross-video used_set from disk so clips aren't repeated across runs."""
     try:
-        if PERSISTENT_USED_PATH.exists():
-            data = json.loads(PERSISTENT_USED_PATH.read_text())
-            return set(data) if isinstance(data, list) else set()
+        source_path = (
+            PERSISTENT_USED_PATH
+            if PERSISTENT_USED_PATH.exists()
+            else LEGACY_PERSISTENT_USED_PATH
+        )
+        if source_path.exists():
+            data = json.loads(source_path.read_text())
+            if not isinstance(data, list):
+                return set()
+            return {
+                str(item)
+                for item in data
+                if _stable_used_key(item)
+            }
     except (OSError, json.JSONDecodeError):
         pass
     return set()
 
+
+def _stable_used_key(value):
+    text = str(value or "").strip()
+    if re.match(r"^[A-Za-z]:[\\/]", text):
+        return False
+    if not re.match(r"^[a-z][a-z0-9_]*:.+", text, flags=re.IGNORECASE):
+        return False
+    return not text.lower().startswith((
+        "local:",
+        "hybrid_composer:",
+        "gemini_image:",
+        "pollinations:",
+    ))
+
+
 def _save_persistent_used(s):
     try:
-        trimmed = sorted(s, key=lambda x: str(x))[-500:]
+        trimmed = sorted(
+            {
+                str(value)
+                for value in (*_load_persistent_used(), *s)
+                if _stable_used_key(value)
+            },
+            key=str,
+        )[-500:]
+        PERSISTENT_USED_PATH.parent.mkdir(parents=True, exist_ok=True)
         PERSISTENT_USED_PATH.write_text(json.dumps(trimmed))
     except (OSError, TypeError):
         pass
@@ -4875,7 +4971,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 no_interactive=False, shot_intent=None,
                 visual_grammar_engine=None, visual_grammar_decision=None,
                 provider_query_variants=None, scene_constraints=None):
-    """Chain b-roll sources: local -> DALL-E (opt) -> Pexels -> Pixabay -> NASA (space).
+    """Chain b-roll sources: local -> generated image (opt) -> Pexels -> Pixabay -> NASA (space).
 
     Uses a persistent cross-video used_set so clips aren't repeated across runs.
     """
@@ -4931,7 +5027,7 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         elif hybrid or dalle:
             print(f"    [Local] No strong match for '{keyword}' (below threshold).")
 
-    # 2. Gemini image generation (when explicitly requested via --dalle flag)
+    # 2. Gemini image generation (when explicitly requested via the legacy --dalle flag)
     if dalle:
         dalle_img = generate_gemini_image(keyword, idx)
         if dalle_img:
@@ -6569,7 +6665,7 @@ def main():
     parser.add_argument("--threshold", type=float, default=0.5,
                         help="Similarity threshold for local file matching in hybrid mode (default: 0.5)")
     parser.add_argument("--dalle", action="store_true",
-                        help="Use OpenAI DALL-E to generate B-roll images when no local match is found (requires OPENAI_API_KEY)")
+                        help="Use Gemini image generation when no local/stock match is found")
     parser.add_argument("--landscape", action="store_true",
                         help="Generate landscape video (1920x1080) instead of vertical (1080x1920)")
     parser.add_argument("--reuse-script", action="store_true",
@@ -6627,7 +6723,7 @@ def main():
         img_count = sum(1 for f in local_media if is_image(f))
         vid_count = len(local_media) - img_count
         if dalle:
-            mode_str = "hybrid matching with DALL-E fallback"
+            mode_str = "hybrid matching with generated-image fallback"
         else:
             mode_str = "hybrid matching with Pexels fallback" if hybrid else "local-only matching"
         print(f"[i] Found {len(local_media)} local file(s) in input_clips/ ({vid_count} video, {img_count} image) - using {mode_str}.")
@@ -7393,20 +7489,28 @@ def main():
             "esa",
             "usgs",
         }
-        plans = [
+        ranked_plans = [
             plan
             for plan in strategy.provider_plans
-            if plan.provider_id in supported and plan.score > 0
+            if plan.provider_id in supported
+            and plan.score > 0
+            and _provider_is_configured(plan.provider_id)
+        ]
+        disabled_plans = [
+            plan for plan in ranked_plans if _provider_failure_detail(plan.provider_id)
+        ]
+        plans = [
+            plan for plan in ranked_plans if _provider_is_available(plan.provider_id)
         ][:config.max_providers_per_scene]
         # Coverage preflight is an availability probe, not the final routing
         # decision.  A narrow capability ranking must not make a concrete
-        # stock query appear impossible when the two configured stock sources
+        # stock query appear impossible when configured stock sources
         # can still answer it.  Final provider selection remains unchanged.
         if not plans and queries:
             fallback_providers = [
                 provider_id
-                for provider_id in ("pexels", "pixabay")
-                if _provider_is_configured(provider_id)
+                for provider_id in ("pexels", "pixabay", "coverr")
+                if _provider_is_available(provider_id)
             ][:config.max_providers_per_scene]
             plans = [
                 SimpleNamespace(provider_id=provider_id, queries=tuple(queries), score=0.01)
@@ -7421,8 +7525,17 @@ def main():
         attempted: list[str] = []
         provider_outcomes: list[ProviderProbeOutcome] = []
         candidates = []
-        for plan in plans:
+        for plan in (*disabled_plans, *plans):
             attempted.append(plan.provider_id)
+            provider_failure = _provider_failure_detail(plan.provider_id)
+            if provider_failure:
+                provider_outcomes.append(ProviderProbeOutcome(
+                    provider=plan.provider_id,
+                    status=ProviderProbeStatus.PROVIDER_ERROR,
+                    detail=f"provider disabled for this run: {provider_failure}",
+                ))
+                reasons.append(f"{plan.provider_id} disabled for this run: {provider_failure}")
+                continue
             if not _provider_is_configured(plan.provider_id):
                 provider_outcomes.append(ProviderProbeOutcome(
                     provider=plan.provider_id,
@@ -7654,7 +7767,7 @@ def main():
         return path
 
     def stage_media_selection(ctx: PipelineContext) -> StageResult:
-        used_set = set()
+        used_set = _load_persistent_used()
         media_assets = []
         broll_overrides = ctx.values.get("broll_overrides", {})
         shot_plan = ctx.values.get("shot_plan")
@@ -7696,6 +7809,13 @@ def main():
                     )
                 provider = str(locked.get("provider") or "")
                 provider_id = str(locked.get("provider_id") or "")
+                if provider and provider_id:
+                    used_set.add(
+                        provider_id
+                        if provider_id.startswith(f"{provider}:")
+                        else f"{provider}:{provider_id}"
+                    )
+                    _save_persistent_used(used_set)
                 locked_asset = _media_asset_from_critical_lock(locked, idx)
                 _MEDIA_SELECTION_DIAGNOSTICS[idx] = locked_asset.metadata
                 media_assets.append(locked_asset)
@@ -7966,13 +8086,17 @@ def main():
         scene_constraint_report = ctx.values.get("scene_constraint_report")
         voice_by_index = {item["idx"]: item for item in ctx.values.get("voice_items", [])}
         media_assets = list(ctx.values.get("media_assets", []))
-        used_set = set()
+        used_set = _load_persistent_used()
         for asset in media_assets:
             selection = (asset.metadata or {}).get("selection", {})
             provider = str(selection.get("provider") or "")
             provider_id = str(selection.get("provider_id") or "")
             if provider and provider_id:
-                used_set.add(f"{provider}:{provider_id}")
+                used_set.add(
+                    provider_id
+                    if provider_id.startswith(f"{provider}:")
+                    else f"{provider}:{provider_id}"
+                )
             used_set.add(str(asset.local_path))
 
         final_results = []
@@ -8058,6 +8182,17 @@ def main():
                 continue
 
             original_asset = asset
+            original_path = Path(original_asset.local_path)
+            original_backup = None
+            if (
+                original_path.exists()
+                and original_path.parent.resolve() == OUT_DIR.resolve()
+                and original_path.stem == f"broll_{idx}"
+            ):
+                backup_dir = OUT_DIR / "verified_media_backups"
+                backup_dir.mkdir(parents=True, exist_ok=True)
+                original_backup = backup_dir / f"broll_{idx}{original_path.suffix}"
+                shutil.copy2(original_path, original_backup)
             replacement = None
             queries = _replacement_queries(ctx, idx, provider_intent)
             fallback = getattr(provider_intent, "primary_subject", "") or niche
@@ -8110,6 +8245,8 @@ def main():
 
             if replacement is None:
                 # Never allow a rejected replacement to displace the original.
+                if original_backup is not None and original_backup.exists():
+                    original_backup.replace(original_path)
                 media_assets[idx] = original_asset
                 result = initial_result
                 if request.priority is not VerificationPriority.CRITICAL:
@@ -8118,6 +8255,11 @@ def main():
                         decision=VerificationDecision.UNVERIFIED,
                         reason=f"{initial_result.reason}; no verified replacement available",
                     )
+            elif original_backup is not None:
+                try:
+                    original_backup.unlink()
+                except FileNotFoundError:
+                    pass
             media_assets[idx].metadata.setdefault("verified_media", result.to_dict())
             final_results.append(result)
 
@@ -8339,6 +8481,21 @@ def main():
         description_base = topic_metadata.description or title
         if title.lower() not in description_base[:150].lower():
             description_base = f"{title}\n\n{description_base}"
+        visual_attributions = []
+        for asset in ctx.values.get("media_assets", []):
+            asset_metadata = asset.metadata if isinstance(asset.metadata, dict) else {}
+            selection = asset_metadata.get("selection")
+            selection = selection if isinstance(selection, dict) else asset_metadata
+            if str(selection.get("provider") or "").lower() != "coverr":
+                continue
+            attribution = str(selection.get("attribution") or "Coverr").strip()
+            source_url = str(selection.get("source_url") or "https://coverr.co/").strip()
+            credit = f"{attribution}: {source_url}"
+            if credit not in visual_attributions:
+                visual_attributions.append(credit)
+        visual_credit_text = "; ".join(visual_attributions)
+        if visual_credit_text:
+            description_base = f"{description_base}\n\nVisual footage: {visual_credit_text}"
         music_selection = {}
         try:
             music_selection = read_manifest(OUT_DIR / "music_selection.json")
@@ -8367,9 +8524,18 @@ def main():
                     "Selected music requires attribution, but no attribution text is available."
                 )
             description_base = f"{description_base}\n\nMusic: {music_attribution}"
+        publish_slot = os.environ.get("AUTO_VIDEO_DAILY_SLOT", "").strip().lower()
+        publish_key = (
+            f"{dt.datetime.now():%Y-%m-%d}:{publish_slot}"
+            if publish_slot else ""
+        )
+        if publish_key:
+            description_base = f"{description_base}\n\nAutoShort-Publish-Key: {publish_key}"
         youtube_description = f"{description_base}\n\n{hashtag_str}"
         facebook_description = youtube_description
         instagram_caption = topic_metadata.instagram_caption or title
+        if visual_credit_text:
+            instagram_caption = f"{instagram_caption}\n\nVisual footage: {visual_credit_text}"
         instagram_caption = f"{instagram_caption}\n\n{hashtag_str}"
         youtube_tags = topic_metadata.youtube_tags
         pinned_comment = generate_pinned_comment(
@@ -8402,6 +8568,8 @@ def main():
             "music_provider": selected_track.get("provider") if isinstance(selected_track, dict) else None,
             "music_license": license_metadata if isinstance(license_metadata, dict) else {},
             "music_attribution": music_attribution,
+            "visual_attributions": visual_attributions,
+            "publish_key": publish_key,
             "duration_sec": round(float(ctx.values["total"]), 2),
             "video_file": "video.mp4",
             "video_file_yt": "video_yt_safe.mp4",

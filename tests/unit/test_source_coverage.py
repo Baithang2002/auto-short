@@ -75,6 +75,11 @@ class SourceCoverageTests(unittest.TestCase):
         })
         self.assertEqual(1.0, config.supporting_scene_score_ratio)
 
+    def test_default_probe_budget_checks_three_providers_per_scene(self) -> None:
+        config = SourceCoverageConfig.from_env({})
+
+        self.assertEqual(3, config.max_providers_per_scene)
+
     def test_sampling_is_bounded_and_evenly_distributed(self) -> None:
         self.assertEqual((0,), sample_scene_indexes(12, 1))
         self.assertEqual((0, 2, 4, 7, 9, 11), sample_scene_indexes(12, 6))
@@ -116,6 +121,43 @@ class SourceCoverageTests(unittest.TestCase):
         report = SourceCoverageEvaluator().evaluate("Rainforests", [scene])
 
         self.assertEqual("CONTENT_COVERAGE_GAP", report.failure_classification)
+
+    def test_mixed_technical_and_no_results_can_rotate_to_another_topic(self) -> None:
+        scene = _scene(0, covered=False, importance="HOOK")
+        scene = replace(
+            scene,
+            provider_outcomes=(
+                ProviderProbeOutcome("coverr", ProviderProbeStatus.PROVIDER_ERROR),
+                ProviderProbeOutcome("pixabay", ProviderProbeStatus.NO_RESULTS),
+            ),
+        )
+
+        report = SourceCoverageEvaluator().evaluate("Rainforests", [scene])
+
+        self.assertEqual("CONTENT_COVERAGE_GAP", report.failure_classification)
+
+    def test_successful_probe_with_rejected_candidates_remains_content_gap(self) -> None:
+        scene = replace(
+            _scene(0, covered=False, importance="HOOK"),
+            provider_outcomes=(
+                ProviderProbeOutcome("pexels", ProviderProbeStatus.SUCCESS, candidates_found=10),
+                ProviderProbeOutcome("coverr", ProviderProbeStatus.PROVIDER_ERROR),
+            ),
+        )
+
+        report = SourceCoverageEvaluator().evaluate("Rainforests", [scene])
+
+        self.assertEqual("CONTENT_COVERAGE_GAP", report.failure_classification)
+
+    def test_zero_minimum_ratio_allows_noncritical_uncovered_scene(self) -> None:
+        config = SourceCoverageConfig(minimum_scene_coverage_ratio=0.0)
+
+        report = SourceCoverageEvaluator(config).evaluate(
+            "Rainforests",
+            [_scene(0, covered=False, importance="SUPPORTING")],
+        )
+
+        self.assertEqual(SourceCoverageDecision.APPROVED, report.decision)
 
     def test_daily_recovery_recognizes_matching_deferred_report(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
