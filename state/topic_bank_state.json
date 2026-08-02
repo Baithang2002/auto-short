@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-02T11:15:39Z",
+  "updated_at": "2026-08-02T14:41:36Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -1546,6 +1546,21 @@
       "last_failure_at": "2026-08-01T14:11:44Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-15T14:11:44Z"
+    },
+    {
+      "topic": "Why Iceland Has So Many Volcanoes",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T14:41:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T14:41:36Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-16T14:41:36Z"
     },
     {
       "topic": "Why Jupiter Has a Giant Red Spot",
