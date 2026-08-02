@@ -409,10 +409,10 @@ def count_words(text):
 
 
 def automatic_duration_for_topic(topic, card=None):
-    """Choose a conservative Shorts target without changing the hard cap."""
+    """Choose a target that remains inside the production Shorts profile."""
 
     if isinstance(card, TopicCard):
-        return int(card.recommended_duration_sec), f"topic card {card.id}"
+        return max(int(card.recommended_duration_sec), int(SHORTS_MIN_DURATION)), f"topic card {card.id}"
     text = re.sub(r"[^a-z0-9]+", " ", str(topic or "").casefold())
     if any(term in text for term in (
         "shark", "jellyfish", "octopus", "lightning", "fish rain", "insect zombie",
@@ -421,8 +421,8 @@ def automatic_duration_for_topic(topic, card=None):
     if any(term in text for term in (
         "how ", "why ", "survive", "camouflage", "hover", "rotate", "forms ", "build",
     )):
-        return 48, "mechanism topic fallback"
-    return 46, "short explainer fallback"
+        return max(48, int(SHORTS_MIN_DURATION)), "mechanism topic fallback"
+    return max(46, int(SHORTS_MIN_DURATION)), "short explainer fallback"
 
 
 def resolve_target_duration(topic, explicit_duration=None, card=None):
@@ -1150,6 +1150,21 @@ def retime_voice(voice_path, idx, tempo):
     return out_path, media_duration(out_path)
 
 
+def pad_voice(voice_path, idx, duration, padding):
+    """Add a short silent tail so scene pacing can meet the format minimum."""
+
+    out_path = OUT_DIR / f"voice_{idx}_padded.mp3"
+    run_ff([
+        "ffmpeg", "-y",
+        "-i", str(voice_path),
+        "-filter:a", f"apad=pad_dur={padding:.3f}",
+        "-t", f"{duration + padding:.3f}",
+        "-vn",
+        str(out_path),
+    ])
+    return out_path, media_duration(out_path)
+
+
 def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
     """Keep default Shorts runs inside the format profile's duration window
     without making the narration sound odd.
@@ -1161,24 +1176,29 @@ def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile 
     if target_duration < profile.min_duration_sec:
         return voice_items
 
+    if not voice_items:
+        return voice_items
     total = sum(item["duration"] for item in voice_items)
+    transition_allowance = max(0, len(voice_items) - 1) * profile.transition_duration_sec
+    estimated_render_duration = total - transition_allowance
     desired = min(max(target_duration, profile.min_duration_sec), profile.max_duration_sec)
+    desired_voice_total = desired + transition_allowance
 
-    if total < profile.min_duration_sec:
-        raw_tempo = total / desired
+    if estimated_render_duration < profile.min_duration_sec:
+        raw_tempo = total / desired_voice_total
         # Avoid dragging the voice. The richer script should provide duration;
         # retiming only corrects normal TTS variance.
         tempo = max(profile.narration_min_retime_tempo, raw_tempo)
         action = "slowing"
     else:
-        raw_tempo = total / desired
+        raw_tempo = total / desired_voice_total
         # Anything above the max retime tempo sounds chipmunky on phone speakers
         # and tanks retention. Better to ship a slightly-long video and let the
         # hard-cap trim take the tail than to rush the whole narration.
         tempo = min(profile.narration_max_retime_tempo, raw_tempo)
         action = "speeding up"
 
-    if profile.min_duration_sec <= total <= profile.max_duration_sec:
+    if profile.min_duration_sec <= estimated_render_duration <= profile.max_duration_sec:
         # Once the natural narration already fits the Shorts window, preserve
         # its delivery. The timeline follows the voice instead of tightening
         # pauses to match an earlier target estimate.
@@ -1196,8 +1216,33 @@ def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile 
         adjusted.append(adjusted_item)
 
     adjusted_total = sum(item["duration"] for item in adjusted)
-    if not (profile.min_duration_sec <= adjusted_total <= profile.max_duration_sec):
-        print(f"    [Warning] Voice timing is still {adjusted_total:.1f}s after safe retiming.")
+    adjusted_render_duration = adjusted_total - transition_allowance
+    if adjusted_render_duration < profile.min_duration_sec:
+        required_voice_total = profile.min_duration_sec + transition_allowance + 0.5
+        padding_per_scene = max(0.0, required_voice_total - adjusted_total) / len(adjusted)
+        if padding_per_scene > 0:
+            print(
+                f"[i] Adding {padding_per_scene:.2f}s of scene-end breathing room "
+                "to meet the Shorts duration floor."
+            )
+            padded = []
+            for item in adjusted:
+                path, item_duration = pad_voice(
+                    item["voice"], item["idx"], item["duration"], padding_per_scene
+                )
+                padded_item = {**item, "voice": path, "duration": item_duration}
+                voice_track = item.get("voice_track")
+                if isinstance(voice_track, VoiceTrack):
+                    padded_item["voice_track"] = voice_track.with_retimed_audio(path, item_duration)
+                padded.append(padded_item)
+            adjusted = padded
+            adjusted_total = sum(item["duration"] for item in adjusted)
+            adjusted_render_duration = adjusted_total - transition_allowance
+    if not (profile.min_duration_sec <= adjusted_render_duration <= profile.max_duration_sec):
+        print(
+            f"    [Warning] Estimated render timing is still "
+            f"{adjusted_render_duration:.1f}s after safe normalization."
+        )
     return adjusted
 
 
@@ -8880,6 +8925,8 @@ def main():
             if check.severity.value in {"WARNING", "DEFER", "BLOCK"}
         ]
         print(f"[quality] Publish decision: {report.verdict.value}")
+        for warning in warnings:
+            print(f"    [quality] {warning}")
         return StageResult(
             outputs={
                 "publish_quality_report": str(report_path),

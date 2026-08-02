@@ -70,6 +70,19 @@ ATTEMPT_REPORTS = (
     VERIFIED_MEDIA_REPORT,
     EXACT_SUBJECT_GATE_REPORT,
 )
+ATTEMPT_DIAGNOSTICS = ATTEMPT_REPORTS + (
+    OUT_DIR / "pipeline_state.json",
+    OUT_DIR / "critical_asset_plan.json",
+    OUT_DIR / "rendered_visual_qa_report.json",
+    OUT_DIR / "evidence_verification_report.json",
+    OUT_DIR / "ffprobe.json",
+    OUT_DIR / "contact_sheet.jpg",
+    OUT_DIR / "upload_metadata.json",
+)
+ATTEMPT_RENDER_FILES = (
+    OUT_DIR / "final.mp4",
+    OUT_DIR / "final_yt_safe.mp4",
+)
 
 
 def load_topics() -> list:
@@ -349,11 +362,27 @@ def _read_json(path: Path) -> dict:
 def clear_attempt_reports() -> None:
     """Remove stale quality reports before a new topic attempt begins."""
 
-    for report_path in ATTEMPT_REPORTS:
+    for report_path in (*ATTEMPT_DIAGNOSTICS, *ATTEMPT_RENDER_FILES):
         try:
             report_path.unlink()
         except FileNotFoundError:
             continue
+
+
+def archive_attempt_diagnostics(topic: str, attempt_number: int) -> Path:
+    """Preserve one failed attempt before the next topic clears its reports."""
+
+    topic_slug = re.sub(r"[^a-z0-9]+", "-", topic.casefold()).strip("-")[:48] or "topic"
+    destination = OUT_DIR / "attempt_reports" / f"{attempt_number:02d}-{topic_slug}"
+    sources = list(ATTEMPT_DIAGNOSTICS)
+    if PUBLISH_QUALITY_REPORT.exists():
+        sources.extend(ATTEMPT_RENDER_FILES)
+    for source in sources:
+        if not source.exists() or not source.is_file():
+            continue
+        destination.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination / source.name)
+    return destination
 
 
 def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
@@ -479,6 +508,7 @@ def run_daily() -> int:
             return 0
 
         deferred, reason = candidate_quality_deferred(topic)
+        archive_attempt_diagnostics(topic, attempt_number)
         if not deferred:
             finished = dt.datetime.now()
             secs = (finished - started).total_seconds()

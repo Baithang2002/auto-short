@@ -15,6 +15,49 @@ import pipeline_daily
 
 
 class PipelineDailyTests(unittest.TestCase):
+    def test_archives_attempt_diagnostics_before_next_topic(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "output"
+            output.mkdir()
+            publish_report = output / "publish_quality_report.json"
+            publish_report.write_text('{"verdict": "DEFERRED"}', encoding="utf-8")
+            missing = output / "missing.json"
+
+            with patch.object(pipeline_daily, "OUT_DIR", output), patch.object(
+                pipeline_daily,
+                "ATTEMPT_DIAGNOSTICS",
+                (publish_report, missing),
+            ), patch.object(
+                pipeline_daily,
+                "ATTEMPT_RENDER_FILES",
+                (),
+            ):
+                destination = pipeline_daily.archive_attempt_diagnostics(
+                    "Wind Turbines & Electricity", 3
+                )
+
+            archived = destination / publish_report.name
+            self.assertTrue(archived.exists())
+            self.assertEqual('{"verdict": "DEFERRED"}', archived.read_text(encoding="utf-8"))
+            self.assertFalse((destination / missing.name).exists())
+
+    def test_clears_stale_cross_attempt_diagnostics_and_render(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            report = root / "rendered_visual_qa_report.json"
+            video = root / "final.mp4"
+            report.write_text("stale report", encoding="utf-8")
+            video.write_bytes(b"stale video")
+
+            with patch.object(pipeline_daily, "ATTEMPT_DIAGNOSTICS", (report,)), patch.object(
+                pipeline_daily, "ATTEMPT_RENDER_FILES", (video,)
+            ):
+                pipeline_daily.clear_attempt_reports()
+
+            self.assertFalse(report.exists())
+            self.assertFalse(video.exists())
+
     def test_prepare_qualified_script_seeds_exact_approved_script(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

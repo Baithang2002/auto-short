@@ -238,6 +238,7 @@ jobs:
             output/evidence_verification_report.json
             output/rendered_visual_qa_report.json
             output/publish_quality_report.json
+            output/attempt_reports/
             output/daily_runs.log
             state/
             output/screenshots/
