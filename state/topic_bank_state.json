@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-01T14:19:29Z",
+  "updated_at": "2026-08-02T06:22:05Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -211,6 +211,21 @@
       "last_failure_at": "2026-07-31T15:09:13Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:13Z"
+    },
+    {
+      "topic": "How Craters Form on the Moon",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:14:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:14:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
+      "quarantine_until": "2026-08-16T06:14:59Z"
     },
     {
       "topic": "How Crocodiles Wait Underwater",
@@ -631,6 +646,21 @@
       "last_failure_at": "2026-07-27T08:18:01Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T08:18:01Z"
+    },
+    {
+      "topic": "how satellites take pictures of Earth",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:20:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:20:35Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
+      "quarantine_until": "2026-08-16T06:20:35Z"
     },
     {
       "topic": "How Sea Turtles Find Their Birth Beach",
@@ -1263,6 +1293,21 @@
       "quarantine_until": "2026-08-14T15:59:25Z"
     },
     {
+      "topic": "why Earth has seasons",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:20:23Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:20:23Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-16T06:20:23Z"
+    },
+    {
       "topic": "why elephants can hear through their feet",
       "status": "quarantined",
       "success_count": 0,
@@ -1831,6 +1876,51 @@
       "last_failure_at": "2026-07-31T11:47:02Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T11:47:02Z"
+    },
+    {
+      "topic": "Why The Moon Controls Tides",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:17:34Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:17:34Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-16T06:17:34Z"
+    },
+    {
+      "topic": "why the moon has no weather",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:16:15Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:16:15Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-16T06:16:15Z"
+    },
+    {
+      "topic": "Why The Moon Has Phases",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-02T06:22:05Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-02T06:22:05Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-16T06:22:05Z"
     },
     {
       "topic": "why the ocean has giant blue holes",
