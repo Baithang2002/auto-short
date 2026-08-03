@@ -188,3 +188,7 @@
 2026-08-03 15:22:02  topic='How Caves Form Underground'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-03 15:28:38  topic='How Islands Form From Volcanoes'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-03 15:14:22  topic='How an octopus changes color and texture to disappear on the seafloor'  exit=1  slot='evening'  duration=990s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-03 15:33:42  topic='How an octopus changes color and texture to disappear on the seafloor'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-03 15:33:53  topic='How The Andes Mountains Rose So High'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/6 (33%) is below required 5/6 (67%)'
+2026-08-03 15:34:08  topic='How The Swiss Alps Hold Glaciers'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
+2026-08-03 15:36:57  topic='How Fog Forms Near the Ground'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
