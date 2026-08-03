@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-03T12:51:36Z",
+  "updated_at": "2026-08-03T15:28:38Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -169,18 +169,18 @@
     },
     {
       "topic": "How Caves Form Underground",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-03T12:48:16Z",
+      "last_attempt_at": "2026-08-03T15:22:02Z",
       "last_qualified_at": "2026-08-03T12:48:16Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/da682dd0da532f6e869a.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-03T15:22:02Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-17T15:22:02Z"
     },
     {
       "topic": "how caves grow giant crystal formations",
@@ -469,18 +469,18 @@
     },
     {
       "topic": "How Islands Form From Volcanoes",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-03T12:51:36Z",
+      "last_attempt_at": "2026-08-03T15:28:38Z",
       "last_qualified_at": "2026-08-03T12:51:36Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/0ae83c8983facaecca49.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-03T15:28:38Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-17T15:28:38Z"
     },
     {
       "topic": "How Jellyfish Move Without Bones",
@@ -1969,18 +1969,18 @@
     },
     {
       "topic": "Why The Arctic Has Midnight Sun",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-03T12:48:31Z",
+      "last_attempt_at": "2026-08-03T15:16:33Z",
       "last_qualified_at": "2026-08-03T12:48:31Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/a0efe9745f32601c72c9.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-03T15:16:33Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-17T15:16:33Z"
     },
     {
       "topic": "Why The Arctic Ocean Freezes",
