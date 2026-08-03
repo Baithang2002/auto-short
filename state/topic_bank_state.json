@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-02T14:41:36Z",
+  "updated_at": "2026-08-03T12:51:36Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -168,6 +168,21 @@
       "quarantine_until": "2026-08-10T07:37:36Z"
     },
     {
+      "topic": "How Caves Form Underground",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-03T12:48:16Z",
+      "last_qualified_at": "2026-08-03T12:48:16Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/da682dd0da532f6e869a.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "how caves grow giant crystal formations",
       "status": "quarantined",
       "success_count": 0,
@@ -291,16 +306,16 @@
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 3,
+      "failure_count": 4,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T11:06:41Z",
+      "last_attempt_at": "2026-08-03T12:47:58Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T11:06:41Z",
+      "last_failure_at": "2026-08-03T12:47:58Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-16T11:06:41Z"
+      "quarantine_until": "2026-08-17T12:47:58Z"
     },
     {
       "topic": "How Earthquakes Shake the Ground",
@@ -451,6 +466,21 @@
       "last_failure_at": "2026-07-30T06:06:08Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:06:08Z"
+    },
+    {
+      "topic": "How Islands Form From Volcanoes",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-03T12:51:36Z",
+      "last_qualified_at": "2026-08-03T12:51:36Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/0ae83c8983facaecca49.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Jellyfish Move Without Bones",
@@ -936,16 +966,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 2,
+      "failure_count": 3,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T11:06:19Z",
+      "last_attempt_at": "2026-08-03T12:47:14Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T11:06:19Z",
+      "last_failure_at": "2026-08-03T12:47:14Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-16T11:06:19Z"
+      "quarantine_until": "2026-08-17T12:47:14Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1936,6 +1966,21 @@
       "last_failure_at": "2026-07-31T14:33:10Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-14T14:33:10Z"
+    },
+    {
+      "topic": "Why The Arctic Has Midnight Sun",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-03T12:48:31Z",
+      "last_qualified_at": "2026-08-03T12:48:31Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/a0efe9745f32601c72c9.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why The Arctic Ocean Freezes",
