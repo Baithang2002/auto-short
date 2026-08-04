@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-03T15:36:57Z",
+  "updated_at": "2026-08-04T06:42:47Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -633,6 +633,21 @@
       "quarantine_until": "2026-08-12T09:01:32Z"
     },
     {
+      "topic": "How Niagara Falls Keeps Moving Backward",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T06:42:47Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-04T06:42:47Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Owls Fly Almost Silently",
       "status": "quarantined",
       "success_count": 0,
@@ -1201,6 +1216,21 @@
       "last_failure_at": "2026-07-30T06:13:59Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:13:59Z"
+    },
+    {
+      "topic": "How Victoria Falls Creates Mist",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T06:08:09Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T06:08:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-18T06:08:09Z"
     },
     {
       "topic": "how waterfalls carve through solid rock",
