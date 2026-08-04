@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-04T11:51:57Z",
+  "updated_at": "2026-08-04T14:55:24Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -79,18 +79,18 @@
     },
     {
       "topic": "how astronauts sleep in space",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-04T11:51:20Z",
+      "last_attempt_at": "2026-08-04T14:40:26Z",
       "last_qualified_at": "2026-08-04T11:51:20Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/9031f88f5e2c91115370.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-04T14:40:26Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-18T14:40:26Z"
     },
     {
       "topic": "How Bats Fly in Total Darkness",
@@ -513,6 +513,21 @@
       "quarantine_until": ""
     },
     {
+      "topic": "How humpback whales use bubble nets to concentrate fish",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T14:55:24Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T14:55:24Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-18T14:55:24Z"
+    },
+    {
       "topic": "How Icebergs Break Away From Glaciers",
       "status": "quarantined",
       "success_count": 0,
@@ -571,6 +586,21 @@
       "last_failure_at": "2026-07-30T06:13:33Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
       "quarantine_until": "2026-08-13T06:13:33Z"
+    },
+    {
+      "topic": "How lava cools at the coast and creates new land",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T14:54:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T14:54:57Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-18T14:54:57Z"
     },
     {
       "topic": "How Lava Cools Into Rock",
@@ -1054,18 +1084,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 3,
+      "failure_count": 4,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-04T11:50:43Z",
+      "last_attempt_at": "2026-08-04T14:52:30Z",
       "last_qualified_at": "2026-08-04T11:50:43Z",
       "last_coverage_ratio": 0.8333,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T12:47:14Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-04T14:52:30Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-18T14:52:30Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",

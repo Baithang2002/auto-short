@@ -194,3 +194,7 @@
 2026-08-03 15:36:57  topic='How Fog Forms Near the Ground'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-04 06:08:09  topic='How Victoria Falls Creates Mist'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-04 06:07:21  topic='How Niagara Falls Keeps Moving Backward'  exit=0  slot='morning'  duration=2126s  attempts=2
+2026-08-04 14:40:26  topic='how astronauts sleep in space'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-04 14:52:30  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='evening'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
+2026-08-04 14:54:57  topic='How lava cools at the coast and creates new land'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-04 14:55:24  topic='How humpback whales use bubble nets to concentrate fish'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
