@@ -1,7 +1,22 @@
 {
   "version": 1,
-  "updated_at": "2026-08-04T14:55:24Z",
+  "updated_at": "2026-08-04T15:14:39Z",
   "records": [
+    {
+      "topic": "How A Lunar Eclipse Turns the Moon Red",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T15:11:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T15:11:35Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-18T15:11:35Z"
+    },
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
       "status": "quarantined",
@@ -256,6 +271,36 @@
       "last_failure_at": "2026-07-31T15:09:13Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:13Z"
+    },
+    {
+      "topic": "How Comets Grow Glowing Tails",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T15:14:12Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T15:14:12Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-18T15:14:12Z"
+    },
+    {
+      "topic": "how comets grow their glowing tails",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T15:14:25Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T15:14:25Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-18T15:14:25Z"
     },
     {
       "topic": "How Craters Form on the Moon",
@@ -1291,6 +1336,21 @@
       "last_failure_at": "2026-08-04T06:08:09Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-18T06:08:09Z"
+    },
+    {
+      "topic": "how Vikings navigated without GPS",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T15:14:39Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T15:14:39Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-18T15:14:39Z"
     },
     {
       "topic": "how waterfalls carve through solid rock",
