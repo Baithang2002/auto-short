@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-04T06:42:47Z",
+  "updated_at": "2026-08-04T11:51:57Z",
   "records": [
     {
       "topic": "How an Arctic fox changes its coat for winter camouflage",
@@ -76,6 +76,21 @@
       "last_failure_at": "2026-07-30T11:35:06Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T11:35:06Z"
+    },
+    {
+      "topic": "how astronauts sleep in space",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-04T11:51:20Z",
+      "last_qualified_at": "2026-08-04T11:51:20Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/9031f88f5e2c91115370.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Bats Fly in Total Darkness",
@@ -321,16 +336,16 @@
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 4,
+      "failure_count": 5,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-03T12:47:58Z",
+      "last_attempt_at": "2026-08-04T11:50:55Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T12:47:58Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-17T12:47:58Z"
+      "last_failure_at": "2026-08-04T11:50:55Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-18T11:50:55Z"
     },
     {
       "topic": "How Earthquakes Shake the Ground",
@@ -421,6 +436,21 @@
       "last_failure_at": "2026-07-31T06:27:01Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-14T06:27:01Z"
+    },
+    {
+      "topic": "How Geysers Erupt Like Clocks",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T11:51:44Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T11:51:44Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-18T11:51:44Z"
     },
     {
       "topic": "How Giraffes Drink With Long Necks",
@@ -1024,18 +1054,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 3,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-08-03T12:47:14Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-04T11:50:43Z",
+      "last_qualified_at": "2026-08-04T11:50:43Z",
+      "last_coverage_ratio": 0.8333,
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-03T12:47:14Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-17T12:47:14Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1086,16 +1116,16 @@
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T11:06:03Z",
+      "last_attempt_at": "2026-08-04T11:50:33Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T11:06:03Z",
+      "last_failure_at": "2026-08-04T11:50:33Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-16T11:06:03Z"
+      "quarantine_until": "2026-08-18T11:50:33Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -1623,6 +1653,21 @@
       "quarantine_until": "2026-08-12T09:07:38Z"
     },
     {
+      "topic": "Why Hot Springs Bubble From the Ground",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T11:51:10Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T11:51:10Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-18T11:51:10Z"
+    },
+    {
       "topic": "why hummingbirds can fly backward",
       "status": "quarantined",
       "success_count": 0,
@@ -1996,6 +2041,21 @@
       "last_failure_at": "2026-07-31T16:55:08Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-14T16:55:08Z"
+    },
+    {
+      "topic": "Why Snowflakes Have Six Sides",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-04T11:51:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-04T11:51:57Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-18T11:51:57Z"
     },
     {
       "topic": "why some clouds look like flying saucers",
