@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-05T14:46:19Z",
+  "updated_at": "2026-08-05T15:04:11Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1053,6 +1053,21 @@
       "quarantine_until": "2026-08-15T06:14:58Z"
     },
     {
+      "topic": "How The Alps Were Pushed Upward",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T15:03:07Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T15:03:07Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T15:03:07Z"
+    },
+    {
       "topic": "How The Amazon Rainforest Makes Rain",
       "status": "quarantined",
       "success_count": 0,
@@ -1111,6 +1126,21 @@
       "last_failure_at": "2026-07-31T14:38:11Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-14T14:38:11Z"
+    },
+    {
+      "topic": "How The Everglades Filters Water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T15:04:11Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T15:04:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T15:04:11Z"
     },
     {
       "topic": "How The Galapagos Shaped Evolution",
@@ -1486,6 +1516,21 @@
       "last_failure_at": "2026-07-30T11:34:38Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T11:34:38Z"
+    },
+    {
+      "topic": "why airplanes leave white trails in the sky",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T15:01:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T15:01:33Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T15:01:33Z"
     },
     {
       "topic": "why ancient cities were built beside rivers",
@@ -1876,6 +1921,21 @@
       "last_failure_at": "2026-07-31T16:00:44Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T16:00:44Z"
+    },
+    {
+      "topic": "why lakes can suddenly change color",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T15:02:27Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T15:02:27Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T15:02:27Z"
     },
     {
       "topic": "Why Leaves Change Color",
