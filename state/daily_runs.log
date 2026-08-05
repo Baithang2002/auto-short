@@ -206,3 +206,7 @@
 2026-08-05 06:05:05  topic='why suspension bridges can bend without breaking'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)'
 2026-08-05 06:05:15  topic='why the ground can crack into hexagons'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-05 06:06:36  topic='why train tracks have small gaps'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-05 06:13:04  topic='how hurricanes grow into giant storms'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-05 06:14:37  topic='Why The Sky Turns Red at Sunset'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-05 06:14:46  topic='how desert dunes move across the landscape'  exit=1  slot='morning'  attempt=3/4  quality_deferred='scene coverage 3/6 (50%) is below required 5/6 (67%)'
+2026-08-05 06:15:01  topic='why rivers bend and change course'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'

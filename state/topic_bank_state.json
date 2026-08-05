@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-05T06:06:36Z",
+  "updated_at": "2026-08-05T06:15:01Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -348,6 +348,21 @@
       "quarantine_until": "2026-08-15T13:55:03Z"
     },
     {
+      "topic": "how desert dunes move across the landscape",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T06:14:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T06:14:46Z",
+      "last_failure_reason": "scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T06:14:46Z"
+    },
+    {
       "topic": "How Dolphins Use Sound to Hunt",
       "status": "quarantined",
       "success_count": 0,
@@ -571,6 +586,21 @@
       "last_failure_at": "2026-08-04T14:55:24Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-18T14:55:24Z"
+    },
+    {
+      "topic": "how hurricanes grow into giant storms",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T06:13:04Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T06:13:04Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-19T06:13:04Z"
     },
     {
       "topic": "How Icebergs Break Away From Glaciers",
@@ -2103,6 +2133,21 @@
       "quarantine_until": "2026-08-13T06:07:59Z"
     },
     {
+      "topic": "why rivers bend and change course",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T06:15:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T06:15:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T06:15:01Z"
+    },
+    {
       "topic": "Why Saturn Has Rings",
       "status": "quarantined",
       "success_count": 0,
@@ -2461,6 +2506,21 @@
       "last_failure_at": "2026-07-31T14:35:06Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-14T14:35:06Z"
+    },
+    {
+      "topic": "Why The Sky Turns Red at Sunset",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-05T06:14:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-05T06:14:37Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-19T06:14:37Z"
     },
     {
       "topic": "Why The Sun Rises in the East",
