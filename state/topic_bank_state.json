@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-05T06:15:01Z",
+  "updated_at": "2026-08-05T14:46:19Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -51,16 +51,16 @@
       "topic": "how ancient Egyptians built stone pyramids",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-22T14:20:34Z",
+      "last_attempt_at": "2026-08-05T14:43:20Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-22T14:20:34Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-05T14:20:34Z"
+      "last_failure_at": "2026-08-05T14:43:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T14:43:20Z"
     },
     {
       "topic": "How Ants Build Underground Cities",
@@ -966,16 +966,16 @@
       "topic": "how shipping containers changed world trade",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-22T14:22:22Z",
+      "last_attempt_at": "2026-08-05T14:41:37Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-22T14:22:22Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-05T14:22:22Z"
+      "last_failure_at": "2026-08-05T14:41:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T14:41:37Z"
     },
     {
       "topic": "How Solar Eclipses Happen",
@@ -1491,16 +1491,16 @@
       "topic": "why ancient cities were built beside rivers",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-22T14:20:49Z",
+      "last_attempt_at": "2026-08-05T14:46:19Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-22T14:20:49Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-05T14:20:49Z"
+      "last_failure_at": "2026-08-05T14:46:19Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-19T14:46:19Z"
     },
     {
       "topic": "Why Antarctica Is the World's Largest Desert",
@@ -1926,16 +1926,16 @@
       "topic": "why Mars has the tallest volcano in the solar system",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-22T14:21:14Z",
+      "last_attempt_at": "2026-08-05T14:41:08Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-22T14:21:14Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-05T14:21:14Z"
+      "last_failure_at": "2026-08-05T14:41:08Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-19T14:41:08Z"
     },
     {
       "topic": "why medieval castles had moats",

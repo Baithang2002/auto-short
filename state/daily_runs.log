@@ -210,3 +210,7 @@
 2026-08-05 06:14:37  topic='Why The Sky Turns Red at Sunset'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-05 06:14:46  topic='how desert dunes move across the landscape'  exit=1  slot='morning'  attempt=3/4  quality_deferred='scene coverage 3/6 (50%) is below required 5/6 (67%)'
 2026-08-05 06:15:01  topic='why rivers bend and change course'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
+2026-08-05 14:41:08  topic='why Mars has the tallest volcano in the solar system'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-05 14:41:37  topic='how shipping containers changed world trade'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)'
+2026-08-05 14:43:20  topic='how ancient Egyptians built stone pyramids'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)'
+2026-08-05 14:46:19  topic='why ancient cities were built beside rivers'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
