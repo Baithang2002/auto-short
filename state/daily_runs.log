@@ -222,3 +222,7 @@
 2026-08-06 06:08:27  topic='How The Great Migration Crosses Africa'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
 2026-08-06 06:08:39  topic='How The Great Rift Valley Split the Land'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/6 (33%) is below required 5/6 (67%)'
 2026-08-06 06:08:51  topic='Why Mount Everest Is Still Growing'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)'
+2026-08-06 06:16:29  topic='Why The Grand Canyon Looks So Huge'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/6 (33%) is below required 5/6 (67%)'
+2026-08-06 06:27:35  topic='Why Yellowstone Has Geysers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
+2026-08-06 06:29:45  topic='How The Sahara Desert Became So Vast'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-06 06:29:59  topic='Why The Atacama Desert Is So Dry'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)'

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-06T06:08:51Z",
+  "updated_at": "2026-08-06T06:29:59Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1338,6 +1338,21 @@
       "quarantine_until": ""
     },
     {
+      "topic": "How The Sahara Desert Became So Vast",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:29:45Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:29:45Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-20T06:29:45Z"
+    },
+    {
       "topic": "How The Sun Creates Solar Flares",
       "status": "proven",
       "success_count": 1,
@@ -2433,6 +2448,21 @@
       "quarantine_until": "2026-08-15T06:15:18Z"
     },
     {
+      "topic": "Why The Atacama Desert Is So Dry",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:29:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:29:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:29:59Z"
+    },
+    {
       "topic": "Why The Danube River Connects Europe",
       "status": "quarantined",
       "success_count": 0,
@@ -2461,6 +2491,21 @@
       "last_failure_at": "2026-07-31T11:47:22Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
       "quarantine_until": "2026-08-14T11:47:22Z"
+    },
+    {
+      "topic": "Why The Grand Canyon Looks So Huge",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:16:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:16:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/6 (33%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:16:29Z"
     },
     {
       "topic": "why the ground can crack into hexagons",
@@ -2761,6 +2806,21 @@
       "last_failure_at": "2026-07-31T16:55:20Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T16:55:20Z"
+    },
+    {
+      "topic": "Why Yellowstone Has Geysers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:27:35Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:27:35Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-20T06:27:35Z"
     },
     {
       "topic": "Why Zebras Have Stripes",
