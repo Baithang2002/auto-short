@@ -66,7 +66,32 @@ class PipelineDailyTests(unittest.TestCase):
             output_dir = root / "output"
             script_dir.mkdir(parents=True)
             approved = script_dir / "approved.json"
-            approved.write_text('{"niche": "Sand dunes"}', encoding="utf-8")
+            approved.write_text(json.dumps({
+                "niche": "Sand dunes",
+                "segments": [
+                    {
+                        "beat_role": "hook",
+                        "narration": "Sand dunes can move across a desert when strong winds push loose grains.",
+                        "broll": "sand dunes in wind",
+                    },
+                    {
+                        "beat_role": "explanation",
+                        "narration": "Each grain hops and rolls, slowly building a moving ridge across the landscape.",
+                        "broll": "close view of blowing sand",
+                    },
+                    {
+                        "beat_role": "reveal",
+                        "narration": "The dune moves because wind lifts grains up its gentle slope before gravity drops them down.",
+                        "broll": "sand moving over a dune ridge",
+                    },
+                    {
+                        "beat_role": "conclusion_cta",
+                        "narration": "That is how wind turns a quiet desert into a landscape that never stops moving.",
+                        "broll": "wide desert dunes",
+                    },
+                ],
+            }), encoding="utf-8")
+            expected = approved.read_text(encoding="utf-8")
             state_path = state_dir / "topic_bank_state.json"
             pipeline_daily.TopicBankStateStore(state_path).mark_qualified(
                 "How Sand Dunes Move",
@@ -90,7 +115,7 @@ class PipelineDailyTests(unittest.TestCase):
                 cached = (output_dir / "last_script.json").read_text(encoding="utf-8")
 
         self.assertEqual(source, approved)
-        self.assertEqual(cached, '{"niche": "Sand dunes"}')
+        self.assertEqual(cached, expected)
 
     def test_candidate_quality_deferred_detects_fallback_gate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

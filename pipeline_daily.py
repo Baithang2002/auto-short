@@ -41,6 +41,8 @@ from autovideo.intelligence import (
     load_topic_sources,
     topic_source_for_path,
 )
+from autovideo.format import get_default_format_profile
+from autovideo.format.story import validate_beat_structure
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 TOPICS     = SCRIPT_DIR / "topics.txt"
@@ -291,6 +293,18 @@ def prepare_qualified_script(
     qualified_root = QUALIFIED_SCRIPT_DIR.resolve()
     if not source.is_relative_to(qualified_root) or not source.exists():
         print(f"[daily] qualified script unavailable for {topic!r}; generating a fresh script.")
+        return None
+    try:
+        payload = json.loads(source.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        print(f"[daily] qualified script unreadable for {topic!r}; generating a fresh script.")
+        return None
+    fatal, _soft = validate_beat_structure(payload, get_default_format_profile())
+    if fatal:
+        print(
+            f"[daily] qualified script invalid for {topic!r}; generating a fresh script. "
+            f"First issue: {fatal[0]}"
+        )
         return None
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     shutil.copy2(source, LAST_SCRIPT)
