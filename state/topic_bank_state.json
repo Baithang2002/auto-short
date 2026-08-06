@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-06T06:29:59Z",
+  "updated_at": "2026-08-06T11:54:29Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -396,16 +396,16 @@
       "topic": "how earthquakes can change a river's course",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 5,
+      "failure_count": 6,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T11:50:55Z",
+      "last_attempt_at": "2026-08-06T11:53:10Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T11:50:55Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-18T11:50:55Z"
+      "last_failure_at": "2026-08-06T11:53:10Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-20T11:53:10Z"
     },
     {
       "topic": "How Earthquakes Shake the Ground",
@@ -1234,18 +1234,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 4,
-      "qualification_count": 1,
-      "last_attempt_at": "2026-08-04T14:52:30Z",
-      "last_qualified_at": "2026-08-04T11:50:43Z",
-      "last_coverage_ratio": 0.8333,
-      "qualified_script_path": "",
+      "qualification_count": 2,
+      "last_attempt_at": "2026-08-06T11:52:48Z",
+      "last_qualified_at": "2026-08-06T11:52:48Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-04T14:52:30Z",
-      "last_failure_reason": "post-render publish quality gate deferred topic",
-      "quarantine_until": "2026-08-18T14:52:30Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1609,14 +1609,14 @@
     },
     {
       "topic": "Why Antarctica Is the World's Largest Desert",
-      "status": "proven",
+      "status": "qualified",
       "success_count": 1,
       "failure_count": 0,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T06:31:40Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-06T11:53:41Z",
+      "last_qualified_at": "2026-08-06T11:53:41Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/7e8ba87e8cde3b08395b.json",
       "last_success_at": "2026-07-31T06:31:40Z",
       "last_failure_at": "",
       "last_failure_reason": "",
@@ -2493,6 +2493,21 @@
       "quarantine_until": "2026-08-14T11:47:22Z"
     },
     {
+      "topic": "Why The Galapagos Islands Are So Unique",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T11:54:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T11:54:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T11:54:29Z"
+    },
+    {
       "topic": "Why The Grand Canyon Looks So Huge",
       "status": "quarantined",
       "success_count": 0,
@@ -2536,6 +2551,21 @@
       "last_failure_at": "2026-07-31T11:46:53Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-14T11:46:53Z"
+    },
+    {
+      "topic": "Why The Mariana Trench Is So Deep",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T11:54:07Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T11:54:07Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T11:54:07Z"
     },
     {
       "topic": "Why The Mekong River Feeds Millions",
