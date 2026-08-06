@@ -93,6 +93,20 @@ class RendererTests(unittest.TestCase):
             self.assertEqual(profile.pixel_format, "yuv420p")
             self.assertEqual(profile.audio_codec, "aac")
 
+    def test_renderer_rejects_large_combined_overrun(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            timeline = self._sample_timeline(root)
+            services = _FakeRenderServices(root, combined_duration=70.0)
+            renderer = FfmpegTimelineRenderer(
+                out_dir=root,
+                profile=render_profile_for("production", music_volume=0.12),
+                services=services.services(),
+            )
+
+            with self.assertRaises(RuntimeError):
+                renderer.render(timeline)
+
     def test_legacy_adapter_still_matches_renderer_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -147,8 +161,9 @@ class RendererTests(unittest.TestCase):
 
 
 class _FakeRenderServices:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, combined_duration: float = 8.78) -> None:
         self.root = root
+        self.combined_duration = combined_duration
         self.segment_calls: list[dict[str, object]] = []
         self.run_ff_outputs: list[Path] = []
         self.music_call: dict[str, object] = {}
@@ -186,11 +201,11 @@ class _FakeRenderServices:
     def media_duration(self, path):
         name = Path(path).name
         if name == "combined.mp4":
-            return 8.78
+            return self.combined_duration
         if name == "captioned.mp4":
-            return 8.78
+            return self.combined_duration
         if name in {"final.mp4", "final_yt_safe.mp4"}:
-            return 8.78
+            return self.combined_duration
         return 4.0
 
     def build_ass(self, meta, video_duration=None):

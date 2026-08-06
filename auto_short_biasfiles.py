@@ -91,18 +91,16 @@ BIAS_FILES_EVERGREEN_TAGS = [
 # parse_script_json, script_quality_notes). Only the prompt text and the
 # evergreen-tags list change.
 # ============================================================================
-def generate_script_biasfiles(niche, n_segments, target_duration):
-    min_total, max_total, min_segment, max_segment = auto_short.narration_targets(
-        target_duration, n_segments
-    )
-
+def generate_script_biasfiles(niche, critical_asset_plan=None, profile=None):
+    profile = profile or auto_short._FORMAT_PROFILE
     prompt = f"""
 You are scripting a fast-paced vertical short for THE BIAS FILES — a faceless
 YouTube channel about money psychology, cognitive biases, and real-person
 money disasters.
 
 TOPIC FOR THIS VIDEO: "{niche}"
-Target finished length: about {target_duration} seconds.
+The story decides its own length; the only limit is the platform ceiling
+(about 60 seconds). Do NOT compress or pad to hit any specific duration.
 
 CHANNEL VOICE (non-negotiable):
 - Forensic, unsparing, quietly authoritative. Documentary tone.
@@ -124,16 +122,21 @@ Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
   "music_mood": "one of: mysterious, dramatic, urgent, curious",
   "hashtags": ["#tag1", "#tag2", "..."],
   "segments": [
-    {{"narration": "one or two spoken sentences, {min_segment}-{max_segment} words, concrete and specific",
+    {{"narration": "one or two spoken sentences, concrete and specific",
       "broll": "2-3 word stock-footage search term, very visual and literal",
-      "broll_queries": ["specific visual search phrase", "backup visual search phrase", "wide establishing search phrase"]}}
+      "broll_queries": ["specific visual search phrase", "backup visual search phrase", "wide establishing search phrase"],
+      "beat_role": "one of: hook, context, setup, discovery, conflict, escalation, turning_point, climax, resolution, interesting_fact, conclusion_cta",
+      "beat_importance": 1-10,
+      "beat_can_merge": true,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false}}
   ]
 }}
 
 RULES:
-- Exactly {n_segments} segments.
-- LENGTH IS NON-NEGOTIABLE. Total narration MUST be {min_total}-{max_total} words.
-- Each segment MUST be {min_segment}-{max_segment} words. Count before submitting.
+- Write the complete story with as many beats as it needs (the FIRST segment
+  is always the hook, the LAST always ends the CTA). Every segment must carry a
+  beat_role in story order.
 - Segment 1 is the HOOK: open directly with a counterintuitive claim, a specific dollar amount, or a named person who lost a lot of money. Start immediately in the middle of the action. NEVER open with greetings, rhetorical questions, or throat-clearing clichés like "Have you ever wondered...", "Did you know...", "Imagine...", or "Meet...". Open immediately with a bizarre, counterintuitive, or striking statement.
 - Segments 2-3 set up the bias or story. Name the bias OR the person involved.
 - Middle segments deliver the EVIDENCE: the study finding, the brain-science
@@ -163,7 +166,7 @@ RULES:
 
     raw = auto_short.generate_script_raw(prompt)
     data = auto_short.parse_script_json(raw)
-    fatal, soft = auto_short.script_quality_notes(data, n_segments, target_duration)
+    fatal, soft = auto_short.script_quality_notes(data, critical_asset_plan, profile)
 
     if fatal or soft:
         all_notes = fatal + soft
@@ -173,23 +176,24 @@ RULES:
 The previous JSON failed these checks:
 {json.dumps(all_notes, indent=2)}
 
-Rewrite from scratch satisfying every word-count and tone rule.
+Rewrite from scratch satisfying every rule and tone rule.
 Previous JSON:
 {json.dumps(data, ensure_ascii=False)}
 """
         data = auto_short.parse_script_json(auto_short.generate_script_raw(repair_prompt))
-        fatal, soft = auto_short.script_quality_notes(data, n_segments, target_duration)
+        fatal, soft = auto_short.script_quality_notes(data, critical_asset_plan, profile)
         if fatal:
             raise RuntimeError(
-                "Generated script is still too short or malformed: "
+                "Generated script is still broken: "
                 + "; ".join(fatal[:6])
             )
         if soft:
             print(
-                f"    [Script QA] Accepting with minor overshoots: {'; '.join(soft[:3])}"
+                f"    [Script QA] Accepting with minor issues: {'; '.join(soft[:3])}"
             )
 
-    segs = data["segments"][:n_segments]
+    auto_short.finalize_story_length(niche, data, critical_asset_plan, profile)
+    segs = data["segments"]
     data["segments"] = segs
 
     # Normalize SEO metadata

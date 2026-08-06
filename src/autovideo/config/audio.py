@@ -17,6 +17,9 @@ class ClipAudioConfig:
     ducking: bool = True
     fade_ms: int = 250
     noise_gate: bool = True
+    separate_stems: bool = False
+    stem_target: str = "other"
+    demucs_model: str = "htdemucs"
 
 
 def clip_audio_config_from_env(env: Mapping[str, str]) -> ClipAudioConfig:
@@ -28,7 +31,11 @@ def clip_audio_config_from_env(env: Mapping[str, str]) -> ClipAudioConfig:
         ducking=_env_bool(env, "AUTO_VIDEO_CLIP_AUDIO_DUCKING", True),
         fade_ms=max(0, _env_int(env, "AUTO_VIDEO_CLIP_AUDIO_FADE_MS", 250)),
         noise_gate=_env_bool(env, "AUTO_VIDEO_CLIP_AUDIO_NOISE_GATE", True),
+        separate_stems=_env_bool(env, "AUTO_VIDEO_SEPARATE_STEMS", False),
+        stem_target=env.get("AUTO_VIDEO_STEM_TARGET", "other").strip() or "other",
+        demucs_model=env.get("AUTO_VIDEO_DEMUCS_MODEL", "htdemucs").strip() or "htdemucs",
     )
+
 
 
 def _env_bool(env: Mapping[str, str], name: str, default: bool) -> bool:

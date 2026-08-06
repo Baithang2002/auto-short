@@ -178,6 +178,12 @@ class RenderedVisualQAGate:
                     "rendered frame passed entity verification",
                 ))
                 continue
+            if evidence.confidence < self.config.minimum_confidence:
+                results.append(RenderedVisualSceneResult(
+                    request, RenderedVisualDecision.UNAVAILABLE, evidence,
+                    "rendered-frame verification confidence is below the configured threshold",
+                ))
+                continue
             results.append(RenderedVisualSceneResult(
                 request, RenderedVisualDecision.MISMATCH, evidence,
                 "rendered frame does not prove the planned entity",

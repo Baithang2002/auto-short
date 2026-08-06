@@ -19,7 +19,7 @@ class RenderProfile:
     width: int = 1080
     height: int = 1920
     fps: int = 30
-    shorts_max_duration_sec: float = 58.0
+    shorts_max_duration_sec: float = 60.0
     transition_duration_sec: float = 0.22
     music_volume: float = 0.22
     video_codec: str = "libx264"
@@ -55,7 +55,7 @@ def render_profile_for(
         width=width if width is not None else configured.width,
         height=height if height is not None else configured.height,
         fps=fps if fps is not None else configured.fps,
-        shorts_max_duration_sec=shorts_max_duration_sec or configured.max_duration_sec or 58.0,
+        shorts_max_duration_sec=shorts_max_duration_sec or configured.max_duration_sec or 60.0,
         transition_duration_sec=transition_duration_sec,
         music_volume=music_volume,
     )

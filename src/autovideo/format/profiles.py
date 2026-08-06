@@ -16,19 +16,32 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-FormatProfileName = Literal["shorts_vertical"]
+FormatProfileName = Literal[
+    "shorts_vertical",
+    "tiktok_vertical",
+    "reels_vertical",
+]
 
 
 @dataclass(frozen=True)
 class FormatProfile:
     """Immutable format-shaped configuration.
 
+    The profile is the *single* source of duration policy in the
+    pipeline. The story/script determines the natural length; the profile
+    only constrains the platform ceiling.
+
     Owns
     ----
-    * Duration bounds (target, min, max) for the finished video.
-    * Scene target duration and per-scene transition duration.
-    * Narration tempo bounds (retime floor and ceiling, preferred tempo).
-    * Narration word-rate bounds (words per second, minimum per segment).
+    * ``max_duration_sec`` -- the only hard ceiling. Every trim, retime,
+      and validation reads this one value.
+    * ``target_duration_sec`` -- a story-driven *hint* only. ``None``
+      means "the story decides"; it is never fed to writers as a clamp.
+    * ``min_duration_sec`` -- a *soft* quality/analytics indicator.
+      Never rejects a video and never triggers padding.
+    * ``min_story_beats`` -- the content floor for story completeness.
+    * Scene transition duration, narration tempo bounds, and narration
+      word-rate bounds.
 
     Does not own
     ------------
@@ -38,14 +51,15 @@ class FormatProfile:
     """
 
     name: FormatProfileName
-    target_duration_sec: int
-    min_duration_sec: int
     max_duration_sec: int
-    scene_target_duration_sec: float
-    transition_duration_sec: float
-    preferred_narration_tempo: float
-    narration_max_retime_tempo: float
-    narration_min_retime_tempo: float
-    narration_words_per_sec_min: float
-    narration_words_per_sec_max: float
-    narration_words_per_segment_min: int
+    target_duration_sec: int | None = None
+    min_duration_sec: float = 0.0
+    min_story_beats: int = 4
+    scene_target_duration_sec: float = 5.0
+    transition_duration_sec: float = 0.22
+    preferred_narration_tempo: float = 1.03
+    narration_max_retime_tempo: float = 1.05
+    narration_min_retime_tempo: float = 0.90
+    narration_words_per_sec_min: float = 2.00
+    narration_words_per_sec_max: float = 2.25
+    narration_words_per_segment_min: int = 8

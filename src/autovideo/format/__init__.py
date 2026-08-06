@@ -11,11 +11,15 @@ from .profiles import FormatProfile, FormatProfileName
 from .registry import (
     get_default_format_profile,
     get_format_profile,
+    resolve_format_profile,
 )
+from . import story
 
 __all__ = [
     "FormatProfile",
     "FormatProfileName",
     "get_default_format_profile",
     "get_format_profile",
+    "resolve_format_profile",
+    "story",
 ]

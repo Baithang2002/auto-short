@@ -39,7 +39,7 @@ class RenderedVisualQATests(unittest.TestCase):
         report = RenderedVisualQAGate(
             RenderedVisualQAConfig(enabled=True),
             verifier=lambda request: RenderedVisualEvidence(
-                match=False, confidence=0.02, matched_entity="horse"
+                match=False, confidence=0.95, matched_entity="horse"
             ),
         ).evaluate([self._request()])
         self.assertTrue(report.has_mismatch)
@@ -52,6 +52,30 @@ class RenderedVisualQATests(unittest.TestCase):
         ).evaluate([self._request()])
         self.assertEqual(RenderedVisualDecision.UNAVAILABLE, report.scenes[0].decision)
         self.assertFalse(report.has_mismatch)
+
+    def test_treats_low_confidence_positive_result_as_unavailable(self) -> None:
+        report = RenderedVisualQAGate(
+            RenderedVisualQAConfig(enabled=True),
+            verifier=lambda request: RenderedVisualEvidence(True, confidence=0.50),
+        ).evaluate([self._request()])
+        self.assertEqual(RenderedVisualDecision.UNAVAILABLE, report.scenes[0].decision)
+        self.assertFalse(report.has_mismatch)
+
+    def test_treats_low_confidence_negative_result_as_unavailable(self) -> None:
+        report = RenderedVisualQAGate(
+            RenderedVisualQAConfig(enabled=True),
+            verifier=lambda request: RenderedVisualEvidence(False, confidence=0.50),
+        ).evaluate([self._request()])
+        self.assertEqual(RenderedVisualDecision.UNAVAILABLE, report.scenes[0].decision)
+        self.assertFalse(report.has_mismatch)
+
+    def test_keeps_high_confidence_negative_result_as_mismatch(self) -> None:
+        report = RenderedVisualQAGate(
+            RenderedVisualQAConfig(enabled=True),
+            verifier=lambda request: RenderedVisualEvidence(False, confidence=0.95),
+        ).evaluate([self._request()])
+        self.assertEqual(RenderedVisualDecision.MISMATCH, report.scenes[0].decision)
+        self.assertTrue(report.has_mismatch)
 
     def test_limits_scene_samples_to_configured_budget(self) -> None:
         requests = [self._request() for _ in range(3)]

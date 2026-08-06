@@ -50,7 +50,7 @@ class AutoShortQualityTests(unittest.TestCase):
             "_make_voice_track",
             side_effect=[first_track, second_track],
         ) as make_track:
-            auto_short.make_all_voices(segments, target_duration=1)
+            auto_short.make_all_voices(segments, auto_short._FORMAT_PROFILE)
 
         self.assertEqual(2, make_track.call_count)
         self.assertTrue(all(call.kwargs["registry"] is registry for call in make_track.call_args_list))
@@ -66,7 +66,6 @@ class AutoShortQualityTests(unittest.TestCase):
             },
             "arctic fox survival",
         )
-
         self.assertEqual(queries[0], "wild arctic fox hunting")
         self.assertIn("wild arctic fox close up", queries)
         self.assertIn("arctic fox hunting in snow", queries)
@@ -124,13 +123,36 @@ class AutoShortQualityTests(unittest.TestCase):
             auto_short.pexels_relevance_score(bad, "arctic fox close up"),
         )
 
-    def test_narration_targets_provide_enough_words_without_long_scenes(self) -> None:
-        min_total, max_total, min_segment, max_segment = auto_short.narration_targets(55, 11)
+    def test_short_complete_story_is_not_rejected_by_duration(self) -> None:
+        profile = auto_short._FORMAT_PROFILE
+        script = {
+            "title": "A Tiny Lantern Switches On at Dusk",
+            "segments": [
+                {"narration": "A quiet survival trick appears in plain sight tonight.", "broll": "firefly glowing", "beat_role": "hook"},
+                {"narration": "Its light is cold, made by a precise chemical trick.", "broll": "firefly close up", "beat_role": "setup"},
+                {"narration": "The flash is a message between mates in the grass.", "broll": "firefly in meadow", "beat_role": "discovery"},
+                {"narration": "Follow Wonders of the Nature for more wild secrets.", "broll": "night forest", "beat_role": "conclusion_cta"},
+            ],
+        }
 
-        self.assertGreaterEqual(min_total, 110)
-        self.assertLessEqual(min_segment, 11)
-        self.assertLessEqual(max_segment, 15)
-        self.assertGreater(max_total, min_total)
+        fatal, soft = auto_short.script_quality_notes(script, profile=profile)
+
+        self.assertEqual([], fatal)
+        self.assertFalse(any("duration" in note or "second" in note for note in fatal + soft))
+
+    def test_missing_hook_is_rejected(self) -> None:
+        profile = auto_short._FORMAT_PROFILE
+        script = {
+            "title": "A Tiny Lantern Switches On at Dusk",
+            "segments": [
+                {"narration": "A chemical reaction creates cold light in the night.", "broll": "firefly close up", "beat_role": "discovery"},
+                {"narration": "Follow Wonders of the Nature for more wild secrets.", "broll": "night forest", "beat_role": "conclusion_cta"},
+            ],
+        }
+
+        fatal, _soft = auto_short.script_quality_notes(script, profile=profile)
+
+        self.assertTrue(any("missing a hook" in note for note in fatal))
 
     def test_title_style_requires_a_curious_declarative_statement(self) -> None:
         self.assertTrue(any("question-led" in note for note in auto_short._title_style_notes("Why Fireflies Glow")))
@@ -138,6 +160,87 @@ class AutoShortQualityTests(unittest.TestCase):
         self.assertTrue(any("absolute" in note for note in auto_short._title_style_notes("Fireflies Never Stop Glowing")))
         self.assertTrue(any("absolute" in note for note in auto_short._title_style_notes("A Beaver Completely Rewrites a River")))
         self.assertEqual([], auto_short._title_style_notes("A Tiny Lantern Switches On at Dusk"))
+
+
+class CeilingTrimTests(unittest.TestCase):
+    def _long_story(self) -> dict:
+        return {
+            "title": "A Long Overbuilt Chameleon Story",
+            "description": "desc",
+            "instagram_caption": "cap",
+            "music_mood": "curious",
+            "hashtags": ["#chameleon"],
+            "segments": [
+                {"narration": "A hidden predator stalks still leaves with perfect patience every single day without blinking once.", "broll": "chameleon on branch", "broll_queries": ["chameleon close up"], "beat_role": "hook", "beat_importance": 10},
+                {"narration": "Most reptiles simply blend in with their background for a moment before moving away quickly to escape.", "broll": "chameleon leaves", "broll_queries": ["chameleon wide"], "beat_role": "context", "beat_importance": 4},
+                {"narration": "The chameleon changes its whole skin color using tiny cells that expand and contract under its skin.", "broll": "chameleon skin", "broll_queries": ["chameleon detail"], "beat_role": "setup", "beat_importance": 5},
+                {"narration": "Light lands on these cells and bounces back in a completely different color to confuse the watchful eye.", "broll": "chameleon colors", "broll_queries": ["chameleon macro"], "beat_role": "discovery", "beat_importance": 6},
+                {"narration": "The shift is not instant so the chameleon must stay very still while its skin slowly changes tone.", "broll": "chameleon still", "broll_queries": ["chameleon branch"], "beat_role": "conflict", "beat_importance": 6},
+                {"narration": "Each change is controlled by mood heat light and the need to vanish from a hungry enemy completely.", "broll": "chameleon mood", "broll_queries": ["chameleon hunting"], "beat_role": "escalation", "beat_importance": 6},
+                {"narration": "In a flash the pattern shifts and the chameleon becomes nearly invisible against the dried brown bark.", "broll": "chameleon hidden", "broll_queries": ["chameleon camouflage"], "beat_role": "climax", "beat_importance": 9},
+                {"narration": "Follow Wonders of the Nature for more wild survival secrets and amazing hidden animals every single day.", "broll": "jungle canopy", "broll_queries": ["jungle wide"], "beat_role": "conclusion_cta", "beat_importance": 9},
+            ],
+        }
+
+    def test_llm_trim_success_preserves_metadata(self) -> None:
+        profile = auto_short._FORMAT_PROFILE
+        script = self._long_story()
+        trimmed_copy = {
+            "segments": script["segments"][:5],
+            "title": "New title",
+            "description": "",
+            "instagram_caption": "",
+            "music_mood": "",
+            "hashtags": [],
+        }
+        with patch.object(auto_short, "_script_draft", return_value=trimmed_copy) as draft:
+            applied = auto_short._try_trim_story(
+                "chameleons", script, None, profile, budget=50.0
+            )
+        self.assertTrue(applied)
+        self.assertEqual(1, draft.call_count)
+        self.assertEqual(5, len(script["segments"]))
+        self.assertEqual("New title", script["title"])
+        self.assertEqual("desc", script["description"])
+        self.assertEqual("cap", script["instagram_caption"])
+
+    def test_deterministic_fallback_when_llm_keeps_failing(self) -> None:
+        profile = auto_short._FORMAT_PROFILE
+        script = self._long_story()
+        with patch.object(
+            auto_short,
+            "_script_draft",
+            side_effect=RuntimeError("Generated script is still malformed: segment 1 is missing broll"),
+        ):
+            applied = auto_short._try_trim_story(
+                "chameleons", script, None, profile, budget=50.0
+            )
+        self.assertTrue(applied)
+        roles = {str(seg.get("beat_role")) for seg in script["segments"]}
+        self.assertIn("hook", roles)
+        self.assertIn("climax", roles)
+        self.assertIn("conclusion_cta", roles)
+        self.assertGreaterEqual(len(script["segments"]), profile.min_story_beats)
+        estimated = auto_short.story_planning.estimate_story_duration(script, profile, conservative=True)
+        self.assertLessEqual(estimated, 50.0)
+
+    def test_deterministic_fallback_respects_critical_asset_and_cannot_remove(self) -> None:
+        profile = auto_short._FORMAT_PROFILE
+        script = self._long_story()
+        script["segments"][1]["critical_asset_dependency"] = "true"
+        script["segments"][2]["beat_can_remove"] = "false"
+        with patch.object(
+            auto_short,
+            "_script_draft",
+            side_effect=RuntimeError("Generated script is still malformed"),
+        ):
+            applied = auto_short._try_trim_story(
+                "chameleons", script, None, profile, budget=50.0
+            )
+        self.assertTrue(applied)
+        roles = [str(seg.get("beat_role")) for seg in script["segments"]]
+        self.assertIn("context", roles)
+        self.assertIn("setup", roles)
 
 
 if __name__ == "__main__":

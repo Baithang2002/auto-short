@@ -1,4 +1,7 @@
 import unittest
+from pathlib import Path
+
+from tests.unit import _path  # noqa: F401
 
 from autovideo.media import (
     EntityFidelity,
@@ -172,6 +175,47 @@ class EvidenceVerificationTests(unittest.TestCase):
         self.assertEqual(calls, [("Titanic", "frame")])
         self.assertTrue(score.breakdown["_evidence_verification_value"]["vision_invoked"])
         self.assertGreaterEqual(score.breakdown["_metadata_confidence_value"], 0.9)
+
+    def test_url_provider_id_and_filename_do_not_prove_entity(self) -> None:
+        intent = build_visual_intent(
+            {
+                "primary_subject": "chameleon",
+                "scene_entity": {
+                    "canonical_entity": "chameleon",
+                    "aliases": ["lizard"],
+                    "required_terms": ["chameleon"],
+                    "optional_terms": [],
+                    "forbidden_terms": [],
+                },
+            },
+            "How Chameleons Change Color",
+        )
+        candidate = StockCandidate(
+            provider="pexels",
+            provider_id="chameleon-123456",
+            query="chameleon close up",
+            title="tropical rainforest canopy",
+            description="lush green jungle leaves",
+            url="https://videos.pexels.com/video/chameleon-123456/",
+            download_url="https://videos.pexels.com/download/chameleon-123456.mp4",
+            local_path=Path("/tmp/chameleon-123456.mp4"),
+            width=1080,
+            height=1920,
+        )
+
+        score = score_candidate(intent, candidate)
+        evidence = score.breakdown["_evidence_verification_value"]
+
+        self.assertNotEqual(
+            score.breakdown["_entity_fidelity_value"],
+            EntityFidelity.EXACT_ENTITY.value,
+        )
+        self.assertNotEqual(
+            score.breakdown["_entity_fidelity_value"],
+            EntityFidelity.EXACT_ALIAS.value,
+        )
+        self.assertFalse(evidence["accepted"])
+        self.assertNotIn("chameleon", evidence["metadata_evidence"])
 
     def test_vision_failure_does_not_fail_metadata_accepted_candidate(self) -> None:
         def verifier(_requested_entity, _candidate):

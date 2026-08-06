@@ -11,8 +11,8 @@ lives in `CHANGELOG.md`; architecture boundaries live in `ARCHITECTURE.md`.
 |---|---|
 | **Current phase** | Era I - Autonomous YouTube Shorts reliability |
 | **Operating model** | Single channel, single format, GitHub Actions scheduled publishing |
-| **Maturity** | Production-running with strict quality gates; final reliability validation in progress |
-| **Immediate focus** | Autonomous topic supply and scheduled reliability burn-in |
+| **Maturity** | Production-running with strict quality gates; reliability burn-in underway — first unattended production publish completed |
+| **Immediate focus** | Scheduled reliability burn-in across the topic bank |
 
 The system can select a viable topic, generate a script and narration, retrieve and
 verify media, render a Short, apply music/captions/metadata, and upload through the
@@ -58,6 +58,8 @@ merely to create a video.
 | Editorial Identity hotfix | Rejects topic/domain/subject drift before source coverage | Complete |
 | Energy/physics capability-routing hotfix | Routes terrestrial solar/renewable-energy scenes to stock providers while retaining NASA-first astronomy routing | Implemented; awaiting real-provider validation |
 | Autonomous topic supply | Large nature-safe candidate bank, category rotation, exact-repeat blocking, persistent burn-in states, and background source-coverage qualification | Complete |
+| Era I reliability hardening | Deterministic date-and-slot publish keys, Coverr endpoint fix, Gemini→Groq vision fallback, persistent clip deduplication, Content-ID-safe uploads, source-coverage classification, and workflow concurrency/timing fixes | Complete |
+| Shorts duration-floor enforcement | Transition-aware voice normalization with distributed silence padding, duration-target clamping, and per-attempt diagnostics archiving | Complete |
 
 ## Current Work
 
@@ -66,6 +68,7 @@ merely to create a video.
 - **Objective.** Prove that GitHub Actions can publish fresh, correct Shorts without daily operator intervention.
 - **Validation.** Monitor scheduled runs using the topic bank, `topic_bank_status_report.json`, `scheduler_report.json`, `source_coverage_report.json`, `verified_media_report.json`, and `publish_quality_report.json`.
 - **Success criteria.** Runs choose non-repeated, provider-friendly topics; recover from weak candidates; upload only when quality gates pass; and leave complete diagnostics when they defer.
+- **Evidence.** 2026-08-02 production run published *Tiny wings defy gravity with precision* at 50.2 s (YouTube-safe duration) with an APPROVED publish-quality verdict and a deterministic publish key; diagnostics and render files are archived per attempt so recovery runs never mix reports.
 - **Burn-in policy.** New bank entries begin as candidates, become proven only after a complete successful production run, and are temporarily quarantined after a content-quality deferral. Critical technical failures do not change topic status.
 - **Qualification buffer.** A separate no-upload workflow runs only through script and source-coverage planning, stores the exact approved script, maintains a small queue of qualified unused topics, and consumes no voice or rendering resources. Daily publishing prioritizes this queue and reuses its approved script before considering untested candidates.
 - **Non-goal.** Do not weaken source-coverage thresholds, media verification, rendered QA, or publish-quality gates just to force daily output.
@@ -83,7 +86,7 @@ Ordered by dependency and impact.
 
 ### 2. Era I Reliability Burn-In
 
-- **Objective.** Prove unattended operation over scheduled production runs.
+- **Objective.** Prove unattended operation over scheduled production runs. **In progress** — first unattended production publish completed 2026-08-02.
 - **Success criteria.** Thirty scheduled runs with durable artifacts, topic recovery where appropriate, successful upload behavior, no identity leakage in sampled audits, and no unhandled provider failure preventing later runs.
 - **Outcome.** Establish the Shorts v1 production baseline.
 

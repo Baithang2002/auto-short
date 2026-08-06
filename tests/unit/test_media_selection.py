@@ -29,6 +29,34 @@ from autovideo.media import (
 
 
 class MediaSelectionTests(unittest.TestCase):
+    def test_find_manual_input_clip_matches_scene_name(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            scene = Path(tmp) / "scene_01.mp4"
+            scene.write_bytes(b"video")
+            local_media = [scene]
+            match = auto_short._find_manual_input_clip(0, local_media, None)
+            self.assertEqual(match, scene)
+
+    def test_find_manual_input_clip_matches_entity_slug(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            wolf = Path(tmp) / "greenland-shark.mp4"
+            wolf.write_bytes(b"video")
+            local_media = [wolf]
+            intent = SimpleNamespace(requested_entity="Greenland shark", primary_subject="")
+            match = auto_short._find_manual_input_clip(4, local_media, intent)
+            self.assertEqual(match, wolf)
+
+    def test_yt_clip_probe_candidates_returns_remote_candidate(self) -> None:
+        payload = '{"entries": [{"id": "abc123xyz89", "title": "Greenland shark footage", "description": "arctic shark", "webpage_url": "https://www.youtube.com/watch?v=abc123xyz89"}]}'
+        with patch("autovideo.providers.stock.yt_clip.is_yt_dlp_available", return_value=True), \
+             patch("shutil.which", return_value="/usr/bin/yt-dlp"), \
+             patch("auto_short.subprocess.run", return_value=SimpleNamespace(returncode=0, stdout=payload)):
+            candidates = auto_short._yt_clip_probe_candidates(["greenland shark arctic"], timeout_sec=10)
+
+        self.assertEqual(len(candidates), 1)
+        self.assertEqual(candidates[0].provider, "yt_clip")
+        self.assertEqual(candidates[0].provider_id, "abc123xyz89")
+
     def test_download_transcodes_png_payload_to_requested_jpeg_atomically(self) -> None:
         image_bytes = BytesIO()
         Image.new("RGBA", (32, 24), (10, 20, 30, 128)).save(image_bytes, format="PNG")
@@ -940,6 +968,275 @@ class MediaSelectionTests(unittest.TestCase):
         self.assertEqual(headers["X-API-Key"], "coverr-key")
         self.assertEqual(auto_short._MEDIA_SELECTION_DIAGNOSTICS[3]["selection"]["provider"], "coverr")
 
+    def test_vecteezy_fetches_and_downloads_selected_candidate(self) -> None:
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "page": 1,
+            "per_page": 8,
+            "resources": [
+                {
+                    "id": 18985346,
+                    "content_type": "video",
+                    "tags": ["wind", "maple"],
+                    "title": "autumn maple leaves moving with wind",
+                    "file_metadata": {
+                        "available_file_types": [
+                            {"extension": "mp4", "size_in_bytes": 42990802},
+                        ],
+                        "available_download_sizes": [
+                            {"id": "original", "width": 1920, "height": 1080},
+                        ],
+                    },
+                }
+            ],
+        }
+        download_response = Mock()
+        download_response.raise_for_status.return_value = None
+        download_response.json.return_value = {
+            "url": "https://files.vecteezy.com/system/resource/files/18985346/autumn.mp4?Expires=1&Signature=sig",
+            "inline_url": "https://files.vecteezy.com/system/resource/files/18985346/autumn.mp4",
+            "requires_attribution": True,
+            "required_attribution_url": "https://api.vecteezy.com/free-videos/autumn",
+        }
+        session = Mock()
+        session.get.side_effect = [search_response, download_response]
+        old_url = auto_short.VECTEEZY_API_URL
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_URL = "https://api.vecteezy.com"
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        auto_short._MEDIA_SELECTION_DIAGNOSTICS.clear()
+        try:
+            with patch("requests.Session", return_value=session), patch.object(
+                auto_short,
+                "_download_to",
+                return_value=True,
+            ) as download:
+                path = auto_short.fetch_vecteezy_video(
+                    ["autumn maple leaves wind"],
+                    3,
+                    set(),
+                    target_duration=5,
+                    fallback="Why Do Maple Leaves Change Color",
+                    narration="Maple leaves drift with the wind.",
+                )
+        finally:
+            auto_short.VECTEEZY_API_URL = old_url
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+        self.assertEqual(path, auto_short.OUT_DIR / "broll_3.mp4")
+        download.assert_called_once_with(
+            "https://files.vecteezy.com/system/resource/files/18985346/autumn.mp4?Expires=1&Signature=sig",
+            auto_short.OUT_DIR / "broll_3.mp4",
+            timeout=90,
+            max_bytes=120 * 1024 * 1024,
+        )
+        first_call = session.get.call_args_list[0]
+        self.assertEqual(first_call.args[0], "https://api.vecteezy.com/v2/170169/resources")
+        self.assertEqual(first_call.kwargs["params"]["term"], "autumn maple leaves wind")
+        self.assertEqual(first_call.kwargs["params"]["content_type"], "video")
+        self.assertEqual(first_call.kwargs["params"]["per_page"], 8)
+        self.assertEqual(first_call.kwargs["params"]["sort_by"], "relevance")
+        self.assertEqual(first_call.kwargs["params"]["license_type"], "commercial")
+        self.assertEqual(first_call.kwargs["params"]["family_friendly"], "true")
+        self.assertEqual(first_call.kwargs["headers"]["Authorization"], "Bearer vecteezy-key")
+        second_call = session.get.call_args_list[1]
+        self.assertEqual(
+            second_call.args[0],
+            "https://api.vecteezy.com/v2/170169/resources/18985346/download",
+        )
+        self.assertEqual(second_call.kwargs["params"], {"file_type": "mp4"})
+        self.assertEqual(
+            auto_short._MEDIA_SELECTION_DIAGNOSTICS[3]["selection"]["provider"],
+            "vecteezy",
+        )
+
+    def test_vecteezy_search_hard_failure_disables_provider_for_run(self) -> None:
+        import requests
+
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        response = Mock(status_code=401)
+        error = requests.HTTPError("401 Client Error")
+        error.response = response
+        session = Mock()
+        session.get.side_effect = error
+        try:
+            with patch("requests.Session", return_value=session):
+                with self.assertRaises(requests.HTTPError):
+                    auto_short._vecteezy_candidates(["ocean turtle"], raise_errors=True)
+
+                self.assertIn("vecteezy", auto_short._PROVIDER_RUN_FAILURES)
+                self.assertEqual([], auto_short._vecteezy_candidates(["ocean turtle"]))
+                self.assertEqual(1, session.get.call_count)
+        finally:
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_vecteezy_rate_limit_keeps_earlier_candidates(self) -> None:
+        import requests
+
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "resources": [{
+                "id": 11,
+                "title": "Ocean waves",
+                "file_metadata": {
+                    "available_file_types": [{"extension": "mp4", "size_in_bytes": 1000}],
+                    "available_download_sizes": [
+                        {"id": "original", "width": 1920, "height": 1080},
+                    ],
+                },
+            }],
+        }
+        download_response = Mock()
+        download_response.raise_for_status.return_value = None
+        download_response.json.return_value = {
+            "url": "https://cdn/ocean.mp4?x=1",
+            "requires_attribution": False,
+        }
+        rate_limit = requests.HTTPError("429 Too Many Requests")
+        rate_limit.response = Mock(status_code=429)
+        session = Mock()
+        session.get.side_effect = [search_response, download_response, rate_limit]
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._vecteezy_candidates(
+                    ["ocean", "waves"], raise_errors=True
+                )
+
+            self.assertEqual(["11"], [candidate.provider_id for candidate in candidates])
+            self.assertIn("vecteezy", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_vecteezy_download_422_skips_item_without_disabling_provider(self) -> None:
+        import requests
+
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "resources": [{
+                "id": 7,
+                "title": "Wind animation",
+                "file_metadata": {
+                    "available_file_types": [{"extension": "mov", "size_in_bytes": 81718551}],
+                    "available_download_sizes": [
+                        {"id": "original", "width": 3840, "height": 2160},
+                    ],
+                },
+            }],
+        }
+        resize_error = requests.HTTPError("422 Invalid File Size")
+        resize_error.response = Mock(status_code=422)
+        session = Mock()
+        session.get.side_effect = [search_response, resize_error]
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._vecteezy_candidates(["wind"], raise_errors=True)
+
+            self.assertEqual([], candidates)
+            self.assertNotIn("vecteezy", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_vecteezy_download_429_disables_provider_for_run(self) -> None:
+        import requests
+
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "resources": [{
+                "id": 9,
+                "title": "Ocean waves",
+                "file_metadata": {
+                    "available_file_types": [{"extension": "mp4", "size_in_bytes": 1000}],
+                    "available_download_sizes": [
+                        {"id": "original", "width": 1920, "height": 1080},
+                    ],
+                },
+            }],
+        }
+        rate_limit = requests.HTTPError("429 Too Many Requests")
+        rate_limit.response = Mock(status_code=429)
+        session = Mock()
+        session.get.side_effect = [search_response, rate_limit]
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._vecteezy_candidates(["ocean"])
+
+            self.assertEqual([], candidates)
+            self.assertIn("vecteezy", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
+    def test_vecteezy_download_without_url_skips_item(self) -> None:
+        search_response = Mock()
+        search_response.raise_for_status.return_value = None
+        search_response.json.return_value = {
+            "resources": [{
+                "id": 12,
+                "title": "Wind farm",
+                "file_metadata": {
+                    "available_file_types": [{"extension": "mp4", "size_in_bytes": 1000}],
+                    "available_download_sizes": [
+                        {"id": "original", "width": 1920, "height": 1080},
+                    ],
+                },
+            }],
+        }
+        download_response = Mock()
+        download_response.raise_for_status.return_value = None
+        download_response.json.return_value = {"url": "", "inline_url": ""}
+        session = Mock()
+        session.get.side_effect = [search_response, download_response]
+        old_key = auto_short.VECTEEZY_API_KEY
+        old_account = auto_short.VECTEEZY_ACCOUNT_ID
+        auto_short.VECTEEZY_API_KEY = "vecteezy-key"
+        auto_short.VECTEEZY_ACCOUNT_ID = "170169"
+        auto_short._PROVIDER_RUN_FAILURES.clear()
+        try:
+            with patch("requests.Session", return_value=session):
+                candidates = auto_short._vecteezy_candidates(["wind farm"])
+
+            self.assertEqual([], candidates)
+            self.assertNotIn("vecteezy", auto_short._PROVIDER_RUN_FAILURES)
+        finally:
+            auto_short.VECTEEZY_API_KEY = old_key
+            auto_short.VECTEEZY_ACCOUNT_ID = old_account
+            auto_short._PROVIDER_RUN_FAILURES.clear()
+
     def test_coverr_hard_failure_disables_provider_for_run(self) -> None:
         import requests
 
@@ -1387,6 +1684,7 @@ class MediaSelectionTests(unittest.TestCase):
                         "fetch_europeana_media",
                         "fetch_flickr_commons_media",
                         "fetch_internet_archive_media",
+                        "fetch_yt_clip_video",
                     )
                 }
                 with patch.multiple(auto_short, **provider_mocks), patch.object(

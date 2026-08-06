@@ -31,6 +31,12 @@ Entries below the `[Unreleased]` section describe released versions. When work m
 - GitHub production runs also sample up to four final rendered SHOW/REVEAL/PROVE frames. This catches portrait crops and compositions that hide or replace the required visual entity after rendering; a confirmed mismatch defers upload and triggers normal daily-topic recovery.
 - The FFmpeg crossfade stitch now has a bounded scene-count-aware timeout instead of the generic 120-second command limit. This preserves protection against hung processes without rejecting healthy multi-scene 1080p renders on slower machines.
 - Direct CLI runs now enforce source-coverage deferrals by default, matching scheduled production behavior. GitHub production also requires final-frame verification for critical scenes; when both Gemini and Groq vision are unavailable, the run defers rather than uploading an unverified hook or main reveal unless the failure is an explicitly allowed transient provider limit.
+- Automatic narration targets are clamped to the Shorts duration minimum, and voice normalization accounts for crossfade transitions when estimating the rendered duration. When retiming alone cannot reach the floor, distributed silence padding brings the render to the minimum plus transitions, so unattended runs are no longer deferred by the publish-quality duration gate for otherwise healthy videos.
+- Per-attempt diagnostics (pipeline state, critical-asset plan, rendered QA, evidence verification, ffprobe, contact sheet, upload metadata) are archived per topic attempt, stale reports are cleared before each attempt, and render files are archived only when a publish-quality report exists — recovery attempts no longer mix reports or media from earlier attempts of the same run.
+
+### Added
+
+- Vecteezy stock-video provider (account-scoped Content API V2). Configured via `VECTEEZY_API_KEY` and `VECTEEZY_ACCOUNT_ID`, it searches `content_type=video` with commercial-license and family-friendly filters, resolves signed per-resource download URLs, records Vecteezy attribution for description credits, and stops on auth/quota/rate-limit failures like other hard providers.
 
 ### Compatibility
 

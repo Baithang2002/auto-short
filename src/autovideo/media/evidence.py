@@ -214,7 +214,12 @@ class EvidenceVerificationEngine:
 
 
 def candidate_metadata_text(candidate: CandidateLike) -> str:
-    """Return provider metadata text without candidate.query."""
+    """Return provider metadata text without candidate.query or provenance IDs.
+
+    Provider names, IDs, URLs, download URLs, and local filenames are intentionally
+    excluded because they can contain the requested entity by coincidence (e.g. a
+    URL slug or filename) without proving the pixels show it.
+    """
 
     raw = candidate.raw_metadata if isinstance(candidate.raw_metadata, Mapping) else {}
     raw_values = []
@@ -222,21 +227,47 @@ def candidate_metadata_text(candidate: CandidateLike) -> str:
         key_norm = _norm(key)
         if key_norm in {"query", "search_query", "selected_query"}:
             continue
+        # Skip raw fields that are provenance/identifier/location rather than
+        # content description (url, id, path, filename, slug, provider, etc.).
+        if any(skip in key_norm for skip in ("url", "id", "path", "filename", "slug", "provider", "source", "download", "link", "href", "token", "signature")):
+            continue
         if isinstance(value, (str, int, float)):
-            raw_values.append(str(value))
+            text = str(value)
+            if _looks_like_url(text):
+                continue
+            raw_values.append(text)
         elif isinstance(value, (list, tuple)):
-            raw_values.extend(str(item) for item in value if isinstance(item, (str, int, float)))
+            for item in value:
+                if isinstance(item, (str, int, float)):
+                    text = str(item)
+                    if _looks_like_url(text):
+                        continue
+                    raw_values.append(text)
     values = [
-        candidate.provider,
-        candidate.provider_id,
         candidate.title,
         candidate.description,
-        candidate.url,
-        candidate.download_url,
-        Path(candidate.local_path).name if candidate.local_path else "",
         *raw_values,
     ]
     return _norm(" ".join(values))
+
+
+_URL_RE = re.compile(r"https?://|www\.\S+|\S+\.\w+/\S+|\S+\?\S+=\S+")
+
+
+def _looks_like_url(text: str) -> bool:
+    """Heuristic to avoid treating URLs, signed links, or filenames as evidence."""
+    if not isinstance(text, str):
+        return False
+    stripped = text.strip()
+    if not stripped:
+        return False
+    if stripped.startswith(("http://", "https://")):
+        return True
+    if "?" in stripped and ("=" in stripped or "&" in stripped):
+        return True
+    if "/" in stripped and "." in stripped.split("/")[-1]:
+        return True
+    return bool(_URL_RE.search(stripped))
 
 
 def _metadata_fidelity(

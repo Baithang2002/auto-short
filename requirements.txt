@@ -12,3 +12,6 @@ google-api-python-client>=2.100
 
 # OpenAI-compatible client used for SambaNova's API surface
 openai>=1.10
+
+# YouTube clip fallback downloader
+yt-dlp>=2024.3.10

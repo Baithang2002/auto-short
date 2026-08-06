@@ -19,7 +19,7 @@ class ElevenLabsVoiceProvider:
         *,
         api_key: str = "",
         voice_id: str = "",
-        model: str,
+        model: str = "eleven_multilingual_v2",
         timeout_sec: int = 120,
         accounts: tuple[tuple[str, str], ...] = (),
     ) -> None:

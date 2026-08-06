@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
@@ -79,6 +80,13 @@ class FfmpegTimelineRenderer(Renderer):
         except (OSError, RuntimeError):
             combined_dur = sum(duration for _, duration in meta)
 
+        tolerance = float(os.environ.get("AUTO_VIDEO_DURATION_TOLERANCE_SEC", "1.0").strip() or "1.0")
+        if combined_dur > self.profile.shorts_max_duration_sec + tolerance:
+            raise RuntimeError(
+                f"Combined video is {combined_dur:.1f}s, exceeding the "
+                f"{self.profile.shorts_max_duration_sec}s ceiling (tolerance {tolerance:.1f}s). "
+                "Narration must be trimmed before rendering, not hard-cut at the tail."
+            )
         if combined_dur > self.profile.shorts_max_duration_sec:
             self.services.print_status(
                 f"[!] Combined video is {combined_dur:.1f}s - trimming to "
@@ -165,8 +173,16 @@ class FfmpegTimelineRenderer(Renderer):
             dur = self.services.media_duration(path)
         except (OSError, RuntimeError):
             return None
-        if dur <= self.profile.shorts_max_duration_sec:
-            return dur
+        tolerance = float(os.environ.get("AUTO_VIDEO_DURATION_TOLERANCE_SEC", "1.0").strip() or "1.0")
+        if dur <= self.profile.shorts_max_duration_sec + tolerance:
+            if dur <= self.profile.shorts_max_duration_sec:
+                return dur
+        else:
+            raise RuntimeError(
+                f"{path.name} is {dur:.1f}s, exceeding the "
+                f"{self.profile.shorts_max_duration_sec}s ceiling (tolerance {tolerance:.1f}s). "
+                "Narration must be trimmed before rendering, not hard-cut at the tail."
+            )
         self.services.print_status(
             f"[!] {path.name} is {dur:.1f}s - exceeds {self.profile.shorts_max_duration_sec}s; trimming."
         )

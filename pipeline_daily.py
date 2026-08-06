@@ -433,6 +433,12 @@ def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
 def max_topic_attempts() -> int:
     """Load the bounded number of candidate topics permitted in one daily run."""
 
+    if "AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS" in os.environ:
+        try:
+            return max(1, int(os.environ["AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS"]))
+        except ValueError:
+            pass
+
     try:
         legacy_recoveries = max(
             0,
@@ -441,13 +447,26 @@ def max_topic_attempts() -> int:
     except ValueError:
         legacy_recoveries = 2
     default_attempts = legacy_recoveries + 1
-    try:
-        return max(
-            1,
-            int(os.environ.get("AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS", str(default_attempts))),
-        )
-    except ValueError:
+
+    if "AUTO_VIDEO_SOURCE_COVERAGE_MAX_RECOVERIES" in os.environ:
         return default_attempts
+
+    # Dynamic scaling based on active candidate bank pool size
+    candidate_count = 20
+    bank_path = SCRIPT_DIR / "state" / "topic_bank_state.json"
+    if bank_path.exists():
+        try:
+            data = json.loads(bank_path.read_text(encoding="utf-8"))
+            recs = data.get("records", [])
+            candidate_count = sum(1 for r in recs if r.get("status") in {"candidate", "qualified"})
+        except Exception:
+            candidate_count = 20
+
+    if candidate_count < 10:
+        return min(2, default_attempts)
+    elif candidate_count <= 20:
+        return min(3, default_attempts)
+    return default_attempts
 
 
 def run_daily() -> int:

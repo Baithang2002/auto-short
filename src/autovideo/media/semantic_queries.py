@@ -266,6 +266,12 @@ class SemanticVisualQueryEngine:
 
 _ENTITY_ALIASES: Mapping[str, tuple[str, ...]] = {
     "egyptian pyramids": ("Great Pyramid of Giza", "Giza pyramids", "ancient Egyptian pyramids"),
+    "solar panels": ("solar panel installation", "photovoltaic panels", "solar energy panels"),
+    "underwater volcano": ("submarine volcano", "underwater volcanic eruption", "hydrothermal vent volcano"),
+    "bee waggle dance": ("honeybee waggle dance", "bee dance communication", "worker bee waggle dance"),
+    "greenland shark": ("Greenland shark arctic", "deep sea Greenland shark", "Somniosus microcephalus"),
+    "blue-ringed octopus": ("blue-ringed octopus venomous", "blue ringed octopus underwater", "Hapalochlaena"),
+    "amazon rainforest": ("Amazon rainforest canopy", "Amazon jungle river", "Amazon tropical forest"),
     "rainforest": ("tropical rainforest", "Amazon rainforest", "jungle canopy", "forest river"),
     "camel": ("desert camel", "dromedary camel", "camel desert"),
     "penguin": ("Antarctic penguin", "emperor penguin", "penguin colony"),
@@ -363,7 +369,7 @@ def _provider_variants(
 _TITLE_WORDS = {
     "how", "why", "when", "where", "what", "the", "world", "worlds", "largest", "smallest", "secret",
     "truth", "about", "inside", "hidden", "survive", "survives", "actually", "still", "its", "and", "of",
-    "in", "to", "a", "an",
+    "in", "to", "a", "an", "wildlife", "animal", "animals", "creature", "creatures", "beast", "beasts",
 }
 _VISUAL_TERMS = {
     "aerial", "drone", "canopy", "rain", "rainfall", "mist", "river", "forest", "jungle", "tropical",

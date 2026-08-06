@@ -31,10 +31,16 @@ class QualitySeverity(str, Enum):
 
 @dataclass(frozen=True)
 class PublishQualityConfig:
-    """Configuration for the post-render publish quality policy."""
+    """Configuration for the post-render publish quality policy.
+
+    ``min_duration_sec`` is a SOFT quality/analytics floor only: a short
+    but complete video is never rejected for being short. The only
+    duration constraint that can defer a publish is ``max_duration_sec``
+    (the platform ceiling, sourced from the active ``FormatProfile``).
+    """
 
     enabled: bool = True
-    min_duration_sec: float = 45.0
+    min_duration_sec: float = 0.0
     max_duration_sec: float = 60.0
     max_low_confidence_ratio: float = 0.34
     max_duplicate_asset_ratio: float = 0.25
@@ -50,7 +56,7 @@ class PublishQualityConfig:
         values = env if env is not None else os.environ
         return cls(
             enabled=_env_bool(values, "AUTO_VIDEO_PUBLISH_QUALITY_GATE_ENABLED", True),
-            min_duration_sec=max(0.0, _env_float(values, "AUTO_VIDEO_PUBLISH_QUALITY_MIN_DURATION_SEC", 45.0)),
+            min_duration_sec=max(0.0, _env_float(values, "AUTO_VIDEO_PUBLISH_QUALITY_MIN_DURATION_SEC", 0.0)),
             max_duration_sec=max(0.0, _env_float(values, "AUTO_VIDEO_PUBLISH_QUALITY_MAX_DURATION_SEC", 60.0)),
             max_low_confidence_ratio=_clamp(_env_float(
                 values,
@@ -78,6 +84,37 @@ class PublishQualityConfig:
                 "AUTO_VIDEO_RENDERED_VISUAL_QA_ALLOW_VISION_UNAVAILABLE",
                 False,
             ),
+        )
+
+    @classmethod
+    def from_format_profile(
+        cls,
+        profile: Any,
+        env: Mapping[str, str] | None = None,
+    ) -> "PublishQualityConfig":
+        """Build the policy with the active format profile's ceiling.
+
+        The platform ceiling (``profile.max_duration_sec``) becomes the only
+        hard duration limit; the min floor stays soft (0.0). An explicit
+        ``AUTO_VIDEO_PUBLISH_QUALITY_MAX_DURATION_SEC`` still overrides.
+        """
+        values = env if env is not None else os.environ
+        configured = cls.from_env(values)
+        ceiling = _env_float(
+            values,
+            "AUTO_VIDEO_PUBLISH_QUALITY_MAX_DURATION_SEC",
+            float(getattr(profile, "max_duration_sec", 60)),
+        )
+        return cls(
+            enabled=configured.enabled,
+            min_duration_sec=configured.min_duration_sec,
+            max_duration_sec=max(0.0, ceiling),
+            max_low_confidence_ratio=configured.max_low_confidence_ratio,
+            max_duplicate_asset_ratio=configured.max_duplicate_asset_ratio,
+            max_hybrid_composer_ratio=configured.max_hybrid_composer_ratio,
+            allow_clip_audio=configured.allow_clip_audio,
+            require_verified_rendered_critical=configured.require_verified_rendered_critical,
+            allow_rendered_critical_when_vision_unavailable=configured.allow_rendered_critical_when_vision_unavailable,
         )
 
 

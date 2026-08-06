@@ -26,17 +26,17 @@ class TestShortsVerticalValues(unittest.TestCase):
     def test_name(self) -> None:
         assert self.profile.name == "shorts_vertical"
 
-    def test_target_duration_sec_matches_render_defaults(self) -> None:
-        # Was DEFAULTS.render.target_duration_sec = 60
-        assert self.profile.target_duration_sec == 60
+    def test_target_duration_sec_is_none_by_default(self) -> None:
+        # The story decides length; target is only an advisory hint (None = unset).
+        assert self.profile.target_duration_sec is None
 
-    def test_min_duration_sec_matches_render_defaults(self) -> None:
-        # Was DEFAULTS.render.shorts_min_duration_sec = 50
-        assert self.profile.min_duration_sec == 50
+    def test_min_duration_sec_is_zero_soft_bound(self) -> None:
+        # min is a soft analytics/quality indicator only; it never rejects or pads.
+        assert self.profile.min_duration_sec == 0.0
 
     def test_max_duration_sec_matches_render_defaults(self) -> None:
-        # Was DEFAULTS.render.shorts_max_duration_sec = 58
-        assert self.profile.max_duration_sec == 58
+        # max is the sole hard ceiling; YouTube Shorts = 60s (was 58).
+        assert self.profile.max_duration_sec == 60
 
     def test_scene_target_duration_sec_matches_module_constant(self) -> None:
         # Was auto_short.py: SHORTS_SCENE_TARGET_DURATION = 5.0
@@ -69,6 +69,23 @@ class TestShortsVerticalValues(unittest.TestCase):
         assert self.profile.narration_max_retime_tempo <= 1.05
 
 
+class TestOtherPlatformCeilings(unittest.TestCase):
+    """TikTok and Reels carry their own platform ceilings."""
+
+    def test_tiktok_ceiling(self) -> None:
+        assert get_format_profile("tiktok_vertical").max_duration_sec == 180
+
+    def test_reels_ceiling(self) -> None:
+        assert get_format_profile("reels_vertical").max_duration_sec == 90
+
+    def test_all_profiles_share_story_driven_duration_shape(self) -> None:
+        for name in ("shorts_vertical", "tiktok_vertical", "reels_vertical"):
+            profile = get_format_profile(name)
+            assert isinstance(profile.max_duration_sec, int)
+            assert isinstance(profile.min_duration_sec, float)
+            assert profile.target_duration_sec is None
+
+
 class TestRegistryLookup(unittest.TestCase):
     def test_get_shorts_vertical_returns_format_profile(self) -> None:
         profile = get_format_profile("shorts_vertical")
@@ -98,11 +115,11 @@ class TestFormatProfileImmutability(unittest.TestCase):
             profile.max_duration_sec = 999  # type: ignore[misc]
 
     def test_profile_field_types_are_preserved(self) -> None:
-        # Duration bounds were ints on RenderDefaults; keep them ints so
-        # comparisons like `duration >= SHORTS_MIN_DURATION` behave identically.
+        # max stays an int (seconds); min is a float soft bound; target is
+        # None by default ("the story decides").
         profile = get_default_format_profile()
-        assert isinstance(profile.target_duration_sec, int)
-        assert isinstance(profile.min_duration_sec, int)
+        assert profile.target_duration_sec is None
+        assert isinstance(profile.min_duration_sec, float)
         assert isinstance(profile.max_duration_sec, int)
         assert isinstance(profile.narration_words_per_segment_min, int)
         assert isinstance(profile.scene_target_duration_sec, float)

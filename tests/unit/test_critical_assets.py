@@ -478,56 +478,95 @@ class CriticalAssetTests(unittest.TestCase):
             ],
         }
         narration = "Beavers reshape rushing streams by carrying branches into carefully built dams every single day."
-        segments = [
+        prompts = []
+        beats = [
             {
-                "narration": narration,
-                "broll": "beaver carrying branches placing dam",
-                "broll_queries": ["beaver carrying branches placing dam"] * 4,
+                "role": role,
+                "purpose": f"advances the story toward its payoff",
+                "importance": 8,
+                "can_merge": role not in {"hook", "climax", "resolution", "conclusion_cta"},
+                "can_remove": role not in {"hook", "climax", "resolution", "conclusion_cta"},
+                "critical_asset_dependency": index in (0, 1),
+                "expected_words": 20,
             }
-            for _ in range(11)
+            for index, role in enumerate(
+                (
+                    "hook", "context", "setup", "discovery", "conflict", "escalation",
+                    "turning_point", "climax", "resolution", "interesting_fact",
+                    "discovery", "conclusion_cta",
+                )
+            )
         ]
-        segments.append({
-            "narration": "Follow Wonders of the Nature for more wild mechanisms hiding in plain sight.",
-            "broll": "beaver carrying branches placing dam",
-            "broll_queries": ["beaver carrying branches placing dam"] * 4,
-        })
-        response = json.dumps({
+        script_response = json.dumps({
             "title": "The River Builder Hiding in Plain Sight",
             "description": "See how beavers reshape a stream.",
             "instagram_caption": "A river-changing secret in action. Follow for more.",
             "music_mood": "curious",
             "hashtags": ["#beaver", "#wildlife"],
-            "segments": segments,
+            "segments": [
+                {
+                    "narration": narration,
+                    "broll": "beaver carrying branches placing dam",
+                    "broll_queries": [
+                        "beaver carrying branch water",
+                        "beaver in dam wide shot",
+                        "beaver tail detail",
+                        "beaver river fallback",
+                    ],
+                    "beat_role": beat["role"],
+                }
+                for beat in beats
+            ],
         })
-        prompts = []
+
+        def _respond(prompt):
+            prompts.append(prompt)
+            if "story planner" in prompt:
+                return json.dumps({
+                    "title": "The River Builder Hiding in Plain Sight",
+                    "complexity": "simple",
+                    "beats": beats,
+                })
+            if "reviewer" in prompt:
+                return json.dumps({
+                    "hook_strength": 9,
+                    "narrative_coherence": 9,
+                    "logical_flow": 9,
+                    "repetition": 9,
+                    "educational_value": 9,
+                    "emotional_progression": 9,
+                    "ending_quality": 9,
+                    "hook_present": "yes",
+                    "ending_present": "yes",
+                    "beats_coherent": "yes",
+                    "summary": "a strong connected story",
+                })
+            return script_response
+
         with tempfile.TemporaryDirectory() as directory, patch.object(
             auto_short,
             "generate_script_raw",
-            side_effect=lambda prompt: prompts.append(prompt) or response,
+            side_effect=_respond,
         ), patch.object(auto_short, "OUT_DIR", Path(directory)):
             script = auto_short.generate_script(
                 _card().premise,
-                12,
-                auto_short.TARGET_DURATION,
                 critical_asset_plan=plan,
             )
 
-        prompt = prompts[0]
-        for beat in (
-            "opening image", "subject's need", "obstacle or tension", "first attempt",
-            "visible mechanism", "cost or stakes", "escalation", "intimate detail",
-            "reveal", "consequence", "quiet visual payoff", "existing short branded CTA",
-        ):
-            self.assertIn(beat, prompt)
-        self.assertIn("confirmed beaver; visible action: carrying a branch", prompt)
-        self.assertIn("Return ONE title only", prompt)
-        self.assertIn("curious declarative statement", prompt)
-        self.assertIn("This [animal/place/event] looks [simple/beautiful/harmless]", prompt)
-        self.assertIn("first segment's visual searches must promise motion or impact", prompt)
-        self.assertIn("Never make the first segment's primary b-roll a static landscape", prompt)
-        self.assertIn("For segment 1, the first query must be the strongest motion/action/close-up query", prompt)
-        self.assertEqual(len(script["segments"]), 12)
-        self.assertEqual(script["category_id"], "15")
+        planner_prompt = prompts[0]
+        self.assertIn("documentary story planner", planner_prompt)
+        self.assertIn("confirmed beaver; visible action: carrying a branch", planner_prompt)
+        writer_prompt = prompts[1]
+        self.assertIn("STORY PLAN", writer_prompt)
+        self.assertIn("confirmed beaver; visible action: carrying a branch", writer_prompt)
+        self.assertIn("Segments 1 and 2 are visually locked", writer_prompt)
+        for role in ("hook", "climax", "conclusion_cta"):
+            self.assertIn(f"role={role}", writer_prompt)
+        self.assertIn("critical_asset_dependency=true", writer_prompt)
+        self.assertGreaterEqual(len(script["segments"]), 4)
+        self.assertLess(len(script["segments"]), 12)
+        self.assertEqual("hook", script["segments"][0]["beat_role"])
+        self.assertEqual("15", script["category_id"])
 
     def test_script_qa_rejects_academic_suffix_and_misaligned_lock(self) -> None:
         data = {
@@ -549,7 +588,7 @@ class CriticalAssetTests(unittest.TestCase):
             }],
         }
 
-        fatal, _soft = auto_short.script_quality_notes(data, 1, 5, plan)
+        fatal, _soft = auto_short.script_quality_notes(data, plan)
 
         self.assertTrue(any("academic title suffix" in note for note in fatal))
         self.assertTrue(any("locked entity" in note for note in fatal))

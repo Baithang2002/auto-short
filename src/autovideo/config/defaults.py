@@ -41,10 +41,15 @@ class RenderDefaults:
     width: int = 1080
     height: int = 1920
     fps: int = 30
-    target_duration_sec: int = 60
+    # Duration policy is owned by the active FormatProfile; these are
+    # legacy-compatibility defaults only. target is story-driven (None),
+    # min is a soft indicator (0 = never rejects/pads), and the shorts
+    # max is the platform ceiling default (the FormatProfile supplies the
+    # authoritative value at runtime).
+    target_duration_sec: int | None = None
     avg_segment_duration_sec: float = 6.5
-    shorts_min_duration_sec: int = 50
-    shorts_max_duration_sec: int = 58
+    shorts_min_duration_sec: int = 0
+    shorts_max_duration_sec: int = 60
     default_music_volume: float = 0.22
 
 

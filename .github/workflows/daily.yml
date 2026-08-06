@@ -96,9 +96,8 @@ jobs:
           # Stock sources
           PEXELS_API_KEY:      ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:     ${{ secrets.PIXABAY_API_KEY }}
-          COVERR_API_KEY:      ${{ secrets.COVERR_API_KEY }}
-          COVERR_APP_ID:       ${{ secrets.COVERR_APP_ID }}
-          COVERR_API_URL:      "https://api.coverr.co"
+          VECTEEZY_API_KEY:    ${{ secrets.VECTEEZY_API_KEY }}
+          VECTEEZY_ACCOUNT_ID: ${{ secrets.VECTEEZY_ACCOUNT_ID }}
           EUROPEANA_API_KEY:   ${{ secrets.EUROPEANA_API_KEY }}
           EUROPEANA_API_URL:   "https://api.europeana.eu/record/v2/search.json"
           NOAA_USER_AGENT:     "auto-short/1.0, vincentreang23@gmail.com"
@@ -167,7 +166,7 @@ jobs:
             echo "No supported vision secret is configured (Gemini or Groq)."
             exit 2
           fi
-          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$COVERR_API_KEY" ]; then
+          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$VECTEEZY_API_KEY" ]; then
             echo "No keyed stock-video provider is configured."
             exit 2
           fi

@@ -148,6 +148,23 @@ class ProviderCapabilityRegistry:
         return tuple(sorted(ranked, key=lambda item: (-item[1], item[0].base_priority, item[0].provider_id)))
 
 
+def _provider_plan_sort_key(
+    plan: "ProviderSearchPlan",
+    order_index: dict[str, int],
+    registry: "ProviderCapabilityRegistry",
+) -> tuple:
+    """Tier 0: providers named in ``provider_order`` (in that order). Tier 1: natural
+    (score desc, base_priority asc, provider id) ranking."""
+    position = order_index.get(plan.provider_id)
+    if position is not None:
+        return (0, position, plan.provider_id)
+    priority = 100
+    capability = registry.get(plan.provider_id)
+    if capability is not None:
+        priority = capability.base_priority
+    return (1, -plan.score, priority, plan.provider_id)
+
+
 class QueryPlanner:
     """Build a query plan from visual intent."""
 
@@ -329,7 +346,7 @@ class SourcePlanner:
     def __init__(self, registry: ProviderCapabilityRegistry) -> None:
         self.registry = registry
 
-    def plan(self, query_plan: QueryPlan) -> SearchStrategy:
+    def plan(self, query_plan: QueryPlan, provider_order: tuple[str, ...] = ()) -> SearchStrategy:
         ranked = self.registry.rank(query_plan.capability_requirements)
         provider_plans = []
         for provider, score, matched in ranked:
@@ -364,7 +381,8 @@ class SourcePlanner:
                     is_fallback=adjusted_score <= 0,
                 )
             )
-        provider_plans.sort(key=lambda plan: (-plan.score, self.registry.get(plan.provider_id).base_priority if self.registry.get(plan.provider_id) else 100, plan.provider_id))
+        order_index = {provider_id: index for index, provider_id in enumerate(provider_order)}
+        provider_plans.sort(key=lambda plan: _provider_plan_sort_key(plan, order_index, self.registry))
         provider_diagnostics = []
         for plan in provider_plans:
             provider_capability = self.registry.get(plan.provider_id) or ProviderCapability(plan.provider_id, ())
@@ -417,6 +435,7 @@ def default_provider_capability_registry(
     pollinations_image_enabled: bool = False,
     mixkit_enabled: bool = False,
     coverr_enabled: bool = False,
+    vecteezy_enabled: bool = False,
     videvo_enabled: bool = False,
     wikimedia_enabled: bool = False,
     noaa_enabled: bool = False,
@@ -429,6 +448,7 @@ def default_provider_capability_registry(
     europeana_enabled: bool = False,
     flickr_commons_enabled: bool = False,
     internet_archive_enabled: bool = False,
+    yt_clip_enabled: bool = False,
 ) -> ProviderCapabilityRegistry:
     """Current provider capability registration.
 
@@ -493,6 +513,25 @@ def default_provider_capability_registry(
         domains=("stock", "archive", "history"),
         licensing="Videvo license varies by clip",
         confidence=0.45,
+    ))
+    registry.register(ProviderCapability(
+        "vecteezy",
+        ("generic_stock_video", "wildlife_video", "nature_video", "city_video", "technology", "architecture_video", "energy_video", "renewable_energy", "abstract_concepts", "ocean_video", "human_video", "lifestyle_video", "macro_video", "close_up_video"),
+        base_priority=52,
+        requires_api_key=True,
+        enabled=vecteezy_enabled,
+        domains=("stock", "wildlife", "nature", "technology", "city", "energy", "physics"),
+        licensing="Vecteezy License",
+        confidence=0.5,
+    ))
+    registry.register(ProviderCapability(
+        "yt_clip",
+        ("generic_stock_video", "wildlife_video", "nature_video", "ocean_video", "city_video", "technology", "history_video", "archive_footage", "geology", "volcano_video", "energy_video"),
+        base_priority=0,
+        enabled=yt_clip_enabled,
+        domains=("wildlife", "nature", "stock", "ocean", "history", "science", "technology", "geology", "energy"),
+        licensing="YouTube Clip Fallback (Fair Use / User Voice Replacement)",
+        confidence=0.7,
     ))
     registry.register(ProviderCapability(
         "noaa",

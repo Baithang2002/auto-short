@@ -1,70 +1,70 @@
-# Wonders of the Nature - current daily topic pool
+# Wonders of Nature - conservative stock-provider daily topic pool
 # One topic per line. Lines starting with # are ignored.
-# Topics favor clear, visually demonstrable subjects so the autonomous quality
-# gates can select reliable documentaries without repeating older validation topics.
+# These topics use literal, common search terms with broad Pexels/Pixabay
+# inventory and Wikimedia supporting imagery. The live source-coverage
+# qualification gate remains authoritative before any topic is published.
 
-# --- Wildlife & Animal Behavior ---
-why flamingos are pink
-how beavers reshape entire rivers
-why hummingbirds can fly backward
-how sea turtles find their way home
-why owls can hunt in complete darkness
-how crows remember human faces
-why elephants can hear through their feet
-how woodpeckers avoid brain damage
-why chameleons change color
-how ants build underground cities
-why penguins do not freeze on Antarctic ice
-how bats navigate in total darkness
+# --- Wildlife with common, visually literal search terms ---
+how bees pollinate flowers
+how butterflies emerge from a chrysalis
+how frogs live near ponds
+how birds build nests
+how penguins move across snow
+how bears catch fish in rivers
+how elephants walk through grasslands
+how dolphins swim in the ocean
+how turtles move along a beach
+how horses run across open fields
+how dogs swim in water
+how cats climb trees
+how rabbits move through grass
+how deer move through forests
+how wolves move through snow
+how fish swim in clear water
+how owls fly at night
+how hummingbirds feed from flowers
+how crabs move along the beach
+how spiders build webs
 
-# --- Oceans, Water & Landscapes ---
-how mangrove forests protect coastlines from storms
-why coral reefs are called underwater cities
-how waterfalls carve through solid rock
-why rivers bend and change course
-how glaciers shape mountains and valleys
-why icebergs look blue
-how tides move entire oceans
-why some beaches have black sand
-how forests create their own rain
-why the ocean has giant blue holes
-how desert dunes move across the landscape
-why lakes can suddenly change color
+# --- Water, coast, and common landscapes ---
+how waves move across the ocean
+how waterfalls flow over rocks
+how rivers move through forests
+how streams flow over stones
+how rain fills a lake
+how clouds form over mountains
+how fog moves through a valley
+how snow falls in a forest
+how ice melts on a lake
+how beaches change with waves
+how coral reefs grow underwater
+how kelp moves in ocean water
+how mangrove trees grow near water
+how sunlight reflects on the ocean
+how rainbows form after rain
 
-# --- Earth Science & Weather ---
-how earthquakes can change a river's course
-why volcanoes create new land
-how caves grow giant crystal formations
-why lightning creates glass in sand
-how hurricanes grow into giant storms
-why snowflakes have six sides
-how rainbows form after a storm
-why the ground can crack into hexagons
-how wind shapes giant rock arches
-why some clouds look like flying saucers
+# --- Plants, forests, and earth science ---
+how forests grow in sunlight
+how flowers open in the morning
+how seeds grow into plants
+how leaves change color
+how moss grows on rocks
+how mushrooms grow in forests
+how bamboo grows quickly
+how trees move in the wind
+how sand dunes move in the wind
+how mountains form
+how caves form in rock
+how volcanoes erupt
+how lava cools into rock
+how geysers send water into the air
+how glaciers move across valleys
 
-# --- Space & Earth From Above ---
-how astronauts sleep in space
-why the moon has no weather
-how solar eclipses turn day into night
-why Venus is hotter than Mercury
-how comets grow their glowing tails
-why Earth has seasons
-how satellites take pictures of Earth
-why Mars has the tallest volcano in the solar system
-how the International Space Station stays in orbit
-why Saturn has rings
-
-# --- History, Engineering & Everyday Science ---
-how ancient Egyptians built stone pyramids
-why medieval castles had moats
-how Vikings navigated without GPS
-why ancient cities were built beside rivers
-how paper changed the world
-why old maps look so strange
-how wind turbines turn wind into electricity
-why suspension bridges can bend without breaking
-how shipping containers changed world trade
-why train tracks have small gaps
-how solar panels turn sunlight into electricity
-why airplanes leave white trails in the sky
+# --- Weather and sky ---
+how thunderstorms form
+how lightning crosses the sky
+how wind moves through clouds
+how sunsets turn the sky orange
+how stars appear at night
+how the moon changes shape
+how the northern lights appear

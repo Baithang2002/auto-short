@@ -121,6 +121,35 @@ class MediaPlanningTests(unittest.TestCase):
         self.assertTrue(registry.get("europeana").requires_api_key)
         self.assertTrue(registry.get("flickr_commons").requires_api_key)
 
+    def test_vecteezy_capability_registration(self) -> None:
+        registry = default_provider_capability_registry(
+            local_enabled=False,
+            vecteezy_enabled=True,
+        )
+
+        self.assertIn("vecteezy", {provider.provider_id for provider in registry.all()})
+        vecteezy = registry.get("vecteezy")
+        self.assertIn("generic_stock_video", vecteezy.capabilities)
+        self.assertIn("nature_video", vecteezy.capabilities)
+        self.assertTrue(vecteezy.requires_api_key)
+        self.assertEqual(vecteezy.licensing, "Vecteezy License")
+        self.assertIn("stock", vecteezy.domains)
+
+    def test_vecteezy_ranks_before_coverr_when_enabled(self) -> None:
+        registry = default_provider_capability_registry(
+            local_enabled=False,
+            vecteezy_enabled=True,
+            coverr_enabled=True,
+        )
+        ranked = registry.rank([CapabilityRequirement("city_video", required=False, weight=2.0)])
+        provider_ids = [
+            entry[0].provider_id
+            for entry in ranked
+            if entry[0].provider_id in {"vecteezy", "coverr"}
+        ]
+
+        self.assertEqual(provider_ids, ["vecteezy", "coverr"])
+
     def test_provider_agnostic_ranking_uses_capabilities_not_names(self) -> None:
         registry = ProviderCapabilityRegistry()
         registry.register(ProviderCapability("provider_a", ("generic_stock_video",), base_priority=0))
@@ -162,12 +191,45 @@ class MediaPlanningTests(unittest.TestCase):
             local_enabled=False,
             mixkit_enabled=True,
             gemini_image_enabled=False,
+            yt_clip_enabled=True,
         )
         strategy = SourcePlanner(registry).plan(QueryPlanner().plan(intent))
         order = strategy.provider_order
 
         self.assertLess(order.index("pexels"), order.index("pixabay"))
         self.assertLess(order.index("pixabay"), order.index("mixkit"))
+
+    def test_provider_order_override_moves_yt_clip_to_front(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "The arctic fox pounces through snow.", "broll": "arctic fox pouncing snow"},
+            "Arctic Fox Survival Tricks",
+        )
+        registry = default_provider_capability_registry(
+            local_enabled=False,
+            mixkit_enabled=True,
+            gemini_image_enabled=False,
+            yt_clip_enabled=True,
+        )
+        query_plan = QueryPlanner().plan(intent)
+        natural = SourcePlanner(registry).plan(query_plan)
+        forced = SourcePlanner(registry).plan(query_plan, provider_order=("yt_clip", "pexels"))
+
+        self.assertEqual(forced.provider_order[0], "yt_clip")
+        self.assertEqual(forced.provider_order[1], "pexels")
+        self.assertEqual(
+            tuple(p for p in forced.provider_order if p not in {"yt_clip", "pexels"}),
+            tuple(p for p in natural.provider_order if p not in {"yt_clip", "pexels"}),
+        )
+
+    def test_provider_order_override_ignores_unknown_ids(self) -> None:
+        intent = build_visual_intent(
+            {"narration": "The arctic fox pounces through snow.", "broll": "arctic fox pouncing snow"},
+            "Arctic Fox Survival Tricks",
+        )
+        registry = default_provider_capability_registry(local_enabled=False, gemini_image_enabled=False)
+        query_plan = QueryPlanner().plan(intent)
+        strategy = SourcePlanner(registry).plan(query_plan, provider_order=("does_not_exist",))
+        self.assertNotIn("does_not_exist", strategy.provider_order)
 
     def test_wildlife_routes_to_usfws_archive_before_generic_stock_when_enabled(self) -> None:
         intent = build_visual_intent(
@@ -559,9 +621,14 @@ class MediaPlanningTests(unittest.TestCase):
                     return_value=None,
                 ), patch.object(
                     auto_short,
+                    "fetch_yt_clip_video",
+                    return_value=None,
+                ), patch.object(
+                    auto_short,
                     "fetch_pexels_video",
                     return_value=pexels_path,
                 ) as pexels, patch.object(
+
                     auto_short,
                     "fetch_nasa_video",
                     return_value=nasa_path,
@@ -621,6 +688,10 @@ class MediaPlanningTests(unittest.TestCase):
             ), patch.object(
                 auto_short,
                 "fetch_internet_archive_media",
+                return_value=None,
+            ), patch.object(
+                auto_short,
+                "fetch_yt_clip_video",
                 return_value=None,
             ), patch.object(
                 auto_short,

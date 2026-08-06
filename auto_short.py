@@ -145,10 +145,13 @@ from autovideo.media import (
     VerifiedMediaSceneResult,
     HybridVisualComposer,
     ShotPlan,
+    SourceContinuityEngine,
+    SourceContinuityState,
+    SourceIdentity,
     SubjectContinuityEngine,
     VisionVerificationResult,
-    VisualGrammarEngine,
     VisualDirector,
+    VisualGrammarEngine,
     build_visual_intent,
     candidate_from_local_path,
     candidate_from_nasa_item,
@@ -156,6 +159,7 @@ from autovideo.media import (
     candidate_from_pixabay_hit,
     candidate_from_remote_item,
     default_provider_capability_registry,
+    identity_from_candidate,
     score_candidate,
     select_best_candidate,
 )
@@ -180,7 +184,7 @@ from autovideo.pipeline import (
     StageResult,
 )
 from autovideo.render import FfmpegRenderServices, FfmpegTimelineRenderer, render_profile_for
-from autovideo.format import FormatProfile, get_default_format_profile
+from autovideo.format import FormatProfile, get_default_format_profile, resolve_format_profile, story as story_planning
 from autovideo.storage import ArtifactStore, FilesystemQueue
 
 # ----------------------------------------------------------------------------
@@ -192,16 +196,17 @@ GEMINI_MODEL         = DEFAULTS.providers.gemini_models[0]
 # Format-shaped configuration is owned by the FormatProfile abstraction.
 # The module-level constants below remain for backward compatibility with
 # any external code that imports them from this module; their values are
-# derived from the default profile so there is a single source of truth.
-_FORMAT_PROFILE: FormatProfile = get_default_format_profile()
+# derived from the active profile so there is a single source of truth.
+# The active profile is selected via AUTO_VIDEO_FORMAT (default shorts_vertical).
+_FORMAT_PROFILE: FormatProfile = resolve_format_profile()
 
-TARGET_DURATION      = _FORMAT_PROFILE.target_duration_sec                     # target video length in seconds (use --duration to override)
+TARGET_DURATION      = _FORMAT_PROFILE.target_duration_sec                     # story-driven hint; None means the story decides (use --duration to hint)
 AVG_SEGMENT_DURATION = DEFAULTS.render.avg_segment_duration_sec                    # estimated seconds per narration/story beat
 SHORTS_SCENE_TARGET_DURATION = _FORMAT_PROFILE.scene_target_duration_sec
 SHORTS_PREFERRED_NARRATION_TEMPO = _FORMAT_PROFILE.preferred_narration_tempo
 SHORTS_TRANSITION_DURATION = _FORMAT_PROFILE.transition_duration_sec
-SHORTS_MIN_DURATION  = _FORMAT_PROFILE.min_duration_sec                     # preferred default lower bound for YouTube Shorts
-SHORTS_MAX_DURATION  = _FORMAT_PROFILE.max_duration_sec                     # hard ceiling: >=60s triggers YT Content ID (Adrev). 2s safety margin to absorb encoding drift.
+SHORTS_MIN_DURATION  = _FORMAT_PROFILE.min_duration_sec                     # soft quality indicator only - never rejects or pads
+SHORTS_MAX_DURATION  = _FORMAT_PROFILE.max_duration_sec                     # the ONLY hard ceiling; every trim/retime/validation reads this
 WIDTH, HEIGHT        = DEFAULTS.render.width, DEFAULTS.render.height             # vertical (Reels / Shorts / FB)
 FPS                  = DEFAULTS.render.fps
 OUT_DIR              = SCRIPT_DIR / "output"
@@ -218,11 +223,50 @@ MEDIA_EXTENSIONS     = VIDEO_EXTENSIONS | IMAGE_EXTENSIONS
 DEFAULT_MUSIC_VOLUME = DEFAULTS.render.default_music_volume                    # background bed under narration
 _GEMINI_CLIENT = None
 _MEDIA_SELECTION_DIAGNOSTICS = {}
+_BROAD_FALLBACK_SCENES = 0
+_BROAD_FALLBACK_MAX_SCENES = max(1, int(os.environ.get("AUTO_VIDEO_MAX_BROAD_FALLBACK_SCENES", "1").strip() or "1"))
+_YT_CLIP_SCENES_USED = 0
+
+
+def _yt_clip_max_scenes() -> int:
+    """Per-documentary yt_clip scene cap (lazy so the local .env loader has run)."""
+    return max(0, int(os.environ.get("AUTO_VIDEO_YT_CLIP_MAX_SCENES", "6").strip() or "6"))
+
+
+def _stock_provider_order() -> tuple[str, ...]:
+    """Return the user-configured provider priority order if any (read lazily so the
+    local .env loader has already run)."""
+    raw = os.environ.get("AUTO_VIDEO_STOCK_PROVIDER_ORDER", "")
+    return tuple(part.strip() for part in raw.split(",") if part.strip())
+
+
+def _yt_clip_budget_available() -> bool:
+    """Return whether the per-documentary yt_clip scene budget is not exhausted."""
+    return _yt_clip_max_scenes() <= 0 or _YT_CLIP_SCENES_USED < _yt_clip_max_scenes()
 _MEDIA_PLANNING_DIAGNOSTICS = {}
 _ADAPTIVE_SEARCH_DIAGNOSTICS = {}
 _AUDIO_MIX_DECISIONS: list[ClipAudioDecision] = []
+# Story-planning metrics (filled by generate_script, enriched at voice/gen
+# and report time) -> written to output/story_report.json.
+_STORY_REPORT: dict = {}
 _WIKIMEDIA_SEARCH_CACHE = {}
 _WIKIMEDIA_LAST_REQUEST_AT = 0.0
+
+
+def _write_story_report() -> Path:
+    """Persist the story-planning analytics payload to output/story_report.json."""
+    report = {
+        "semantic_trim_applied": bool(_STORY_REPORT.get("semantic_trim_applied", False)),
+        "narration_overflow": bool(_STORY_REPORT.get("narration_overflow", False)),
+        "renderer_tail_trim": bool(_STORY_REPORT.get("renderer_tail_trim", False)),
+    }
+    report.update({key: value for key, value in _STORY_REPORT.items() if key not in report})
+    try:
+        path = OUT_DIR / "story_report.json"
+        path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
+        return path
+    except OSError:
+        return OUT_DIR / "story_report.json"
 
 
 def _get_gemini_client():
@@ -280,6 +324,9 @@ COVERR_API_KEY     = os.environ.get("COVERR_API_KEY", "").strip()
 COVERR_APP_ID      = os.environ.get("COVERR_APP_ID", "").strip()
 VIDEVO_API_KEY     = os.environ.get("VIDEVO_API_KEY", "").strip()
 VIDEVO_API_URL     = os.environ.get("VIDEVO_API_URL", "").strip()
+VECTEEZY_API_URL = os.environ.get("VECTEEZY_API_URL", "https://api.vecteezy.com").strip().rstrip("/")
+VECTEEZY_API_KEY = os.environ.get("VECTEEZY_API_KEY", "").strip()
+VECTEEZY_ACCOUNT_ID = os.environ.get("VECTEEZY_ACCOUNT_ID", "").strip()
 ARCHIVE_PROVIDERS_ENABLED = os.environ.get("ENABLE_ARCHIVE_PROVIDERS", "1").lower() not in {"0", "false", "no"}
 NOAA_API_URL       = os.environ.get("NOAA_API_URL", "").strip()
 NOAA_USER_AGENT    = os.environ.get("NOAA_USER_AGENT", "auto-short/1.0 educational video generator").strip()
@@ -311,7 +358,7 @@ AI_VISUAL_QA_PROVIDER = os.environ.get("AI_VISUAL_QA_PROVIDER", "gemini").strip(
 AI_VISUAL_QA_MIN_METADATA_CONFIDENCE = float(os.environ.get("AI_VISUAL_QA_MIN_METADATA_CONFIDENCE", "0.90") or "0.90")
 AI_VISUAL_QA_MAX_CANDIDATES = int(os.environ.get("AI_VISUAL_QA_MAX_CANDIDATES", "3") or "3")
 AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO = float(os.environ.get("AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO", "0.50") or "0.50")
-CRITICAL_ASSET_PROVIDERS = ("pexels", "pixabay", "wikimedia", "coverr", "europeana")
+CRITICAL_ASSET_PROVIDERS = ("pexels", "pixabay", "wikimedia", "europeana")
 CRITICAL_ASSET_TECHNICAL_FAILURES = {
     ProviderProbeStatus.UNCONFIGURED,
     ProviderProbeStatus.AUTH_ERROR,
@@ -409,102 +456,53 @@ def count_words(text):
 
 
 def automatic_duration_for_topic(topic, card=None):
-    """Choose a target that remains inside the production Shorts profile."""
+    """Return an *advisory* story-length hint in seconds.
 
-    if isinstance(card, TopicCard):
-        return max(int(card.recommended_duration_sec), int(SHORTS_MIN_DURATION)), f"topic card {card.id}"
-    text = re.sub(r"[^a-z0-9]+", " ", str(topic or "").casefold())
-    if any(term in text for term in (
-        "shark", "jellyfish", "octopus", "lightning", "fish rain", "insect zombie",
-    )):
-        return 52, "high-retention curiosity topic fallback"
-    if any(term in text for term in (
-        "how ", "why ", "survive", "camouflage", "hover", "rotate", "forms ", "build",
-    )):
-        return max(48, int(SHORTS_MIN_DURATION)), "mechanism topic fallback"
-    return max(46, int(SHORTS_MIN_DURATION)), "short explainer fallback"
+    The story itself determines the finished length; this value is used
+    only for logging/analytics and is never fed to writers as a clamp.
+    When a topic card carries a recommendation it is honored; otherwise
+    the advisory hint is the platform ceiling from the active profile.
+    """
+
+    if isinstance(card, TopicCard) and card.recommended_duration_sec:
+        return int(card.recommended_duration_sec), f"topic card {card.id} advisory"
+    return int(SHORTS_MAX_DURATION), "platform ceiling advisory"
 
 
 def resolve_target_duration(topic, explicit_duration=None, card=None):
-    """Resolve an explicit CLI target before applying automatic policy."""
+    """Resolve an explicit CLI --duration hint, or None (story-driven).
+
+    ``--duration`` remains a user override at the call site only: it is a
+    soft hint for planning/logging, never a clamp on the finished story.
+    """
 
     if explicit_duration is not None:
         return int(explicit_duration), "explicit --duration override"
-    return automatic_duration_for_topic(topic, card)
+    return None, "story-driven length (platform ceiling governs)"
 
 
-def narration_targets(target_duration, n_segments, profile: FormatProfile = _FORMAT_PROFILE):
-    """Return word-count targets that usually land TTS output near target_duration.
-
-    TTS reads at roughly 2.5-3 words/sec on neural voices. Shorts need enough
-    words to avoid slow retiming, but each sentence still needs to be punchy.
-
-    Word-rate bounds come from the ``FormatProfile`` so a future long-form
-    profile can widen them without touching this function.
-    """
-    min_total = max(
-        n_segments * profile.narration_words_per_segment_min,
-        round(target_duration * profile.narration_words_per_sec_min),
-    )
-    max_total = max(
-        min_total + 14,
-        round(target_duration * profile.narration_words_per_sec_max),
-    )
-    min_segment = max(8, min(13, min_total // max(n_segments, 1)))
-    max_segment = max(min_segment + 4, round(max_total / max(n_segments, 1)) + 2)
-    return min_total, max_total, min_segment, max_segment
-
-
-def script_quality_notes(data, n_segments, target_duration, critical_asset_plan=None):
+def script_quality_notes(data, critical_asset_plan=None, profile: FormatProfile = _FORMAT_PROFILE):
     """Return (fatal_notes, soft_notes).
 
-    Fatal = will produce a broken or way-too-short video. Pipeline must reject.
-    Soft  = overshoots and minor issues - video will be slightly longer than
-            target but still postable. Accept after one repair attempt fails.
+    Fatal = genuinely broken output (missing hook/conclusion/beats, empty
+    or unspeakable segments, missing b-roll, title violations, critical
+    asset misalignment). Duration is NEVER used as a quality proxy and a
+    short-but-complete story is never rejected.
 
-    Splitting these matters because the Groq fallback (used when Gemini 503s)
-    consistently writes longer narrations than asked. Hard-failing on overshoot
-    means a Gemini outage = no daily video.
+    Splitting fatal/soft matters because the Groq fallback (used when
+    Gemini 503s) consistently writes longer narrations than asked.
     """
-    min_total, max_total, min_segment, max_segment = narration_targets(target_duration, n_segments)
-    segments = data.get("segments") or []
     fatal_notes = []
-    soft_notes  = []
+    soft_notes = []
 
     title = str(data.get("title") or "").strip()
     if ACADEMIC_TITLE_SUFFIX_RE.search(title):
         fatal_notes.append("title has an academic title suffix")
     fatal_notes.extend(_title_style_notes(title))
 
-    if len(segments) != n_segments:
-        fatal_notes.append(f"expected exactly {n_segments} segments, got {len(segments)}")
-
-    # Tolerance: a segment that's 1-3 words under min is borderline, not broken.
-    # Below crit_min the segment is genuinely too short (TTS clip < 3-4s).
-    crit_min_segment = max(8, min_segment - 3)
-    crit_min_total   = max(n_segments * 8, round(min_total * 0.85))
-
-    total_words = 0
-    for idx, seg in enumerate(segments[:n_segments], start=1):
-        narration = str(seg.get("narration", "")).strip()
-        broll = str(seg.get("broll", "")).strip()
-        words = count_words(narration)
-        total_words += words
-        if words < crit_min_segment:
-            fatal_notes.append(f"segment {idx} narration is critically short ({words} words, hard minimum {crit_min_segment})")
-        elif words < min_segment:
-            soft_notes.append(f"segment {idx} narration is short ({words} words, target minimum {min_segment})")
-        if words > max_segment:
-            soft_notes.append(f"segment {idx} narration is too long ({words} words, maximum {max_segment})")
-        if not broll:
-            fatal_notes.append(f"segment {idx} is missing broll")
-
-    if total_words < crit_min_total:
-        fatal_notes.append(f"total narration is critically short ({total_words} words, hard minimum {crit_min_total})")
-    elif total_words < min_total:
-        soft_notes.append(f"total narration is short ({total_words} words, target minimum {min_total})")
-    if total_words > max_total:
-        soft_notes.append(f"total narration is too long ({total_words} words, maximum {max_total})")
+    struct_fatal, struct_soft = story_planning.validate_beat_structure(data, profile)
+    fatal_notes.extend(struct_fatal)
+    soft_notes.extend(struct_soft)
 
     fatal_notes.extend(_critical_script_alignment_notes(data, critical_asset_plan))
 
@@ -784,8 +782,39 @@ def parse_script_json(raw):
     return json.loads(raw)
 
 
-def generate_script(niche, n_segments, target_duration, critical_asset_plan=None):
-    min_total, max_total, min_segment, max_segment = narration_targets(target_duration, n_segments)
+def finalize_story_length(niche, data, critical_asset_plan=None, profile: FormatProfile = _FORMAT_PROFILE):
+    """Enforce only the platform ceiling while preserving story-driven length."""
+    estimated = story_planning.estimate_story_duration(data, profile, conservative=True)
+    segments = data.get("segments") or []
+    budget = story_planning.voice_budget_seconds(profile, len(segments))
+    if estimated <= budget:
+        return estimated, False
+    if len(segments) <= profile.min_story_beats or not _try_trim_story(
+        niche, data, critical_asset_plan, profile, budget
+    ):
+        raise RuntimeError(
+            f"Story narration is estimated {estimated:.1f}s, exceeding the voice budget "
+            f"{budget:.1f}s for a {profile.max_duration_sec}s ceiling. "
+            "The story must be regenerated shorter."
+        )
+    estimated = story_planning.estimate_story_duration(data, profile, conservative=True)
+    budget = story_planning.voice_budget_seconds(profile, len(data.get("segments") or []))
+    if estimated > budget:
+        raise RuntimeError(
+            f"Story narration is estimated {estimated:.1f}s after semantic trim, exceeding "
+            f"the voice budget {budget:.1f}s for a {profile.max_duration_sec}s ceiling."
+        )
+    return estimated, True
+
+
+def generate_script(niche, critical_asset_plan=None, profile: FormatProfile = _FORMAT_PROFILE):
+    """Write the complete story for ``niche``.
+
+    Two-pass by default (Story Planner -> Script Writer). With
+    ``AUTO_VIDEO_STORY_PLANNER=0`` a single writer pass discovers the beats
+    itself. The story decides its own length; the platform ceiling is the only
+    limit. Returns the legacy script dict (additive beat metadata included).
+    """
     critical_visuals = _confirmed_critical_visual_prompt(critical_asset_plan)
     if isinstance(critical_asset_plan, dict) and critical_asset_plan.get("status") == "VERIFIED":
         critical_lock_rules = (
@@ -799,162 +828,60 @@ def generate_script(niche, n_segments, target_duration, critical_asset_plan=None
             "- No critical visual lock applies to this legacy topic; use the normal strict "
             "narration/B-roll alignment rules."
         )
-    prompt = f"""
-You are scripting a high-retention YouTube Short about: "{niche}".
-Target finished length: about {target_duration} seconds.
 
-CONFIRMED CRITICAL VISUALS (already downloaded and frame-verified):
-{critical_visuals}
+    planner_plan = None
+    if story_planning.planner_enabled():
+        planner_plan = _plan_story(niche, critical_visuals, critical_lock_rules, profile)
 
-    Style target:
-    - Sound like a cinematic nature documentary, not a textbook or a list of facts.
-    - Write for one human listener. Use simple, spoken words and natural pauses.
-    - Build one connected short film: opening image -> subject's need -> obstacle or tension -> action and mechanism -> cost or stakes -> reveal -> quiet visual payoff.
-    - Let each segment feel like the next shot in the same story. Do not reset the topic or announce another fact.
-    - Keep scientific details inside the action: explain only what the viewer needs to understand what is happening on screen.
-    - Never invent material properties, precise measurements, motives, or biological claims that are not established by the topic. Prefer a careful observation over a dramatic certainty.
-    - Use concrete sensory images, restrained emotion, and measured suspense. Avoid generic hype like "will blow your mind", "amazing facts", "truly bizarre", or "you won't believe".
+    if planner_plan and planner_plan.get("beats"):
+        prompt = story_planning.build_writer_prompt(
+            niche, planner_plan["beats"], critical_visuals, critical_lock_rules, profile
+        )
+        writer_context = f"story for {niche!r}"
+    else:
+        prompt = story_planning.build_single_pass_prompt(
+            niche, critical_visuals, critical_lock_rules, profile
+        )
+        writer_context = f"single-pass story for {niche!r}"
 
-Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
-{{
-  "title": "one punchy 5-8 word curious declarative statement (no question, #shorts, or academic label)",
-  "description": "2-3 sentence YouTube/Facebook description, hook + value, no hashtags inside",
-  "instagram_caption": "1-2 sentence Instagram caption with a soft CTA, no hashtags inside",
-  "music_mood": "one of: mysterious, inspiring, dramatic, warm, curious, urgent",
-  "hashtags": ["#tag1", "#tag2", "..."],
-  "segments": [
-    {{"narration": "one or two spoken sentences, {min_segment}-{max_segment} words, conversational and visual",
-      "broll": "3-5 word stock-footage search term with subject + action",
-      "broll_queries": ["subject action close up", "subject in environment wide shot", "subject detail shot", "safe exact-subject fallback"]}}
-  ]
-}}
+    data = _script_draft(prompt, critical_asset_plan, profile, context=writer_context)
 
-Rules:
-- Exactly {n_segments} segments.
-- LENGTH IS NON-NEGOTIABLE. Total narration MUST be {min_total}-{max_total} words across all segments. Below {min_total} the video is too short and gets rejected.
-- EACH segment narration MUST be at least {min_segment} words and at most {max_segment} words, except the first hook may be 8-12 words if it is stronger that way.
-    - Do NOT write short fragments like "Auroras dazzle." Write complete spoken sentences with a subject, verb, and visual detail.
-    - Use one or two short sentences per segment. Use punctuation to create breathing room instead of packing in extra facts.
-    - For a 12-segment script, use these story jobs in order: (1) opening image, (2) subject's need, (3) obstacle or tension, (4) first attempt, (5) visible mechanism, (6) cost or stakes, (7) escalation, (8) intimate detail, (9) reveal, (10) consequence, (11) quiet visual payoff, (12) the existing short branded CTA.
-    - If a non-default segment count is requested, preserve this same story arc without changing the requested count.
-    - Make it a connected short film, never a sequence of isolated facts.
-    - First segment is the first 2-4 seconds and must be the strongest visual line. It must create tension immediately with the formula:
-  "This [animal/place/event] looks [simple/beautiful/harmless]... but [danger/problem/surprising mechanism]."
-  Do not use that exact wording unless it fits naturally.
-  Use a curiosity hook like:
-  "This tiny animal survives temperatures colder than your freezer."
-  "A quiet survival trick appears in plain sight."
-  "The smallest detail changes the whole scene."
-  Do not copy these exactly unless they fit the topic.
-- NEVER open with generic educational narration, greetings, rhetorical questions, "Did you know", "Meet the", "In this video", or the topic name followed by "are/have/can".
-- NEVER open with broad hype like "These facts will blow your mind" or "Space is truly bizarre".
-- Open on a concrete problem, danger, mystery, or surprising mechanism that the rest of the video proves.
-- The first segment's caption/narration must be understandable if muted and must not sound like a lesson title.
-- The first segment's visual searches must promise motion or impact immediately: animal escaping/feeding/jumping/flashing, lava/waves/storms moving, close-up eyes/teeth/claws/skin, pulsing aurora, crashing wave, lightning strike, or another topic-specific action.
-- Never make the first segment's primary b-roll a static landscape, map, satellite view, generic sky, calm wide shot, or abstract explainer graphic. Wide/context shots can appear later.
-{critical_lock_rules}
-    - The title must be a curious statement, not a question. Return ONE title only. Never begin it with Why, How, What, Does, Can, or similar question-led wording. Never use a question mark, unsupported absolute claims such as "never" or "impossible", or academic/category labels such as "| Biology", "| Science", "- Education", or ": Facts".
-- The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words, not a paraphrase). Pick one of these patterns:
-  "Subscribe to Wonders of the Nature for more."
-  "Follow Wonders of the Nature for more like this."
-  "Stay curious - Wonders of the Nature posts daily."
-  Do NOT invent a different channel name. Do NOT say "Celestial Wonders" or any other variant. Do NOT use "smash the bell", "hit subscribe", or other creator-speak.
-    - Do not write isolated fact fragments. Every segment must feel like the next shot in the same story.
-    - Do not claim that an animal uses "almost zero energy", or use "always", "never", "impossible", "no one", "every", or "completely" unless the claim is directly supported by the topic's established science.
-- Choose "music_mood" to match the emotional feel of the story.
-- Narration is plain spoken English, no emojis, no hashtags, no stage directions.
-- "broll" must be something Pexels stock video would actually have
-  (e.g. "ocean waves", "city night", "galaxy stars") - concrete nouns, not abstractions.
-- STRICT ALIGNMENT: The "broll" search term and "broll_queries" list for a segment MUST directly match the subject, animal, object, or action described in that segment's "narration". If you talk about a lioness, the broll and queries must be specifically about a lioness. Never suggest a different animal or unrelated scenery.
-- Each "broll_queries" list must have exactly 4 concrete visual searches:
-  1 close-up/action matching the narration (e.g. "lioness stalking close up"),
-  1 environment/wide shot (e.g. "lioness in savannah grass wide shot"),
-  1 detail shot when useful (e.g. "lioness eyes close up"),
-  and 1 safe exact-subject fallback (e.g. "lioness", not "nature documentary" or "nature").
-  For segment 1, the first query must be the strongest motion/action/close-up query, not the wide shot or fallback.
-  For space or astronomy topics, include real-object NASA-friendly terms where useful (e.g. "aurora borealis timelapse", "earth magnetosphere", "saturn atmosphere").
-  For ocean-science topics, include ocean-current and water-motion terms (e.g. "ocean current aerial", "underwater ocean flow", "waves moving ocean").
-  Avoid abstract words like innovation, wisdom, mystery, or existence as visual searches.
-- For every segment, vary the shot type from the previous segment when possible: close-up, action, wide, detail, tracking shot.
-- 10-15 lowercase hashtags, each prefixed with #, no spaces inside a tag.
-  Do NOT include "#shorts" in the list - it is appended automatically.
-"""
-
-    raw = generate_script_raw(prompt)
-    first_draft = parse_script_json(raw)
-    fatal, soft = script_quality_notes(
-        first_draft, n_segments, target_duration, critical_asset_plan
+    estimated, trim_applied = finalize_story_length(
+        niche, data, critical_asset_plan, profile
     )
 
-    if not fatal:
-        # First draft is acceptable (possibly with soft warnings). DO NOT repair -
-        # asking Gemini to rewrite often returns worse output (empty segments,
-        # truncated JSON). Soft notes mean "slightly off target but watchable."
-        data = first_draft
-        if soft:
-            print(f"    [Script QA] First draft acceptable with soft notes: {'; '.join(soft[:3])}")
+    # Story quality gate (soft by default; strict via AUTO_VIDEO_STORY_QUALITY_STRICT=1).
+    quality_score = None
+    if data.get("segments"):
+        quality_score, data = _enforce_story_quality(
+            niche, data, prompt, critical_asset_plan, profile
+        )
+
+    # A quality rewrite must not bypass the story-driven platform ceiling.
+    estimated, quality_trim = finalize_story_length(
+        niche, data, critical_asset_plan, profile
+    )
+    trim_applied = trim_applied or quality_trim
+
+    if planner_plan and planner_plan.get("complexity"):
+        data["story_complexity"] = planner_plan["complexity"]
+    elif len(data.get("segments") or []) >= 10:
+        data["story_complexity"] = "complex"
     else:
-        # Fatal issues - the script is genuinely broken. Try one repair attempt.
-        print(f"    [Script QA] First draft has FATAL issues; asking for a rewrite: {'; '.join(fatal[:2])}")
-        repair_prompt = f"""{prompt}
+        data["story_complexity"] = "simple"
 
-The previous JSON failed these critical checks:
-{json.dumps(fatal, indent=2)}
-
-Rewrite the whole JSON from scratch. Keep the same topic, but satisfy every word-count and story rule.
-Previous JSON:
-{json.dumps(first_draft, ensure_ascii=False)}
-"""
-        try:
-            repaired = parse_script_json(generate_script_raw(repair_prompt))
-            fatal2, soft2 = script_quality_notes(
-                repaired, n_segments, target_duration, critical_asset_plan
-            )
-        except Exception as e:
-            print(f"    [Script QA] Repair attempt errored ({e}); checking if first draft is salvageable...")
-            fatal2 = ["repair attempt errored"]
-            soft2 = []
-            repaired = None
-
-        # Pick whichever draft has fewer fatal issues - sometimes the repair
-        # is WORSE than the first draft (empty segments, malformed JSON).
-        first_fatal_count = len(fatal)
-        repair_fatal_count = len(fatal2) if repaired else 999
-        if repair_fatal_count >= first_fatal_count and repaired is not None:
-            # Repair is no better. Fall back to first draft if its fatal issues
-            # are tolerable (no empty segments, just slight undershoots).
-            print(f"    [Script QA] Repair was no better; using first draft.")
-            data = first_draft
-            fatal, soft = script_quality_notes(
-                data, n_segments, target_duration, critical_asset_plan
-            )
-            if fatal:
-                # The first draft IS the better option but still has hard issues.
-                # Soften the criticism: only re-raise if every fatal issue is
-                # "0 words" or "missing broll" (truly unsalvageable).
-                unsalvageable = [
-                    note for note in fatal
-                    if "0 words" in note
-                    or "missing broll" in note
-                    or "academic title suffix" in note
-                    or "title is question-led" in note
-                    or "title contains a question mark" in note
-                    or "title contains an unsupported absolute" in note
-                    or "critical segment" in note
-                    or "critical scene" in note
-                ]
-                if unsalvageable:
-                    raise RuntimeError("Script is unsalvageable: " + "; ".join(unsalvageable[:4]))
-                print(f"    [Script QA] Tolerating soft fatal: {'; '.join(fatal[:2])}")
-        else:
-            data = repaired
-            if fatal2:
-                raise RuntimeError("Generated script is still too short or malformed: " + "; ".join(fatal2[:6]))
-            if soft2:
-                print(f"    [Script QA] Accepting repaired draft with soft notes: {'; '.join(soft2[:3])}")
-
-    segs = data["segments"][:n_segments]
-    data["segments"] = segs
+    _STORY_REPORT.update({
+        "topic": niche,
+        "complexity": data.get("story_complexity") or ("complex" if len(data.get("segments") or []) >= 10 else "simple"),
+        "beat_count": len(data.get("segments") or []),
+        "role_distribution": story_planning.story_roles(data),
+        "profile": profile.name,
+        "platform_max_duration_sec": profile.max_duration_sec,
+        "estimated_narration_sec": round(estimated, 2),
+        "final_word_count": sum(count_words(seg.get("narration", "")) for seg in data.get("segments", [])),
+        "story_quality_score": quality_score,
+        "semantic_trim_applied": bool(trim_applied),
+    })
 
     # Normalize SEO metadata. Older runs (or weak fallbacks) may omit these.
     data.setdefault("description", data.get("title", niche))
@@ -1001,6 +928,244 @@ Previous JSON:
         print(f"    {i+1}. {s['narration']}   [b-roll: {s['broll']}]")
     return data
 
+
+def _plan_story(niche, critical_visuals, critical_lock_rules, profile):
+    """Story Planner pass: produce a structured beat outline (or None)."""
+    try:
+        raw = generate_script_raw(story_planning.build_planner_prompt(niche, critical_visuals))
+        plan = parse_script_json(raw)
+    except Exception as e:
+        print(f"    [Story Planner] failed ({e}); writing single-pass script.")
+        return None
+    if not isinstance(plan, dict):
+        print("    [Story Planner] returned malformed output; writing single-pass script.")
+        return None
+    beats = [
+        beat for beat in plan.get("beats") or []
+        if isinstance(beat, dict) and str(beat.get("role") or "").strip()
+    ]
+    if not beats:
+        print("    [Story Planner] produced no usable beats; writing single-pass script.")
+        return None
+    print(f"    [Story Planner] planned {len(beats)} beats (complexity {plan.get('complexity', '?')}).")
+    plan["beats"] = beats
+    return plan
+
+
+def _script_draft(prompt, critical_asset_plan, profile, context="script"):
+    """Run the writer prompt, QA it, and repair only when fatally broken.
+
+    Preserves the legacy wisdom: a first draft with only soft notes is
+    accepted untouched (a rewrite usually makes it worse), a repair is
+    attempted only on fatal issues, and the better of the two drafts wins.
+    """
+    raw = generate_script_raw(prompt)
+    first_draft = parse_script_json(raw)
+    fatal, soft = script_quality_notes(first_draft, critical_asset_plan, profile)
+    if not fatal:
+        data = first_draft
+        if soft:
+            print(f"    [Script QA] {context}: first draft acceptable with soft notes: {'; '.join(soft[:3])}")
+    else:
+        print(f"    [Script QA] {context}: first draft has FATAL issues; asking for a rewrite: {'; '.join(fatal[:2])}")
+        repair_prompt = f"""{prompt}
+
+The previous JSON failed these critical checks:
+{json.dumps(fatal, indent=2)}
+
+Rewrite the whole JSON from scratch. Keep the same topic, but satisfy every rule.
+Previous JSON:
+{json.dumps(first_draft, ensure_ascii=False)}
+"""
+        try:
+            repaired = parse_script_json(generate_script_raw(repair_prompt))
+            fatal2, soft2 = script_quality_notes(repaired, critical_asset_plan, profile)
+        except Exception as e:
+            print(f"    [Script QA] {context}: repair attempt errored ({e}); checking if first draft is salvageable...")
+            fatal2 = ["repair attempt errored"]
+            soft2 = []
+            repaired = None
+
+        first_fatal_count = len(fatal)
+        repair_fatal_count = len(fatal2) if repaired else 999
+        if repair_fatal_count >= first_fatal_count and repaired is not None:
+            # Repair is no better. Fall back to the first draft if its fatal
+            # issues are tolerable (no empty segments, just slight issues).
+            print(f"    [Script QA] {context}: repair was no better; using first draft.")
+            data = first_draft
+            fatal, _soft = script_quality_notes(data, critical_asset_plan, profile)
+            if fatal:
+                unsalvageable = [note for note in fatal if _is_unsalvageable_note(note)]
+                if unsalvageable:
+                    raise RuntimeError("Script is unsalvageable: " + "; ".join(unsalvageable[:4]))
+                print(f"    [Script QA] {context}: tolerating soft fatal: {'; '.join(fatal[:2])}")
+        else:
+            data = repaired
+            if fatal2:
+                raise RuntimeError("Generated script is still malformed: " + "; ".join(fatal2[:6]))
+            if soft2:
+                print(f"    [Script QA] {context}: accepting repaired draft with soft notes: {'; '.join(soft2[:3])}")
+    return data
+
+
+def _is_unsalvageable_note(note):
+    """A fatal QA note that can never be repaired by another LLM pass."""
+    markers = (
+        "no narration", "no segments", "has no narration", "missing broll",
+        "academic title suffix", "title is question-led", "title contains a question mark",
+        "title contains an unsupported absolute", "critical segment", "critical scene",
+        "missing a hook", "missing a conclusion", "below the",
+    )
+    return any(marker in note for marker in markers)
+
+
+def _try_trim_story(niche, data, critical_asset_plan, profile, budget):
+    """Ceiling trim: merge/cut low-priority beats, never cut equally.
+
+    Preserves hook, climax, resolution, conclusion CTA, and any beat
+    flagged critical_asset_dependency or can_remove=False. Retries the
+    semantic merge up to three times, then enforces the budget with a
+    deterministic drop of the least important supporting beats so the
+    platform ceiling always holds even when the LLM trim is too shallow.
+    """
+    segments = data.get("segments") or []
+    before = len(segments)
+    feedback = ""
+    llm_trimmed = False
+    for attempt in range(1, 4):
+        prompt = story_planning.build_trim_prompt(niche, data, profile, budget) + feedback
+        try:
+            trimmed = _script_draft(prompt, critical_asset_plan, profile, context=f"ceiling trim (attempt {attempt})")
+        except RuntimeError as e:
+            print(f"    [Ceiling trim] attempt {attempt} failed ({e}); retrying.")
+            feedback = (
+                "\n\nYour previous attempt was REJECTED. Fix ALL of these issues in the next "
+                f"draft: {e}\n"
+            )
+            continue
+        trimmed_segs = trimmed.get("segments") or []
+        if not trimmed_segs or len(trimmed_segs) >= before:
+            if attempt >= 3:
+                print("    [Ceiling trim] produced no shorter story; trying deterministic trim.")
+                break
+            print(f"    [Ceiling trim] attempt {attempt} did not shorten the story; retrying.")
+            feedback = (
+                "\n\nYour previous attempt did NOT reduce the number of segments. Return "
+                "FEWER segments (merge or remove supporting beats) while keeping "
+                "hook/climax/resolution/conclusion_cta.\n"
+            )
+            continue
+        for key in ("title", "description", "instagram_caption", "music_mood", "hashtags"):
+            if not trimmed.get(key):
+                trimmed[key] = data.get(key)
+        data.clear()
+        data.update(trimmed)
+        llm_trimmed = True
+        print(f"    [Ceiling trim] LLM trimmed {before} -> {len(trimmed_segs)} segments.")
+        break
+
+    # Deterministic enforcement: keep dropping the least important removable
+    # beat until the conservative estimate fits the budget or we hit the floor.
+    segments = data.get("segments") or []
+    floor = profile.min_story_beats
+    dropped = 0
+    while len(segments) > floor:
+        estimated = story_planning.estimate_story_duration(data, profile, conservative=True)
+        if estimated <= budget:
+            break
+        candidates = story_planning.merge_suggestions(segments)
+        removable = [
+            c for c in candidates
+            if c["can_remove"]
+            and c["role"] not in story_planning.PROTECTED_ROLES
+            and not str(segments[c["index"]].get("critical_asset_dependency") or "").strip().casefold() in {"true", "1"}
+        ]
+        if not removable:
+            print("    [Ceiling trim] no removable supporting beat left; keeping the full story.")
+            break
+        drop_index = removable[0]["index"]
+        dropped_seg = segments[drop_index]
+        segments.pop(drop_index)
+        dropped += 1
+        print(
+            f"    [Ceiling trim] deterministic drop: {dropped_seg.get('beat_role')} "
+            f"(importance {dropped_seg.get('beat_importance', '?')}/10)."
+        )
+        data["segments"] = segments
+    if dropped:
+        print(f"    [Ceiling trim] deterministic trim removed {dropped} beat(s) to fit the ceiling.")
+    return bool(llm_trimmed or dropped)
+
+
+def _score_story(niche, data):
+    """LLM story-quality review; returns None when the provider fails."""
+    try:
+        raw = generate_script_raw(story_planning.build_quality_prompt(niche, data))
+    except Exception as e:
+        print(f"    [Story quality] evaluation failed ({e}); skipping gate.")
+        return None
+    scores = story_planning.parse_quality_scores(raw)
+    if not scores:
+        return None
+    return {
+        "scores": scores,
+        "aggregate": story_planning.aggregate_quality_score(scores),
+        "broken": story_planning.is_structurally_broken(scores),
+    }
+
+
+def _enforce_story_quality(niche, data, writer_prompt, critical_asset_plan, profile):
+    """Story quality gate. Soft by default; strict via env.
+
+    Always hard-fails on objectively broken stories (missing hook or ending
+    CTA). Below the threshold it requests ONE revision and, if still below,
+    proceeds with a warning (soft) or raises (AUTO_VIDEO_STORY_QUALITY_STRICT=1).
+    """
+    score = _score_story(niche, data)
+    if score is None or score["aggregate"] is None:
+        return None, data
+    aggregate = score["aggregate"]
+    if score["broken"]:
+        raise RuntimeError(
+            "Story is structurally broken (missing hook or ending CTA). "
+            + str(score["scores"].get("summary") or "")[:160]
+        )
+    print(f"    [Story quality] score {aggregate}/10.")
+    if aggregate >= story_planning.min_story_score():
+        return aggregate, data
+
+    critique = str(score["scores"].get("summary") or "raise the overall story quality")
+    revision_prompt = f"""{writer_prompt}
+
+A reviewer scored the previous draft {aggregate}/10 and requested a rewrite.
+Their note: {critique}
+
+Rewrite the complete story satisfying every rule. Keep the same beats where
+possible but fix the flagged weaknesses.
+Previous JSON:
+{json.dumps(data, ensure_ascii=False)}
+"""
+    try:
+        revised = _script_draft(revision_prompt, critical_asset_plan, profile, context="story quality revision")
+    except RuntimeError as e:
+        print(f"    [Story quality] revision failed ({e}); keeping original draft.")
+        revised = data
+    revised_score = _score_story(niche, revised)
+    revised_aggregate = revised_score["aggregate"] if revised_score else None
+    if revised_score and revised_score["broken"]:
+        raise RuntimeError("Story is structurally broken after revision.")
+    if revised_aggregate is not None and revised_aggregate >= story_planning.min_story_score():
+        return revised_aggregate, revised
+    if story_planning.quality_gate_soft():
+        print(
+            f"    [Story quality] still {max(aggregate, revised_aggregate or 0)}/10 "
+            f"below {story_planning.min_story_score()}; soft gate proceeding."
+        )
+        return max(aggregate, revised_aggregate or 0), revised
+    raise RuntimeError(
+        f"Story quality {max(aggregate, revised_aggregate or 0)}/10 below "
+        f"threshold {story_planning.min_story_score()} (AUTO_VIDEO_STORY_QUALITY_STRICT=1)."
+    )
 
 # ----------------------------------------------------------------------------
 # Step 2: voiceover per segment (Speechify with Edge-TTS fallback)
@@ -1126,7 +1291,12 @@ def make_voice(text, idx):
 
 
 def atempo_chain(tempo):
-    """Build a valid ffmpeg atempo chain. Values near 1.0 preserve voice quality."""
+    """Build a valid ffmpeg atempo chain. Values near 1.0 preserve voice quality.
+
+    Tempo is clamped to a safe [0.5, 2.0] overall range to prevent extreme
+    speed changes if called directly with an out-of-range value.
+    """
+    tempo = max(0.5, min(2.0, float(tempo)))
     parts = []
     while tempo < 0.5:
         parts.append("atempo=0.5")
@@ -1150,6 +1320,14 @@ def retime_voice(voice_path, idx, tempo):
     return out_path, media_duration(out_path)
 
 
+_ALLOWED_RETIME_RANGE = (0.5, 2.0)
+
+
+def _clamp_tempo(tempo: float) -> float:
+    """Clamp tempo to a safe overall range regardless of caller intent."""
+    return max(_ALLOWED_RETIME_RANGE[0], min(_ALLOWED_RETIME_RANGE[1], float(tempo)))
+
+
 def pad_voice(voice_path, idx, duration, padding):
     """Add a short silent tail so scene pacing can meet the format minimum."""
 
@@ -1165,88 +1343,67 @@ def pad_voice(voice_path, idx, duration, padding):
     return out_path, media_duration(out_path)
 
 
-def normalize_voice_timing(voice_items, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
-    """Keep default Shorts runs inside the format profile's duration window
-    without making the narration sound odd.
+def fit_narration_to_ceiling(voice_items, profile: FormatProfile = _FORMAT_PROFILE):
+    """Keep narration natural; only enforce the platform ceiling.
 
-    Duration bounds, retime tempo bounds, and the preferred narration tempo
-    come from the ``FormatProfile`` so a future long-form profile can widen
-    them without touching this function.
+    There is no duration padding and no duration-window targeting. The
+    finished length follows the actual narration. If the actual narration
+    exceeds the ceiling, it is sped up slightly with a BOUNDED retime
+    (optional, ``AUTO_VIDEO_ALLOW_NARRATION_RETIME``). If the retime cannot
+    bring the narration within the ceiling plus a small encoding tolerance,
+    the function raises so the run fails before rendering instead of
+    producing a hard-tail-trimmed video.
     """
-    if target_duration < profile.min_duration_sec:
-        return voice_items
-
     if not voice_items:
         return voice_items
     total = sum(item["duration"] for item in voice_items)
     transition_allowance = max(0, len(voice_items) - 1) * profile.transition_duration_sec
-    estimated_render_duration = total - transition_allowance
-    desired = min(max(target_duration, profile.min_duration_sec), profile.max_duration_sec)
-    desired_voice_total = desired + transition_allowance
-
-    if estimated_render_duration < profile.min_duration_sec:
-        raw_tempo = total / desired_voice_total
-        # Avoid dragging the voice. The richer script should provide duration;
-        # retiming only corrects normal TTS variance.
-        tempo = max(profile.narration_min_retime_tempo, raw_tempo)
-        action = "slowing"
-    else:
-        raw_tempo = total / desired_voice_total
-        # Anything above the max retime tempo sounds chipmunky on phone speakers
-        # and tanks retention. Better to ship a slightly-long video and let the
-        # hard-cap trim take the tail than to rush the whole narration.
-        tempo = min(profile.narration_max_retime_tempo, raw_tempo)
-        action = "speeding up"
-
-    if profile.min_duration_sec <= estimated_render_duration <= profile.max_duration_sec:
-        # Once the natural narration already fits the Shorts window, preserve
-        # its delivery. The timeline follows the voice instead of tightening
-        # pauses to match an earlier target estimate.
+    ceiling = float(profile.max_duration_sec)
+    tolerance = float(os.environ.get("AUTO_VIDEO_DURATION_TOLERANCE_SEC", "1.0").strip() or "1.0")
+    combined = total + transition_allowance
+    if combined <= ceiling + tolerance:
         return voice_items
 
-    effective_target = total / tempo if tempo else desired
-    print(f"[i] Voiceover is {total:.1f}s; {action} narration slightly for a ~{effective_target:.0f}s Short.")
-    adjusted = []
-    for item in voice_items:
-        path, duration = retime_voice(item["voice"], item["idx"], tempo)
-        adjusted_item = {**item, "voice": path, "duration": duration}
-        voice_track = item.get("voice_track")
-        if isinstance(voice_track, VoiceTrack):
-            adjusted_item["voice_track"] = voice_track.with_retimed_audio(path, duration)
-        adjusted.append(adjusted_item)
-
-    adjusted_total = sum(item["duration"] for item in adjusted)
-    adjusted_render_duration = adjusted_total - transition_allowance
-    if adjusted_render_duration < profile.min_duration_sec:
-        required_voice_total = profile.min_duration_sec + transition_allowance + 0.5
-        padding_per_scene = max(0.0, required_voice_total - adjusted_total) / len(adjusted)
-        if padding_per_scene > 0:
-            print(
-                f"[i] Adding {padding_per_scene:.2f}s of scene-end breathing room "
-                "to meet the Shorts duration floor."
-            )
-            padded = []
-            for item in adjusted:
-                path, item_duration = pad_voice(
-                    item["voice"], item["idx"], item["duration"], padding_per_scene
-                )
-                padded_item = {**item, "voice": path, "duration": item_duration}
-                voice_track = item.get("voice_track")
-                if isinstance(voice_track, VoiceTrack):
-                    padded_item["voice_track"] = voice_track.with_retimed_audio(path, item_duration)
-                padded.append(padded_item)
-            adjusted = padded
-            adjusted_total = sum(item["duration"] for item in adjusted)
-            adjusted_render_duration = adjusted_total - transition_allowance
-    if not (profile.min_duration_sec <= adjusted_render_duration <= profile.max_duration_sec):
+    allow_retime = os.environ.get("AUTO_VIDEO_ALLOW_NARRATION_RETIME", "1").strip() not in {"0", "false", "no"}
+    tempo = min(profile.narration_max_retime_tempo, combined / ceiling)
+    if allow_retime and tempo > 1.0:
         print(
-            f"    [Warning] Estimated render timing is still "
-            f"{adjusted_render_duration:.1f}s after safe normalization."
+            f"[i] Voiceover is {combined:.1f}s, over the {ceiling:.0f}s ceiling; "
+            f"speeding the narration up slightly ({tempo:.2f}x) to fit."
         )
-    return adjusted
+        adjusted = []
+        for item in voice_items:
+            path, duration = retime_voice(item["voice"], item["idx"], tempo)
+            adjusted_item = {**item, "voice": path, "duration": duration}
+            voice_track = item.get("voice_track")
+            if isinstance(voice_track, VoiceTrack):
+                adjusted_item["voice_track"] = voice_track.with_retimed_audio(path, duration)
+            adjusted.append(adjusted_item)
+        adjusted_total = sum(item["duration"] for item in adjusted) + transition_allowance
+        if adjusted_total <= ceiling + tolerance:
+            return adjusted
+        raise RuntimeError(
+            f"Narration is {adjusted_total:.1f}s after {tempo:.2f}x retime, exceeding the "
+            f"{ceiling:.0f}s ceiling (tolerance {tolerance:.1f}s). The story must be trimmed "
+            "before rendering, not hard-cut at the tail."
+        )
+    raise RuntimeError(
+        f"Narration is {combined:.1f}s, exceeding the {ceiling:.0f}s ceiling "
+        f"(tolerance {tolerance:.1f}s) and retiming is disabled or insufficient. "
+        "The story must be trimmed before rendering, not hard-cut at the tail."
+    )
 
 
-def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_PROFILE):
+def normalize_voice_timing(voice_items, target_duration=None, profile: FormatProfile = _FORMAT_PROFILE):
+    """Backward-compatible alias for :func:`fit_narration_to_ceiling`.
+
+    ``target_duration`` and ``profile.min_duration_sec`` are ignored: the
+    story decides the length and only the ceiling is enforced.
+    """
+    return fit_narration_to_ceiling(voice_items, profile)
+
+
+def make_all_voices(segments, profile: FormatProfile = _FORMAT_PROFILE):
     voice_items = []
     registry = _voice_provider_registry()
     preferred_provider = ""
@@ -1265,7 +1422,7 @@ def make_all_voices(segments, target_duration, profile: FormatProfile = _FORMAT_
         )
         preferred_provider = voice_track.provider
         voice_items.append(voice_track.to_legacy_item(index=idx, segment=seg))
-    return normalize_voice_timing(voice_items, target_duration, profile)
+    return fit_narration_to_ceiling(voice_items, profile)
 
 
 
@@ -1399,6 +1556,36 @@ def filename_keywords(filepath):
     stem = Path(filepath).stem.lower()
     # split on underscores, hyphens, spaces, digits
     return [w for w in re.split(r'[_\-\s\d]+', stem) if len(w) > 1]
+
+
+def _override_stem_key(value):
+    return re.sub(r"[^a-z0-9]+", "", str(value or "").lower())
+
+
+def _find_manual_input_clip(idx, local_media, intent=None):
+    """Return an operator-provided scene/entity clip from input_clips/ when present."""
+
+    if not local_media:
+        return None
+    scene_keys = {
+        _override_stem_key(f"scene_{idx+1:02d}"),
+        _override_stem_key(f"scene_{idx+1}"),
+        _override_stem_key(f"scene_{idx:02d}"),
+        _override_stem_key(f"scene_{idx}"),
+    }
+    entity = ""
+    if intent is not None:
+        entity = (
+            getattr(intent, "requested_entity", "")
+            or getattr(intent, "primary_subject", "")
+            or ""
+        )
+    entity_key = _override_stem_key(slugify(entity, 80)) if entity else ""
+    for path in local_media:
+        stem_key = _override_stem_key(Path(path).stem)
+        if stem_key in scene_keys or (entity_key and stem_key == entity_key):
+            return Path(path)
+    return None
 
 
 # Per-run circuit breaker: first Gemini 429 trips this flag. Subsequent calls
@@ -1700,6 +1887,8 @@ def interactive_broll_review(segments, niche):
     Returns a dict of overrides keyed by segment index:
       - {"queries": [...]}  - use these search terms instead
       - {"clip_path": "..."} - use this local file directly
+      - {"source_path": "...", "start_sec": 12.0} - slice this local source
+        at a specific timestamp; add preserve_audio=true to retain source audio
       - {"skip": True}      - use Gemini image generation
     Empty dict means everything was accepted as-is.
     """
@@ -2664,7 +2853,9 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
         gemini_image_enabled=is_gemini_image_available(),
         pollinations_image_enabled=is_pollinations_image_available(),
         mixkit_enabled=bool(MIXKIT_API_URL),
-        coverr_enabled=bool(COVERR_API_URL and COVERR_API_KEY),
+        coverr_enabled=False,
+        yt_clip_enabled=False,
+        vecteezy_enabled=bool(VECTEEZY_API_URL and VECTEEZY_API_KEY and VECTEEZY_ACCOUNT_ID),
         videvo_enabled=bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         wikimedia_enabled=ENABLE_WIKIMEDIA_COMMONS,
         noaa_enabled=bool(NOAA_API_URL),
@@ -2679,7 +2870,7 @@ def _build_search_strategy(queries, fallback, narration, local_media=None, idx=N
         internet_archive_enabled=INTERNET_ARCHIVE_ENABLED,
     )
     query_plan = QueryPlanner().plan(intent)
-    return SourcePlanner(registry).plan(query_plan)
+    return SourcePlanner(registry).plan(query_plan, provider_order=_stock_provider_order())
 
 
 def _remember_media_planning(idx, strategy):
@@ -2733,6 +2924,7 @@ def _provider_is_configured(provider):
         "wikimedia": bool(ENABLE_WIKIMEDIA_COMMONS),
         "mixkit": bool(MIXKIT_API_URL),
         "coverr": bool(COVERR_API_URL and COVERR_API_KEY),
+        "vecteezy": bool(VECTEEZY_API_URL and VECTEEZY_API_KEY and VECTEEZY_ACCOUNT_ID),
         "videvo": bool(VIDEVO_API_URL and VIDEVO_API_KEY),
         "noaa": bool(NOAA_API_URL),
         "esa": bool(ESA_API_URL),
@@ -3056,6 +3248,168 @@ def _coverr_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=Fal
     return candidate_pool
 
 
+def _vecteezy_headers():
+    headers = {"User-Agent": "auto-short/1.0 educational video generator"}
+    if VECTEEZY_API_KEY:
+        headers["Authorization"] = f"Bearer {VECTEEZY_API_KEY}"
+    return headers
+
+
+def _vecteezy_resource_extensions(item):
+    file_metadata = item.get("file_metadata") if isinstance(item.get("file_metadata"), dict) else {}
+    file_types = file_metadata.get("available_file_types")
+    if not isinstance(file_types, list):
+        return []
+    extensions = []
+    for entry in file_types:
+        if isinstance(entry, dict) and entry.get("extension"):
+            extensions.append(str(entry["extension"]))
+    return extensions
+
+
+def _vecteezy_resource_dimensions(item):
+    file_metadata = item.get("file_metadata") if isinstance(item.get("file_metadata"), dict) else {}
+    sizes = file_metadata.get("available_download_sizes")
+    if not isinstance(sizes, list):
+        return None, None
+    sizes = [entry for entry in sizes if isinstance(entry, dict)]
+    preferred = next((entry for entry in sizes if entry.get("id") == "original"), None)
+    picked = preferred or (sizes[0] if sizes else None)
+    if not picked:
+        return None, None
+    width = picked.get("width")
+    height = picked.get("height")
+    if not width or not height:
+        return None, None
+    return int(width), int(height)
+
+
+def _vecteezy_download_resolution(session, resource_id, extensions, *, timeout_sec=30, raise_errors=False):
+    """Resolve the signed download URL for one Vecteezy resource.
+
+    Returns a dict with download_url and attribution fields, or None when the
+    item cannot be downloaded. Auth, quota, and rate-limit failures disable
+    the provider for the run; item-level failures do not.
+    """
+
+    file_type = "mp4" if "mp4" in extensions else (extensions[0] if extensions else "")
+    if not file_type:
+        return None
+    try:
+        response = session.get(
+            f"{VECTEEZY_API_URL}/v2/{VECTEEZY_ACCOUNT_ID}/resources/{resource_id}/download",
+            headers=_vecteezy_headers(),
+            params={"file_type": file_type},
+            timeout=timeout_sec,
+        )
+        response.raise_for_status()
+        payload = response.json()
+    except Exception as e:
+        response = getattr(e, "response", None)
+        status_code = int(getattr(response, "status_code", 0) or 0)
+        if status_code in {401, 403, 429, 402}:
+            _mark_provider_run_failure("vecteezy", f"HTTP {status_code}: {_safe_diagnostic(e)}")
+            if raise_errors:
+                raise
+        else:
+            print(f"    [Vecteezy] download resolution failed for {resource_id}: {_safe_diagnostic(e)}")
+        return None
+    if not isinstance(payload, dict):
+        return None
+    url = str(payload.get("url") or payload.get("inline_url") or "").strip()
+    if not url:
+        return None
+    return {
+        "download_url": url,
+        "requires_attribution": bool(payload.get("requires_attribution")),
+        "required_attribution_url": str(payload.get("required_attribution_url") or "").strip(),
+    }
+
+
+def _vecteezy_candidates(queries, *, fallback="", timeout_sec=30, raise_errors=False):
+    import requests
+
+    if not (VECTEEZY_API_URL and VECTEEZY_API_KEY and VECTEEZY_ACCOUNT_ID):
+        return []
+    if _provider_failure_detail("vecteezy"):
+        return []
+    session = requests.Session()
+    candidate_pool = []
+    for q in queries:
+        enriched = _qualify_query(q, fallback)
+        try:
+            response = session.get(
+                f"{VECTEEZY_API_URL}/v2/{VECTEEZY_ACCOUNT_ID}/resources",
+                headers=_vecteezy_headers(),
+                params={
+                    "term": enriched,
+                    "content_type": "video",
+                    "per_page": 8,
+                    "sort_by": "relevance",
+                    "license_type": "commercial",
+                    "family_friendly": "true",
+                },
+                timeout=timeout_sec,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            items = payload.get("resources") if isinstance(payload, dict) else None
+            if not isinstance(items, list):
+                items = _json_items(payload)
+        except Exception as e:
+            print(f"    [Vecteezy] search failed for {enriched!r}: {_safe_diagnostic(e)}")
+            response = getattr(e, "response", None)
+            status_code = int(getattr(response, "status_code", 0) or 0)
+            hard_failure = status_code in {401, 403, 404, 429, 402}
+            if hard_failure:
+                _mark_provider_run_failure("vecteezy", f"HTTP {status_code}: {_safe_diagnostic(e)}")
+            if raise_errors and not candidate_pool:
+                raise
+            if hard_failure:
+                return candidate_pool
+            continue
+        for item in items[:8]:
+            if not isinstance(item, dict):
+                continue
+            resource_id = item.get("id")
+            if not resource_id:
+                continue
+            resolution = _vecteezy_download_resolution(
+                session,
+                resource_id,
+                _vecteezy_resource_extensions(item),
+                timeout_sec=timeout_sec,
+                raise_errors=raise_errors,
+            )
+            if resolution is None:
+                if _provider_failure_detail("vecteezy"):
+                    return candidate_pool
+                continue
+            width, height = _vecteezy_resource_dimensions(item)
+            attribution_url = resolution["required_attribution_url"]
+            candidate = candidate_from_remote_item(
+                "vecteezy",
+                {
+                    "provider_asset_id": resource_id,
+                    "title": item.get("title") or "",
+                    "description": " ".join(
+                        str(tag) for tag in (item.get("tags") or []) if str(tag).strip()
+                    ),
+                    "source_url": attribution_url or "https://www.vecteezy.com/",
+                    "download_url": resolution["download_url"],
+                    "width": width,
+                    "height": height,
+                    "license": "Vecteezy License",
+                    "attribution": "Vecteezy",
+                    "capability": "generic_stock_video",
+                },
+                enriched,
+            )
+            if candidate:
+                candidate_pool.append(candidate)
+    return candidate_pool
+
+
 def _wikimedia_user_agent():
     if WIKIMEDIA_USER_AGENT:
         return WIKIMEDIA_USER_AGENT
@@ -3154,6 +3508,80 @@ def _wikimedia_candidates(queries, *, timeout_sec=30, raise_errors=False):
     return candidate_pool
 
 
+def _yt_clip_probe_candidates(queries, fallback="", *, timeout_sec=15, raise_errors=False):
+    """Lightweight yt_clip availability probe for coverage preflight.
+
+    Runs a single yt-dlp metadata-only search (no download) and emits one
+    candidate per scene when YouTube returns results, so rare/microscopic
+    topics that stock APIs cannot answer are not deferred before yt_clip
+    has a chance to retrieve authentic footage.
+    """
+
+    try:
+        from autovideo.providers.stock.yt_clip import is_yt_dlp_available
+    except ImportError:
+        return []
+    if not is_yt_dlp_available():
+        return []
+    yt_dlp_cmd = shutil.which("yt-dlp") or "yt-dlp"
+    candidate_queries = [
+        str(query).strip()
+        for query in (*queries, fallback or "wildlife nature footage")
+        if str(query or "").strip()
+    ]
+    if not candidate_queries:
+        return []
+    for raw_query in dict.fromkeys(candidate_queries):
+        search_term = f"ytsearch2:{raw_query} footage"
+        info_cmd = [
+            yt_dlp_cmd,
+            search_term,
+            "--dump-single-json",
+            "--default-search", "ytsearch",
+            "--no-playlist",
+            "--match-filter", "duration <= 600 & duration >= 3",
+            "--quiet",
+        ]
+        try:
+            res = subprocess.run(
+                info_cmd, capture_output=True, text=True, timeout=min(int(timeout_sec), 12),
+            )
+        except subprocess.TimeoutExpired:
+            continue
+        except OSError:
+            continue
+        if not res.stdout.strip():
+            continue
+        try:
+            data = json.loads(res.stdout)
+        except json.JSONDecodeError:
+            continue
+        entries = data.get("entries") or [data] if "entries" in data or "id" in data else []
+        if not entries:
+            continue
+        entry = entries[0]
+        vid_id = str(entry.get("id") or f"probe_{hash(raw_query) & 0xffff:04x}")
+        candidate = candidate_from_remote_item(
+            "yt_clip",
+            {
+                "provider_asset_id": vid_id,
+                "title": str(entry.get("title") or raw_query)[:200],
+                "description": str(entry.get("description") or "")[:400],
+                "source_url": entry.get("webpage_url") or f"https://www.youtube.com/watch?v={vid_id}",
+                "download_url": entry.get("webpage_url") or f"https://www.youtube.com/watch?v={vid_id}",
+                "width": None,
+                "height": None,
+                "license": "YouTube Standard License",
+                "attribution": "",
+                "is_image": False,
+                "capability": "generic_stock_video",
+            },
+            raw_query,
+        )
+        return [candidate] if candidate else []
+    return []
+
+
 def _adaptive_provider_candidates(
     provider,
     queries,
@@ -3194,6 +3622,13 @@ def _adaptive_provider_candidates(
         )
     if provider == "coverr":
         return _coverr_candidates(
+            queries,
+            fallback=fallback,
+            timeout_sec=timeout_sec,
+            raise_errors=probe,
+        )
+    if provider == "vecteezy":
+        return _vecteezy_candidates(
             queries,
             fallback=fallback,
             timeout_sec=timeout_sec,
@@ -3244,6 +3679,13 @@ def _adaptive_provider_candidates(
     if provider == "europeana":
         return _europeana_candidates(
             queries,
+            timeout_sec=timeout_sec,
+            raise_errors=probe,
+        )
+    if provider == "yt_clip":
+        return _yt_clip_probe_candidates(
+            queries,
+            fallback,
             timeout_sec=timeout_sec,
             raise_errors=probe,
         )
@@ -3775,8 +4217,11 @@ def _fetch_adaptive_broll(
     target_duration,
     intent,
     provider_query_variants=None,
+    continuity_engine=None,
+    continuity_state=None,
 ):
     """Build an expanded candidate pool before downloading a stock asset."""
+    global _YT_CLIP_SCENES_USED
 
     plans = [
         plan
@@ -3818,10 +4263,12 @@ def _fetch_adaptive_broll(
             "wikimedia",
             "mixkit",
             "coverr",
+            "vecteezy",
             "videvo",
             "noaa",
             "esa",
             "usgs",
+            "yt_clip",
         }:
             continue
         portrait_candidates = _adaptive_provider_candidates(
@@ -3884,18 +4331,76 @@ def _fetch_adaptive_broll(
         _ADAPTIVE_SEARCH_DIAGNOSTICS[idx] = report
         return None
 
+    continuity_reason = ""
+    if continuity_engine is not None and continuity_state is not None:
+        result, continuity_reason = continuity_engine.prefer_continuity(
+            intent,
+            candidates,
+            result,
+            continuity_state,
+            used_provider_ids=set(used_set or []),
+            target_duration_sec=target_duration,
+            output_width=WIDTH,
+            output_height=HEIGHT,
+            scene_index=idx,
+        )
+        if result.selected_candidate:
+            continuity_state.record(
+                idx,
+                identity_from_candidate(result.selected_candidate),
+                reason=continuity_reason,
+            )
+
     candidate = result.selected_candidate
     report["final_provider_selected"] = candidate.provider
     report["selected_provider_id"] = candidate.provider_id
     report["selected_query"] = candidate.query
+    report["continuity_reason"] = continuity_reason
     _ADAPTIVE_SEARCH_DIAGNOSTICS[idx] = report
     _remember_media_selection(idx, result, "adaptive")
+    if continuity_reason:
+        _MEDIA_SELECTION_DIAGNOSTICS.setdefault(idx, {}).setdefault("selection", {})[
+            "continuity_reason"
+        ] = continuity_reason
 
     out_path = OUT_DIR / f"broll_{idx}{_candidate_extension(candidate)}"
     print(
         f"    [Adaptive] Selected {candidate.provider}:{candidate.provider_id} "
         f"confidence={result.confidence} exact={report['exact_subject_candidates']}"
     )
+    if candidate.provider == "yt_clip":
+        if not _yt_clip_budget_available():
+            print(
+                f"    [YTClip] scene budget exhausted "
+                f"({_YT_CLIP_SCENES_USED}/{_yt_clip_max_scenes()}); skipping yt_clip for this scene."
+            )
+            return None
+        segment_offset = None
+        if continuity_state is not None:
+            candidate_identity = identity_from_candidate(candidate)
+            prior_uses = [
+                scene_idx
+                for scene_idx, scene_identity in continuity_state.scene_sources.items()
+                if scene_idx != idx and scene_identity.matches(candidate_identity)
+            ]
+            if prior_uses:
+                segment_offset = 5.0 + (len(prior_uses) * (target_duration + 3.0))
+        out = fetch_yt_clip_video(
+            [candidate.query] if candidate.query else (plan_queries or []),
+            idx,
+            used_set,
+            target_duration=target_duration,
+            fallback=fallback,
+            narration=narration,
+            intent=intent,
+            clip_source=candidate.download_url or candidate.url,
+            segment_offset=segment_offset,
+        )
+        if _valid_media_path(out):
+            _YT_CLIP_SCENES_USED += 1
+            used_set.add(candidate.dedup_key)
+            return out
+        return None
     if _download_to(candidate.download_url, out_path):
         used_set.add(candidate.dedup_key)
         return out_path
@@ -4236,6 +4741,32 @@ def fetch_coverr_video(
     return None
 
 
+def fetch_vecteezy_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+):
+    """Fetch Vecteezy videos via the account-scoped V2 content API."""
+
+    if not (VECTEEZY_API_URL and VECTEEZY_API_KEY and VECTEEZY_ACCOUNT_ID):
+        return None
+    intent = intent or _selection_intent(queries, fallback=fallback, narration=narration, idx=idx)
+    candidate = _select_candidate_for_provider(
+        "Vecteezy",
+        idx,
+        _vecteezy_candidates(queries, fallback=fallback),
+        intent=intent,
+        used_set=used_set,
+        target_duration=target_duration,
+    )
+    if not candidate:
+        return None
+    used_set.add(candidate.dedup_key)
+    out_path = OUT_DIR / f"broll_{idx}.mp4"
+    print(f"    [Vecteezy] Query: {candidate.query!r}  asset_id={candidate.provider_id}")
+    if _download_to(candidate.download_url, out_path, timeout=90, max_bytes=120 * 1024 * 1024):
+        return out_path
+    return None
+
+
 def fetch_videvo_video(
     queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
 ):
@@ -4256,6 +4787,60 @@ def fetch_videvo_video(
         license_name="Videvo license varies by clip",
         intent=intent,
     )
+
+
+def fetch_yt_clip_video(
+    queries, idx, used_set, target_duration=5.0, fallback="", narration="", intent=None,
+    clip_source=None,
+    segment_offset=None,
+):
+    """Fetch short YouTube clip via yt-dlp fallback."""
+    from autovideo.providers.stock import fetch_yt_clip
+    entity = ""
+    constraints: list[str] = []
+    if intent is not None:
+        entity = (
+            getattr(intent, "requested_entity", "")
+            or getattr(intent, "primary_subject", "")
+            or ""
+        )
+        for attr in ("environment_terms", "action_terms", "entity_required_terms"):
+            values = tuple(getattr(intent, attr, ()) or ())
+            constraints.extend(str(v).strip() for v in values if str(v or "").strip())
+    out = fetch_yt_clip(
+        queries,
+        idx,
+        OUT_DIR,
+        target_duration=target_duration,
+        used_set=used_set,
+        expected_entity=str(entity).strip() or None,
+        constraints=constraints,
+        source_url=str(clip_source or "").strip() or None,
+        segment_offset_sec=segment_offset,
+    )
+    if out and out.exists() and out.stat().st_size > 0:
+        _MEDIA_SELECTION_DIAGNOSTICS[idx] = {
+            **_MEDIA_SELECTION_DIAGNOSTICS.get(idx, {}),
+            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+            "selection": {
+                "query": queries[0] if queries else fallback,
+                "provider": "yt_clip",
+                "provider_id": out.stem,
+                "score": 0.6,
+                "confidence": "fallback",
+                "confidence_level": "MEDIUM",
+                "required_constraints": list(constraints),
+                "canonical_entity": str(entity).strip() or "",
+                "fallback_level": "provider",
+                "yt_scene_usage": _YT_CLIP_SCENES_USED + 1,
+                "warnings": [],
+                "rejection_reasons": [],
+                "candidate_count": 1,
+                "score_breakdown": {},
+            }
+        }
+        return out
+    return None
 
 
 def fetch_noaa_media(
@@ -5015,12 +5600,17 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 hybrid=False, threshold=0.5, dalle=False, target_duration=5.0,
                 no_interactive=False, shot_intent=None,
                 visual_grammar_engine=None, visual_grammar_decision=None,
-                provider_query_variants=None, scene_constraints=None):
+                provider_query_variants=None, scene_constraints=None,
+                continuity_engine=None, continuity_state=None):
     """Chain b-roll sources: local -> generated image (opt) -> Pexels -> Pixabay -> NASA (space).
 
     Uses a persistent cross-video used_set so clips aren't repeated across runs.
     """
     used_set = used_set if used_set is not None else _load_persistent_used()
+    global _BROAD_FALLBACK_SCENES, _YT_CLIP_SCENES_USED
+    if idx == 0:
+        _BROAD_FALLBACK_SCENES = 0
+        _YT_CLIP_SCENES_USED = 0
     if isinstance(queries, str):
         queries = [queries]
     queries = [q for q in queries if q]
@@ -5105,6 +5695,8 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
         target_duration=target_duration,
         intent=canonical_intent,
         provider_query_variants=provider_query_variants,
+        continuity_engine=continuity_engine,
+        continuity_state=continuity_state,
     )
     if _valid_media_path(adaptive_out):
         _save_persistent_used(used_set)
@@ -5166,6 +5758,16 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 narration=narration,
                 intent=canonical_intent,
             )
+        elif source == "vecteezy":
+            out = fetch_vecteezy_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
         elif source == "videvo":
             out = fetch_videvo_video(
                 plan_queries,
@@ -5176,6 +5778,24 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
                 narration=narration,
                 intent=canonical_intent,
             )
+        elif source == "yt_clip":
+            if not _yt_clip_budget_available():
+                print(
+                    f"    [YTClip] scene budget exhausted "
+                    f"({_YT_CLIP_SCENES_USED}/{_yt_clip_max_scenes()}); skipping yt_clip for this scene."
+                )
+                continue
+            out = fetch_yt_clip_video(
+                plan_queries,
+                idx,
+                used_set,
+                target_duration=target_duration,
+                fallback=fallback,
+                narration=narration,
+                intent=canonical_intent,
+            )
+            if _valid_media_path(out):
+                _YT_CLIP_SCENES_USED += 1
         elif source == "wikimedia":
             out = fetch_wikimedia_media(
                 plan_queries,
@@ -5509,6 +6129,37 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
 
     # 5. Last-resort generic Pexels search using the niche/fallback term.
     # This is the "broad nature shot" safety net so scheduled runs don't die.
+    scene_importance = _scene_importance_for_index(idx, narration)
+    forbidden_role = scene_importance in {
+        SceneImportance.HOOK.value,
+        SceneImportance.MAIN_REVEAL.value,
+        SceneImportance.CTA.value,
+    }
+    if forbidden_role:
+        print(
+            f"    [Broad fallback] blocked for {scene_importance} scene {idx+1}: "
+            "generic fallback is not allowed on hook/main-reveal/CTA scenes."
+        )
+        _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+            "broad_fallback_blocked_reason": (
+                f"scene importance {scene_importance} forbids generic broad fallback"
+            ),
+        }
+        return None
+    if _BROAD_FALLBACK_SCENES >= _BROAD_FALLBACK_MAX_SCENES:
+        print(
+            f"    [Constraint fallback] broad fallback budget exhausted "
+            f"({_BROAD_FALLBACK_SCENES}/{_BROAD_FALLBACK_MAX_SCENES}); skipping generic fallback."
+        )
+        _MEDIA_PLANNING_DIAGNOSTICS[idx] = {
+            **_MEDIA_PLANNING_DIAGNOSTICS.get(idx, {}),
+            "broad_fallback_blocked_reason": (
+                f"per-documentary budget exhausted "
+                f"({_BROAD_FALLBACK_SCENES}/{_BROAD_FALLBACK_MAX_SCENES})"
+            ),
+        }
+        return None
     print(f"    [!] No specific footage found for segment {idx+1} ('{keyword}'); trying broad niche search.")
     broad_terms = _broad_fallback_terms(keyword, narration, fallback)
     if scene_constraints and getattr(scene_constraints, "constraints", ()):
@@ -5532,12 +6183,14 @@ def fetch_broll(queries, idx, fallback, local_media=None, narration="", used_set
     )
     if broad_out:
         print(f"    [Pexels broad] Using domain-safe broad clip for '{fallback}'.")
+        _BROAD_FALLBACK_SCENES += 1
         _MEDIA_SELECTION_DIAGNOSTICS.setdefault(idx, {"selection": {}})
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"].setdefault("warnings", [])
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["warnings"].append("broad fallback used")
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["confidence"] = "low"
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["confidence_level"] = "LOW"
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["fallback_level"] = "broad"
+        _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"]["broad_fallback_scene_importance"] = scene_importance
         _MEDIA_SELECTION_DIAGNOSTICS[idx]["selection"].setdefault(
             "selection_reason",
             "last-resort broad fallback after specific providers failed",
@@ -6735,11 +7388,14 @@ def main():
 
     check_deps()
     _AUDIO_MIX_DECISIONS.clear()
+    _STORY_REPORT.clear()
     niche = args.topic
     topic_card = find_topic_card(niche)
     duration, duration_reason = resolve_target_duration(niche, args.duration, topic_card)
     if args.duration is None:
-        print(f"[i] Automatic duration policy: {duration}s ({duration_reason}).")
+        print(f"[i] Story-driven duration: no target set; the story decides its length ({duration_reason}).")
+    else:
+        print(f"[i] Explicit --duration hint: {duration}s ({duration_reason}).")
     compare_mode = args.compare
     hybrid = args.hybrid
     threshold = args.threshold
@@ -6755,8 +7411,6 @@ def main():
     global WIDTH, HEIGHT
     if landscape:
         WIDTH, HEIGHT = 1920, 1080
-
-    n_segments = max(3, round(duration / _FORMAT_PROFILE.scene_target_duration_sec))
 
     OUT_DIR.mkdir(exist_ok=True)
     PENDING_DIR.mkdir(parents=True, exist_ok=True)
@@ -6780,7 +7434,8 @@ def main():
             die("Compare mode requires at least 2 files in input_clips/. Add images/videos to compare.")
         print(f"[i] Compare mode ON - will create split-screen segments.")
 
-    print(f"\n=== Building a ~{duration}s {'landscape' if landscape else 'vertical'} video about: {niche} ({n_segments} segments) ===\n")
+    print(f"\n=== Building a {'landscape' if landscape else 'vertical'} documentary short about: {niche} "
+          f"(platform ceiling {_FORMAT_PROFILE.max_duration_sec}s, format {_FORMAT_PROFILE.name}) ===\n")
 
     def write_manifest(path: Path, payload: dict) -> Path:
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -6813,17 +7468,17 @@ def main():
             print(f"[i] Reusing cached script from output/last_script.json...")
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
-            cached["segments"] = cached.get("segments", [])[:n_segments]
+            cached["segments"] = cached.get("segments", [])
             cached = Script.from_legacy_dict(cached, niche=niche).to_legacy_dict()
-            fatal, _soft = script_quality_notes(
-                cached, n_segments, duration, critical_asset_plan
-            )
-            if duration >= SHORTS_MIN_DURATION and fatal:
+            fatal, soft = script_quality_notes(cached, critical_asset_plan, _FORMAT_PROFILE)
+            if fatal:
                 die(
-                    "Cached script is too short for a 50-60s video. "
-                    "Run without --reuse-script so a fuller story can be generated. "
+                    "Cached script is structurally broken. "
+                    "Run without --reuse-script so a complete story can be generated. "
                     f"First issue: {fatal[0]}"
                 )
+            if soft:
+                print(f"[i] Cached script loaded with soft notes: {'; '.join(soft[:3])}")
             if announce:
                 print(f"[+] Title: {cached.get('title', niche)}")
                 for i, s in enumerate(cached["segments"]):
@@ -6875,7 +7530,8 @@ def main():
             "topic": niche,
             "duration": duration,
             "duration_reason": duration_reason,
-            "segments": n_segments,
+            "format": _FORMAT_PROFILE.name,
+            "platform_max_duration_sec": _FORMAT_PROFILE.max_duration_sec,
             "orientation": "landscape" if landscape else "portrait",
             "compare_mode": compare_mode,
             "hybrid": hybrid,
@@ -7051,9 +7707,8 @@ def main():
             print("[1/5] Writing script with Gemini...")
             script_payload = generate_script(
                 niche,
-                n_segments,
-                duration,
                 critical_asset_plan=critical_plan,
+                profile=_FORMAT_PROFILE,
             )
         set_script_context(ctx, script_payload)
         write_manifest(OUT_DIR / "last_script.json", script_payload)
@@ -7533,6 +8188,7 @@ def main():
             "noaa",
             "esa",
             "usgs",
+            "yt_clip",
         }
         ranked_plans = [
             plan
@@ -7554,7 +8210,7 @@ def main():
         if not plans and queries:
             fallback_providers = [
                 provider_id
-                for provider_id in ("pexels", "pixabay", "coverr")
+                for provider_id in ("pexels", "pixabay")
                 if _provider_is_available(provider_id)
             ][:config.max_providers_per_scene]
             plans = [
@@ -7648,7 +8304,17 @@ def main():
             for score in scored
             if score.quality_gate_passed and score.score >= required_score
         ]
-        if candidates and not accepted:
+        yt_clip_hits = [
+            candidate
+            for candidate in candidates
+            if str(candidate.provider).lower() == "yt_clip"
+        ]
+        if not accepted and yt_clip_hits:
+            reasons.append(
+                "yt_clip availability probe succeeded; authentic footage will be "
+                "fetched and vision-verified during media selection"
+            )
+        if candidates and not accepted and not yt_clip_hits:
             reasons.append("candidates found but none passed production scoring")
         if not plans:
             reasons.append("no probe-supported provider was ranked for this scene")
@@ -7664,9 +8330,9 @@ def main():
             query=queries[0] if queries else fallback,
             providers_attempted=tuple(attempted),
             candidates_found=len(candidates),
-            accepted_candidates=len(accepted),
+            accepted_candidates=len(accepted) + len(yt_clip_hits),
             best_score=max((score.score for score in scored), default=None),
-            covered=bool(accepted),
+            covered=bool(accepted) or bool(yt_clip_hits),
             provider_outcomes=tuple(provider_outcomes),
             reasons=tuple(reasons),
             coverage_basis="production_score" if critical else "availability_score",
@@ -7739,8 +8405,14 @@ def main():
         return Path(record.outputs.get("source_coverage_report", "")).exists()
 
     def stage_voice_generation(ctx: PipelineContext) -> StageResult:
-        voice_items = make_all_voices(ctx.values["segments"], duration)
+        voice_items = make_all_voices(ctx.values["segments"])
         ctx.values["voice_items"] = voice_items
+        actual_seconds = sum(item["duration"] for item in voice_items)
+        transition_allowance = max(0, len(voice_items) - 1) * _FORMAT_PROFILE.transition_duration_sec
+        _STORY_REPORT["actual_narration_sec"] = round(actual_seconds, 2)
+        if actual_seconds + transition_allowance > _FORMAT_PROFILE.max_duration_sec:
+            _STORY_REPORT["narration_overflow"] = True
+        _write_story_report()
         manifest = voice_manifest_from_items(voice_items)
         path = write_manifest(OUT_DIR / "voice_manifest.json", manifest)
         return StageResult(outputs={
@@ -7825,6 +8497,8 @@ def main():
             topic=niche,
             total_scenes=len(ctx.values["voice_items"]),
         )
+        source_continuity_engine = SourceContinuityEngine.from_env()
+        source_continuity_state = SourceContinuityState()
         for item in ctx.values["voice_items"]:
             idx = item["idx"]
             seg = item["segment"]
@@ -7899,6 +8573,64 @@ def main():
             else:
                 override = broll_overrides.get(idx)
                 if override:
+                    source_path = str(override.get("source_path") or "").strip()
+                    if source_path:
+                        source_path = str(Path(source_path).expanduser().resolve())
+                        if not Path(source_path).is_file():
+                            raise RuntimeError(f"Source segment override does not exist: {source_path}")
+                        start_sec = override.get("start_sec", override.get("source_start_sec"))
+                        try:
+                            start_sec = float(start_sec) if start_sec is not None else None
+                        except (TypeError, ValueError):
+                            start_sec = None
+                        print(
+                            f"[3/5] Segment {idx+1}: slicing source override "
+                            f"'{Path(source_path).name}' at "
+                            f"{start_sec if start_sec is not None else 2.0:.1f}s..."
+                        )
+                        manual_queries = list(
+                            semantic_scene.provider_queries if semantic_scene
+                            else provider_shot_intent.search_queries if provider_shot_intent
+                            else broll_query_list(seg, niche)
+                        )
+                        clip = fetch_yt_clip_video(
+                            manual_queries,
+                            idx,
+                            used_set,
+                            target_duration=dur,
+                            fallback=(provider_shot_intent.primary_subject if provider_shot_intent else niche),
+                            narration=seg["narration"],
+                            intent=provider_shot_intent,
+                            clip_source=source_path,
+                            segment_offset=start_sec,
+                            preserve_audio=bool(override.get("preserve_audio", False)),
+                        )
+                        if clip:
+                            media_assets.append(_media_asset_from_path(
+                                clip,
+                                source=MediaSource.LOCAL,
+                                idx=idx,
+                                metadata={
+                                    "selection": {
+                                        "query": "source_override",
+                                        "provider": "yt_clip",
+                                        "provider_id": Path(clip).stem,
+                                        "source_url": source_path,
+                                        "source_start_sec": start_sec,
+                                        "score": None,
+                                        "confidence": "manual",
+                                        "manual_override": True,
+                                        "warnings": ["local source segment override"],
+                                        "rejection_reasons": [],
+                                        "candidate_count": 1,
+                                        "score_breakdown": {},
+                                    }
+                                },
+                            ))
+                            continue
+                        raise RuntimeError(
+                            f"Could not slice source segment override: {source_path}"
+                        )
                     if "clip_path" in override:
                         print(f"[3/5] Segment {idx+1}: using user-supplied clip...")
                         clip = Path(override["clip_path"]).expanduser().resolve()
@@ -7913,6 +8645,7 @@ def main():
                                     "provider_id": str(clip),
                                     "score": None,
                                     "confidence": "manual",
+                                    "manual_override": True,
                                     "warnings": ["manual clip override"],
                                     "rejection_reasons": [],
                                     "candidate_count": 1,
@@ -7921,6 +8654,46 @@ def main():
                             },
                         ))
                         continue
+                    elif "youtube_id" in override or "clip_url" in override:
+                        clip_source = str(override.get("clip_url") or override.get("youtube_id") or "").strip()
+                        if clip_source:
+                            print(f"[3/5] Segment {idx+1}: using user-supplied YouTube override...")
+                            manual_queries = list(
+                                semantic_scene.provider_queries if semantic_scene
+                                else provider_shot_intent.search_queries if provider_shot_intent
+                                else broll_query_list(seg, niche)
+                            )
+                            clip = fetch_yt_clip_video(
+                                manual_queries,
+                                idx,
+                                used_set,
+                                target_duration=dur,
+                                fallback=(provider_shot_intent.primary_subject if provider_shot_intent else niche),
+                                narration=seg["narration"],
+                                intent=provider_shot_intent,
+                                clip_source=clip_source,
+                            )
+                            if clip:
+                                media_assets.append(_media_asset_from_path(
+                                    clip,
+                                    source=MediaSource.LOCAL,
+                                    idx=idx,
+                                    metadata={
+                                        "selection": {
+                                            "query": "manual_override",
+                                            "provider": "yt_clip",
+                                            "provider_id": Path(clip).stem,
+                                            "score": None,
+                                            "confidence": "manual",
+                                            "manual_override": True,
+                                            "warnings": ["manual YouTube override"],
+                                            "rejection_reasons": [],
+                                            "candidate_count": 1,
+                                            "score_breakdown": {},
+                                        }
+                                    },
+                                ))
+                                continue
                     elif "skip" in override:
                         print(f"[3/5] Segment {idx+1}: user skipped stock; using Gemini image...")
                         broll = generate_gemini_image(seg.get("broll") or niche, idx)
@@ -7964,6 +8737,29 @@ def main():
                         else provider_shot_intent.search_queries if provider_shot_intent
                         else broll_query_list(seg, niche)
                     )
+                manual_clip = _find_manual_input_clip(idx, local_media, provider_shot_intent)
+                if manual_clip:
+                    print(f"[3/5] Segment {idx+1}: using input_clips override '{manual_clip.name}'...")
+                    media_assets.append(_media_asset_from_path(
+                        manual_clip,
+                        source=MediaSource.LOCAL,
+                        idx=idx,
+                        metadata={
+                            "selection": {
+                                "query": "manual_override",
+                                "provider": "local",
+                                "provider_id": str(manual_clip.resolve()),
+                                "score": None,
+                                "confidence": "manual",
+                                "manual_override": True,
+                                "warnings": ["input_clips scene/entity override"],
+                                "rejection_reasons": [],
+                                "candidate_count": 1,
+                                "score_breakdown": {},
+                            }
+                        },
+                    ))
+                    continue
                 if not queries:
                     queries = broll_query_list(seg, niche)
                 visual_grammar_decision = visual_grammar_engine.decide(
@@ -8035,6 +8831,8 @@ def main():
                         semantic_scene.provider_variants if semantic_scene else None
                     ),
                     scene_constraints=constraint_scene,
+                    continuity_engine=source_continuity_engine,
+                    continuity_state=source_continuity_state,
                 )
                 if not _valid_media_path(broll):
                     print(f"    [Local explainer] replacing missing media for segment {idx+1}.")
@@ -8084,6 +8882,12 @@ def main():
                 scene_visual_focus_report=scene_visual_focus_report,
             )
             write_manifest(continuity_report_path, continuity_report.to_dict())
+        source_continuity_report_path = OUT_DIR / "source_continuity_report.json"
+        source_report = source_continuity_engine.build_report(
+            source_continuity_state,
+            total_scenes=len(ctx.values["voice_items"]),
+        )
+        write_manifest(source_continuity_report_path, source_report.to_dict())
         grammar_report_path = write_manifest(
             OUT_DIR / "visual_grammar_report.json",
             visual_grammar_engine.report(),
@@ -8091,6 +8895,7 @@ def main():
         return StageResult(outputs={
             "media_manifest": str(path),
             "subject_continuity_report": str(continuity_report_path),
+            "source_continuity_report": str(source_continuity_report_path),
             "visual_grammar_report": str(grammar_report_path),
             "fallback_quality_report": str(fallback_quality_report_path),
             "media_files": [str(asset.local_path) for asset in media_assets],
@@ -8531,10 +9336,14 @@ def main():
             asset_metadata = asset.metadata if isinstance(asset.metadata, dict) else {}
             selection = asset_metadata.get("selection")
             selection = selection if isinstance(selection, dict) else asset_metadata
-            if str(selection.get("provider") or "").lower() != "coverr":
+            if str(selection.get("provider") or "").lower() not in {"coverr", "vecteezy"}:
                 continue
-            attribution = str(selection.get("attribution") or "Coverr").strip()
-            source_url = str(selection.get("source_url") or "https://coverr.co/").strip()
+            if str(selection.get("provider") or "").lower() == "vecteezy":
+                attribution = str(selection.get("attribution") or "Vecteezy").strip()
+                source_url = str(selection.get("source_url") or "https://www.vecteezy.com/").strip()
+            else:
+                attribution = str(selection.get("attribution") or "Coverr").strip()
+                source_url = str(selection.get("source_url") or "https://coverr.co/").strip()
             credit = f"{attribution}: {source_url}"
             if credit not in visual_attributions:
                 visual_attributions.append(credit)
@@ -8916,9 +9725,21 @@ def main():
             verified_media_path=OUT_DIR / "verified_media_report.json",
             rendered_visual_qa_path=OUT_DIR / "rendered_visual_qa_report.json",
         )
-        report = PublishQualityGate(PublishQualityConfig.from_env()).evaluate(artifacts)
+        report = PublishQualityGate(PublishQualityConfig.from_format_profile(_FORMAT_PROFILE)).evaluate(artifacts)
         report_path = report.write_json(OUT_DIR / "publish_quality_report.json")
         ctx.values["publish_quality_report"] = report.to_dict()
+        final_seconds = float(ctx.values.get("total") or 0.0)
+        actual_seconds = _STORY_REPORT.get("actual_narration_sec")
+        if actual_seconds:
+            transitions = max(0, int(_STORY_REPORT.get("beat_count", 0)) - 1) * _FORMAT_PROFILE.transition_duration_sec
+            if final_seconds and (actual_seconds + transitions) > _FORMAT_PROFILE.max_duration_sec and final_seconds <= _FORMAT_PROFILE.max_duration_sec:
+                _STORY_REPORT["renderer_tail_trim"] = True
+        _STORY_REPORT["final_video_sec"] = round(final_seconds, 2) if final_seconds else None
+        _STORY_REPORT["average_scene_sec"] = round(final_seconds / max(1, int(_STORY_REPORT.get("beat_count", 0))), 2) if final_seconds else None
+        estimated = _STORY_REPORT.get("estimated_narration_sec")
+        if estimated and final_seconds:
+            _STORY_REPORT["trim_percentage"] = round(max(0.0, 1.0 - (final_seconds / estimated)) * 100.0, 1)
+        _write_story_report()
         warnings = [
             f"{check.name}: {check.message}"
             for check in report.checks
@@ -9093,7 +9914,8 @@ def main():
         "no_interactive": no_interactive,
         "width": WIDTH,
         "height": HEIGHT,
-        "segments": n_segments,
+        "format": _FORMAT_PROFILE.name,
+        "platform_max_duration_sec": _FORMAT_PROFILE.max_duration_sec,
     }
     fingerprint = hashlib.sha256(
         json.dumps(fingerprint_payload, sort_keys=True).encode("utf-8")

@@ -48,6 +48,15 @@ from .subject_continuity import (
     SubjectContinuityProfile,
     SubjectContinuityReport,
 )
+from .source_continuity import (
+    SourceContinuityConfig,
+    SourceContinuityEngine,
+    SourceContinuityReport,
+    SourceContinuityState,
+    SourceIdentity,
+    identity_from_candidate,
+    identity_from_selection,
+)
 from .editorial import (
     DocumentaryMode,
     EditorialCanon,
@@ -146,6 +155,11 @@ __all__ = [
     "SceneType",
     "SourcePlanner",
     "StockCandidate",
+    "SourceContinuityConfig",
+    "SourceContinuityEngine",
+    "SourceContinuityReport",
+    "SourceContinuityState",
+    "SourceIdentity",
     "SubjectContinuityEngine",
     "SubjectContinuityProfile",
     "SubjectContinuityReport",
@@ -207,5 +221,7 @@ __all__ = [
     "select_first_available_provider",
     "default_provider_capability_registry",
     "default_visual_grammars",
+    "identity_from_candidate",
+    "identity_from_selection",
     "isolated_query_candidates",
 ]

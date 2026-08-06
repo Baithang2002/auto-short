@@ -62,7 +62,7 @@ class VerifiedMediaGateConfig:
                 return default
 
         return cls(
-            enabled=flag("AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED", False),
+            enabled=flag("AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED", True),
             critical_confidence_threshold=max(0.0, min(1.0, number(
                 "AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_CONFIDENCE", 0.85
             ))),
@@ -75,9 +75,10 @@ class VerifiedMediaGateConfig:
             )).strip().lower() or "abort",
             frame_sample_count=max(1, whole("AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES", 3)),
             allow_unverified_lower_priority=flag(
-                "AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_UNVERIFIED_LOWER_PRIORITY", True
+                "AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_UNVERIFIED_LOWER_PRIORITY", False
             ),
             allow_unverified_when_vision_unavailable=flag(
+
                 "AUTO_VIDEO_VERIFIED_MEDIA_ALLOW_VISION_UNAVAILABLE", True
             ),
         )

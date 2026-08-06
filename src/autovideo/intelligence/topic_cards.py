@@ -153,11 +153,17 @@ def _required_strings(raw: Mapping[str, Any], field: str, location: str) -> tupl
 
 
 def _duration(value: Any, location: str) -> int:
+    """Parse an advisory story-length hint.
+
+    ``recommended_duration_sec`` is a soft hint for planning/logging only.
+    The story decides the finished length, so no hard window is enforced;
+    the value only needs to be a non-negative number.
+    """
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError(f"{location} field 'recommended_duration_sec' must be numeric")
     duration = int(value)
-    if duration < 45 or duration > 56:
-        raise ValueError(f"{location} field 'recommended_duration_sec' must be between 45 and 56")
+    if duration < 0:
+        raise ValueError(f"{location} field 'recommended_duration_sec' must be non-negative")
     return duration
 
 
