@@ -228,3 +228,4 @@
 2026-08-06 06:29:59  topic='Why The Atacama Desert Is So Dry'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)'
 2026-08-06 14:28:45  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='manual'  duration=1s  critical_failure=true  reason='critical technical failure exit=1'
 2026-08-06 14:34:14  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='evening'  duration=1s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-06 14:59:22  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='evening'  duration=1s  critical_failure=true  reason='critical technical failure exit=1'
