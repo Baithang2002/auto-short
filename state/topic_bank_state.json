@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-05T15:04:11Z",
+  "updated_at": "2026-08-06T06:08:51Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1188,6 +1188,51 @@
       "quarantine_until": "2026-08-14T06:27:31Z"
     },
     {
+      "topic": "How The Great Lakes Hold So Much Water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:08:11Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:08:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:08:11Z"
+    },
+    {
+      "topic": "How The Great Migration Crosses Africa",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:08:27Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:08:27Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:08:27Z"
+    },
+    {
+      "topic": "How The Great Rift Valley Split the Land",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:08:39Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:08:39Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/6 (33%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:08:39Z"
+    },
+    {
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
@@ -2026,6 +2071,21 @@
       "last_failure_at": "2026-07-30T11:34:29Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T11:34:29Z"
+    },
+    {
+      "topic": "Why Mount Everest Is Still Growing",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-06T06:08:51Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-06T06:08:51Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-20T06:08:51Z"
     },
     {
       "topic": "Why Mudslides Move So Fast",
