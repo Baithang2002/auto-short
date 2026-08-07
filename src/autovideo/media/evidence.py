@@ -332,6 +332,32 @@ def _fallback_reason(fidelity: EntityFidelity) -> str:
     }[fidelity]
 
 
+def _matching_forms(term: str) -> tuple[str, ...]:
+    """Singular/plural variants of a single-word entity term.
+
+    Stock metadata almost never repeats the exact inflection from the script
+    ("dolphin" tag vs "dolphins" canonical entity), so prove a match when the
+    other inflection appears. Guarded to avoid mangling short words and
+    words like "glass" or "news".
+    """
+
+    if len(term) <= 3:
+        return (term,)
+    variants = [term]
+    stripped = term
+    if term.endswith("ies"):
+        stripped = term[:-3] + "y"
+    elif term.endswith("es"):
+        stripped = term[:-2]
+    elif term.endswith("s") and not term.endswith("ss"):
+        stripped = term[:-1]
+    if len(stripped) >= 4 and stripped != term:
+        variants.append(stripped)
+    if not term.endswith(("s", "ss")):
+        variants.append(term + "s")
+    return tuple(dict.fromkeys(variants))
+
+
 def _first_match(text: str, terms: tuple[str, ...]) -> str:
     padded = f" {text} "
     for term in terms:
@@ -341,8 +367,10 @@ def _first_match(text: str, terms: tuple[str, ...]) -> str:
         if " " in normalized:
             if normalized in text:
                 return term
-        elif f" {normalized} " in padded:
-            return term
+        else:
+            for form in _matching_forms(normalized):
+                if f" {form} " in padded:
+                    return term
     return ""
 
 

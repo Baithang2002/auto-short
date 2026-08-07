@@ -64,6 +64,7 @@ FALLBACK_QUALITY_REPORT = OUT_DIR / "fallback_quality_report.json"
 PUBLISH_QUALITY_REPORT = OUT_DIR / "publish_quality_report.json"
 VERIFIED_MEDIA_REPORT = OUT_DIR / "verified_media_report.json"
 EXACT_SUBJECT_GATE_REPORT = OUT_DIR / "exact_subject_gate_report.json"
+PIPELINE_STATE = OUT_DIR / "pipeline_state.json"
 ATTEMPT_REPORTS = (
     SOURCE_COVERAGE_REPORT,
     EDITORIAL_IDENTITY_REPORT,
@@ -440,6 +441,19 @@ def candidate_quality_deferred(topic: str) -> tuple[bool, str]:
     publish_report = _read_json(PUBLISH_QUALITY_REPORT)
     if str(publish_report.get("verdict", "")).upper() == "DEFERRED":
         return True, "post-render publish quality gate deferred topic"
+
+    pipeline_state = _read_json(PIPELINE_STATE)
+    if (
+        str(pipeline_state.get("topic", "")).casefold() == topic.casefold()
+        and str(pipeline_state.get("status", "")).casefold() == "failed"
+    ):
+        script_error = str(
+            (pipeline_state.get("stages") or {})
+            .get("script_generation", {})
+            .get("error", "")
+        )
+        if script_error and "Script is unsalvageable" in script_error:
+            return True, script_error or "script quality gate rejected the topic draft"
 
     return False, ""
 

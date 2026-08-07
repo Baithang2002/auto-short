@@ -144,6 +144,45 @@ class PipelineDailyTests(unittest.TestCase):
         self.assertTrue(deferred)
         self.assertIn("generic substitutes", reason)
 
+    def test_script_qa_unsalvageable_is_a_content_deferral(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "pipeline_state.json"
+            state_path.write_text(json.dumps({
+                "topic": "how snow falls in a forest",
+                "status": "failed",
+                "stages": {
+                    "script_generation": {
+                        "status": "failed",
+                        "error": "RuntimeError: Script is unsalvageable: title is question-led; use a curious declarative statement",
+                    }
+                },
+            }), encoding="utf-8")
+
+            with patch.object(pipeline_daily, "PIPELINE_STATE", state_path):
+                deferred, reason = pipeline_daily.candidate_quality_deferred("how snow falls in a forest")
+
+        self.assertTrue(deferred)
+        self.assertIn("question-led", reason)
+
+    def test_script_qa_technical_crash_is_not_a_deferral(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            state_path = Path(directory) / "pipeline_state.json"
+            state_path.write_text(json.dumps({
+                "topic": "how snow falls in a forest",
+                "status": "failed",
+                "stages": {
+                    "script_generation": {
+                        "status": "failed",
+                        "error": "RuntimeError: ProviderError: HTTP 429",
+                    }
+                },
+            }), encoding="utf-8")
+
+            with patch.object(pipeline_daily, "PIPELINE_STATE", state_path):
+                deferred, _reason = pipeline_daily.candidate_quality_deferred("how snow falls in a forest")
+
+        self.assertFalse(deferred)
+
     def test_run_daily_retries_quality_failure_then_publishes(self) -> None:
         scheduled = iter((
             ("Weak topic", "run-1", None),

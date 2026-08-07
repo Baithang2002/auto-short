@@ -248,7 +248,7 @@ class SceneConstraintPlanner:
                 constraints.append(
                     _constraint(kind, term, _aliases_for(term), "scene_narration_or_intent")
                 )
-        constraints = _dedupe_constraints(constraints)
+        constraints = _collapse_alias_constraints(_dedupe_constraints(constraints))
         query_seeds = _query_seeds(canonical, constraints, self.config.max_queries_per_scene)
         if not self.config.enabled:
             query_seeds = tuple(
@@ -368,15 +368,35 @@ def _aliases_for(term: str) -> tuple[str, ...]:
     return (term,)
 
 
+_SUPPORTING_KIND_ORDER = {
+    "environment": 0,
+    "atmosphere": 1,
+    "mechanism": 2,
+    "action": 3,
+    "framing": 4,
+}
+
+
 def _query_seeds(
     canonical: str,
     constraints: Sequence[MandatoryVisualConstraint],
     maximum: int,
 ) -> tuple[str, ...]:
     subject = next((constraint for constraint in constraints if constraint.kind == "subject"), None)
-    supporting = [constraint for constraint in constraints if constraint.kind != "subject"]
+    supporting = [
+        constraint for constraint in constraints if constraint.kind != "subject"
+    ]
     if not canonical or not supporting:
         return (canonical,) if canonical else ()
+    # A seed is a search hint, not a full contract. Appending every
+    # mandatory term ("dolphins swim ocean underwater deep ocean dark ocean")
+    # makes stock search degrade and evidence verification impossible, so
+    # bound the hint to the canonical subject plus at most two supporting
+    # terms, preferring the environment.
+    supporting = sorted(
+        supporting,
+        key=lambda item: _SUPPORTING_KIND_ORDER.get(item.kind, 5),
+    )[:2]
     first_terms = [constraint.canonical_term for constraint in supporting]
     seeds = [_join(canonical, *first_terms)]
     for index, constraint in enumerate(supporting):
@@ -405,6 +425,31 @@ def _dedupe_constraints(
         if key and key not in seen:
             seen.add(key)
             result.append(constraint)
+    return result
+
+
+def _collapse_alias_constraints(
+    constraints: Sequence[MandatoryVisualConstraint],
+) -> list[MandatoryVisualConstraint]:
+    """Merge mandatory requirements that alias the same visual concept.
+
+    The alias tables intentionally overlap ("underwater", "deep ocean", and
+    "dark ocean" all describe the same environment), so one narration can
+    create several near-duplicate constraints. Demanding every alias term in
+    a single query then forces keyword soups ("dolphins swim ocean underwater
+    deep ocean dark ocean") that stock search degrades on and that evidence
+    verification can never prove. Keep only the first constraint whose alias
+    set intersects an already-kept one.
+    """
+
+    result: list[MandatoryVisualConstraint] = []
+    kept_terms: list[set[str]] = []
+    for constraint in constraints:
+        terms = {_normalize(term) for term in constraint.accepted_terms if term}
+        if any(terms & kept for kept in kept_terms):
+            continue
+        result.append(constraint)
+        kept_terms.append(terms)
     return result
 
 

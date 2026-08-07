@@ -113,6 +113,16 @@ class CanonicalSceneEntityResolverTests(unittest.TestCase):
         self.assertEqual("coastal waters", report.canonical_documentary_entity)
         self.assertEqual("coastal waters", report.scene_for_index(0).canonical_entity)
 
+    def test_fallback_truncates_phrase_entities_at_action_verb(self) -> None:
+        topic = "How Dolphins Swim in the Ocean"
+        report = CanonicalSceneEntityResolver().resolve(
+            documentary_topic=topic,
+            shot_plan=_plan(topic, _intent(0, topic)),
+        )
+
+        self.assertEqual("dolphins", report.canonical_documentary_entity)
+        self.assertEqual("dolphins", report.scene_for_index(0).canonical_entity)
+
     def test_normalizes_pyramid_title_and_scene_entities(self) -> None:
         topic = "How Ancient Egyptians Built Stone Pyramids"
         report = CanonicalSceneEntityResolver().resolve(

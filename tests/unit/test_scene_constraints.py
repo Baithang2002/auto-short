@@ -82,6 +82,29 @@ class SceneConstraintTests(unittest.TestCase):
             for provider_queries in report.scene_for_index(0).provider_variants.values()
         ))
 
+    def test_alias_constraints_collapse_into_one_environment(self) -> None:
+        intent = _intent(
+            "dolphin",
+            narration="Dolphins swim through the deep dark ocean.",
+            action="swimming",
+            environment="underwater",
+            broll="dolphins swim ocean underwater",
+        )
+        constraints = SceneConstraintPlanner().plan(
+            documentary_topic="How Dolphins Swim in the Ocean",
+            shot_plan=SimpleNamespace(intents=(intent,), primary_subject="dolphin"),
+        )
+        scene = constraints.scene_for_index(0)
+        environment_terms = [
+            item.canonical_term
+            for item in scene.constraints
+            if item.kind == "environment"
+        ]
+        self.assertEqual(["underwater"], environment_terms)
+        self.assertTrue(scene.query_seeds)
+        for seed in scene.query_seeds:
+            self.assertLessEqual(len(seed.split()), 4)
+
     def test_waggle_dance_is_not_reduced_to_generic_bee(self) -> None:
         intent = _intent(
             "honeybee",

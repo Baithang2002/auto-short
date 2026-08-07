@@ -260,5 +260,67 @@ class EvidenceVerificationTests(unittest.TestCase):
         self.assertIn("quota exceeded", evidence["vision_result"]["error"])
 
 
+    def test_plural_entity_proven_by_singular_stock_metadata(self) -> None:
+        intent = build_visual_intent(
+            {
+                "narration": "Dolphins race through the water.",
+                "primary_subject": "dolphins",
+                "scene_entity": {
+                    "canonical_entity": "dolphins",
+                    "aliases": [],
+                    "required_terms": ["dolphins"],
+                    "optional_terms": [],
+                    "forbidden_terms": [],
+                },
+            },
+            "How Dolphins Swim in the Ocean",
+        )
+        candidate = StockCandidate(
+            provider="pixabay",
+            provider_id="dolphin-tag",
+            query="dolphins swim ocean underwater",
+            title="dolphin swimming in the sea",
+            description="dolphin",
+            width=1080,
+            height=1920,
+        )
+
+        score = score_candidate(intent, candidate)
+
+        self.assertEqual(score.breakdown["_entity_fidelity_value"], EntityFidelity.EXACT_ENTITY.value)
+        self.assertTrue(score.breakdown["_evidence_verification_value"]["accepted"])
+
+    def test_plural_variant_does_not_prove_unrelated_singular_entity(self) -> None:
+        intent = build_visual_intent(
+            {
+                "primary_subject": "whale",
+                "scene_entity": {
+                    "canonical_entity": "whale",
+                    "aliases": [],
+                    "required_terms": ["whale"],
+                    "optional_terms": [],
+                    "forbidden_terms": [],
+                },
+            },
+            "Why Whales Sing",
+        )
+        candidate = StockCandidate(
+            provider="pixabay",
+            provider_id="shark-tag",
+            query="whale shark",
+            title="shark in open water",
+            description="shark",
+            width=1080,
+            height=1920,
+        )
+
+        score = score_candidate(intent, candidate)
+
+        self.assertNotEqual(
+            score.breakdown["_entity_fidelity_value"],
+            EntityFidelity.EXACT_ENTITY.value,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
