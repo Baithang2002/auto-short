@@ -233,3 +233,7 @@
 2026-08-07 02:33:17  topic='how sunlight reflects on the ocean'  exit=1  slot='manual'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-07 02:34:15  topic='how coral reefs grow underwater'  exit=1  slot='manual'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-07 02:34:49  topic='how kelp moves in ocean water'  exit=1  slot='manual'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-07 05:06:44  topic='how rain fills a lake'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-07 05:08:19  topic='how sand dunes move in the wind'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-07 05:09:53  topic='how trees move in the wind'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-07 05:06:16  topic='how waves move across the ocean'  exit=1  slot='morning'  duration=230s  critical_failure=true  reason='critical technical failure exit=1'

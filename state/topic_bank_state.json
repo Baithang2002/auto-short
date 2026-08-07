@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T02:34:49Z",
+  "updated_at": "2026-08-07T05:09:53Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -858,6 +858,21 @@
       "quarantine_until": ""
     },
     {
+      "topic": "how rain fills a lake",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T05:06:44Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T05:06:44Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-21T05:06:44Z"
+    },
+    {
       "topic": "how rainbows form after a storm",
       "status": "quarantined",
       "success_count": 0,
@@ -916,6 +931,21 @@
       "last_failure_at": "2026-07-27T08:18:01Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T08:18:01Z"
+    },
+    {
+      "topic": "how sand dunes move in the wind",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T05:08:19Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T05:08:19Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T05:08:19Z"
     },
     {
       "topic": "how satellites take pictures of Earth",
@@ -1486,6 +1516,21 @@
       "last_failure_at": "2026-07-30T06:13:59Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:13:59Z"
+    },
+    {
+      "topic": "how trees move in the wind",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T05:09:53Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T05:09:53Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T05:09:53Z"
     },
     {
       "topic": "How Victoria Falls Creates Mist",
