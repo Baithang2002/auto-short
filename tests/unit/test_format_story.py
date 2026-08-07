@@ -52,9 +52,14 @@ class TestWordAndDurationHelpers(unittest.TestCase):
         assert abs(optimistic - words / 2.25) < 0.001
 
     def test_voice_budget_leaves_room_for_transitions_and_margin(self) -> None:
-        budget = story_planning.voice_budget_seconds(SHORTS, 10)
+        budget = story_planning.voice_budget_seconds(SHORTS, 10, renderer_tolerance_sec=1.0)
         transitions = 9 * SHORTS.transition_duration_sec
-        assert budget == 60.0 - transitions - 2.0
+        assert budget == 60.0 + 1.0 - transitions - 0.5
+
+    def test_voice_budget_matches_renderer_acceptance_for_near_ceiling_narration(self) -> None:
+        budget = story_planning.voice_budget_seconds(SHORTS, 4, renderer_tolerance_sec=1.0)
+        transitions = 3 * SHORTS.transition_duration_sec
+        assert budget >= 59.0
 
     def test_voice_budget_never_drops_below_one_second(self) -> None:
         assert story_planning.voice_budget_seconds(SHORTS, 100) >= 1.0

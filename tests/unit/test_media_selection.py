@@ -1913,6 +1913,69 @@ class MediaSelectionTests(unittest.TestCase):
 
             self.assertFalse(auto_short._valid_media_path(path))
 
+    def test_replacement_queries_fall_back_to_segment_broll_queries(self) -> None:
+        ctx = SimpleNamespace(values={
+            "semantic_query_report": None,
+            "voice_items": [
+                {
+                    "idx": 1,
+                    "segment": {
+                        "narration": "The buoy rides the swell.",
+                        "broll_queries": [
+                            "buoy bobbing on ocean waves",
+                            "yellow buoy in the sea",
+                            "wave gauge close up",
+                            "buoy on open water",
+                        ],
+                    },
+                }
+            ],
+        })
+        queries = auto_short._replacement_queries(
+            ctx, 1, SimpleNamespace(search_queries=())
+        )
+        self.assertEqual(
+            ["buoy bobbing on ocean waves", "yellow buoy in the sea", "wave gauge close up", "buoy on open water"],
+            queries,
+        )
+
+    def test_replacement_queries_prefer_semantic_provider_queries(self) -> None:
+        from autovideo.media import SemanticQueryReport, SemanticQueryConfig
+        from autovideo.media.semantic_queries import SemanticSceneQuery
+        from autovideo.media.scene_entities import SceneEntity
+
+        scene = SemanticSceneQuery(
+            scene_index=2,
+            canonical_visual_entity="mist",
+            visual_entities=("mist",),
+            provider_queries=("mist over mountains", "fog in valley"),
+            provider_variants={},
+            normalization_decisions=(),
+            provider_entity=SceneEntity(canonical_entity="mist", entity_type="element"),
+        )
+        report = SemanticQueryReport(
+            documentary_topic="how mist forms",
+            primary_subject="mist",
+            config=SemanticQueryConfig.from_env({}),
+            scenes=(scene,),
+        )
+        ctx = SimpleNamespace(values={
+            "semantic_query_report": report,
+            "voice_items": [],
+        })
+        queries = auto_short._replacement_queries(
+            ctx, 2, SimpleNamespace(search_queries=("original query",))
+        )
+        self.assertEqual(["mist over mountains", "fog in valley"], queries)
+
+    def test_replacement_queries_return_empty_without_any_source(self) -> None:
+        ctx = SimpleNamespace(values={
+            "semantic_query_report": None,
+            "voice_items": [{"idx": 3, "segment": {"narration": "Line", "broll_queries": []}}],
+        })
+        queries = auto_short._replacement_queries(ctx, 3, SimpleNamespace(search_queries=()))
+        self.assertEqual([], queries)
+
 
 if __name__ == "__main__":
     unittest.main()

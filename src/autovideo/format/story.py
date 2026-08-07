@@ -125,17 +125,31 @@ def estimate_story_duration(
 def voice_budget_seconds(
     profile: FormatProfile,
     segment_count: int,
-    safety_margin: float = 2.0,
+    safety_margin: float = 0.5,
+    renderer_tolerance_sec: float | None = None,
 ) -> float:
-    """Narration ceiling after transitions and a safety margin.
+    """Narration ceiling after transitions and a small safety margin.
 
-    The renderer trims combined (narration + transitions) length to
-    ``profile.max_duration_sec``. To keep that tail-trim from firing we
-    budget narration to leave room for the per-scene transitions and a
-    margin that absorbs TTS variance and provider overshoot.
+    The renderer tolerates combined (narration + transitions) length up to
+    ``max_duration_sec`` plus ``AUTO_VIDEO_DURATION_TOLERANCE_SEC`` (default
+    1.0s) and may retime narration up to ``narration_max_retime_tempo``.
+    The budget mirrors that acceptance so a natural ~60s story is not
+    rejected for a 60s platform; the small margin still keeps the renderer's
+    hard tail-trim from firing under normal TTS variance.
     """
+    if renderer_tolerance_sec is None:
+        try:
+            renderer_tolerance_sec = float(
+                os.environ.get("AUTO_VIDEO_DURATION_TOLERANCE_SEC", "1.0").strip() or "1.0"
+            )
+        except ValueError:
+            renderer_tolerance_sec = 1.0
     transitions = max(0, segment_count - 1) * profile.transition_duration_sec
-    return max(1.0, float(profile.max_duration_sec) - transitions - safety_margin)
+    return max(
+        1.0,
+        float(profile.max_duration_sec) + float(renderer_tolerance_sec)
+        - transitions - safety_margin,
+    )
 
 
 def validate_beat_structure(

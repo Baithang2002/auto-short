@@ -2576,6 +2576,34 @@ def _verification_priority_for_intent(intent) -> VerificationPriority:
     return VerificationPriority.MEDIUM
 
 
+def _replacement_queries(ctx: PipelineContext, idx: int, intent) -> list[str]:
+    """Replacement search queries for a rejected scene, with segment fallback.
+
+    Prefers the semantic query report, then the shot intent's own search
+    queries, and finally the writer-authored ``broll_queries``/``broll`` of
+    the segment so a rejected critical asset always has a concrete query to
+    search again instead of silently aborting.
+    """
+    semantic_report = ctx.values.get("semantic_query_report")
+    semantic_scene = (
+        semantic_report.scene_for_index(idx)
+        if isinstance(semantic_report, SemanticQueryReport) else None
+    )
+    if semantic_scene and semantic_scene.provider_queries:
+        return list(semantic_scene.provider_queries)
+    intent_queries = list(getattr(intent, "search_queries", ()) or ())
+    if intent_queries:
+        return intent_queries
+    voice_by_index = {item["idx"]: item for item in ctx.values.get("voice_items", [])}
+    item = voice_by_index.get(idx)
+    segment = (item or {}).get("segment") or {}
+    broll_queries = list(segment.get("broll_queries") or ())
+    if broll_queries:
+        return [q for q in broll_queries if str(q).strip()]
+    broll = str(segment.get("broll") or "").strip()
+    return [broll] if broll else []
+
+
 def _verification_request_for_asset(idx, asset, intent) -> VerificationRequest:
     entity = (
         getattr(intent, "requested_entity", "")
@@ -8906,16 +8934,6 @@ def main():
         ctx.values["media_assets"] = [
             MediaAsset.from_dict(asset) for asset in payload.get("assets", [])
         ]
-
-    def _replacement_queries(ctx: PipelineContext, idx: int, intent) -> list[str]:
-        semantic_report = ctx.values.get("semantic_query_report")
-        semantic_scene = (
-            semantic_report.scene_for_index(idx)
-            if isinstance(semantic_report, SemanticQueryReport) else None
-        )
-        if semantic_scene and semantic_scene.provider_queries:
-            return list(semantic_scene.provider_queries)
-        return list(getattr(intent, "search_queries", ()) or ())
 
     def stage_verified_media(ctx: PipelineContext) -> StageResult:
         """Reject bad downloaded assets before Timeline construction.
