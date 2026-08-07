@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-06T11:54:29Z",
+  "updated_at": "2026-08-07T02:34:49Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -301,6 +301,21 @@
       "last_failure_at": "2026-08-04T15:14:25Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
       "quarantine_until": "2026-08-18T15:14:25Z"
+    },
+    {
+      "topic": "how coral reefs grow underwater",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T02:34:15Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T02:34:15Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-21T02:34:15Z"
     },
     {
       "topic": "How Craters Form on the Moon",
@@ -646,6 +661,21 @@
       "last_failure_at": "2026-07-31T16:59:52Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-14T16:59:52Z"
+    },
+    {
+      "topic": "how kelp moves in ocean water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T02:34:49Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T02:34:49Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-21T02:34:49Z"
     },
     {
       "topic": "How Lagoons Form Behind Reefs",
@@ -1053,6 +1083,21 @@
       "quarantine_until": "2026-08-15T06:14:58Z"
     },
     {
+      "topic": "how sunlight reflects on the ocean",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T02:33:17Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T02:33:17Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-21T02:33:17Z"
+    },
+    {
       "topic": "How The Alps Were Pushed Upward",
       "status": "quarantined",
       "success_count": 0,
@@ -1234,18 +1279,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 4,
+      "failure_count": 5,
       "qualification_count": 2,
-      "last_attempt_at": "2026-08-06T11:52:48Z",
+      "last_attempt_at": "2026-08-07T02:32:09Z",
       "last_qualified_at": "2026-08-06T11:52:48Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T14:52:30Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-07T02:32:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-21T02:32:09Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
