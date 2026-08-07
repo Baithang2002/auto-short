@@ -1,123 +1,96 @@
 {
+  "story_complexity": "complex",
   "category_id": "28",
-  "title": "Giant Mountain Peaks Swallowed Earth's Greenhouse Gas",
-  "description": "Discover how the rise of the Himalayas reshaped our global climate. This massive tectonic collision did more than build peaks—it acted as a colossal chemical sponge. Learn the silent planetary mechanism that cooled our world down.",
-  "instagram_caption": "The earth has its own powerful ways of cooling down runaway heat. Watch how the rising Himalayas altered our global climate forever.",
+  "title": "The Mountain Range That Accidentally Froze Our Planet",
+  "description": "Discover how the tectonic collision that formed the Himalayas triggered global cooling, reshaped our atmosphere, and altered the course of human evolution.",
+  "instagram_caption": "Fifty million years ago, a colossal collision built the Himalayas—and completely rewrote Earth’s climate. 🏔️ From scrubbing carbon from the atmosphere to forcing our ancestors to walk upright, this massive wall of rock controls our world. \n\nFollow @WondersOfTheNature for more incredible planet secrets! \n\n#earthhistory #himalayas #climatechange #sciencefacts #evolution #naturewonders",
   "hashtags": [
     "#shorts",
     "#earthscience",
     "#planetearth",
     "#geology",
-    "#himalayas",
     "#earthhistory",
+    "#himalayas",
     "#climatechange",
-    "#naturedocumentary",
     "#sciencefacts",
-    "#geologyrocks",
-    "#tectonicplates",
-    "#deephistory",
-    "#iceage"
+    "#evolution",
+    "#naturewonders"
   ],
-  "music_mood": "curious",
+  "music_mood": "inspiring",
   "segments": [
     {
-      "narration": "These towering stone peaks look completely frozen, but they actively inhale global carbon.",
-      "broll": "mountain peak snow blowing",
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Deep inside Asia, a colossal wall of rock is secretly controlling the temperature of our entire atmosphere.",
+      "broll": "Himalayas snowy mountain peaks",
       "broll_queries": [
-        "mountain peak snow blowing",
-        "mountain peak snow blowing close up",
-        "himalayas mountain range wide shot",
-        "mountain ridge detail shot"
+        "Himalayas snowy mountain peaks",
+        "aerial close up mountain peak snowy",
+        "wide shot majesty himalayas range tibet",
+        "snow blowing off mountain peak high altitude"
       ]
     },
     {
-      "narration": "Millions of years ago, a suffocating greenhouse heat trapped the entire planet.",
-      "broll": "volcanic steam jungle",
+      "beat_role": "context",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Fifty million years ago, India's collision with Asia pushed up the Himalayas, triggering massive monsoon rains that scrubbed carbon dioxide from the air.",
+      "broll": "tectonic plates collision animation",
       "broll_queries": [
-        "volcanic steam jungle",
-        "volcanic steam jungle close up",
-        "hot hazy primeval forest wide shot",
-        "cracked dry earth detail shot"
+        "tectonic plates collision animation",
+        "3d animation tectonic plates colliding continent",
+        "earth surface global continents moving graphic",
+        "heavy rain storm forest mountains"
       ]
     },
     {
-      "narration": "Then, two massive tectonic plates collided with unimaginable, slow-motion power.",
-      "broll": "rock landslide",
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "As the planet lost its carbon greenhouse blanket and froze, drying forests forced our early ancestors to walk upright.",
+      "broll": "prehistoric dry grassland savannah",
       "broll_queries": [
-        "rock landslide close up",
-        "crumbled rock mountain wide shot",
-        "fractured stone detail shot",
-        "rock landslide"
+        "prehistoric dry grassland savannah",
+        "close up dry grass swaying wind",
+        "wide shot dusty african savanna landscape",
+        "early hominid shadow walking upright"
       ]
     },
     {
-      "narration": "The violent crash pushed raw, fresh minerals high into the sky.",
-      "broll": "mountain peak rising",
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This single continental collision ended a tropical greenhouse era, creating the seasonal, ice-capped world we know today.",
+      "broll": "earth spinning ice caps glowing",
       "broll_queries": [
-        "mountain peak rising",
-        "mountain peak clouds fast motion",
-        "rocky mountain peaks wide shot",
-        "sharp rock cliff detail shot"
+        "earth spinning ice caps glowing",
+        "close up rotating earth globe polar ice caps",
+        "space view planet earth glowing atmosphere",
+        "sun rising over earth planet space"
       ]
     },
     {
-      "narration": "Heavy monsoon rains began washing over these newly exposed rock faces.",
-      "broll": "rain falling rocks",
+      "beat_role": "conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Follow Wonders of the Nature to discover how our planet's greatest wonders rewrite history.",
+      "broll": "cinematic drone over green valley",
       "broll_queries": [
-        "rain falling rocks",
-        "heavy rain splashing stones close up",
-        "rainy mountain landscape wide shot",
-        "water drops on rock detail shot"
-      ]
-    },
-    {
-      "narration": "A quiet chemical reaction stripped carbon dioxide directly from the atmosphere.",
-      "broll": "water bubbling rock",
-      "broll_queries": [
-        "water bubbling rock",
-        "water bubbling on stone close up",
-        "river flowing over stones wide shot",
-        "wet stone texture detail shot"
-      ]
-    },
-    {
-      "narration": "Raging rivers carried these dissolved minerals straight into the deep ocean.",
-      "broll": "raging river muddy water",
-      "broll_queries": [
-        "raging river muddy water",
-        "raging muddy river rushing close up",
-        "wide river valley wide shot",
-        "rushing water foam detail shot"
-      ]
-    },
-    {
-      "narration": "The trapped carbon settled onto the seabed, locking away the greenhouse heat.",
-      "broll": "underwater marine snow falling",
-      "broll_queries": [
-        "underwater marine snow falling",
-        "underwater marine snow close up",
-        "deep dark ocean floor wide shot",
-        "silt settling ocean floor detail shot"
-      ]
-    },
-    {
-      "narration": "This massive chemical drain permanently cooled the entire surface of the Earth.",
-      "broll": "glacier ice melting",
-      "broll_queries": [
-        "glacier ice melting",
-        "glacier ice texture close up",
-        "giant mountain glacier wide shot",
-        "glowing blue ice detail shot"
-      ]
-    },
-    {
-      "narration": "Subscribe to Wonders of the Nature for more deep-earth discoveries.",
-      "broll": "mountain sunrise dramatic",
-      "broll_queries": [
-        "mountain sunrise dramatic",
-        "mountain peak sunrise close up",
-        "mountain range orange sunset wide shot",
-        "morning light on peak detail shot"
+        "cinematic drone over green valley",
+        "close up camera movement lush green leaves",
+        "wide shot epic mountain valley drone path",
+        "sun rays breaking through mountain clouds"
       ]
     }
   ],

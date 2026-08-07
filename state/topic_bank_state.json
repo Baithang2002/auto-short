@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T09:07:46Z",
+  "updated_at": "2026-08-07T10:36:29Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -138,6 +138,21 @@
       "quarantine_until": "2026-08-15T13:54:56Z"
     },
     {
+      "topic": "how beaches change with waves",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T10:36:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T10:36:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-21T10:36:29Z"
+    },
+    {
       "topic": "How Beavers Build Dams",
       "status": "quarantined",
       "success_count": 0,
@@ -196,6 +211,21 @@
       "last_failure_at": "2026-07-27T07:34:36Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T07:34:36Z"
+    },
+    {
+      "topic": "how birds build nests",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T10:35:05Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T10:35:05Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-21T10:35:05Z"
     },
     {
       "topic": "How Camels Survive the Desert",
@@ -648,6 +678,21 @@
       "quarantine_until": "2026-08-19T06:13:04Z"
     },
     {
+      "topic": "how ice melts on a lake",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-07T10:33:33Z",
+      "last_qualified_at": "2026-08-07T10:33:33Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/7f3fac94d1097197cd42.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Icebergs Break Away From Glaciers",
       "status": "quarantined",
       "success_count": 0,
@@ -1068,6 +1113,21 @@
       "quarantine_until": "2026-08-19T14:41:37Z"
     },
     {
+      "topic": "how snow falls in a forest",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T10:35:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T10:35:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-21T10:35:37Z"
+    },
+    {
       "topic": "How Solar Eclipses Happen",
       "status": "quarantined",
       "success_count": 0,
@@ -1141,6 +1201,21 @@
       "last_failure_at": "2026-08-01T06:14:58Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-15T06:14:58Z"
+    },
+    {
+      "topic": "how stars appear at night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T10:32:32Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T10:32:32Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-21T10:32:32Z"
     },
     {
       "topic": "how sunlight reflects on the ocean",
@@ -1339,18 +1414,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 5,
-      "qualification_count": 2,
-      "last_attempt_at": "2026-08-07T02:32:09Z",
-      "last_qualified_at": "2026-08-06T11:52:48Z",
+      "qualification_count": 3,
+      "last_attempt_at": "2026-08-07T10:34:35Z",
+      "last_qualified_at": "2026-08-07T10:34:35Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-07T02:32:09Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
-      "quarantine_until": "2026-08-21T02:32:09Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1744,18 +1819,18 @@
     },
     {
       "topic": "Why Antarctica Is the World's Largest Desert",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 1,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-06T11:53:41Z",
+      "last_attempt_at": "2026-08-07T10:35:55Z",
       "last_qualified_at": "2026-08-06T11:53:41Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/7e8ba87e8cde3b08395b.json",
+      "qualified_script_path": "",
       "last_success_at": "2026-07-31T06:31:40Z",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-07T10:35:55Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-21T10:35:55Z"
     },
     {
       "topic": "Why Astronauts Float in Space",

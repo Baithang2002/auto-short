@@ -1,0 +1,95 @@
+{
+  "story_complexity": "simple",
+  "category_id": "28",
+  "title": "The Secret Way Lakes Melt",
+  "description": "Discover the hidden science behind how frozen lakes melt from the inside out, forming beautiful but dangerous candle ice before shattering instantly.",
+  "instagram_caption": "Spring ice doesn't melt—it rots. 🧊 Hidden beneath the surface, warm sunlight creates vertical needles called 'candle ice.' Watch how a single gust of wind turns a frozen lake into tinkling glass. \n\n#nature #science #lake #spring #satisfying",
+  "hashtags": [
+    "#shorts",
+    "#climate",
+    "#climatescience",
+    "#environment",
+    "#lake",
+    "#spring",
+    "#satisfying"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "When spring arrives, a frozen lake doesn't actually melt from the top down. It secretly rots from the inside out.",
+      "broll": "frozen lake thawing spring",
+      "broll_queries": [
+        "frozen lake thawing spring",
+        "close up melting ice lake shore",
+        "aerial wide frozen lake spring forest",
+        "macro detail rotting ice texture"
+      ]
+    },
+    {
+      "beat_role": "discovery",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "As spring sunlight penetrates the ice, internal melting creates vertical, needle-like 'candle ice.' Though looking solid, it has zero structural strength.",
+      "broll": "candle ice formation close up",
+      "broll_queries": [
+        "candle ice formation close up",
+        "crystals of candle ice close up",
+        "wide frozen lake sunny spring day",
+        "macro needle like ice crystals"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "But the real magic happens when a strong wind pushes these millions of ice candles to collision, tinkling like glass before instantly shattering.",
+      "broll": "wind blowing candle ice shattering",
+      "broll_queries": [
+        "wind blowing candle ice shattering",
+        "ice shards crashing waves slow motion",
+        "wide windy lake ice sheets crashing",
+        "macro ice needles shattering on shore"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 7,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Within hours, the frozen sheet completely vanishes, unlocking the lake's spring biological cycle.",
+      "broll": "clear open lake water spring",
+      "broll_queries": [
+        "clear open lake water spring",
+        "rippling clear lake water sun flare",
+        "wide sunny lake green forest drone",
+        "underwater sunlight lake spring"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Nature's transitions are rarely as simple as they appear. Follow Wonders of the Nature for more like this.",
+      "broll": "scenic mountain lake sunset",
+      "broll_queries": [
+        "scenic mountain lake sunset",
+        "glistening lake water close up sunset",
+        "wide dramatic sunset over mountain lake",
+        "camera panning across quiet lake water"
+      ]
+    }
+  ],
+  "niche": "how ice melts on a lake"
+}
