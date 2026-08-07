@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T05:09:53Z",
+  "updated_at": "2026-08-07T05:27:12Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -271,6 +271,21 @@
       "last_failure_at": "2026-07-31T15:09:13Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:13Z"
+    },
+    {
+      "topic": "how clouds form over mountains",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T05:27:12Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T05:27:12Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T05:27:12Z"
     },
     {
       "topic": "How Comets Grow Glowing Tails",
@@ -1591,6 +1606,21 @@
       "last_failure_at": "2026-07-30T06:14:10Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T06:14:10Z"
+    },
+    {
+      "topic": "how waves move across the ocean",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T05:25:51Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T05:25:51Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T05:25:51Z"
     },
     {
       "topic": "How Wildfires Help Some Forests Regrow",

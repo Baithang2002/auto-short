@@ -237,3 +237,6 @@
 2026-08-07 05:08:19  topic='how sand dunes move in the wind'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 05:09:53  topic='how trees move in the wind'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 05:06:16  topic='how waves move across the ocean'  exit=1  slot='morning'  duration=230s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-07 05:25:52  topic='how waves move across the ocean'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-07 05:27:12  topic='how clouds form over mountains'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-07 05:23:28  topic='how dolphins swim in the ocean'  exit=1  slot='morning'  duration=256s  critical_failure=true  reason='critical technical failure exit=1'
