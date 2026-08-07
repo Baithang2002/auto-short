@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T05:27:12Z",
+  "updated_at": "2026-08-07T09:07:46Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -391,6 +391,21 @@
       "last_failure_at": "2026-08-05T06:14:46Z",
       "last_failure_reason": "scene coverage 3/6 (50%) is below required 5/6 (67%)",
       "quarantine_until": "2026-08-19T06:14:46Z"
+    },
+    {
+      "topic": "how dolphins swim in the ocean",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T09:07:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T09:07:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-21T09:07:46Z"
     },
     {
       "topic": "How Dolphins Use Sound to Hunt",

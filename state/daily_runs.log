@@ -240,3 +240,5 @@
 2026-08-07 05:25:52  topic='how waves move across the ocean'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 05:27:12  topic='how clouds form over mountains'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 05:23:28  topic='how dolphins swim in the ocean'  exit=1  slot='morning'  duration=256s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-07 09:07:46  topic='how dolphins swim in the ocean'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)'
+2026-08-07 09:07:01  topic='how snow falls in a forest'  exit=1  slot='manual'  duration=81s  critical_failure=true  reason='critical technical failure exit=1'
