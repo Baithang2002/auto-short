@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T10:59:12Z",
+  "updated_at": "2026-08-07T13:43:07Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -211,6 +211,21 @@
       "last_failure_at": "2026-07-27T07:34:36Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T07:34:36Z"
+    },
+    {
+      "topic": "how bees pollinate flowers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T13:43:07Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T13:43:07Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T13:43:07Z"
     },
     {
       "topic": "how birds build nests",
@@ -798,6 +813,21 @@
       "quarantine_until": "2026-08-13T06:05:44Z"
     },
     {
+      "topic": "how lightning crosses the sky",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T13:39:54Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T13:39:54Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T13:39:54Z"
+    },
+    {
       "topic": "How Mangrove Forests Protect Coastlines",
       "status": "quarantined",
       "success_count": 0,
@@ -1171,6 +1201,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "how spiders build webs",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T13:40:53Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T13:40:53Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-21T13:40:53Z"
     },
     {
       "topic": "How Spiders Spin Strong Silk",
@@ -1726,6 +1771,21 @@
       "last_failure_at": "2026-07-27T07:41:17Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T07:41:17Z"
+    },
+    {
+      "topic": "how wind moves through clouds",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-07T13:38:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-07T13:38:29Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T13:38:29Z"
     },
     {
       "topic": "how wind shapes giant rock arches",
