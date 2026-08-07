@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T10:36:29Z",
+  "updated_at": "2026-08-07T10:59:12Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1414,18 +1414,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 5,
+      "failure_count": 6,
       "qualification_count": 3,
-      "last_attempt_at": "2026-08-07T10:34:35Z",
+      "last_attempt_at": "2026-08-07T10:59:12Z",
       "last_qualified_at": "2026-08-07T10:34:35Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-07T02:32:09Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-07T10:59:12Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-21T10:59:12Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
