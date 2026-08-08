@@ -254,3 +254,7 @@
 2026-08-08 04:36:57  topic='how butterflies emerge from a chrysalis'  exit=1  slot='morning'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
 2026-08-08 04:39:45  topic='how mountains form'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-08 04:31:25  topic='how bears catch fish in rivers'  exit=0  slot='morning'  duration=876s  attempts=4
+2026-08-08 06:24:57  topic='how horses run across open fields'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-08 06:26:38  topic='how forests grow in sunlight'  exit=1  slot='manual'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-08 06:28:06  topic='how bamboo grows quickly'  exit=1  slot='manual'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-08 06:28:36  topic='how cats climb trees'  exit=1  slot='manual'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'

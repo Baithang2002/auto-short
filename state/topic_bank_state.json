@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-08T04:46:01Z",
+  "updated_at": "2026-08-08T06:28:36Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -106,6 +106,21 @@
       "last_failure_at": "2026-08-04T14:40:26Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-18T14:40:26Z"
+    },
+    {
+      "topic": "how bamboo grows quickly",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T06:28:06Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T06:28:06Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-22T06:28:06Z"
     },
     {
       "topic": "How Bats Fly in Total Darkness",
@@ -286,6 +301,21 @@
       "last_failure_at": "2026-07-27T07:37:36Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-10T07:37:36Z"
+    },
+    {
+      "topic": "how cats climb trees",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T06:28:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T06:28:36Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-22T06:28:36Z"
     },
     {
       "topic": "How Caves Form Underground",
@@ -618,6 +648,21 @@
       "quarantine_until": "2026-08-09T13:55:16Z"
     },
     {
+      "topic": "how forests grow in sunlight",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T06:26:38Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T06:26:38Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-22T06:26:38Z"
+    },
+    {
       "topic": "How Frogs Survive the Dry Season",
       "status": "quarantined",
       "success_count": 0,
@@ -676,6 +721,21 @@
       "last_failure_at": "2026-07-25T06:32:56Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-08T06:32:56Z"
+    },
+    {
+      "topic": "how horses run across open fields",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T06:24:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T06:24:57Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-22T06:24:57Z"
     },
     {
       "topic": "How Hummingbirds Hover in Midair",
