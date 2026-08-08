@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-07T14:08:07Z",
+  "updated_at": "2026-08-08T04:46:01Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -153,6 +153,21 @@
       "quarantine_until": "2026-08-21T10:36:29Z"
     },
     {
+      "topic": "how bears catch fish in rivers",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T04:46:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-08T04:46:01Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Beavers Build Dams",
       "status": "quarantined",
       "success_count": 0,
@@ -241,6 +256,21 @@
       "last_failure_at": "2026-08-07T10:35:05Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-08-21T10:35:05Z"
+    },
+    {
+      "topic": "how butterflies emerge from a chrysalis",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T04:36:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T04:36:57Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-22T04:36:57Z"
     },
     {
       "topic": "How Camels Survive the Desert",
@@ -901,6 +931,21 @@
       "last_failure_at": "2026-07-29T09:02:07Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-12T09:02:07Z"
+    },
+    {
+      "topic": "how mountains form",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T04:39:45Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T04:39:45Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-22T04:39:45Z"
     },
     {
       "topic": "How Mountains Rise From the Earth",
@@ -1651,6 +1696,21 @@
       "last_failure_at": "2026-07-30T11:33:35Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
       "quarantine_until": "2026-08-13T11:33:35Z"
+    },
+    {
+      "topic": "how thunderstorms form",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T04:31:51Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T04:31:51Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-22T04:31:51Z"
     },
     {
       "topic": "how tides move entire oceans",

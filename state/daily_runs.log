@@ -250,3 +250,7 @@
 2026-08-07 13:43:07  topic='how bees pollinate flowers'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 14:02:42  topic='how rivers move through forests'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-07 13:58:09  topic='how deer move through forests'  exit=0  slot='evening'  duration=598s  attempts=2
+2026-08-08 04:31:51  topic='how thunderstorms form'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)'
+2026-08-08 04:36:57  topic='how butterflies emerge from a chrysalis'  exit=1  slot='morning'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
+2026-08-08 04:39:45  topic='how mountains form'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-08 04:31:25  topic='how bears catch fish in rivers'  exit=0  slot='morning'  duration=876s  attempts=4
