@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-08T10:12:08Z",
+  "updated_at": "2026-08-08T13:16:57Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -679,15 +679,15 @@
     },
     {
       "topic": "how frogs live near ponds",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-08T10:11:26Z",
+      "last_attempt_at": "2026-08-08T13:16:57Z",
       "last_qualified_at": "2026-08-08T10:11:26Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/73518710029866745caf.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-08T13:16:57Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
