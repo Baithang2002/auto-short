@@ -112,7 +112,7 @@ jobs:
           YT_CLIENT_ID:        ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET:    ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN:    ${{ secrets.YT_REFRESH_TOKEN }}
-          YT_MUSIC:            "false"
+          YT_MUSIC:            "true"
           AUTO_VIDEO_DAILY_SLOT: ${{ github.event_name == 'workflow_dispatch' && 'manual' || (contains(fromJSON('["17 3 * * *", "47 3 * * *"]'), github.event.schedule) && 'morning' || 'evening') }}
           AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
