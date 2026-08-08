@@ -187,8 +187,10 @@ jobs:
               export AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED="false"
               export AUTO_VIDEO_ENFORCE_PUBLISH_QUALITY_GATE="false"
               export AUTO_VIDEO_MAX_EXPLAINER_FALLBACK_RATIO="1.0"
+              python pipeline.py "$TOPIC" --platforms youtube --no-interactive --skip-upload
+            else
+              python pipeline.py "$TOPIC" --platforms youtube --no-interactive
             fi
-            python pipeline.py "$TOPIC" --platforms youtube --no-interactive --skip-upload
           else
             python pipeline_daily.py
           fi
