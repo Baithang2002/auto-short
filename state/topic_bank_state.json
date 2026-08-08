@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-08T06:37:07Z",
+  "updated_at": "2026-08-08T10:12:08Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -678,6 +678,21 @@
       "quarantine_until": "2026-08-22T06:26:38Z"
     },
     {
+      "topic": "how frogs live near ponds",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-08T10:11:26Z",
+      "last_qualified_at": "2026-08-08T10:11:26Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/73518710029866745caf.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Frogs Survive the Dry Season",
       "status": "quarantined",
       "success_count": 0,
@@ -1081,6 +1096,21 @@
       "last_failure_at": "2026-08-02T11:09:22Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
       "quarantine_until": "2026-08-16T11:09:22Z"
+    },
+    {
+      "topic": "how penguins move across snow",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-08T10:12:08Z",
+      "last_qualified_at": "2026-08-08T10:12:08Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/f0b03cb1fcd2b48775dc.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Penguins Survive Antarctica",
@@ -1611,16 +1641,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 6,
+      "failure_count": 7,
       "qualification_count": 3,
-      "last_attempt_at": "2026-08-07T10:59:12Z",
+      "last_attempt_at": "2026-08-08T10:07:59Z",
       "last_qualified_at": "2026-08-07T10:34:35Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-07T10:59:12Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-21T10:59:12Z"
+      "last_failure_at": "2026-08-08T10:07:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-22T10:07:59Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1671,16 +1701,16 @@
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 2,
+      "failure_count": 3,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T11:50:33Z",
+      "last_attempt_at": "2026-08-08T10:06:53Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T11:50:33Z",
-      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-18T11:50:33Z"
+      "last_failure_at": "2026-08-08T10:06:53Z",
+      "last_failure_reason": "main_reveal: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-08-22T10:06:53Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -1696,6 +1726,21 @@
       "last_failure_at": "2026-07-27T12:46:31Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-10T12:46:31Z"
+    },
+    {
+      "topic": "how the northern lights appear",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T10:10:43Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-08T10:10:43Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-22T10:10:43Z"
     },
     {
       "topic": "How the Northern Lights Are Created",
@@ -2044,18 +2089,18 @@
     },
     {
       "topic": "Why Antarctica Is the World's Largest Desert",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 1,
       "failure_count": 1,
-      "qualification_count": 1,
-      "last_attempt_at": "2026-08-07T10:35:55Z",
-      "last_qualified_at": "2026-08-06T11:53:41Z",
-      "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualification_count": 2,
+      "last_attempt_at": "2026-08-08T10:09:04Z",
+      "last_qualified_at": "2026-08-08T10:09:04Z",
+      "last_coverage_ratio": 0.8,
+      "qualified_script_path": "state/qualified_scripts/7e8ba87e8cde3b08395b.json",
       "last_success_at": "2026-07-31T06:31:40Z",
       "last_failure_at": "2026-08-07T10:35:55Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-21T10:35:55Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Astronauts Float in Space",

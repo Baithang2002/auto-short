@@ -1,121 +1,94 @@
 {
+  "story_complexity": "simple",
   "category_id": "28",
-  "title": "The World Largest Desert Is Made of Ice",
-  "description": "Discover why the coldest continent on Earth is actually its driest desert. Learn how extreme temperatures lock away moisture to create a barren polar wilderness.",
-  "instagram_caption": "Antarctica is famous for its ice, but it is actually the driest desert on Earth. Follow Wonders of the Nature for more natural mysteries.",
+  "title": "The Largest Desert on Earth Is Made of Ice",
+  "description": "Discover why the coldest place on Earth is actually its largest and driest desert.",
+  "instagram_caption": "Think deserts are only hot and sandy? Think again. ❄️ Earth's largest desert is actually frozen solid—and the science behind it will blow your mind! #geography #sciencefacts #nature #wondersofnature",
   "hashtags": [
     "#shorts",
-    "#climate",
-    "#climatescience",
-    "#environment",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
     "#antarctica",
     "#desert",
-    "#earthscience",
-    "#polarwilderness",
-    "#sciencefacts",
-    "#geographyfacts",
-    "#naturelovers"
+    "#earthwonders",
+    "#naturefacts"
   ],
-  "music_mood": "mysterious",
+  "music_mood": "inspiring",
   "segments": [
     {
-      "narration": "This freezing wind looks like snow, but is actually bone dry.",
-      "broll": "wind blowing snow",
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Forget everything you know about scorching sand dunes. The largest desert on Earth is actually a frozen wasteland of solid ice.",
+      "broll": "vast antarctic ice sheet",
       "broll_queries": [
-        "snow storm blowing close up",
-        "antarctica windy landscape wide shot",
-        "ice particles blowing wind",
-        "wind blowing snow"
+        "vast antarctic ice sheet",
+        "antarctica aerial ice shelf",
+        "antarctic frozen wasteland",
+        "massive glacier drone shot"
       ]
     },
     {
-      "narration": "Deserts are defined by how much water they lose each year.",
-      "broll": "antarctica desert landscape",
+      "beat_role": "context",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Science defines a desert by its lack of moisture, not temperature. Here, the freezing air is too dry to hold the vapor needed for rain or snow.",
+      "broll": "dry snow blowing wind",
       "broll_queries": [
-        "antarctica rocky soil close up",
-        "dry valleys antarctica aerial shot",
-        "barren landscape detail",
-        "antarctica desert landscape"
+        "dry snow blowing wind",
+        "dry snow blowing wind antarctica",
+        "extreme cold dry climate ice",
+        "antarctica dry valleys wind"
       ]
     },
     {
-      "narration": "Here, freezing temperatures lock away water, keeping the air dry.",
-      "broll": "frozen glacier ice",
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Yet, this hyper-dry wilderness holds ninety percent of the world’s fresh water, locked away in colossal ice sheets built up over millions of years.",
+      "broll": "colossal ice wall glacier",
       "broll_queries": [
-        "glacier ice freeze close up",
-        "frozen ice sheet wide shot",
-        "ice crystals detail shot",
-        "frozen glacier ice"
+        "colossal ice wall glacier",
+        "massive glacier wall close-up",
+        "antarctic ice sheet wide",
+        "glacier ice texture detailed"
       ]
     },
     {
-      "narration": "Cold air cannot hold moisture, preventing clouds from forming.",
-      "broll": "clear sky glacier",
+      "beat_role": "resolution",
+      "beat_importance": 8,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "So when you look at this frozen continent, you are looking at the quietest, coldest, and most beautiful desert on Earth.",
+      "broll": "beautiful vast frozen horizon",
       "broll_queries": [
-        "clear blue sky glacier close up",
-        "antarctic sky wide shot",
-        "clouds over ice detail shot",
-        "clear sky glacier"
+        "beautiful vast frozen horizon",
+        "antarctic horizon sunset pan",
+        "frozen icy landscape wide",
+        "beautiful antarctica desert scenic"
       ]
     },
     {
-      "narration": "Without clouds, some areas have seen no rain for millions of years.",
-      "broll": "mcmurdo dry valleys",
+      "beat_role": "conclusion_cta",
+      "beat_importance": 6,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Subscribe to Wonders of the Nature for more mind-bending geographic revelations.",
+      "broll": "epic antarctic peak",
       "broll_queries": [
-        "dry valley stones close up",
-        "barren mountain landscape wide shot",
-        "dry cracked earth detail",
-        "mcmurdo dry valleys"
-      ]
-    },
-    {
-      "narration": "Fierce winds sweep the valleys, evaporating any tiny trace of moisture.",
-      "broll": "wind blowing rocks",
-      "broll_queries": [
-        "wind blowing dirt close up",
-        "dust blowing over landscape wide shot",
-        "wind sweep textures detail",
-        "wind blowing rocks"
-      ]
-    },
-    {
-      "narration": "The soil here is so dry that it resembles Mars.",
-      "broll": "red rocky soil",
-      "broll_queries": [
-        "dry red soil close up",
-        "barren rocky ground wide shot",
-        "red stones detail",
-        "red rocky soil"
-      ]
-    },
-    {
-      "narration": "This makes this polar wilderness the largest desert on Earth.",
-      "broll": "antarctica vast ice",
-      "broll_queries": [
-        "ice sheet edge close up",
-        "polar wilderness horizon wide shot",
-        "ice texture detail",
-        "antarctica vast ice"
-      ]
-    },
-    {
-      "narration": "It is a silent place defined by ice instead of sand.",
-      "broll": "ice dunes wind",
-      "broll_queries": [
-        "wind moving over ice close up",
-        "frozen landscape quiet wide shot",
-        "ice ripples detail",
-        "ice dunes wind"
-      ]
-    },
-    {
-      "narration": "Follow Wonders of the Nature to explore more secrets of our world.",
-      "broll": "antarctica sunset horizon",
-      "broll_queries": [
-        "sunset over ice close up",
-        "polar sunset wide shot",
-        "golden light on ice detail",
-        "antarctica sunset horizon"
+        "epic antarctic peak",
+        "antarctica mountain peak sunset",
+        "epic snowy mountain wide",
+        "majestic icy peak detail"
       ]
     }
   ],

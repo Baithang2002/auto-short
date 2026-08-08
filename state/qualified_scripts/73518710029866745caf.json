@@ -1,0 +1,79 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "The Frog's High-Stakes Shoreline",
+  "description": "A survival story of a frog navigating the dangers of a pond's edge.",
+  "instagram_caption": "Life at the water's edge is a constant game of survival. Watch how this tiny frog dodges a predator in a split-second escape. 🐸✨ #FrogLife #NatureDocumentary #WildlifeSurvival #PondLife",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#frog",
+    "#pond"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "For a tiny frog, resting on the exposed edge of a pond is a high-stakes gamble. To stay moist enough to breathe, it must risk the open bank, scanning land and sky for sudden danger.",
+      "broll": "Frog sitting on pond bank",
+      "broll_queries": [
+        "Frog sitting on pond bank",
+        "macro frog on mud edge",
+        "wide shot pond shoreline",
+        "close up frog breathing"
+      ]
+    },
+    {
+      "beat_role": "conflict",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Suddenly, the shadow of a hunting heron sweeps across the bank, forcing the frog into a split-second choice: freeze, or flee.",
+      "broll": "Heron shadow over pond",
+      "broll_queries": [
+        "Heron shadow over pond",
+        "heron shadow over water",
+        "bird silhouette flying over pond",
+        "heron wings in flight"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "With an explosive leap, the frog plunges into the murky, protective depths—safe beneath the surface where its specialized skin breathes in the cool water until danger passes.",
+      "broll": "Frog jumping into water",
+      "broll_queries": [
+        "Frog jumping into water",
+        "frog jumping into water",
+        "underwater murky pond life",
+        "frog swimming underwater"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 6,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Next time you're by a pond, watch the edge quietly to spot these hidden survivors. Follow Wonders of the Nature for more.",
+      "broll": "Person observing a pond",
+      "broll_queries": [
+        "Person observing a pond",
+        "person walking near pond",
+        "scenic pond landscape",
+        "water ripples in pond"
+      ]
+    }
+  ],
+  "niche": "how frogs live near ponds"
+}
