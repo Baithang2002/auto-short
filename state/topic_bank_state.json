@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-08T06:28:36Z",
+  "updated_at": "2026-08-08T06:37:07Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -316,6 +316,21 @@
       "last_failure_at": "2026-08-08T06:28:36Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
       "quarantine_until": "2026-08-22T06:28:36Z"
+    },
+    {
+      "topic": "how caves form in rock",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-08T06:37:07Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-08T06:37:07Z",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Caves Form Underground",

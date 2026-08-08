@@ -258,3 +258,4 @@
 2026-08-08 06:26:38  topic='how forests grow in sunlight'  exit=1  slot='manual'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-08 06:28:06  topic='how bamboo grows quickly'  exit=1  slot='manual'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-08 06:28:36  topic='how cats climb trees'  exit=1  slot='manual'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-08 06:31:20  topic='how caves form in rock'  exit=0  slot='manual'  duration=347s  attempts=1
