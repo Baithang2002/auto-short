@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-08T13:16:57Z",
+  "updated_at": "2026-08-09T04:52:16Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -528,6 +528,21 @@
       "quarantine_until": "2026-08-19T06:14:46Z"
     },
     {
+      "topic": "how dogs swim in water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T04:51:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T04:51:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-23T04:51:01Z"
+    },
+    {
       "topic": "how dolphins swim in the ocean",
       "status": "quarantined",
       "success_count": 0,
@@ -603,6 +618,21 @@
       "quarantine_until": "2026-08-13T06:08:10Z"
     },
     {
+      "topic": "how elephants walk through grasslands",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T04:51:15Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T04:51:15Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-23T04:51:15Z"
+    },
+    {
       "topic": "How fireflies make cold light to signal at night",
       "status": "quarantined",
       "success_count": 0,
@@ -616,6 +646,21 @@
       "last_failure_at": "2026-07-31T11:47:26Z",
       "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
       "quarantine_until": "2026-08-14T11:47:26Z"
+    },
+    {
+      "topic": "how flowers open in the morning",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T04:51:45Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T04:51:45Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-23T04:51:45Z"
     },
     {
       "topic": "How Fog Forms Near the Ground",
@@ -721,6 +766,21 @@
       "last_failure_at": "2026-08-04T11:51:44Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
       "quarantine_until": "2026-08-18T11:51:44Z"
+    },
+    {
+      "topic": "how geysers send water into the air",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T04:52:16Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T04:52:16Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-23T04:52:16Z"
     },
     {
       "topic": "How Giraffes Drink With Long Necks",
