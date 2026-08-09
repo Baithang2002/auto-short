@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-09T13:22:05Z",
+  "updated_at": "2026-08-09T13:49:33Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -648,6 +648,21 @@
       "quarantine_until": "2026-08-14T11:47:26Z"
     },
     {
+      "topic": "how fish swim in clear water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:49:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:49:33Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:49:33Z"
+    },
+    {
       "topic": "how flowers open in the morning",
       "status": "quarantined",
       "success_count": 0,
@@ -676,6 +691,21 @@
       "last_failure_at": "2026-08-03T15:36:57Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-17T15:36:57Z"
+    },
+    {
+      "topic": "how fog moves through a valley",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:47:53Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:47:53Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:47:53Z"
     },
     {
       "topic": "How Forests Clean the Air",
@@ -1066,6 +1096,21 @@
       "last_failure_at": "2026-08-01T13:54:49Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-15T13:54:49Z"
+    },
+    {
+      "topic": "how mangrove trees grow near water",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:36:24Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:36:24Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-23T13:36:24Z"
     },
     {
       "topic": "How Mars Got Its Red Color",
@@ -1576,6 +1621,21 @@
       "last_failure_at": "2026-08-07T10:32:32Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
       "quarantine_until": "2026-08-21T10:32:32Z"
+    },
+    {
+      "topic": "how streams flow over stones",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:43:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:43:37Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:43:37Z"
     },
     {
       "topic": "how sunlight reflects on the ocean",
