@@ -260,3 +260,4 @@
 2026-08-08 06:28:36  topic='how cats climb trees'  exit=1  slot='manual'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-08 06:31:20  topic='how caves form in rock'  exit=0  slot='manual'  duration=347s  attempts=1
 2026-08-08 13:10:19  topic='how frogs live near ponds'  exit=0  slot='evening'  duration=398s  attempts=1
+2026-08-09 04:40:09  topic='how dogs swim in water'  exit=1  slot='morning'  duration=22s  critical_failure=true  reason='critical technical failure exit=1'
