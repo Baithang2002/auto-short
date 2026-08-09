@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-09T05:57:00Z",
+  "updated_at": "2026-08-09T10:14:14Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1203,6 +1203,21 @@
       "quarantine_until": ""
     },
     {
+      "topic": "how rabbits move through grass",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-09T10:14:14Z",
+      "last_qualified_at": "2026-08-09T10:14:14Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/bda34029ab49b89a6968.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "how rain fills a lake",
       "status": "quarantined",
       "success_count": 0,
@@ -1746,16 +1761,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 7,
+      "failure_count": 8,
       "qualification_count": 3,
-      "last_attempt_at": "2026-08-08T10:07:59Z",
+      "last_attempt_at": "2026-08-09T10:11:24Z",
       "last_qualified_at": "2026-08-07T10:34:35Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-08T10:07:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-22T10:07:59Z"
+      "last_failure_at": "2026-08-09T10:11:24Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-23T10:11:24Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1998,6 +2013,21 @@
       "quarantine_until": "2026-08-21T05:09:53Z"
     },
     {
+      "topic": "how turtles move along a beach",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T10:13:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T10:13:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-23T10:13:03Z"
+    },
+    {
       "topic": "How Victoria Falls Creates Mist",
       "status": "quarantined",
       "success_count": 0,
@@ -2194,18 +2224,18 @@
     },
     {
       "topic": "Why Antarctica Is the World's Largest Desert",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 1,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 2,
-      "last_attempt_at": "2026-08-08T10:09:04Z",
+      "last_attempt_at": "2026-08-09T10:12:18Z",
       "last_qualified_at": "2026-08-08T10:09:04Z",
       "last_coverage_ratio": 0.8,
-      "qualified_script_path": "state/qualified_scripts/7e8ba87e8cde3b08395b.json",
+      "qualified_script_path": "",
       "last_success_at": "2026-07-31T06:31:40Z",
-      "last_failure_at": "2026-08-07T10:35:55Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-09T10:12:18Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-23T10:12:18Z"
     },
     {
       "topic": "Why Astronauts Float in Space",

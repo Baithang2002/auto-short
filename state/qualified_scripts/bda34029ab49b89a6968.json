@@ -1,0 +1,96 @@
+{
+  "story_complexity": "complex",
+  "category_id": "27",
+  "title": "Rabbits use a secret skeletal superpower to glide through dense grass",
+  "description": "Discover the incredible biomechanics of how rabbits navigate dense meadow grass at high speeds to escape predators.",
+  "instagram_caption": "Ever wonder how a rabbit moves so fast through thick grass? 🐇🌾 It’s not just speed—it’s pure physics and incredible skeletal design! Watch to see how they vanish in seconds. #wildlife #naturelovers #mechanics #animals",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#naturewonders",
+    "#rabbitlife",
+    "#wildlifephysics",
+    "#animaladaptations"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "A rabbit hitting a wall of thick grass doesn't slow down; it bursts through the dense tangle at nearly forty miles an hour.",
+      "broll": "rabbit sprinting through tall grass",
+      "broll_queries": [
+        "rabbit sprinting through tall grass",
+        "close up rabbit running fast grass",
+        "wild rabbit running meadow wide",
+        "rabbit feet sprinting grass close up"
+      ]
+    },
+    {
+      "beat_role": "escalation",
+      "beat_importance": 8,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "With a predator close behind, running straight is fatal, requiring sudden, blind direction changes under the canopy.",
+      "broll": "predator chasing through meadow",
+      "broll_queries": [
+        "predator chasing through meadow",
+        "fox hunting in tall grass",
+        "predator chasing through meadow wide",
+        "shaking tall grass movement close up"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Its powerful hind legs act like coiled springs, launching it forward without needing to see where it will land.",
+      "broll": "rabbit hind legs jumping",
+      "broll_queries": [
+        "rabbit hind legs jumping",
+        "rabbit hind legs jumping close up",
+        "rabbit leaping through meadow wide",
+        "slow motion rabbit jump detail"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This seamless zig-zag glide parts the grass like water, leaving a confused predator completely lost in the maze.",
+      "broll": "rabbit disappearing into deep grass",
+      "broll_queries": [
+        "rabbit disappearing into deep grass",
+        "rabbit disappearing into grass close up",
+        "confused predator looking around meadow",
+        "hidden tunnel under tall grass detail"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Look closely for these secret meadow tunnels next time you walk past, and follow Wonders of the Nature for more.",
+      "broll": "person looking at meadow path",
+      "broll_queries": [
+        "person looking at meadow path",
+        "hand parting tall grass close up",
+        "scenic green meadow pathway wide",
+        "dew drops on meadow grass detail"
+      ]
+    }
+  ],
+  "niche": "how rabbits move through grass"
+}
