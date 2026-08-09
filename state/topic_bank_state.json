@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-09T10:14:14Z",
+  "updated_at": "2026-08-09T13:22:05Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -798,6 +798,21 @@
       "quarantine_until": "2026-08-14T15:09:23Z"
     },
     {
+      "topic": "how glaciers move across valleys",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:20:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:20:57Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-23T13:20:57Z"
+    },
+    {
       "topic": "how glaciers shape mountains and valleys",
       "status": "quarantined",
       "success_count": 0,
@@ -1113,6 +1128,21 @@
       "quarantine_until": "2026-08-12T09:01:32Z"
     },
     {
+      "topic": "how mushrooms grow in forests",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:22:05Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:22:05Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:22:05Z"
+    },
+    {
       "topic": "How Niagara Falls Keeps Moving Backward",
       "status": "proven",
       "success_count": 1,
@@ -1204,18 +1234,18 @@
     },
     {
       "topic": "how rabbits move through grass",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-09T10:14:14Z",
+      "last_attempt_at": "2026-08-09T13:15:17Z",
       "last_qualified_at": "2026-08-09T10:14:14Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/bda34029ab49b89a6968.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-09T13:15:17Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:15:17Z"
     },
     {
       "topic": "how rain fills a lake",
@@ -1816,6 +1846,21 @@
       "last_failure_at": "2026-07-30T11:33:22Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-13T11:33:22Z"
+    },
+    {
+      "topic": "how the moon changes shape",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-09T13:16:31Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-09T13:16:31Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-23T13:16:31Z"
     },
     {
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
