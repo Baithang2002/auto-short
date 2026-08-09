@@ -265,3 +265,6 @@
 2026-08-09 04:51:15  topic='how elephants walk through grasslands'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
 2026-08-09 04:51:45  topic='how flowers open in the morning'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)'
 2026-08-09 04:52:16  topic='how geysers send water into the air'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-09 05:50:03  topic='how owls fly at night'  exit=1  slot='manual'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-09 05:51:27  topic='how seeds grow into plants'  exit=1  slot='manual'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-09 05:48:21  topic='how sunsets turn the sky orange'  exit=0  slot='manual'  duration=520s  attempts=3
