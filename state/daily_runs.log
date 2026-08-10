@@ -287,3 +287,6 @@
 2026-08-10 13:50:01  topic='Why Hurricanes Grow Over Warm Oceans'  exit=1  slot='evening'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
 2026-08-10 13:54:25  topic='How Roman Aqueducts Changed Civilization'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-10 13:41:15  topic='How The Nile River Shaped Ancient Egypt'  exit=1  slot='evening'  duration=806s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-10 14:07:16  topic='How The Nile River Shaped Ancient Egypt'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-10 14:07:49  topic='How Mars Got Its Red Color'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)'
+2026-08-10 14:06:33  topic='Why Whales Sing Across the Ocean'  exit=1  slot='evening'  duration=106s  critical_failure=true  reason='critical technical failure exit=1'
