@@ -283,3 +283,7 @@
 2026-08-10 05:17:33  topic='how hummingbirds feed from flowers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-10 05:18:44  topic='how moss grows on rocks'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-10 05:19:09  topic='how wolves move through snow'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)'
+2026-08-10 13:43:05  topic='How Bees Make Honey'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-10 13:50:01  topic='Why Hurricanes Grow Over Warm Oceans'  exit=1  slot='evening'  attempt=2/4  quality_deferred='post-render publish quality gate deferred topic'
+2026-08-10 13:54:25  topic='How Roman Aqueducts Changed Civilization'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-10 13:41:15  topic='How The Nile River Shaped Ancient Egypt'  exit=1  slot='evening'  duration=806s  critical_failure=true  reason='critical technical failure exit=1'

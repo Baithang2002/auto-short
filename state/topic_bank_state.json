@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-10T10:52:13Z",
+  "updated_at": "2026-08-10T13:54:25Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -229,18 +229,18 @@
     },
     {
       "topic": "How Bees Make Honey",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-10T10:51:21Z",
+      "last_attempt_at": "2026-08-10T13:43:05Z",
       "last_qualified_at": "2026-08-10T10:51:21Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/4e5ac3bbc924b2da5426.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T07:34:36Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-10T13:43:05Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T13:43:05Z"
     },
     {
       "topic": "how bees pollinate flowers",
@@ -1401,16 +1401,16 @@
       "topic": "How Roman Aqueducts Changed Civilization",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T12:46:58Z",
+      "last_attempt_at": "2026-08-10T13:54:25Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T12:46:58Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
-      "quarantine_until": "2026-08-10T12:46:58Z"
+      "last_failure_at": "2026-08-10T13:54:25Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T13:54:25Z"
     },
     {
       "topic": "How Sand Dunes Move Across Deserts",
@@ -2704,18 +2704,18 @@
     },
     {
       "topic": "Why Hurricanes Grow Over Warm Oceans",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-10T10:52:13Z",
+      "last_attempt_at": "2026-08-10T13:50:01Z",
       "last_qualified_at": "2026-08-10T10:52:13Z",
       "last_coverage_ratio": 0.8,
-      "qualified_script_path": "state/qualified_scripts/ab11933c61f445973ea7.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T08:19:18Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-10T13:50:01Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-08-24T13:50:01Z"
     },
     {
       "topic": "why icebergs look blue",
