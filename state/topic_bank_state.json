@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-09T13:49:33Z",
+  "updated_at": "2026-08-10T04:59:48Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -451,6 +451,21 @@
       "last_failure_at": "2026-08-07T02:34:15Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
       "quarantine_until": "2026-08-21T02:34:15Z"
+    },
+    {
+      "topic": "how crabs move along the beach",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-10T04:59:48Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-10T04:59:48Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T04:59:48Z"
     },
     {
       "topic": "How Craters Form on the Moon",
@@ -2733,19 +2748,19 @@
       "quarantine_until": ""
     },
     {
-      "topic": "why lightning creates glass in sand",
+      "topic": "Why Lightning Creates Glass in Sand",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-26T13:55:51Z",
+      "last_attempt_at": "2026-08-10T04:58:28Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-26T13:55:51Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-09T13:55:51Z"
+      "last_failure_at": "2026-08-10T04:58:28Z",
+      "last_failure_reason": "scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-24T04:58:28Z"
     },
     {
       "topic": "Why Lions Roar at Night",
