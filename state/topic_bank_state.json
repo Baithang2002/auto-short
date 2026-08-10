@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-10T04:59:48Z",
+  "updated_at": "2026-08-10T05:19:09Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -888,6 +888,21 @@
       "quarantine_until": "2026-08-22T06:24:57Z"
     },
     {
+      "topic": "how hummingbirds feed from flowers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-10T05:17:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-10T05:17:33Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T05:17:33Z"
+    },
+    {
       "topic": "How Hummingbirds Hover in Midair",
       "status": "quarantined",
       "success_count": 0,
@@ -1156,6 +1171,21 @@
       "last_failure_at": "2026-07-29T09:02:07Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-12T09:02:07Z"
+    },
+    {
+      "topic": "how moss grows on rocks",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-10T05:18:44Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-10T05:18:44Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T05:18:44Z"
     },
     {
       "topic": "how mountains form",
@@ -2193,6 +2223,21 @@
       "quarantine_until": "2026-08-15T13:55:42Z"
     },
     {
+      "topic": "how waterfalls flow over rocks",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-10T05:12:33Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-10T05:12:33Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-24T05:12:33Z"
+    },
+    {
       "topic": "How Waterfalls Shape Rock",
       "status": "quarantined",
       "success_count": 0,
@@ -2296,6 +2341,21 @@
       "last_failure_at": "2026-08-02T10:43:15Z",
       "last_failure_reason": "post-render publish quality gate deferred topic",
       "quarantine_until": "2026-08-16T10:43:15Z"
+    },
+    {
+      "topic": "how wolves move through snow",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-10T05:19:09Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-10T05:19:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-24T05:19:09Z"
     },
     {
       "topic": "how woodpeckers avoid brain damage",

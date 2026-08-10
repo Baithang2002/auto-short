@@ -279,3 +279,7 @@
 2026-08-10 04:58:28  topic='Why Lightning Creates Glass in Sand'  exit=1  slot='morning'  attempt=1/4  quality_deferred='scene coverage 4/6 (67%) is below required 5/6 (67%)'
 2026-08-10 04:59:48  topic='how crabs move along the beach'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-10 04:57:47  topic='how waterfalls flow over rocks'  exit=1  slot='morning'  duration=140s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-10 05:12:33  topic='how waterfalls flow over rocks'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-10 05:17:33  topic='how hummingbirds feed from flowers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-10 05:18:44  topic='how moss grows on rocks'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-10 05:19:09  topic='how wolves move through snow'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)'
