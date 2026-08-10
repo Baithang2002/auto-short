@@ -1,0 +1,79 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "The Alchemy of Honey",
+  "description": "Discover the incredible chemical process bees use to transform nectar into the golden honey that lasts for centuries.",
+  "instagram_caption": "Ever wonder how nectar turns into liquid gold? It’s not just storage—it’s high-stakes chemistry. 🐝🍯 #honeybees #naturefacts #beekeeping #wondersofnature",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#bees",
+    "#honey"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "If a bee simply stored nectar, it would rot in days. To create honey, they perform a high-stakes chemical alchemy to keep the colony fed.",
+      "broll": "macro shot honey bee",
+      "broll_queries": [
+        "macro shot honey bee",
+        "macro bee on flower",
+        "honeycomb close up",
+        "bee flying slow motion"
+      ]
+    },
+    {
+      "beat_role": "context",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "A foraging bee collects nectar in a specialized stomach, then passes it to house bees who begin the refinement process inside the dark hive.",
+      "broll": "bees inside honey hive",
+      "broll_queries": [
+        "bees inside honey hive",
+        "bee drinking nectar",
+        "bees working in hive",
+        "nectar droplet macro"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Bees mix the nectar with enzymes, breaking down sugars before spreading the liquid thin and fanning it with their wings to evaporate all excess water.",
+      "broll": "bees fanning wings hive",
+      "broll_queries": [
+        "bees fanning wings hive",
+        "bees flapping wings",
+        "honeycomb close up",
+        "liquid nectar drying"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Finally, they seal the honey with airtight wax, keeping it preserved for years. Nature is full of marvels like this—subscribe to Wonders of Nature for more.",
+      "broll": "sealed honeycomb wax cap",
+      "broll_queries": [
+        "sealed honeycomb wax cap",
+        "honeycomb wax seal",
+        "golden honey pouring",
+        "bees on honeycomb"
+      ]
+    }
+  ],
+  "niche": "How Bees Make Honey"
+}

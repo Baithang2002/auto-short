@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-10T05:19:09Z",
+  "updated_at": "2026-08-10T10:52:13Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -229,18 +229,18 @@
     },
     {
       "topic": "How Bees Make Honey",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T07:34:36Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-10T10:51:21Z",
+      "last_qualified_at": "2026-08-10T10:51:21Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/4e5ac3bbc924b2da5426.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-27T07:34:36Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-10T07:34:36Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "how bees pollinate flowers",
@@ -1521,16 +1521,16 @@
       "topic": "How Sharks Hunt in the Ocean",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T09:09:51Z",
+      "last_attempt_at": "2026-08-10T10:49:47Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T09:09:51Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-10T09:09:51Z"
+      "last_failure_at": "2026-08-10T10:49:47Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-24T10:49:47Z"
     },
     {
       "topic": "how shipping containers changed world trade",
@@ -1566,16 +1566,16 @@
       "topic": "How Solar Eclipses Happen",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T09:09:10Z",
+      "last_attempt_at": "2026-08-10T10:47:27Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T09:09:10Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-10T09:09:10Z"
+      "last_failure_at": "2026-08-10T10:47:27Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-24T10:47:27Z"
     },
     {
       "topic": "how solar eclipses turn day into night",
@@ -1761,16 +1761,16 @@
       "topic": "How The Black Forest Got Its Name",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T09:10:42Z",
+      "last_attempt_at": "2026-08-10T10:50:45Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T09:10:42Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-10T09:10:42Z"
+      "last_failure_at": "2026-08-10T10:50:45Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-24T10:50:45Z"
     },
     {
       "topic": "How The Congo Rainforest Stores Carbon",
@@ -1806,16 +1806,16 @@
       "topic": "How The Galapagos Shaped Evolution",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T09:09:29Z",
+      "last_attempt_at": "2026-08-10T10:48:46Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T09:09:29Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
-      "quarantine_until": "2026-08-10T09:09:29Z"
+      "last_failure_at": "2026-08-10T10:48:46Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-24T10:48:46Z"
     },
     {
       "topic": "How The Grand Canyon Was Carved",
@@ -2704,18 +2704,18 @@
     },
     {
       "topic": "Why Hurricanes Grow Over Warm Oceans",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T08:19:18Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-10T10:52:13Z",
+      "last_qualified_at": "2026-08-10T10:52:13Z",
+      "last_coverage_ratio": 0.8,
+      "qualified_script_path": "state/qualified_scripts/ab11933c61f445973ea7.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-27T08:19:18Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-10T08:19:18Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "why icebergs look blue",
