@@ -293,3 +293,4 @@
 2026-08-11 04:48:26  topic='Why Whales Sing Across the Ocean'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-11 04:48:54  topic='How Beavers Build Dams'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-11 04:43:13  topic='Why Butterflies Have Colorful Wings'  exit=1  slot='morning'  duration=358s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-11 04:54:16  topic='Why Butterflies Have Colorful Wings'  exit=1  slot='morning'  duration=14s  critical_failure=true  reason='critical technical failure exit=1'
