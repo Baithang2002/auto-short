@@ -294,3 +294,7 @@
 2026-08-11 04:48:54  topic='How Beavers Build Dams'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-11 04:43:13  topic='Why Butterflies Have Colorful Wings'  exit=1  slot='morning'  duration=358s  critical_failure=true  reason='critical technical failure exit=1'
 2026-08-11 04:54:16  topic='Why Butterflies Have Colorful Wings'  exit=1  slot='morning'  duration=14s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-11 13:45:36  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-11 13:48:22  topic='How Camels Survive the Desert'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-11 13:50:02  topic='Why Rainforests Create Their Own Rain'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-11 13:40:30  topic='Why Butterflies Have Colorful Wings'  exit=0  slot='evening'  duration=1145s  attempts=4

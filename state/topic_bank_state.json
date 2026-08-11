@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-11T10:35:30Z",
+  "updated_at": "2026-08-11T13:59:34Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -289,18 +289,18 @@
     },
     {
       "topic": "How Camels Survive the Desert",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-11T10:35:30Z",
+      "last_attempt_at": "2026-08-11T13:48:22Z",
       "last_qualified_at": "2026-08-11T10:35:30Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/e3c3e8de466701438d3d.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T07:37:36Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-11T13:48:22Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-25T13:48:22Z"
     },
     {
       "topic": "how cats climb trees",
@@ -1894,18 +1894,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 8,
+      "failure_count": 9,
       "qualification_count": 4,
-      "last_attempt_at": "2026-08-11T10:34:29Z",
+      "last_attempt_at": "2026-08-11T13:45:36Z",
       "last_qualified_at": "2026-08-11T10:34:29Z",
       "last_coverage_ratio": 0.8,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-09T10:11:24Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-11T13:45:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-25T13:45:36Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -2449,18 +2449,18 @@
     },
     {
       "topic": "Why Butterflies Have Colorful Wings",
-      "status": "quarantined",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 1,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T08:18:20Z",
+      "last_attempt_at": "2026-08-11T13:59:34Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
-      "last_success_at": "",
+      "last_success_at": "2026-08-11T13:59:34Z",
       "last_failure_at": "2026-07-27T08:18:20Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-10T08:18:20Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Chameleons Change Color",
@@ -3036,16 +3036,16 @@
       "topic": "Why Rainforests Create Their Own Rain",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T07:37:09Z",
+      "last_attempt_at": "2026-08-11T13:50:02Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T07:37:09Z",
+      "last_failure_at": "2026-08-11T13:50:02Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-10T07:37:09Z"
+      "quarantine_until": "2026-08-25T13:50:02Z"
     },
     {
       "topic": "Why Rivers Bend Across the Land",
