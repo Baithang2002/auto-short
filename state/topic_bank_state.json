@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-11T04:48:54Z",
+  "updated_at": "2026-08-11T10:35:30Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -289,18 +289,18 @@
     },
     {
       "topic": "How Camels Survive the Desert",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T07:37:36Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-11T10:35:30Z",
+      "last_qualified_at": "2026-08-11T10:35:30Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/e3c3e8de466701438d3d.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-27T07:37:36Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-10T07:37:36Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "how cats climb trees",
@@ -1894,18 +1894,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 8,
-      "qualification_count": 3,
-      "last_attempt_at": "2026-08-09T10:11:24Z",
-      "last_qualified_at": "2026-08-07T10:34:35Z",
-      "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualification_count": 4,
+      "last_attempt_at": "2026-08-11T10:34:29Z",
+      "last_qualified_at": "2026-08-11T10:34:29Z",
+      "last_coverage_ratio": 0.8,
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-09T10:11:24Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-23T10:11:24Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",

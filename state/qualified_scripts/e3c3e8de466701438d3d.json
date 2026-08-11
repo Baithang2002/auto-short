@@ -1,0 +1,121 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "Camels Are Built to Survive Earths Deadliest Deserts",
+  "description": "Discover the incredible biological design that allows camels to thrive in the world's most unforgiving environments. From specialized fat-storing humps to uniquely shaped blood cells, their survival mechanisms are absolute masterpieces of natural engineering.",
+  "instagram_caption": "The desert is a lethal wasteland for almost any mammal, but camels are built differently. Follow us to discover more incredible survival secrets of the wild.",
+  "hashtags": [
+    "#shorts",
+    "#engineering",
+    "#architecture",
+    "#infrastructure",
+    "#camels",
+    "#desert",
+    "#survival",
+    "#animalfacts",
+    "#documentary",
+    "#adaptation",
+    "#sciencefacts",
+    "#naturewonders"
+  ],
+  "music_mood": "dramatic",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "The blistering desert sun can bake a human to death in hours, yet one creature walks through this absolute hell completely unfazed.",
+      "broll": "wind blowing sand across empty desert dunes",
+      "broll_queries": [
+        "wind blowing sand across empty desert dunes",
+        "wind blowing sand across dunes close up",
+        "barren desert landscape wide shot",
+        "cracked earth detail shot"
+      ]
+    },
+    {
+      "beat_role": "context",
+      "merged_from": [
+        "setup"
+      ],
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Forget the myth about humps holding water; they actually store concentrated fat, which prevents heat from trapping around the camel's body.",
+      "broll": "camel hump walking across desert",
+      "broll_queries": [
+        "camel hump walking across desert",
+        "camel hump bouncing close up",
+        "camel walking through desert wide shot",
+        "camel hump fur detail shot"
+      ]
+    },
+    {
+      "beat_role": "discovery",
+      "merged_from": [
+        "escalation"
+      ],
+      "beat_importance": 9,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "To preserve every drop of moisture, specialized nasal passages recycle their exhaled breath, allowing them to lose forty percent of their body weight to dehydration.",
+      "broll": "camel nostrils breathing in hot air",
+      "broll_queries": [
+        "camel nostrils breathing in hot air",
+        "camel nose breathing close up",
+        "camel head profile desert wide shot",
+        "camel muzzle detail shot"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Under this extreme stress, their unique oval-shaped red blood cells keep flowing smoothly to prevent a fatal cardiovascular collapse.",
+      "broll": "camel walking in harsh sandstorm",
+      "broll_queries": [
+        "camel walking in harsh sandstorm",
+        "camel walking through sandstorm close up",
+        "sandstorm sweeping desert dunes wide shot",
+        "camel eye protecting from dust detail shot"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 9,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "When they finally locate a water source, they can drink thirty gallons in just ten minutes to fully recover.",
+      "broll": "camel drinking water at a pool",
+      "broll_queries": [
+        "camel drinking water at a pool",
+        "camel drinking water close up",
+        "camel at desert oasis wide shot",
+        "camel mouth drinking detail shot"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 6,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Follow Wonders of the Nature for more like this.",
+      "broll": "camel looking towards camera at sunset",
+      "broll_queries": [
+        "camel looking towards camera at sunset",
+        "camel looking at camera close up",
+        "camel standing on dune wide shot",
+        "camel eyelashes detail shot"
+      ]
+    }
+  ],
+  "niche": "How Camels Survive the Desert"
+}
