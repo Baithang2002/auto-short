@@ -290,3 +290,6 @@
 2026-08-10 14:07:16  topic='How The Nile River Shaped Ancient Egypt'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-10 14:07:49  topic='How Mars Got Its Red Color'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)'
 2026-08-10 14:06:33  topic='Why Whales Sing Across the Ocean'  exit=1  slot='evening'  duration=106s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-11 04:48:26  topic='Why Whales Sing Across the Ocean'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-11 04:48:54  topic='How Beavers Build Dams'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-11 04:43:13  topic='Why Butterflies Have Colorful Wings'  exit=1  slot='morning'  duration=358s  critical_failure=true  reason='critical technical failure exit=1'

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-10T14:07:49Z",
+  "updated_at": "2026-08-11T04:48:54Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -186,16 +186,16 @@
       "topic": "How Beavers Build Dams",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T12:46:17Z",
+      "last_attempt_at": "2026-08-11T04:48:54Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T12:46:17Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-10T12:46:17Z"
+      "last_failure_at": "2026-08-11T04:48:54Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-25T04:48:54Z"
     },
     {
       "topic": "How beavers build dams that reshape a stream",
@@ -3606,16 +3606,16 @@
       "topic": "Why Whales Sing Across the Ocean",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T12:45:59Z",
+      "last_attempt_at": "2026-08-11T04:48:26Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T12:45:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-10T12:45:59Z"
+      "last_failure_at": "2026-08-11T04:48:26Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-25T04:48:26Z"
     },
     {
       "topic": "Why Wolves Hunt in Packs",
