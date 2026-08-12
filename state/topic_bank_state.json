@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-11T13:59:34Z",
+  "updated_at": "2026-08-12T05:14:23Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1101,16 +1101,16 @@
       "topic": "How Mangrove Forests Protect Coastlines",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T07:39:38Z",
+      "last_attempt_at": "2026-08-12T05:12:42Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T07:39:38Z",
+      "last_failure_at": "2026-08-12T05:12:42Z",
       "last_failure_reason": "visual fallback quality gate deferred topic",
-      "quarantine_until": "2026-08-10T07:39:38Z"
+      "quarantine_until": "2026-08-26T05:12:42Z"
     },
     {
       "topic": "how mangrove forests protect coastlines from storms",
@@ -1416,16 +1416,16 @@
       "topic": "How Sand Dunes Move Across Deserts",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T08:18:01Z",
+      "last_attempt_at": "2026-08-12T05:14:23Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T08:18:01Z",
+      "last_failure_at": "2026-08-12T05:14:23Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-10T08:18:01Z"
+      "quarantine_until": "2026-08-26T05:14:23Z"
     },
     {
       "topic": "how sand dunes move in the wind",
@@ -2271,16 +2271,16 @@
       "topic": "How Wildfires Help Some Forests Regrow",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T07:41:17Z",
+      "last_attempt_at": "2026-08-12T05:11:16Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T07:41:17Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-10T07:41:17Z"
+      "last_failure_at": "2026-08-12T05:11:16Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-26T05:11:16Z"
     },
     {
       "topic": "how wind moves through clouds",
@@ -2646,16 +2646,16 @@
       "topic": "Why Glaciers Carve Valleys",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-27T08:19:46Z",
+      "last_attempt_at": "2026-08-12T05:09:49Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-27T08:19:46Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-10T08:19:46Z"
+      "last_failure_at": "2026-08-12T05:09:49Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-26T05:09:49Z"
     },
     {
       "topic": "Why Hail Forms Inside Storm Clouds",
