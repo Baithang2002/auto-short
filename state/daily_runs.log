@@ -308,3 +308,7 @@
 2026-08-12 13:45:31  topic='Why Jupiter Has a Giant Red Spot'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)'
 2026-08-12 13:46:00  topic='How Monsoon Rains Begin'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-12 13:46:24  topic='Why Ocean Currents Shape Climate'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-12 14:05:54  topic='Why The Ocean Looks Blue'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-12 14:09:01  topic='Why Coral Reefs Build Underwater Cities'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-12 14:11:11  topic='how ice melts on a lake'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-12 14:14:05  topic='Why Volcanoes Create New Land'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

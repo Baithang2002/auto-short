@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-12T13:46:24Z",
+  "updated_at": "2026-08-12T14:14:05Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -964,18 +964,18 @@
     },
     {
       "topic": "how ice melts on a lake",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-07T10:33:33Z",
+      "last_attempt_at": "2026-08-12T14:11:11Z",
       "last_qualified_at": "2026-08-07T10:33:33Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/7f3fac94d1097197cd42.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-12T14:11:11Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-26T14:11:11Z"
     },
     {
       "topic": "How Icebergs Break Away From Glaciers",
@@ -2511,16 +2511,16 @@
       "topic": "Why Coral Reefs Build Underwater Cities",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-29T11:50:42Z",
+      "last_attempt_at": "2026-08-12T14:09:01Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-29T11:50:42Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 33% is below required 67%",
-      "quarantine_until": "2026-08-12T11:50:42Z"
+      "last_failure_at": "2026-08-12T14:09:01Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-26T14:09:01Z"
     },
     {
       "topic": "Why Crabs Walk Sideways",
@@ -3441,16 +3441,16 @@
       "topic": "Why The Ocean Looks Blue",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-29T11:50:05Z",
+      "last_attempt_at": "2026-08-12T14:05:54Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-29T11:50:05Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-12T11:50:05Z"
+      "last_failure_at": "2026-08-12T14:05:54Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-26T14:05:54Z"
     },
     {
       "topic": "Why The Pacific Ring of Fire Has So Many Volcanoes",
@@ -3589,18 +3589,18 @@
     },
     {
       "topic": "Why Volcanoes Create New Land",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-02T11:06:52Z",
+      "last_attempt_at": "2026-08-12T14:14:05Z",
       "last_qualified_at": "2026-08-02T11:06:52Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/0802c404a1ffbb5f49f6.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-12T14:14:05Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-26T14:14:05Z"
     },
     {
       "topic": "Why Whales Sing Across the Ocean",
