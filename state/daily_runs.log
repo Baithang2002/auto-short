@@ -302,3 +302,5 @@
 2026-08-12 05:11:16  topic='How Wildfires Help Some Forests Regrow'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-12 05:12:42  topic='How Mangrove Forests Protect Coastlines'  exit=1  slot='morning'  attempt=3/4  quality_deferred='visual fallback quality gate deferred topic'
 2026-08-12 05:14:23  topic='How Sand Dunes Move Across Deserts'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-12 05:21:41  topic='Why Deserts Get So Cold at Night'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-12 05:19:03  topic='How Forests Clean the Air'  exit=1  slot='morning'  duration=176s  critical_failure=true  reason='critical technical failure exit=1'
