@@ -1,0 +1,112 @@
+{
+  "story_complexity": "simple",
+  "category_id": "28",
+  "title": "The Mountain Collision That Cooled Our Planet",
+  "description": "Discover how the tectonic collision that formed the Himalayas acted as a giant geological thermostat, pulling carbon from the atmosphere and plunging Earth into the ice ages.",
+  "instagram_caption": "Fifty million years ago, a massive continental collision did more than build the tallest peaks on Earth—it completely rewrote our global climate. 🏔️❄️ Here is how the Himalayas cooled down a tropical planet. #EarthHistory #Geology #ClimateChange #Himalayas #ScienceFacts",
+  "hashtags": [
+    "#shorts",
+    "#earthscience",
+    "#planetearth",
+    "#geology",
+    "#earthhistory",
+    "#climatechange",
+    "#himalayas",
+    "#sciencefacts",
+    "#naturehistory"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Fifty million years ago, a colossal land collision began rewriting the climate of our entire planet.",
+      "broll": "tectonic plates colliding animation",
+      "broll_queries": [
+        "tectonic plates colliding animation",
+        "close up planet earth animation",
+        "tectonic plate collision 3d",
+        "continental drift simulation"
+      ]
+    },
+    {
+      "beat_role": "setup",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Before these peaks rose, Earth was a tropical hothouse—until the Indian plate rammed into Asia, lifting the giant Himalayas.",
+      "broll": "lush prehistoric jungle forest",
+      "broll_queries": [
+        "lush prehistoric jungle forest",
+        "lush tropical ancient jungle",
+        "himalayan mountain range aerial",
+        "mountain range formation animation"
+      ]
+    },
+    {
+      "beat_role": "conflict",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Violent monsoon rains washed over this new rock, combining with atmospheric carbon dioxide and locking the greenhouse gas safely in the oceans.",
+      "broll": "heavy rain on mountain rocks",
+      "broll_queries": [
+        "heavy rain on mountain rocks",
+        "heavy monsoon rain falling on rocks",
+        "mountain river rushing water",
+        "ocean waves crashing storm"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This massive geological sponge stripped carbon from the sky, dragging Earth out of its warm state and triggering the modern ice ages.",
+      "broll": "glacier ice landscape slow pan",
+      "broll_queries": [
+        "glacier ice landscape slow pan",
+        "glacier ice close up",
+        "arctic landscape wide shot",
+        "frozen mountain peak ice"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Every time you look at these snow-capped peaks, you are seeing the ancient thermostat that cooled our world.",
+      "broll": "himalayas snow peaks sunset",
+      "broll_queries": [
+        "himalayas snow peaks sunset",
+        "mount everest peak close up",
+        "himalayas mountain range epic",
+        "snowy mountain ridge sunset"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Follow Wonders of Nature for more daily space and earth science discoveries.",
+      "broll": "person looking at mountain vista",
+      "broll_queries": [
+        "person looking at mountain vista",
+        "traveler looking at mountains",
+        "epic nature landscape wide",
+        "misty forest valley morning"
+      ]
+    }
+  ],
+  "niche": "How The Himalayas Changed Earth's Climate"
+}
