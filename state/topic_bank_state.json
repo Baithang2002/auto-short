@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-12T14:14:05Z",
+  "updated_at": "2026-08-13T05:39:03Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1083,6 +1083,21 @@
       "quarantine_until": "2026-08-13T06:05:44Z"
     },
     {
+      "topic": "how leaves change color",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-13T05:39:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-13T05:39:03Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-27T05:39:03Z"
+    },
+    {
       "topic": "how lightning crosses the sky",
       "status": "quarantined",
       "success_count": 0,
@@ -1294,33 +1309,33 @@
     },
     {
       "topic": "how penguins move across snow",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-08T10:12:08Z",
+      "last_attempt_at": "2026-08-13T05:34:23Z",
       "last_qualified_at": "2026-08-08T10:12:08Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/f0b03cb1fcd2b48775dc.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-13T05:34:23Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-27T05:34:23Z"
     },
     {
       "topic": "How Penguins Survive Antarctica",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-30T11:34:08Z",
+      "last_attempt_at": "2026-08-13T05:28:26Z",
       "last_qualified_at": "2026-07-30T11:34:08Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/8db38ab06e19631cdfb1.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-13T05:28:26Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-27T05:28:26Z"
     },
     {
       "topic": "how rabbits move through grass",
@@ -2206,6 +2221,21 @@
       "last_failure_at": "2026-08-04T15:14:39Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
       "quarantine_until": "2026-08-18T15:14:39Z"
+    },
+    {
+      "topic": "how volcanoes erupt",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-13T05:30:27Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-13T05:30:27Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-27T05:30:27Z"
     },
     {
       "topic": "how waterfalls carve through solid rock",
