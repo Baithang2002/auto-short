@@ -324,3 +324,4 @@
 2026-08-14 05:20:54  topic='How The Milky Way Looks From Earth'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-14 05:23:41  topic='How Sea Turtles Find Their Birth Beach'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-14 05:24:01  topic='Why The Danube River Connects Europe'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-14 13:39:53  topic='Why The Maldives Are Built From Coral'  exit=1  slot='evening'  duration=67s  critical_failure=true  reason='critical technical failure exit=1'
