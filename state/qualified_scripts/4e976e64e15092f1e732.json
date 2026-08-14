@@ -1,0 +1,110 @@
+{
+  "story_complexity": "complex",
+  "category_id": "27",
+  "title": "This Frog Survives Seven Years Buried Alive",
+  "description": "Discover the incredible survival story of the desert frog, which buries itself alive and enters suspended animation to endure years of extreme drought.",
+  "instagram_caption": "Buried alive for up to seven years? 🐸🏜️ Nature's survival strategies are mind-blowing. See how this desert frog defeats the dry season! #wildlife #naturelovers #amazinganimals #survivor",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#survival",
+    "#desertlife",
+    "#sciencefacts"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "To survive a desert baking alive, this frog does the unthinkable: it buries itself alive.",
+      "broll": "desert frog burrowing soil",
+      "broll_queries": [
+        "desert frog burrowing soil",
+        "close up frog burrowing sand",
+        "wide desert landscape cracked earth",
+        "macro frog eyes blinking sand"
+      ]
+    },
+    {
+      "beat_role": "setup",
+      "beat_importance": 8,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "As the wetlands bake into cracked clay, its sensitive skin faces lethal heat, forcing it deep underground.",
+      "broll": "dry cracked earth desert",
+      "broll_queries": [
+        "dry cracked earth desert",
+        "close up dry mud riverbed",
+        "wide baking desert clay",
+        "detail of dry baking earth"
+      ]
+    },
+    {
+      "beat_role": "discovery",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Deep in the earth, the frog secretes a waterproof cocoon, slowing its heartbeat to survive up to seven years.",
+      "broll": "underground cocoon hibernating frog",
+      "broll_queries": [
+        "underground cocoon hibernating frog",
+        "close up frog cocoon mucus underground",
+        "cross section underground soil chamber",
+        "macro detail frog skin cocoon"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "But when rain finally falls, soaking the parched earth, the tomb begins to soften.",
+      "broll": "rain falling on desert",
+      "broll_queries": [
+        "rain falling on desert",
+        "close up water drops hitting dry mud",
+        "wide desert rain storm",
+        "detail water sinking into clay"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Sensing the moisture, the frog tears free from its cocoon and claws its way back to the surface.",
+      "broll": "frog emerging from mud",
+      "broll_queries": [
+        "frog emerging from mud",
+        "close up frog breaking out of mud",
+        "wide muddy puddle desert rain",
+        "macro frog emerging surface wet"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Life conquers the desert once again. Subscribe to Wonders of Nature for more incredible survival stories.",
+      "broll": "vibrant desert life pool",
+      "broll_queries": [
+        "vibrant desert life pool",
+        "close up desert frog swimming",
+        "wide ephemeral pool desert landscape",
+        "detail frog calling water bubble"
+      ]
+    }
+  ],
+  "niche": "How Frogs Survive the Dry Season"
+}

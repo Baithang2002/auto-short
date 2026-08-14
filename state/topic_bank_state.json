@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-14T05:24:01Z",
+  "updated_at": "2026-08-14T10:46:11Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -784,18 +784,18 @@
     },
     {
       "topic": "How Frogs Survive the Dry Season",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T06:27:01Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-14T10:44:46Z",
+      "last_qualified_at": "2026-08-14T10:44:46Z",
+      "last_coverage_ratio": 0.8333,
+      "qualified_script_path": "state/qualified_scripts/4e976e64e15092f1e732.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T06:27:01Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
-      "quarantine_until": "2026-08-14T06:27:01Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Geysers Erupt Like Clocks",
@@ -1386,16 +1386,16 @@
       "topic": "How Rainbows Form After Rain",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:34:56Z",
+      "last_attempt_at": "2026-08-14T10:46:11Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:34:56Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-13T11:34:56Z"
+      "last_failure_at": "2026-08-14T10:46:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-28T10:46:11Z"
     },
     {
       "topic": "how rivers move through forests",
@@ -1911,16 +1911,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 11,
+      "failure_count": 12,
       "qualification_count": 5,
-      "last_attempt_at": "2026-08-13T13:50:18Z",
+      "last_attempt_at": "2026-08-14T10:42:43Z",
       "last_qualified_at": "2026-08-13T10:48:13Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-13T13:50:18Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-27T13:50:18Z"
+      "last_failure_at": "2026-08-14T10:42:43Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-28T10:42:43Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -2091,16 +2091,16 @@
       "topic": "How Thunderstorms Build in the Sky",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:33:35Z",
+      "last_attempt_at": "2026-08-14T10:43:03Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:33:35Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-13T11:33:35Z"
+      "last_failure_at": "2026-08-14T10:43:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-28T10:43:03Z"
     },
     {
       "topic": "how thunderstorms form",
