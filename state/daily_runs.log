@@ -319,3 +319,4 @@
 2026-08-13 05:39:03  topic='how leaves change color'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-13 13:50:18  topic="How The Himalayas Changed Earth's Climate"  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-13 13:45:02  topic='How Waterfalls Shape Rock'  exit=0  slot='evening'  duration=629s  attempts=2
+2026-08-14 05:08:34  topic='Why Stars Twinkle at Night'  exit=1  slot='morning'  duration=49s  critical_failure=true  reason='critical technical failure exit=1'
