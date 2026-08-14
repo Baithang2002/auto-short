@@ -325,3 +325,7 @@
 2026-08-14 05:23:41  topic='How Sea Turtles Find Their Birth Beach'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-14 05:24:01  topic='Why The Danube River Connects Europe'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-14 13:39:53  topic='Why The Maldives Are Built From Coral'  exit=1  slot='evening'  duration=67s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-14 14:03:29  topic='Why The Maldives Are Built From Coral'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-14 14:09:46  topic='How The Great Barrier Reef Was Built'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-14 14:10:16  topic='Why Venus Shines So Bright'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-14 14:10:41  topic='How The International Space Station Orbits Earth'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)'
