@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-13T13:55:31Z",
+  "updated_at": "2026-08-14T05:24:01Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1476,16 +1476,16 @@
       "topic": "How Sea Turtles Find Their Birth Beach",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:34:19Z",
+      "last_attempt_at": "2026-08-14T05:23:41Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:34:19Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:34:19Z"
+      "last_failure_at": "2026-08-14T05:23:41Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-28T05:23:41Z"
     },
     {
       "topic": "how sea turtles find their way home",
@@ -1956,16 +1956,16 @@
       "topic": "How The Milky Way Looks From Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:33:22Z",
+      "last_attempt_at": "2026-08-14T05:20:54Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:33:22Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:33:22Z"
+      "last_failure_at": "2026-08-14T05:20:54Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-28T05:20:54Z"
     },
     {
       "topic": "how the moon changes shape",
@@ -3201,16 +3201,16 @@
       "topic": "Why Stars Twinkle at Night",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:32:10Z",
+      "last_attempt_at": "2026-08-14T05:20:30Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:32:10Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:32:10Z"
+      "last_failure_at": "2026-08-14T05:20:30Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-28T05:20:30Z"
     },
     {
       "topic": "why suspension bridges can bend without breaking",
@@ -3291,16 +3291,16 @@
       "topic": "Why The Danube River Connects Europe",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:33:46Z",
+      "last_attempt_at": "2026-08-14T05:24:01Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:33:46Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:33:46Z"
+      "last_failure_at": "2026-08-14T05:24:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-28T05:24:01Z"
     },
     {
       "topic": "Why The Dead Sea Is So Salty",
