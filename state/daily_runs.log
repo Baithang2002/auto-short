@@ -334,3 +334,7 @@
 2026-08-15 03:59:43  topic='How The Congo Rainforest Stores Carbon'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-15 04:03:22  topic='Why The Dead Sea Is So Salty'  exit=1  slot='morning'  attempt=4/4  quality_deferred='visual fallback quality gate deferred topic'
 2026-08-15 04:14:23  topic='How Earth Looks From Space'  exit=1  slot='morning'  duration=33s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-15 13:00:42  topic='Why The Amazon River Is So Powerful'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-15 13:01:05  topic='Why The Arctic Ocean Freezes'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-15 13:01:28  topic='Why The Mekong River Feeds Millions'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-15 13:01:36  topic='How an Arctic fox changes its coat for winter camouflage'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

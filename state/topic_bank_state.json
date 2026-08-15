@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-15T10:04:53Z",
+  "updated_at": "2026-08-15T13:01:36Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -21,16 +21,16 @@
       "topic": "How an Arctic fox changes its coat for winter camouflage",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:11:59Z",
+      "last_attempt_at": "2026-08-15T13:01:36Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:11:59Z",
-      "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
-      "quarantine_until": "2026-08-15T11:11:59Z"
+      "last_failure_at": "2026-08-15T13:01:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-29T13:01:36Z"
     },
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -3229,18 +3229,18 @@
     },
     {
       "topic": "Why The Amazon River Is So Powerful",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 2,
-      "last_attempt_at": "2026-08-15T10:00:59Z",
+      "last_attempt_at": "2026-08-15T13:00:42Z",
       "last_qualified_at": "2026-08-15T10:00:59Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/e60a76f138c42b20abf4.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T14:33:10Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-15T13:00:42Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-29T13:00:42Z"
     },
     {
       "topic": "Why The Arctic Has Midnight Sun",
@@ -3261,16 +3261,16 @@
       "topic": "Why The Arctic Ocean Freezes",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T06:15:18Z",
+      "last_attempt_at": "2026-08-15T13:01:05Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T06:15:18Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-15T06:15:18Z"
+      "last_failure_at": "2026-08-15T13:01:05Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-29T13:01:05Z"
     },
     {
       "topic": "Why The Atacama Desert Is So Dry",
@@ -3396,16 +3396,16 @@
       "topic": "Why The Mekong River Feeds Millions",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:02Z",
+      "last_attempt_at": "2026-08-15T13:01:28Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:47:02Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T11:47:02Z"
+      "last_failure_at": "2026-08-15T13:01:28Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-29T13:01:28Z"
     },
     {
       "topic": "Why The Moon Controls Tides",
