@@ -329,3 +329,7 @@
 2026-08-14 14:09:46  topic='How The Great Barrier Reef Was Built'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-14 14:10:16  topic='Why Venus Shines So Bright'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-14 14:10:41  topic='How The International Space Station Orbits Earth'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)'
+2026-08-15 03:57:50  topic='How Crocodiles Wait Underwater'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-15 03:58:11  topic='Why The Serengeti Has So Many Animals'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)'
+2026-08-15 03:59:43  topic='How The Congo Rainforest Stores Carbon'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-15 04:03:22  topic='Why The Dead Sea Is So Salty'  exit=1  slot='morning'  attempt=4/4  quality_deferred='visual fallback quality gate deferred topic'

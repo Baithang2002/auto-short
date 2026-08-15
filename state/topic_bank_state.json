@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-14T14:10:41Z",
+  "updated_at": "2026-08-15T04:03:22Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -486,16 +486,16 @@
       "topic": "How Crocodiles Wait Underwater",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T06:26:38Z",
+      "last_attempt_at": "2026-08-15T03:57:50Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T06:26:38Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T06:26:38Z"
+      "last_failure_at": "2026-08-15T03:57:50Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-29T03:57:50Z"
     },
     {
       "topic": "how crows remember human faces",
@@ -1791,16 +1791,16 @@
       "topic": "How The Congo Rainforest Stores Carbon",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-31T14:38:11Z",
+      "last_attempt_at": "2026-08-15T03:59:43Z",
       "last_qualified_at": "2026-07-27T09:09:38Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T14:38:11Z",
+      "last_failure_at": "2026-08-15T03:59:43Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-14T14:38:11Z"
+      "quarantine_until": "2026-08-29T03:59:43Z"
     },
     {
       "topic": "How The Everglades Filters Water",
@@ -3306,16 +3306,16 @@
       "topic": "Why The Dead Sea Is So Salty",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:22Z",
+      "last_attempt_at": "2026-08-15T04:03:22Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:47:22Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
-      "quarantine_until": "2026-08-14T11:47:22Z"
+      "last_failure_at": "2026-08-15T04:03:22Z",
+      "last_failure_reason": "visual fallback quality gate deferred topic",
+      "quarantine_until": "2026-08-29T04:03:22Z"
     },
     {
       "topic": "Why The Galapagos Islands Are So Unique",
@@ -3516,16 +3516,16 @@
       "topic": "Why The Serengeti Has So Many Animals",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-07-31T14:35:06Z",
+      "last_attempt_at": "2026-08-15T03:58:11Z",
       "last_qualified_at": "2026-07-31T11:47:55Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T14:35:06Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-14T14:35:06Z"
+      "last_failure_at": "2026-08-15T03:58:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-29T03:58:11Z"
     },
     {
       "topic": "Why The Sky Turns Red at Sunset",
