@@ -627,7 +627,14 @@ def check_deps():
 # Provider chain: every entry is tried in order; first success wins.
 # Multiple Gemini models so a single throttled model doesn't kill the run.
 # Multiple Groq models so a single deprecated model doesn't kill the run.
-GEMINI_MODELS = list(DEFAULTS.providers.gemini_models)
+GEMINI_MODELS = [
+    model.strip()
+    for model in os.environ.get(
+        "AUTO_VIDEO_GEMINI_MODELS",
+        ",".join(DEFAULTS.providers.gemini_models),
+    ).split(",")
+    if model.strip()
+] or list(DEFAULTS.providers.gemini_models)
 GROQ_MODELS = list(DEFAULTS.providers.groq_models)
 GROQ_VISION_MODELS = [
     model.strip()
@@ -643,7 +650,7 @@ SAMBANOVA_MODELS = list(DEFAULTS.providers.sambanova_models)
 
 
 def _try_gemini(prompt):
-    global _GEMINI_QUOTA_DEAD
+    global _GEMINI_QUOTA_DEAD, _GEMINI_DEAD_MODELS
 
     if _GEMINI_QUOTA_DEAD:
         print("    [LLM Fallback] Gemini skipped because quota is exhausted; trying SambaNova/Groq.")
@@ -657,7 +664,11 @@ def _try_gemini(prompt):
         return None, Exception("Failed to initialize Gemini client")
     last_err = None
     failures = []
+    tried_any = False
     for model in GEMINI_MODELS:
+        if model in _GEMINI_DEAD_MODELS:
+            continue
+        tried_any = True
         try:
             resp = client.models.generate_content(model=model, contents=prompt)
             print(f"    [Gemini] {model} - OK")
@@ -665,8 +676,15 @@ def _try_gemini(prompt):
         except Exception as e:
             last_err = e
             failures.append(str(e))
-            print(f"    [Gemini] {model} failed: {str(e)[:120]}")
-    if failures and all(
+            if _looks_like_quota_error(str(e)):
+                _GEMINI_DEAD_MODELS.add(model)
+                print(f"    [Gemini] {model} quota exhausted; skipping for rest of run.")
+            else:
+                print(f"    [Gemini] {model} failed: {str(e)[:120]}")
+    if not tried_any and _GEMINI_DEAD_MODELS:
+        _GEMINI_QUOTA_DEAD = True
+        print("    [Gemini quota] all configured Gemini models exhausted; disabling Gemini for rest of run.")
+    elif failures and all(
         "429" in failure or "RESOURCE_EXHAUSTED" in failure or "quota" in failure.lower()
         for failure in failures
     ):
@@ -1591,6 +1609,11 @@ def _find_manual_input_clip(idx, local_media, intent=None):
 # Per-run circuit breaker: first Gemini 429 trips this flag. Subsequent calls
 # skip Gemini entirely instead of burning more quota and retrying.
 _GEMINI_QUOTA_DEAD = False
+# Per-model circuit breaker: a single model that returns 429 is skipped for the
+# rest of the run while cheaper/alternative Gemini models keep working. This
+# prevents the daily run from paying a 429 on gemini-3.5-flash before every
+# successful gemini-3.1-flash-lite call.
+_GEMINI_DEAD_MODELS: set[str] = set()
 
 
 def smart_match_media(keyword, narration, local_media, idx, used_set, hybrid=False, threshold=0.5):
@@ -2385,6 +2408,8 @@ def _require_vision_json(raw, *result_keys):
 def _generate_gemini_vision_content(client, contents):
     """Try configured Gemini vision-capable models in deterministic order."""
 
+    global _GEMINI_DEAD_MODELS
+
     models = []
     for model in (GEMINI_IMAGE_MODEL, *GEMINI_MODELS):
         cleaned = str(model or "").strip()
@@ -2395,10 +2420,16 @@ def _generate_gemini_vision_content(client, contents):
 
     failures = []
     for model in models:
+        if model in _GEMINI_DEAD_MODELS:
+            continue
         try:
             return client.models.generate_content(model=model, contents=contents), model
         except Exception as exc:
             failures.append(f"{model}: {_safe_diagnostic(exc)}")
+            if _looks_like_quota_error(_safe_diagnostic(exc)):
+                _GEMINI_DEAD_MODELS.add(model)
+    if not failures and _GEMINI_DEAD_MODELS:
+        raise RuntimeError("all Gemini vision models skipped: quota exhausted")
     raise RuntimeError("all Gemini vision models failed: " + " | ".join(failures))
 
 

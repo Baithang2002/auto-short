@@ -76,6 +76,10 @@ jobs:
         env:
           # Script providers
           AUTO_VIDEO_RENDER_PROFILE: "production"
+          # Try cheaper Gemini models first; gemini-3.5-flash is kept as a last
+          # resort so a daily quota spike on the premium tier doesn't burn
+          # requests on every single prompt before falling back to flash-lite.
+          AUTO_VIDEO_GEMINI_MODELS: "gemini-3.1-flash-lite,gemini-2.5-flash-lite,gemini-2.5-flash,gemini-3.5-flash"
           GEMINI_API_KEY:      ${{ secrets.GEMINI_API_KEY }}
           GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
           GROQ_VISION_MODELS:  "qwen/qwen3.6-27b"
@@ -106,7 +110,7 @@ jobs:
 
           # Music (chain: jamendo -> pixabay -> mixkit -> generated -> silence)
           JAMENDO_CLIENT_ID:   ${{ secrets.JAMENDO_CLIENT_ID }}
-          DEFAULT_NICHE:       "strange animal survival, wildlife behavior, oceans, and visually demonstrable natural phenomena"
+          DEFAULT_NICHE:       "animal survival, wildlife behavior, and marine life"
 
           # YouTube Data API (replaces browser upload)
           YT_CLIENT_ID:        ${{ secrets.YT_CLIENT_ID }}
@@ -119,9 +123,16 @@ jobs:
           # Supporting scenes are an availability probe. Hooks and main
           # reveals still require the final production score.
           AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
+          # Broader probe budget: more queries, providers, and a longer
+          # timeout give common topics a realistic chance to find acceptable
+          # authentic media before the topic is deferred.
+          AUTO_VIDEO_SOURCE_COVERAGE_MIN_RATIO: "0.60"
+          AUTO_VIDEO_SOURCE_COVERAGE_MAX_QUERIES_PER_SCENE: "2"
+          AUTO_VIDEO_SOURCE_COVERAGE_MAX_PROVIDERS_PER_SCENE: "4"
+          AUTO_VIDEO_SOURCE_COVERAGE_PROVIDER_TIMEOUT_SEC: "10"
           # Try several different viable topics when a topic-specific quality
           # gate defers one. Technical failures still stop immediately.
-          AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "4"
+          AUTO_VIDEO_DAILY_MAX_TOPIC_ATTEMPTS: "6"
           # Final downloaded-media verification. A critical scene that cannot
           # be proved from sampled frames stops before rendering/uploading.
           AUTO_VIDEO_VERIFIED_MEDIA_GATE_ENABLED: "true"
@@ -133,7 +144,7 @@ jobs:
           AUTO_VIDEO_VERIFIED_MEDIA_MAX_REPLACEMENTS: "2"
           AUTO_VIDEO_VERIFIED_MEDIA_FRAME_SAMPLES: "3"
           AUTO_VIDEO_VERIFIED_MEDIA_CRITICAL_POLICY: "abort"
-          AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES: "3"
+          AUTO_VIDEO_CRITICAL_ASSET_MAX_ALTERNATIVES: "2"
           AUTO_VIDEO_CRITICAL_ASSET_PROVIDER_TIMEOUT_SEC: "30"
           AUTO_VIDEO_CRITICAL_ASSET_DOWNLOAD_TIMEOUT_SEC: "90"
           # An unavailable external vision model must not turn a valid render
@@ -142,7 +153,7 @@ jobs:
           # Final-output samples catch incorrect crops or compositions that
           # were not visible in the original downloaded asset.
           AUTO_VIDEO_RENDERED_VISUAL_QA_ENABLED: "true"
-          AUTO_VIDEO_RENDERED_VISUAL_QA_MAX_SCENES: "4"
+          AUTO_VIDEO_RENDERED_VISUAL_QA_MAX_SCENES: "3"
           AUTO_VIDEO_RENDERED_VISUAL_QA_MIN_CONFIDENCE: "0.80"
           # Quality wins over posting frequency. Without an available vision
           # verdict for the hook or main reveal, defer unless the verifier was

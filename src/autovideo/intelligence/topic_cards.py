@@ -10,10 +10,8 @@ from typing import Any, Mapping
 
 
 PILLAR_ALLOCATION: Mapping[str, float] = MappingProxyType({
-    "wildlife": 0.50,
+    "wildlife": 0.80,
     "ocean": 0.20,
-    "earth_weather": 0.20,
-    "space": 0.10,
 })
 DEFAULT_TOPIC_CARD_PATH = Path(__file__).resolve().parent / "knowledge" / "focused_nature_topic_cards.json"
 DEFAULT_TOPIC_CARD_SOURCE = "src/autovideo/intelligence/knowledge/focused_nature_topic_cards.json"

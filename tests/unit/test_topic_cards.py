@@ -92,7 +92,7 @@ class TopicCardTests(unittest.TestCase):
         catalog = load_topic_card_catalog()
 
         self.assertEqual(dict(catalog.allocation), dict(PILLAR_ALLOCATION))
-        self.assertEqual(len(catalog.cards), 10)
+        self.assertEqual(len(catalog.cards), 7)
         counts = {
             pillar: sum(card.pillar == pillar for card in catalog.cards)
             for pillar in PILLAR_ALLOCATION
@@ -100,8 +100,6 @@ class TopicCardTests(unittest.TestCase):
         self.assertEqual(counts, {
             "wildlife": 5,
             "ocean": 2,
-            "earth_weather": 2,
-            "space": 1,
         })
 
     def test_loader_rejects_empty_critical_retrieval_fields(self) -> None:

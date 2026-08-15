@@ -1,11 +1,9 @@
 {
   "version": 1,
-  "description": "Compact retrieval-focused nature topic cards.",
+  "description": "Compact retrieval-focused animal topic cards.",
   "allocation": {
-    "wildlife": 0.5,
-    "ocean": 0.2,
-    "earth_weather": 0.2,
-    "space": 0.1
+    "wildlife": 0.8,
+    "ocean": 0.2
   },
   "cards": [
     {
@@ -112,51 +110,6 @@
       "title_angles": ["The whales that hunt with bubbles", "A Bubble Ring Becomes a Trap"],
       "source_difficulty": "moderate",
       "recommended_duration_sec": 54
-    },
-    {
-      "id": "earth-weather-supercell-rotation",
-      "pillar": "earth_weather",
-      "subject": "supercell thunderstorm",
-      "premise": "How wind shear can make a supercell thunderstorm rotate",
-      "required_entity": "supercell thunderstorm",
-      "required_action": "rotating over an open landscape",
-      "hook_queries": ["rotating supercell thunderstorm timelapse", "supercell storm structure plains"],
-      "reveal_queries": ["supercell rotating updraft timelapse", "wind shear storm diagram"],
-      "supporting_queries": ["storm clouds building timelapse", "winds at different altitudes animation"],
-      "fallback_visuals": ["shelf cloud over plains", "dark storm base timelapse"],
-      "title_angles": ["A Storm Begins to Spin", "Inside a Rotating Supercell"],
-      "source_difficulty": "moderate",
-      "recommended_duration_sec": 50
-    },
-    {
-      "id": "earth-weather-lava-new-land",
-      "pillar": "earth_weather",
-      "subject": "lava flow",
-      "premise": "How lava cools at the coast and creates new land",
-      "required_entity": "lava flow",
-      "required_action": "entering the ocean and cooling into rock",
-      "hook_queries": ["lava flowing into ocean", "coastal lava flow aerial"],
-      "reveal_queries": ["lava ocean cooling new rock", "fresh lava delta coastline"],
-      "supporting_queries": ["molten lava close up", "black volcanic coastline"],
-      "fallback_visuals": ["fresh basalt shoreline", "steam above volcanic coast"],
-      "title_angles": ["Watch the Coastline Grow", "Fire Becomes New Land at the Shore"],
-      "source_difficulty": "easy",
-      "recommended_duration_sec": 50
-    },
-    {
-      "id": "space-solar-eclipse-shadow",
-      "pillar": "space",
-      "subject": "solar eclipse",
-      "premise": "How the Moon's shadow creates a total solar eclipse on Earth",
-      "required_entity": "solar eclipse",
-      "required_action": "the Moon covering the Sun during totality",
-      "hook_queries": ["total solar eclipse corona real footage", "solar eclipse totality landscape"],
-      "reveal_queries": ["Moon shadow crossing Earth animation", "solar eclipse alignment diagram"],
-      "supporting_queries": ["partial solar eclipse progression", "eclipse viewers landscape"],
-      "fallback_visuals": ["solar corona during totality", "Sun Moon Earth alignment graphic"],
-      "title_angles": ["The Shadow That Turns Day Into Night", "Totality Follows a Narrow Path"],
-      "source_difficulty": "easy",
-      "recommended_duration_sec": 48
     }
   ]
 }

@@ -3,6 +3,8 @@
 # These topics use literal, common search terms with broad Pexels/Pixabay
 # inventory and Wikimedia supporting imagery. The live source-coverage
 # qualification gate remains authoritative before any topic is published.
+#
+# Animal-only pool: the channel focuses on wildlife and marine life.
 
 # --- Wildlife with common, visually literal search terms ---
 how bees pollinate flowers
@@ -25,46 +27,3 @@ how owls fly at night
 how hummingbirds feed from flowers
 how crabs move along the beach
 how spiders build webs
-
-# --- Water, coast, and common landscapes ---
-how waves move across the ocean
-how waterfalls flow over rocks
-how rivers move through forests
-how streams flow over stones
-how rain fills a lake
-how clouds form over mountains
-how fog moves through a valley
-how snow falls in a forest
-how ice melts on a lake
-how beaches change with waves
-how coral reefs grow underwater
-how kelp moves in ocean water
-how mangrove trees grow near water
-how sunlight reflects on the ocean
-how rainbows form after rain
-
-# --- Plants, forests, and earth science ---
-how forests grow in sunlight
-how flowers open in the morning
-how seeds grow into plants
-how leaves change color
-how moss grows on rocks
-how mushrooms grow in forests
-how bamboo grows quickly
-how trees move in the wind
-how sand dunes move in the wind
-how mountains form
-how caves form in rock
-how volcanoes erupt
-how lava cools into rock
-how geysers send water into the air
-how glaciers move across valleys
-
-# --- Weather and sky ---
-how thunderstorms form
-how lightning crosses the sky
-how wind moves through clouds
-how sunsets turn the sky orange
-how stars appear at night
-how the moon changes shape
-how the northern lights appear

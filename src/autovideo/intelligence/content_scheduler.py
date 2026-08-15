@@ -101,10 +101,10 @@ class ContentSchedulerConfig:
     topic_bank_quarantine_days: int = 14
     coverage_proven_topics: tuple[str, ...] = field(default_factory=_load_default_coverage_proven_topics)
     evergreen_topics: tuple[str, ...] = (
-        "Why Volcanoes Create New Land",
         "How Penguins Survive Antarctica",
-        "How the Northern Lights Are Created",
-        "How Roman Aqueducts Changed Civilization",
+        "Why Whales Sing Across the Ocean",
+        "How Cheetahs Run So Fast",
+        "How Beavers Build Dams",
     )
 
     @classmethod

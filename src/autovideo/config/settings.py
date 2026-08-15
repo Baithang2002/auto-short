@@ -98,6 +98,15 @@ class AppConfig:
                 p for p in voice_priority if p != voice_rotation_provider
             )
 
+        llm_override = settings.env("AUTO_VIDEO_LLM_PROVIDER")
+        llm_priority = profile.llm_provider_priority
+        if llm_override:
+            requested = tuple(p.strip().lower() for p in llm_override.split(",") if p.strip())
+            if requested:
+                llm_priority = requested + tuple(
+                    p for p in llm_priority if p not in requested
+                )
+
         allow_external = settings.env_bool("AUTO_VIDEO_ALLOW_EXTERNAL_API_CALLS", profile.allow_external_api_calls)
         mock_uploads = settings.env_bool("AUTO_VIDEO_MOCK_UPLOADS", profile.mock_uploads)
         music_config = music_config_from_settings(settings, profile_order=profile.music_provider_priority)
@@ -121,7 +130,7 @@ class AppConfig:
             settings=settings,
             render_profile=profile,
             provider_priority={
-                "llm": profile.llm_provider_priority,
+                "llm": llm_priority,
                 "voice": voice_priority,
                 "stock": profile.stock_provider_priority,
                 "music": music_config.provider_order,

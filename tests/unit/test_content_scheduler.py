@@ -322,14 +322,15 @@ class ContentSchedulerTests(unittest.TestCase):
         self.assertEqual(result.candidates[0].decision, SchedulingDecision.REJECTED)
         self.assertIn("exact topic was already generated", result.candidates[0].reasons)
 
-    def test_default_coverage_proven_bank_is_large_and_nature_safe(self) -> None:
+    def test_default_coverage_proven_bank_is_animal_only(self) -> None:
         config = ContentSchedulerConfig()
 
-        self.assertGreaterEqual(len(config.coverage_proven_topics), 100)
+        self.assertGreaterEqual(len(config.coverage_proven_topics), 30)
         self.assertIn("How Bees Make Honey", config.coverage_proven_topics)
-        self.assertIn("How The Amazon Rainforest Makes Rain", config.coverage_proven_topics)
-        self.assertIn("How the Northern Lights Are Created", config.coverage_proven_topics)
-        self.assertIn("Why The Grand Canyon Looks So Huge", config.coverage_proven_topics)
+        self.assertIn("How Beavers Build Dams", config.coverage_proven_topics)
+        self.assertIn("Why Whales Sing Across the Ocean", config.coverage_proven_topics)
+        self.assertNotIn("How the Northern Lights Are Created", config.coverage_proven_topics)
+        self.assertNotIn("Why The Grand Canyon Looks So Huge", config.coverage_proven_topics)
 
     def test_topic_bank_category_rotation_prefers_a_fresh_category(self) -> None:
         wildlife = "How Bees Make Honey"
