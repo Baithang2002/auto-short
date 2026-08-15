@@ -333,3 +333,4 @@
 2026-08-15 03:58:11  topic='Why The Serengeti Has So Many Animals'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 3/5 (60%) is below required 4/5 (67%)'
 2026-08-15 03:59:43  topic='How The Congo Rainforest Stores Carbon'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-15 04:03:22  topic='Why The Dead Sea Is So Salty'  exit=1  slot='morning'  attempt=4/4  quality_deferred='visual fallback quality gate deferred topic'
+2026-08-15 04:14:23  topic='How Earth Looks From Space'  exit=1  slot='morning'  duration=33s  critical_failure=true  reason='critical technical failure exit=1'
