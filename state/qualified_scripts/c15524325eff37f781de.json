@@ -1,0 +1,95 @@
+{
+  "story_complexity": "simple",
+  "category_id": "28",
+  "title": "The Cosmic Truth Behind Every Sunrise",
+  "description": "Discover the celestial mechanics of our spinning planet and why the sun appears to rise in the east.",
+  "instagram_caption": "It’s not the sun moving—it’s us! 🌍✨ See the world from a new perspective tomorrow morning. #SpaceFacts #ScienceExplained #Sunrise #Astronomy #EarthRotation",
+  "hashtags": [
+    "#shorts",
+    "#space",
+    "#spaceexploration",
+    "#nasa",
+    "#sunrise",
+    "#earthrotation",
+    "#astronomy"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Every morning, the sun climbs the eastern horizon with a rhythm that feels like an endless, celestial dance.",
+      "broll": "Golden sunrise over horizon",
+      "broll_queries": [
+        "Golden sunrise over horizon",
+        "bright sun rising horizon",
+        "cinematic morning sky view",
+        "close up glowing sun"
+      ]
+    },
+    {
+      "beat_role": "context/discovery",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "But the sun remains still in the void; this motion is an illusion. Viewed from above the North Pole, Earth spins in a steady, counter-clockwise rotation.",
+      "broll": "Earth spinning in space",
+      "broll_queries": [
+        "Earth spinning in space",
+        "earth rotation space view",
+        "planet earth from orbit",
+        "earth spinning animation"
+      ]
+    },
+    {
+      "beat_role": "escalation",
+      "beat_importance": 7,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Because our world rotates toward the east, we pivot into the sunlight, making it seem as though the sun is entering our field of view.",
+      "broll": "Sunlight hitting earth atmosphere",
+      "broll_queries": [
+        "Sunlight hitting earth atmosphere",
+        "sunrise from space orbit",
+        "day night terminator line",
+        "sun light earth globe"
+      ]
+    },
+    {
+      "beat_role": "climax/resolution",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "If you could hover in the stillness of space, you would realize we are simply turning our face toward the light; a sunrise is just our planet greeting the dawn.",
+      "broll": "Earth rotating towards light",
+      "broll_queries": [
+        "Earth rotating towards light",
+        "earth rotating in space",
+        "bright sunrise from orbit",
+        "sunlight hitting planet"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Look at the horizon differently tomorrow morning, and follow Wonders of the Nature for more.",
+      "broll": "Person watching sunrise silhouette",
+      "broll_queries": [
+        "Person watching sunrise silhouette",
+        "person looking at sunrise",
+        "silhouette at sunrise",
+        "people watching horizon"
+      ]
+    }
+  ],
+  "niche": "Why The Sun Rises in the East"
+}

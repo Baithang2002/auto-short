@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-15T04:03:22Z",
+  "updated_at": "2026-08-15T10:04:53Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -576,31 +576,31 @@
       "topic": "How Dolphins Use Sound to Hunt",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:12Z",
+      "last_attempt_at": "2026-08-15T10:02:40Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:47:12Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T11:47:12Z"
+      "last_failure_at": "2026-08-15T10:02:40Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-29T10:02:40Z"
     },
     {
       "topic": "How Earth Looks From Space",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:46:41Z",
+      "last_attempt_at": "2026-08-15T09:59:23Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:46:41Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
-      "quarantine_until": "2026-08-14T11:46:41Z"
+      "last_failure_at": "2026-08-15T09:59:23Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-29T09:59:23Z"
     },
     {
       "topic": "how earthquakes can change a river's course",
@@ -2901,16 +2901,16 @@
       "topic": "Why Meteor Showers Light Up the Sky",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:34:29Z",
+      "last_attempt_at": "2026-08-15T10:04:33Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:34:29Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:34:29Z"
+      "last_failure_at": "2026-08-15T10:04:33Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-29T10:04:33Z"
     },
     {
       "topic": "Why Mount Everest Is Still Growing",
@@ -3229,18 +3229,18 @@
     },
     {
       "topic": "Why The Amazon River Is So Powerful",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 1,
-      "last_attempt_at": "2026-07-31T14:33:10Z",
-      "last_qualified_at": "2026-07-29T11:51:11Z",
+      "qualification_count": 2,
+      "last_attempt_at": "2026-08-15T10:00:59Z",
+      "last_qualified_at": "2026-08-15T10:00:59Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualified_script_path": "state/qualified_scripts/e60a76f138c42b20abf4.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T14:33:10Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-14T14:33:10Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why The Arctic Has Midnight Sun",
@@ -3501,16 +3501,16 @@
       "topic": "Why The Red Sea Looks So Blue",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T06:15:08Z",
+      "last_attempt_at": "2026-08-15T10:03:44Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T06:15:08Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-15T06:15:08Z"
+      "last_failure_at": "2026-08-15T10:03:44Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-29T10:03:44Z"
     },
     {
       "topic": "Why The Serengeti Has So Many Animals",
@@ -3544,18 +3544,18 @@
     },
     {
       "topic": "Why The Sun Rises in the East",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:35Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-15T10:04:53Z",
+      "last_qualified_at": "2026-08-15T10:04:53Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/c15524325eff37f781de.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T11:47:35Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
-      "quarantine_until": "2026-08-14T11:47:35Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "why train tracks have small gaps",
