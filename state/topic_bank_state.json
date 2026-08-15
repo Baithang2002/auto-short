@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-15T13:01:36Z",
+  "updated_at": "2026-08-15T13:19:47Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -81,16 +81,16 @@
       "topic": "How Arctic Foxes Survive Winter",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T11:35:06Z",
+      "last_attempt_at": "2026-08-15T13:19:47Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T11:35:06Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T11:35:06Z"
+      "last_failure_at": "2026-08-15T13:19:47Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-29T13:19:47Z"
     },
     {
       "topic": "how astronauts sleep in space",
@@ -201,16 +201,16 @@
       "topic": "How beavers build dams that reshape a stream",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:09:57Z",
+      "last_attempt_at": "2026-08-15T13:18:11Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:09:57Z",
-      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-15T11:09:57Z"
+      "last_failure_at": "2026-08-15T13:18:11Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-29T13:18:11Z"
     },
     {
       "topic": "how beavers reshape entire rivers",
@@ -366,16 +366,16 @@
       "topic": "How chameleons shift color through microscopic skin structures",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:14:35Z",
+      "last_attempt_at": "2026-08-15T13:18:52Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:14:35Z",
-      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-15T11:14:35Z"
+      "last_failure_at": "2026-08-15T13:18:52Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-29T13:18:52Z"
     },
     {
       "topic": "How Cheetahs Run So Fast",
@@ -2511,16 +2511,16 @@
       "topic": "Why Clouds Float in the Sky",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:46Z",
+      "last_attempt_at": "2026-08-15T13:19:25Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:47:46Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T11:47:46Z"
+      "last_failure_at": "2026-08-15T13:19:25Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-29T13:19:25Z"
     },
     {
       "topic": "why coral reefs are called underwater cities",

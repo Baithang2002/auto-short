@@ -338,3 +338,7 @@
 2026-08-15 13:01:05  topic='Why The Arctic Ocean Freezes'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-15 13:01:28  topic='Why The Mekong River Feeds Millions'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
 2026-08-15 13:01:36  topic='How an Arctic fox changes its coat for winter camouflage'  exit=1  slot='evening'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-15 13:18:11  topic='How beavers build dams that reshape a stream'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-15 13:18:52  topic='How chameleons shift color through microscopic skin structures'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-15 13:19:25  topic='Why Clouds Float in the Sky'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-15 13:19:47  topic='How Arctic Foxes Survive Winter'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)'
