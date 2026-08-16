@@ -342,3 +342,7 @@
 2026-08-15 13:18:52  topic='How chameleons shift color through microscopic skin structures'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-15 13:19:25  topic='Why Clouds Float in the Sky'  exit=1  slot='evening'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-15 13:19:47  topic='How Arctic Foxes Survive Winter'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)'
+2026-08-16 04:04:01  topic='How Icebergs Break Away From Glaciers'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-16 04:04:31  topic='How Earthquakes Shake the Ground'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-16 04:04:50  topic='Why Peacocks Show Their Feathers'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-16 04:09:26  topic='How Bats Fly in Total Darkness'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

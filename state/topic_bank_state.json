@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-15T13:19:47Z",
+  "updated_at": "2026-08-16T04:09:26Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -126,16 +126,16 @@
       "topic": "How Bats Fly in Total Darkness",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:03Z",
+      "last_attempt_at": "2026-08-16T04:09:26Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:03Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:03Z"
+      "last_failure_at": "2026-08-16T04:09:26Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T04:09:26Z"
     },
     {
       "topic": "how bats navigate in total darkness",
@@ -621,16 +621,16 @@
       "topic": "How Earthquakes Shake the Ground",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:08:10Z",
+      "last_attempt_at": "2026-08-16T04:04:31Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T06:08:10Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T06:08:10Z"
+      "last_failure_at": "2026-08-16T04:04:31Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-30T04:04:31Z"
     },
     {
       "topic": "how elephants walk through grasslands",
@@ -981,16 +981,16 @@
       "topic": "How Icebergs Break Away From Glaciers",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:06:08Z",
+      "last_attempt_at": "2026-08-16T04:04:01Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T06:06:08Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T06:06:08Z"
+      "last_failure_at": "2026-08-16T04:04:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-30T04:04:01Z"
     },
     {
       "topic": "How Islands Form From Volcanoes",
@@ -3021,16 +3021,16 @@
       "topic": "Why Peacocks Show Their Feathers",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T06:27:20Z",
+      "last_attempt_at": "2026-08-16T04:04:50Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T06:27:20Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T06:27:20Z"
+      "last_failure_at": "2026-08-16T04:04:50Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-30T04:04:50Z"
     },
     {
       "topic": "why penguins do not freeze on Antarctic ice",
