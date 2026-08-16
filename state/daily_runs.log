@@ -346,3 +346,7 @@
 2026-08-16 04:04:31  topic='How Earthquakes Shake the Ground'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-16 04:04:50  topic='Why Peacocks Show Their Feathers'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-16 04:09:26  topic='How Bats Fly in Total Darkness'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-16 04:22:13  topic='How Cheetahs Run So Fast'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-16 04:22:34  topic='How Giraffes Drink With Long Necks'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-16 04:23:02  topic='How Owls Fly Almost Silently'  exit=1  slot='morning'  attempt=3/4  quality_deferred='RuntimeError: Script is unsalvageable: title is question-led; use a curious declarative statement'
+2026-08-16 04:24:37  topic='How Seahorses Carry Their Babies'  exit=1  slot='morning'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

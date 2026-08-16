@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-16T04:09:26Z",
+  "updated_at": "2026-08-16T04:24:37Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -381,16 +381,16 @@
       "topic": "How Cheetahs Run So Fast",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:13Z",
+      "last_attempt_at": "2026-08-16T04:22:13Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:13Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:13Z"
+      "last_failure_at": "2026-08-16T04:22:13Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T04:22:13Z"
     },
     {
       "topic": "how clouds form over mountains",
@@ -831,16 +831,16 @@
       "topic": "How Giraffes Drink With Long Necks",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:23Z",
+      "last_attempt_at": "2026-08-16T04:22:34Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:23Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:23Z"
+      "last_failure_at": "2026-08-16T04:22:34Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-30T04:22:34Z"
     },
     {
       "topic": "how glaciers move across valleys",
@@ -1266,16 +1266,16 @@
       "topic": "How Owls Fly Almost Silently",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:37Z",
+      "last_attempt_at": "2026-08-16T04:23:02Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:37Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:37Z"
+      "last_failure_at": "2026-08-16T04:23:02Z",
+      "last_failure_reason": "RuntimeError: Script is unsalvageable: title is question-led; use a curious declarative statement",
+      "quarantine_until": "2026-08-30T04:23:02Z"
     },
     {
       "topic": "how owls fly at night",
@@ -1506,16 +1506,16 @@
       "topic": "How Seahorses Carry Their Babies",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:49Z",
+      "last_attempt_at": "2026-08-16T04:24:37Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:49Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:49Z"
+      "last_failure_at": "2026-08-16T04:24:37Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T04:24:37Z"
     },
     {
       "topic": "how seeds grow into plants",
