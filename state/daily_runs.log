@@ -354,3 +354,7 @@
 2026-08-16 13:02:16  topic='Why Chameleons Change Color'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-16 13:02:22  topic='How wind shear can make a supercell thunderstorm rotate'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-16 13:03:06  topic='Why Astronauts Float in Space'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
+2026-08-16 13:21:18  topic='Why The Moon Controls Tides'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-16 13:21:37  topic='Why The Moon Has Phases'  exit=1  slot='evening'  attempt=2/4  quality_deferred='RuntimeError: Script is unsalvageable: title contains an unsupported absolute'
+2026-08-16 13:25:47  topic='Why The Pacific Ring of Fire Has So Many Volcanoes'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-16 13:18:06  topic='How The Amazon Rainforest Makes Rain'  exit=0  slot='evening'  duration=1064s  attempts=4
