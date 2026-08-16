@@ -1,0 +1,125 @@
+{
+  "story_complexity": "complex",
+  "category_id": "28",
+  "title": "The Tectonic Collision That Accidentally Cooled Our Entire Planet",
+  "description": "Discover how the tectonic rise of the Himalayas acted as a colossal carbon sink, stripping greenhouse gases from the atmosphere and plunging Earth into a global cooling phase.",
+  "instagram_caption": "Did you know mountains could cool an entire planet? 🏔️ When the Himalayas rose 50 million years ago, they didn't just touch the sky—they acted as a giant planetary vacuum, pulling carbon dioxide out of the atmosphere and shaping the modern climate we live in today. Nature’s ultimate thermostat! \n\n#Himalayas #EarthScience #ClimateHistory #Geology #NatureWonders #ScienceFacts",
+  "hashtags": [
+    "#shorts",
+    "#earthscience",
+    "#planetearth",
+    "#geology",
+    "#himalayas",
+    "#climatehistory",
+    "#wondersofnature"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "The Himalayas did the unthinkable, acting as a colossal planetary vacuum that sucked greenhouse gases right out of the sky.",
+      "broll": "snowy himalayas mountain peaks aerial",
+      "broll_queries": [
+        "snowy himalayas mountain peaks aerial",
+        "himalayas mountain peaks close up",
+        "aerial view snow covered himalayas",
+        "mountain range clouds sweeping"
+      ]
+    },
+    {
+      "beat_role": "setup",
+      "beat_importance": 8,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Fifty million years ago, a massive tectonic collision slammed India into Asia, forcing these giant mountains upward.",
+      "broll": "tectonic plates colliding 3d animation",
+      "broll_queries": [
+        "tectonic plates colliding 3d animation",
+        "tectonic plate movement close up",
+        "earth continents colliding animation",
+        "mountain formation tectonic animation"
+      ]
+    },
+    {
+      "beat_role": "conflict",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This sudden uplift exposed raw minerals, triggering chemical reactions with rainwater that washed carbon away, burying it deep in the ocean.",
+      "broll": "rushing river mountain gorge aerial",
+      "broll_queries": [
+        "rushing river mountain gorge aerial",
+        "rain falling on mountain rocks",
+        "rushing river through mountain gorge",
+        "river water carrying sediment close up"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This relentless geological drain stripped the atmosphere of its heat-trapping gases, thinning Earth's protective warm blanket.",
+      "broll": "earth atmosphere visible from space",
+      "broll_queries": [
+        "earth atmosphere visible from space",
+        "glowing earth atmosphere close up",
+        "space view of earth atmosphere",
+        "sun shining through earth atmosphere"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "With the greenhouse insulation gone, global temperatures plunged, wrapping the poles in ice.",
+      "broll": "antarctica massive glaciers icebergs ocean",
+      "broll_queries": [
+        "antarctica massive glaciers icebergs ocean",
+        "glacier ice cracking close up",
+        "antarctica massive glaciers aerial",
+        "frozen ice sheet texture"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false,
+      "narration": "Today, these peaks still regulate our climate, acting as a giant thermostat that prevents runaway warming.",
+      "broll": "sunny green valley mountain peak",
+      "broll_queries": [
+        "sunny green valley mountain peak",
+        "wildflowers blowing mountain background",
+        "sunny green valley mountain landscape",
+        "sunlight shining on green mountains"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Follow Wonders of the Nature for more mind-blowing planet science.",
+      "broll": "scenic nature landscape epic sunset",
+      "broll_queries": [
+        "glowing sunset behind mountains",
+        "scenic nature landscape epic sunset",
+        "camera panning up forest trees",
+        "beautiful nature landscape"
+      ]
+    }
+  ],
+  "niche": "How The Himalayas Changed Earth's Climate"
+}

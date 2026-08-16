@@ -1,0 +1,79 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "The Secret Language Written in Chameleon Skin",
+  "description": "Discover the incredible science behind how chameleons actually use microscopic skin crystals to speak through color.",
+  "instagram_caption": "Think chameleons change color to hide? 🦎 Think again! It's actually a brilliant language of emotion and microscopic physics. #nature #chameleon #sciencefacts #wildlife",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#chameleon",
+    "#sciencefacts"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "We always assumed chameleons change color to hide from danger, blending perfectly into their green surroundings. But this famous survival myth is completely wrong.",
+      "broll": "chameleon camouflaged green leaf",
+      "broll_queries": [
+        "chameleon camouflaged green leaf",
+        "chameleon blending in green leaves close up",
+        "chameleon on branch wide shot",
+        "chameleon eyes rotating detail"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "When two rival males clash, their bodies erupt into brilliant displays of fiery orange and neon yellow, a silent visual battle to assert dominance.",
+      "broll": "chameleon changing to bright orange",
+      "broll_queries": [
+        "chameleon changing to bright orange",
+        "two chameleons facing off",
+        "chameleon turning bright orange close up",
+        "panther chameleon display colorful"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false,
+      "narration": "This shifting canvas is not a shield of invisibility, but a sophisticated language of raw emotion and high-stakes communication.",
+      "broll": "colorful panther chameleon side view",
+      "broll_queries": [
+        "colorful panther chameleon side view",
+        "panther chameleon moving slow",
+        "chameleon eye macro shot",
+        "chameleon body skin detail"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Nature always finds a more brilliant way to speak than we ever imagined. Follow Wonders of the Nature for more like this.",
+      "broll": "chameleon walking on branch",
+      "broll_queries": [
+        "chameleon walking on branch",
+        "chameleon walking branch slow motion",
+        "chameleon looking at camera wide",
+        "chameleon skin close up detail"
+      ]
+    }
+  ],
+  "niche": "Why Chameleons Change Color"
+}

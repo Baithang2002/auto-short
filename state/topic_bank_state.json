@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-16T04:24:37Z",
+  "updated_at": "2026-08-16T10:03:24Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -651,16 +651,16 @@
       "topic": "How fireflies make cold light to signal at night",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T11:47:26Z",
+      "last_attempt_at": "2026-08-16T10:00:32Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T11:47:26Z",
+      "last_failure_at": "2026-08-16T10:00:32Z",
       "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
-      "quarantine_until": "2026-08-14T11:47:26Z"
+      "quarantine_until": "2026-08-30T10:00:32Z"
     },
     {
       "topic": "how fish swim in clear water",
@@ -1909,18 +1909,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 12,
-      "qualification_count": 5,
-      "last_attempt_at": "2026-08-14T10:42:43Z",
-      "last_qualified_at": "2026-08-13T10:48:13Z",
+      "qualification_count": 6,
+      "last_attempt_at": "2026-08-16T09:59:23Z",
+      "last_qualified_at": "2026-08-16T09:59:23Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-14T10:42:43Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
-      "quarantine_until": "2026-08-28T10:42:43Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -2494,18 +2494,18 @@
     },
     {
       "topic": "Why Chameleons Change Color",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:10:35Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-16T10:00:22Z",
+      "last_qualified_at": "2026-08-16T10:00:22Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/3c2fbc674d4abee554dd.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-01T11:10:35Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-15T11:10:35Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why Clouds Float in the Sky",
@@ -2586,16 +2586,16 @@
       "topic": "Why Eagles See So Far",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:59:25Z",
+      "last_attempt_at": "2026-08-16T10:02:51Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:59:25Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 17% is below required 67%",
-      "quarantine_until": "2026-08-14T15:59:25Z"
+      "last_failure_at": "2026-08-16T10:02:51Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-30T10:02:51Z"
     },
     {
       "topic": "why Earth has seasons",
@@ -3126,16 +3126,16 @@
       "topic": "Why Snakes Shed Their Skin",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:55:08Z",
+      "last_attempt_at": "2026-08-16T10:03:24Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:55:08Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
-      "quarantine_until": "2026-08-14T16:55:08Z"
+      "last_failure_at": "2026-08-16T10:03:24Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-30T10:03:24Z"
     },
     {
       "topic": "Why Snowflakes Have Six Sides",
@@ -3186,16 +3186,16 @@
       "topic": "Why Space Looks Black",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T11:11:24Z",
+      "last_attempt_at": "2026-08-16T10:01:33Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:11:24Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-15T11:11:24Z"
+      "last_failure_at": "2026-08-16T10:01:33Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-30T10:01:33Z"
     },
     {
       "topic": "Why Stars Twinkle at Night",
