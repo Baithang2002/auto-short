@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-16T10:03:24Z",
+  "updated_at": "2026-08-16T13:03:06Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1909,18 +1909,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 12,
+      "failure_count": 13,
       "qualification_count": 6,
-      "last_attempt_at": "2026-08-16T09:59:23Z",
+      "last_attempt_at": "2026-08-16T13:01:18Z",
       "last_qualified_at": "2026-08-16T09:59:23Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-14T10:42:43Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-16T13:01:18Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T13:01:18Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -2346,16 +2346,16 @@
       "topic": "How wind shear can make a supercell thunderstorm rotate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T11:07:34Z",
+      "last_attempt_at": "2026-08-16T13:02:22Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T11:07:34Z",
-      "last_failure_reason": "hook: authentic candidates were found but none passed intent/evidence scoring; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
-      "quarantine_until": "2026-08-16T11:07:34Z"
+      "last_failure_at": "2026-08-16T13:02:22Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T13:02:22Z"
     },
     {
       "topic": "how wind turbines turn wind into electricity",
@@ -2451,16 +2451,16 @@
       "topic": "Why Astronauts Float in Space",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T11:07:17Z",
+      "last_attempt_at": "2026-08-16T13:03:06Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T11:07:17Z",
+      "last_failure_at": "2026-08-16T13:03:06Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-16T11:07:17Z"
+      "quarantine_until": "2026-08-30T13:03:06Z"
     },
     {
       "topic": "Why Basalt Columns Form Perfect Shapes",
@@ -2494,18 +2494,18 @@
     },
     {
       "topic": "Why Chameleons Change Color",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-16T10:00:22Z",
+      "last_attempt_at": "2026-08-16T13:02:16Z",
       "last_qualified_at": "2026-08-16T10:00:22Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/3c2fbc674d4abee554dd.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T11:10:35Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-16T13:02:16Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-30T13:02:16Z"
     },
     {
       "topic": "Why Clouds Float in the Sky",
