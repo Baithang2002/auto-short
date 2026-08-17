@@ -362,3 +362,4 @@
 2026-08-17 04:13:00  topic='How The Grand Canyon Was Carved'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-17 04:13:21  topic='Why Crabs Walk Sideways'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-17 04:13:55  topic='Why Elephants Never Forget Paths'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-17 04:25:55  topic='Why Fireflies Glow at Night'  exit=1  slot='morning'  duration=84s  critical_failure=true  reason='critical technical failure exit=1'
