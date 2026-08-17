@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-17T04:13:55Z",
+  "updated_at": "2026-08-17T10:19:44Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -906,16 +906,16 @@
       "topic": "How Hummingbirds Hover in Midair",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:57:43Z",
+      "last_attempt_at": "2026-08-17T10:16:20Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:57:43Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T16:57:43Z"
+      "last_failure_at": "2026-08-17T10:16:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-31T10:16:20Z"
     },
     {
       "topic": "How hummingbirds hover while feeding",
@@ -1009,18 +1009,18 @@
     },
     {
       "topic": "How Jellyfish Move Without Bones",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:59:52Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-17T10:19:44Z",
+      "last_qualified_at": "2026-08-17T10:19:44Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/6ce950d1ea23b02f9b90.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T16:59:52Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-14T16:59:52Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "how kelp moves in ocean water",
@@ -1911,16 +1911,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 13,
+      "failure_count": 14,
       "qualification_count": 6,
-      "last_attempt_at": "2026-08-16T13:01:18Z",
+      "last_attempt_at": "2026-08-17T10:13:30Z",
       "last_qualified_at": "2026-08-16T09:59:23Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-16T13:01:18Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-30T13:01:18Z"
+      "last_failure_at": "2026-08-17T10:13:30Z",
+      "last_failure_reason": "scene coverage 3/6 (50%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-08-31T10:13:30Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1986,16 +1986,16 @@
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 4,
+      "failure_count": 5,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-13T10:50:37Z",
+      "last_attempt_at": "2026-08-17T10:09:57Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-13T10:50:37Z",
+      "last_failure_at": "2026-08-17T10:09:57Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-27T10:50:37Z"
+      "quarantine_until": "2026-08-31T10:09:57Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -3051,16 +3051,16 @@
       "topic": "Why Polar Bears Have Black Skin",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:54:59Z",
+      "last_attempt_at": "2026-08-17T10:18:26Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:54:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
-      "quarantine_until": "2026-08-14T16:54:59Z"
+      "last_failure_at": "2026-08-17T10:18:26Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-31T10:18:26Z"
     },
     {
       "topic": "Why Rainforests Create Their Own Rain",
@@ -3681,16 +3681,16 @@
       "topic": "Why Zebras Have Stripes",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:57:33Z",
+      "last_attempt_at": "2026-08-17T10:18:11Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:57:33Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-14T16:57:33Z"
+      "last_failure_at": "2026-08-17T10:18:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-31T10:18:11Z"
     }
   ]
 }
