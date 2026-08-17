@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-16T13:35:50Z",
+  "updated_at": "2026-08-17T04:13:55Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1641,16 +1641,16 @@
       "topic": "How Spiders Spin Strong Silk",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:59Z",
+      "last_attempt_at": "2026-08-17T04:12:36Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:59Z"
+      "last_failure_at": "2026-08-17T04:12:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-31T04:12:36Z"
     },
     {
       "topic": "How Starfish Regrow Lost Arms",
@@ -1836,16 +1836,16 @@
       "topic": "How The Grand Canyon Was Carved",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:13:46Z",
+      "last_attempt_at": "2026-08-17T04:13:00Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T06:13:46Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T06:13:46Z"
+      "last_failure_at": "2026-08-17T04:13:00Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-31T04:13:00Z"
     },
     {
       "topic": "How The Great Barrier Reef Was Built",
@@ -2556,16 +2556,16 @@
       "topic": "Why Crabs Walk Sideways",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:59:15Z",
+      "last_attempt_at": "2026-08-17T04:13:20Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:59:15Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:59:15Z"
+      "last_failure_at": "2026-08-17T04:13:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-08-31T04:13:20Z"
     },
     {
       "topic": "Why Deserts Get So Cold at Night",
@@ -2631,16 +2631,16 @@
       "topic": "Why Elephants Never Forget Paths",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:59:36Z",
+      "last_attempt_at": "2026-08-17T04:13:55Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:59:36Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:59:36Z"
+      "last_failure_at": "2026-08-17T04:13:55Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-08-31T04:13:55Z"
     },
     {
       "topic": "Why Fireflies Glow at Night",

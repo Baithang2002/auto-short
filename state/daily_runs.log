@@ -358,3 +358,7 @@
 2026-08-16 13:21:37  topic='Why The Moon Has Phases'  exit=1  slot='evening'  attempt=2/4  quality_deferred='RuntimeError: Script is unsalvageable: title contains an unsupported absolute'
 2026-08-16 13:25:47  topic='Why The Pacific Ring of Fire Has So Many Volcanoes'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-16 13:18:06  topic='How The Amazon Rainforest Makes Rain'  exit=0  slot='evening'  duration=1064s  attempts=4
+2026-08-17 04:12:36  topic='How Spiders Spin Strong Silk'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-17 04:13:00  topic='How The Grand Canyon Was Carved'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-17 04:13:21  topic='Why Crabs Walk Sideways'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-17 04:13:55  topic='Why Elephants Never Forget Paths'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
