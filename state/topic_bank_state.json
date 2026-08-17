@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-17T10:19:44Z",
+  "updated_at": "2026-08-17T13:12:00Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1009,18 +1009,18 @@
     },
     {
       "topic": "How Jellyfish Move Without Bones",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-17T10:19:44Z",
+      "last_attempt_at": "2026-08-17T13:05:50Z",
       "last_qualified_at": "2026-08-17T10:19:44Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/6ce950d1ea23b02f9b90.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:59:52Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-17T13:05:50Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-08-31T13:05:50Z"
     },
     {
       "topic": "how kelp moves in ocean water",
@@ -2646,16 +2646,16 @@
       "topic": "Why Fireflies Glow at Night",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:00:09Z",
+      "last_attempt_at": "2026-08-17T13:06:12Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:00:09Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T16:00:09Z"
+      "last_failure_at": "2026-08-17T13:06:12Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-08-31T13:06:12Z"
     },
     {
       "topic": "Why Flamingos Are Pink",
@@ -2794,18 +2794,18 @@
     },
     {
       "topic": "Why Koalas Sleep So Much",
-      "status": "quarantined",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 1,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:00:44Z",
+      "last_attempt_at": "2026-08-17T13:12:00Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
-      "last_success_at": "",
+      "last_success_at": "2026-08-17T13:12:00Z",
       "last_failure_at": "2026-07-31T16:00:44Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T16:00:44Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "why lakes can suddenly change color",

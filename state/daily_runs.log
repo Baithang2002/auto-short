@@ -363,3 +363,6 @@
 2026-08-17 04:13:21  topic='Why Crabs Walk Sideways'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-17 04:13:55  topic='Why Elephants Never Forget Paths'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-17 04:25:55  topic='Why Fireflies Glow at Night'  exit=1  slot='morning'  duration=84s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-17 13:05:50  topic='How Jellyfish Move Without Bones'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-17 13:06:12  topic='Why Fireflies Glow at Night'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-17 13:04:04  topic='Why Koalas Sleep So Much'  exit=0  slot='evening'  duration=476s  attempts=3
