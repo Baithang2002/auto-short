@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-18T04:24:59Z",
+  "updated_at": "2026-08-18T10:15:20Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -36,16 +36,16 @@
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-03T15:33:42Z",
+      "last_attempt_at": "2026-08-18T10:12:57Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T15:33:42Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-17T15:33:42Z"
+      "last_failure_at": "2026-08-18T10:12:57Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-09-01T10:12:57Z"
     },
     {
       "topic": "how ancient Egyptians built stone pyramids",
@@ -336,16 +336,16 @@
       "topic": "How Caves Form Underground",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-03T15:22:02Z",
+      "last_attempt_at": "2026-08-18T10:15:20Z",
       "last_qualified_at": "2026-08-03T12:48:16Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T15:22:02Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-17T15:22:02Z"
+      "last_failure_at": "2026-08-18T10:15:20Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-01T10:15:20Z"
     },
     {
       "topic": "how caves grow giant crystal formations",
@@ -1654,18 +1654,18 @@
     },
     {
       "topic": "How Starfish Regrow Lost Arms",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-08-01T06:14:58Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-18T10:13:57Z",
+      "last_qualified_at": "2026-08-18T10:13:57Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/e2dfc66b78811fdde354.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-01T06:14:58Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-15T06:14:58Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "how stars appear at night",
@@ -1909,18 +1909,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 14,
-      "qualification_count": 6,
-      "last_attempt_at": "2026-08-17T10:13:30Z",
-      "last_qualified_at": "2026-08-16T09:59:23Z",
+      "qualification_count": 7,
+      "last_attempt_at": "2026-08-18T10:09:09Z",
+      "last_qualified_at": "2026-08-18T10:09:09Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-17T10:13:30Z",
-      "last_failure_reason": "scene coverage 3/6 (50%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-31T10:13:30Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1986,16 +1986,16 @@
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 5,
+      "failure_count": 6,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-17T10:09:57Z",
+      "last_attempt_at": "2026-08-18T10:05:28Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-17T10:09:57Z",
+      "last_failure_at": "2026-08-18T10:05:28Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-08-31T10:09:57Z"
+      "quarantine_until": "2026-09-01T10:05:28Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -2854,18 +2854,18 @@
     },
     {
       "topic": "Why Lions Roar at Night",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:00:52Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-18T10:14:56Z",
+      "last_qualified_at": "2026-08-18T10:14:56Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/4293940da8fd32db6c48.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T16:00:52Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T16:00:52Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "why Mars has the tallest volcano in the solar system",
@@ -3651,16 +3651,16 @@
       "topic": "Why Wolves Hunt in Packs",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T16:55:20Z",
+      "last_attempt_at": "2026-08-18T10:10:48Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:55:20Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T16:55:20Z"
+      "last_failure_at": "2026-08-18T10:10:48Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-01T10:10:48Z"
     },
     {
       "topic": "Why Yellowstone Has Geysers",
