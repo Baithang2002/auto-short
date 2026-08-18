@@ -370,3 +370,7 @@
 2026-08-18 04:04:40  topic='How Craters Form on the Moon'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-18 04:06:36  topic='How Lava Cools Into Rock'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-18 04:02:19  topic='How Fog Forms Near the Ground'  exit=1  slot='morning'  duration=298s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-18 04:23:12  topic='How Fog Forms Near the Ground'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-18 04:23:23  topic='Why The Arctic Has Midnight Sun'  exit=1  slot='morning'  attempt=2/4  quality_deferred='RuntimeError: Script is unsalvageable: title contains an unsupported absolute'
+2026-08-18 04:23:44  topic='Why Basalt Columns Form Perfect Shapes'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-18 04:24:59  topic='Why Mudslides Move So Fast'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/5 (40%) is below required 4/5 (67%)'
