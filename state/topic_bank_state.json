@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-18T10:15:20Z",
+  "updated_at": "2026-08-18T13:16:16Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -799,18 +799,18 @@
     },
     {
       "topic": "How Geysers Erupt Like Clocks",
-      "status": "quarantined",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 1,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T11:51:44Z",
+      "last_attempt_at": "2026-08-18T13:16:16Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
-      "last_success_at": "",
+      "last_success_at": "2026-08-18T13:16:16Z",
       "last_failure_at": "2026-08-04T11:51:44Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-18T11:51:44Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "how geysers send water into the air",
@@ -1654,18 +1654,18 @@
     },
     {
       "topic": "How Starfish Regrow Lost Arms",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-18T10:13:57Z",
+      "last_attempt_at": "2026-08-18T13:09:57Z",
       "last_qualified_at": "2026-08-18T10:13:57Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/e2dfc66b78811fdde354.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-01T06:14:58Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-18T13:09:57Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-01T13:09:57Z"
     },
     {
       "topic": "how stars appear at night",
@@ -1909,18 +1909,18 @@
     },
     {
       "topic": "How The Himalayas Changed Earth's Climate",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 14,
+      "failure_count": 15,
       "qualification_count": 7,
-      "last_attempt_at": "2026-08-18T10:09:09Z",
+      "last_attempt_at": "2026-08-18T13:07:54Z",
       "last_qualified_at": "2026-08-18T10:09:09Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/5d8d97c781d686d87583.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-17T10:13:30Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-18T13:07:54Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-01T13:07:54Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -2854,18 +2854,18 @@
     },
     {
       "topic": "Why Lions Roar at Night",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-18T10:14:56Z",
+      "last_attempt_at": "2026-08-18T13:08:29Z",
       "last_qualified_at": "2026-08-18T10:14:56Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/4293940da8fd32db6c48.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T16:00:52Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-18T13:08:29Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-01T13:08:29Z"
     },
     {
       "topic": "why Mars has the tallest volcano in the solar system",
