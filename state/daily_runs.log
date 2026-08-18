@@ -366,3 +366,7 @@
 2026-08-17 13:05:50  topic='How Jellyfish Move Without Bones'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-17 13:06:12  topic='Why Fireflies Glow at Night'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-17 13:04:04  topic='Why Koalas Sleep So Much'  exit=0  slot='evening'  duration=476s  attempts=3
+2026-08-18 04:02:56  topic='Why Rivers Bend Across the Land'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-18 04:04:40  topic='How Craters Form on the Moon'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-18 04:06:36  topic='How Lava Cools Into Rock'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-18 04:02:19  topic='How Fog Forms Near the Ground'  exit=1  slot='morning'  duration=298s  critical_failure=true  reason='critical technical failure exit=1'

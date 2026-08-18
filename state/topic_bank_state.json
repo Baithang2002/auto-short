@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-17T13:12:00Z",
+  "updated_at": "2026-08-18T04:06:36Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -471,16 +471,16 @@
       "topic": "How Craters Form on the Moon",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T06:14:59Z",
+      "last_attempt_at": "2026-08-18T04:04:40Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T06:14:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-16T06:14:59Z"
+      "last_failure_at": "2026-08-18T04:04:40Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-01T04:04:40Z"
     },
     {
       "topic": "How Crocodiles Wait Underwater",
@@ -1071,16 +1071,16 @@
       "topic": "How Lava Cools Into Rock",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:05:44Z",
+      "last_attempt_at": "2026-08-18T04:06:36Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T06:05:44Z",
-      "last_failure_reason": "post-render publish quality gate deferred topic",
-      "quarantine_until": "2026-08-13T06:05:44Z"
+      "last_failure_at": "2026-08-18T04:06:36Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-01T04:06:36Z"
     },
     {
       "topic": "how leaves change color",
@@ -3081,16 +3081,16 @@
       "topic": "Why Rivers Bend Across the Land",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:07:59Z",
+      "last_attempt_at": "2026-08-18T04:02:56Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-30T06:07:59Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-13T06:07:59Z"
+      "last_failure_at": "2026-08-18T04:02:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-01T04:02:56Z"
     },
     {
       "topic": "why rivers bend and change course",
