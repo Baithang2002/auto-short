@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-19T10:09:22Z",
+  "updated_at": "2026-08-19T13:16:08Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -994,18 +994,18 @@
     },
     {
       "topic": "How Islands Form From Volcanoes",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 2,
-      "last_attempt_at": "2026-08-19T10:07:04Z",
+      "last_attempt_at": "2026-08-19T13:10:38Z",
       "last_qualified_at": "2026-08-19T10:07:04Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/0ae83c8983facaecca49.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T15:28:38Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-19T13:10:38Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-02T13:10:38Z"
     },
     {
       "topic": "How Jellyfish Move Without Bones",
@@ -1039,15 +1039,15 @@
     },
     {
       "topic": "How Lagoons Form Behind Reefs",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-19T10:09:05Z",
+      "last_attempt_at": "2026-08-19T13:16:08Z",
       "last_qualified_at": "2026-08-19T10:09:05Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/d12439ddac7c16693d98.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-19T13:16:08Z",
       "last_failure_at": "2026-07-30T06:13:33Z",
       "last_failure_reason": "",
       "quarantine_until": ""
@@ -3529,18 +3529,18 @@
     },
     {
       "topic": "Why The Sky Turns Red at Sunset",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-19T10:09:22Z",
+      "last_attempt_at": "2026-08-19T13:07:44Z",
       "last_qualified_at": "2026-08-19T10:09:22Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/bd7ad7909d3469555505.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-05T06:14:37Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-19T13:07:44Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-02T13:07:44Z"
     },
     {
       "topic": "Why The Sun Rises in the East",
