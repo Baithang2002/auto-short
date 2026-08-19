@@ -1,0 +1,81 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "Undersea Volcanic Eruptions Are Actively Creating Brand New Islands",
+  "description": "Discover the incredible journey of how underwater volcanic activity creates brand-new islands from the depths of the ocean.",
+  "instagram_caption": "From the pitch-black ocean depths to a lush, green paradise 🌋 witness the epic birth of a volcanic island. Earth is constantly rebuilding itself! #geology #volcano #naturelovers #earthscience",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#volcano",
+    "#sciencefacts",
+    "#naturehistory",
+    "#earthscience"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Deep beneath the ocean, red-hot magma explodes directly into freezing salt water, instantly cooling and hardening into brand-new land right before your eyes.",
+      "broll": "underwater lava explosion ocean",
+      "broll_queries": [
+        "underwater lava explosion ocean",
+        "close-up underwater lava glow",
+        "wide underwater volcanic eruption",
+        "underwater molten rock cooling"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Eventually, this growing titan breaches the ocean's surface. It clashes violently with crashing waves as it fights to claim its permanent place in the open air.",
+      "broll": "volcanic island breaching ocean surface",
+      "broll_queries": [
+        "volcanic island breaching ocean surface",
+        "close-up waves crashing lava rock",
+        "wide aerial volcanic island birth",
+        "steam rising ocean surface lava"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "But this sterile black rock doesn't stay dead for long. Soon, wind, rain, and drifting seeds transform the barren basalt into a lush, fertile paradise teeming with life.",
+      "broll": "green tropical volcanic island",
+      "broll_queries": [
+        "green tropical volcanic island",
+        "close-up green sprout volcanic ash",
+        "wide aerial lush volcanic island",
+        "rain falling on black basalt"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Our dynamic planet is constantly rebuilding itself from the inside out. Subscribe to Wonders of Nature for more incredible stories of our earth.",
+      "broll": "scenic active volcano sunrise",
+      "broll_queries": [
+        "scenic active volcano sunrise",
+        "close-up bubbling volcanic caldera",
+        "wide scenic active volcano steam",
+        "molten lava flow aerial"
+      ]
+    }
+  ],
+  "niche": "How Islands Form From Volcanoes"
+}

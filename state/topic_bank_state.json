@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-19T04:26:42Z",
+  "updated_at": "2026-08-19T10:09:22Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -994,18 +994,18 @@
     },
     {
       "topic": "How Islands Form From Volcanoes",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 1,
-      "last_attempt_at": "2026-08-03T15:28:38Z",
-      "last_qualified_at": "2026-08-03T12:51:36Z",
+      "qualification_count": 2,
+      "last_attempt_at": "2026-08-19T10:07:04Z",
+      "last_qualified_at": "2026-08-19T10:07:04Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "",
+      "qualified_script_path": "state/qualified_scripts/0ae83c8983facaecca49.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-03T15:28:38Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-17T15:28:38Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Jellyfish Move Without Bones",
@@ -1039,18 +1039,18 @@
     },
     {
       "topic": "How Lagoons Form Behind Reefs",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-30T06:13:33Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-19T10:09:05Z",
+      "last_qualified_at": "2026-08-19T10:09:05Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/d12439ddac7c16693d98.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-30T06:13:33Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 67% is below required 67%",
-      "quarantine_until": "2026-08-13T06:13:33Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How lava cools at the coast and creates new land",
@@ -1911,16 +1911,16 @@
       "topic": "How The Himalayas Changed Earth's Climate",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 15,
+      "failure_count": 16,
       "qualification_count": 7,
-      "last_attempt_at": "2026-08-18T13:07:54Z",
+      "last_attempt_at": "2026-08-19T10:06:02Z",
       "last_qualified_at": "2026-08-18T10:09:09Z",
       "last_coverage_ratio": 1.0,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-18T13:07:54Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-09-01T13:07:54Z"
+      "last_failure_at": "2026-08-19T10:06:02Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 4/6 (67%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-09-02T10:06:02Z"
     },
     {
       "topic": "How The International Space Station Orbits Earth",
@@ -1986,16 +1986,16 @@
       "topic": "How the Moon's shadow creates a total solar eclipse on Earth",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 6,
+      "failure_count": 7,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-18T10:05:28Z",
+      "last_attempt_at": "2026-08-19T10:04:04Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-18T10:05:28Z",
+      "last_failure_at": "2026-08-19T10:04:04Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-09-01T10:05:28Z"
+      "quarantine_until": "2026-09-02T10:04:04Z"
     },
     {
       "topic": "How The Nile River Shaped Ancient Egypt",
@@ -2706,16 +2706,16 @@
       "topic": "Why Hot Springs Bubble From the Ground",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T11:51:10Z",
+      "last_attempt_at": "2026-08-19T10:08:04Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T11:51:10Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 3/6 (50%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-18T11:51:10Z"
+      "last_failure_at": "2026-08-19T10:08:04Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-02T10:08:04Z"
     },
     {
       "topic": "why hummingbirds can fly backward",
@@ -3529,18 +3529,18 @@
     },
     {
       "topic": "Why The Sky Turns Red at Sunset",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-08-05T06:14:37Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-19T10:09:22Z",
+      "last_qualified_at": "2026-08-19T10:09:22Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/bd7ad7909d3469555505.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-05T06:14:37Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-19T06:14:37Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "Why The Sun Rises in the East",
