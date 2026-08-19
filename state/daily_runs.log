@@ -378,3 +378,7 @@
 2026-08-18 13:08:29  topic='Why Lions Roar at Night'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-18 13:09:57  topic='How Starfish Regrow Lost Arms'  exit=1  slot='evening'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-18 13:05:56  topic='How Geysers Erupt Like Clocks'  exit=0  slot='evening'  duration=620s  attempts=4
+2026-08-19 04:05:23  topic='Why Iceland Has So Many Volcanoes'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-19 04:06:14  topic='How The Swiss Alps Hold Glaciers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-19 04:06:56  topic='How Comets Grow Glowing Tails'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-19 04:02:57  topic='How A Lunar Eclipse Turns the Moon Red'  exit=1  slot='morning'  duration=290s  critical_failure=true  reason='critical technical failure exit=1'

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-18T13:16:16Z",
+  "updated_at": "2026-08-19T04:06:56Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -411,16 +411,16 @@
       "topic": "How Comets Grow Glowing Tails",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T15:14:12Z",
+      "last_attempt_at": "2026-08-19T04:06:56Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T15:14:12Z",
-      "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-18T15:14:12Z"
+      "last_failure_at": "2026-08-19T04:06:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-02T04:06:56Z"
     },
     {
       "topic": "how comets grow their glowing tails",
@@ -2076,16 +2076,16 @@
       "topic": "How The Swiss Alps Hold Glaciers",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-03T15:34:08Z",
+      "last_attempt_at": "2026-08-19T04:06:14Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-03T15:34:08Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-17T15:34:08Z"
+      "last_failure_at": "2026-08-19T04:06:14Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-02T04:06:14Z"
     },
     {
       "topic": "How Thunderstorms Build in the Sky",
@@ -2766,16 +2766,16 @@
       "topic": "Why Iceland Has So Many Volcanoes",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-02T14:41:36Z",
+      "last_attempt_at": "2026-08-19T04:05:23Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-02T14:41:36Z",
-      "last_failure_reason": "post-render publish quality gate deferred topic",
-      "quarantine_until": "2026-08-16T14:41:36Z"
+      "last_failure_at": "2026-08-19T04:05:23Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-02T04:05:23Z"
     },
     {
       "topic": "Why Jupiter Has a Giant Red Spot",
