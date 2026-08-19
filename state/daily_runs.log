@@ -382,3 +382,7 @@
 2026-08-19 04:06:14  topic='How The Swiss Alps Hold Glaciers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-19 04:06:56  topic='How Comets Grow Glowing Tails'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
 2026-08-19 04:02:57  topic='How A Lunar Eclipse Turns the Moon Red'  exit=1  slot='morning'  duration=290s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-19 04:22:53  topic='How A Lunar Eclipse Turns the Moon Red'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)'
+2026-08-19 04:23:33  topic='How The Andes Mountains Rose So High'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-19 04:26:42  topic='How lava cools at the coast and creates new land'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-19 04:22:06  topic='How Victoria Falls Creates Mist'  exit=1  slot='morning'  duration=286s  critical_failure=true  reason='critical technical failure exit=1'
