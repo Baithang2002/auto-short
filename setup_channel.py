@@ -13,15 +13,15 @@ AVATAR_PATH = ASSETS_DIR / "profile_picture.png"
 BANNER_PATH = ASSETS_DIR / "banner_image.png"
 WATERMARK_PATH = ASSETS_DIR / "watermark.png"
 
-DESCRIPTION = """Daily mind-blowing facts about nature, space, and the planet we live on.
+DESCRIPTION = """Mind-blowing animal facts and wildlife science. How animals work, hunt, survive, and defy physics.
 
-🌍 New short every weekday at 6pm IST
-🌌 No clickbait. Just real science, told well."""
+🐆 New short every weekday at 6pm IST
+🔬 No clickbait. Just real science, told well."""
 
 TAGS = [
-    "nature", "science", "space", "facts", "mindblown", 
-    "shorts", "educational", "wildlife", "astronomy", 
-    "earth", "biology", "geology"
+    "animals", "wildlife", "nature", "facts", "science",
+    "shorts", "educational", "biology", "zoology",
+    "animalbehavior", "predator", "marine", "insects"
 ]
 
 def die(msg):

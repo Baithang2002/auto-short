@@ -344,7 +344,7 @@ Return STRICT JSON only (no markdown, no backticks, no preamble) in this shape:
 Rules:
 - One segment per beat (or per merged pair). Never invent beats.
 - Each segment must be at least {profile.narration_words_per_segment_min} spoken words and must read as complete sentences.
-- The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words). Pick one pattern: "Subscribe to Wonders of the Nature for more.", "Follow Wonders of the Nature for more like this.", "Stay curious - Wonders of the Nature posts daily."
+- The LAST segment must end with a soft CTA that includes the EXACT channel name "The Wild Mechanics" (these literal words). Pick one pattern: "Subscribe to The Wild Mechanics for more.", "Follow The Wild Mechanics for more like this.", "Stay curious - The Wild Mechanics posts daily."
 - STRICT ALIGNMENT: each segment's "broll" and "broll_queries" MUST match the subject and action of that segment's narration.
 - Each "broll_queries" list has exactly 4 concrete searches: close-up/action, environment/wide, detail, and safe exact-subject fallback. For segment 1 the first query is the strongest motion/action query.
 - For space/ocean topics include real-object NASA-friendly terms.
@@ -412,7 +412,7 @@ Rules:
 - Every segment must carry a beat_role following a coherent story order; the
   FIRST segment is always the hook and the LAST is always the conclusion_cta.
 - Each segment must be at least {profile.narration_words_per_segment_min} spoken words and must read as complete sentences.
-- The LAST segment must end with a soft CTA that includes the EXACT channel name "Wonders of the Nature" (these literal words). Pick one pattern: "Subscribe to Wonders of the Nature for more.", "Follow Wonders of the Nature for more like this.", "Stay curious - Wonders of the Nature posts daily."
+- The LAST segment must end with a soft CTA that includes the EXACT channel name "The Wild Mechanics" (these literal words). Pick one pattern: "Subscribe to The Wild Mechanics for more.", "Follow The Wild Mechanics for more like this.", "Stay curious - The Wild Mechanics posts daily."
 - STRICT ALIGNMENT: each segment's "broll" and "broll_queries" MUST match the subject and action of that segment's narration.
 - Each "broll_queries" list has exactly 4 concrete searches: close-up/action, environment/wide, detail, and safe exact-subject fallback. For segment 1 the first query is the strongest motion/action query.
 - For space/ocean topics include real-object NASA-friendly terms.

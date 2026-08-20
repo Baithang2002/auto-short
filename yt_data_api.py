@@ -32,7 +32,7 @@ from typing import Optional
 #   24 = Entertainment
 #   27 = Education
 #   28 = Science & Technology
-# "Wonders of the Nature" fits Education or Science & Technology cleanly.
+# "The Wild Mechanics" fits Education or Science & Technology cleanly.
 DEFAULT_CATEGORY_ID = "27"
 CREDENTIALS_PATH = Path(__file__).resolve().parent / ".youtube_credentials.json"
 _PUBLISH_KEY_PATTERN = re.compile(r"^AutoShort-Publish-Key:\s*(\S+)\s*$", re.MULTILINE)

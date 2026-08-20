@@ -56,7 +56,7 @@ class RenderDefaults:
 @dataclass(frozen=True)
 class ChannelDefaults:
     default_niche: str = "mind-blowing animal facts and wildlife science"
-    channel_name: str = "Wonders of the Nature"
+    channel_name: str = "The Wild Mechanics"
 
 
 @dataclass(frozen=True)
