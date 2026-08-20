@@ -395,3 +395,5 @@
 2026-08-20 04:22:15  topic='How Victoria Falls Creates Mist'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-20 04:23:29  topic='How humpback whales use bubble nets to concentrate fish'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-20 04:21:24  topic='Why Snowflakes Have Six Sides'  exit=1  slot='morning'  duration=144s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-20 13:12:21  topic='How Bees Regulate Hive Temperature'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-20 13:09:40  topic='How Wasps Build Paper Nests'  exit=0  slot='evening'  duration=702s  attempts=2

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-20T10:11:21Z",
+  "updated_at": "2026-08-20T13:21:22Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -94,18 +94,18 @@
     },
     {
       "topic": "How Bees Regulate Hive Temperature",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-20T10:08:53Z",
+      "last_attempt_at": "2026-08-20T13:12:21Z",
       "last_qualified_at": "2026-08-20T10:08:53Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/4dcd769e49a5f30bbbc5.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-20T13:12:21Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-03T13:12:21Z"
     },
     {
       "topic": "How Camels Survive the Desert",
@@ -379,15 +379,15 @@
     },
     {
       "topic": "How Wasps Build Paper Nests",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-20T10:10:27Z",
+      "last_attempt_at": "2026-08-20T13:21:22Z",
       "last_qualified_at": "2026-08-20T10:10:27Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/3f9143cc284c77869a02.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-20T13:21:22Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
