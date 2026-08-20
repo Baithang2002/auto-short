@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-20T04:03:54Z",
+  "updated_at": "2026-08-20T04:23:29Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -936,16 +936,16 @@
       "topic": "How humpback whales use bubble nets to concentrate fish",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T14:55:24Z",
+      "last_attempt_at": "2026-08-20T04:23:29Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T14:55:24Z",
+      "last_failure_at": "2026-08-20T04:23:29Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
-      "quarantine_until": "2026-08-18T14:55:24Z"
+      "quarantine_until": "2026-09-03T04:23:29Z"
     },
     {
       "topic": "how hurricanes grow into giant storms",
@@ -1806,16 +1806,16 @@
       "topic": "How The Everglades Filters Water",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-05T15:04:11Z",
+      "last_attempt_at": "2026-08-20T04:21:52Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-05T15:04:11Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-19T15:04:11Z"
+      "last_failure_at": "2026-08-20T04:21:52Z",
+      "last_failure_reason": "RuntimeError: Script is unsalvageable: title is question-led; use a curious declarative statement",
+      "quarantine_until": "2026-09-03T04:21:52Z"
     },
     {
       "topic": "How The Galapagos Shaped Evolution",
@@ -2196,16 +2196,16 @@
       "topic": "How Victoria Falls Creates Mist",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-04T06:08:09Z",
+      "last_attempt_at": "2026-08-20T04:22:15Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-04T06:08:09Z",
+      "last_failure_at": "2026-08-20T04:22:15Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
-      "quarantine_until": "2026-08-18T06:08:09Z"
+      "quarantine_until": "2026-09-03T04:22:15Z"
     },
     {
       "topic": "how Vikings navigated without GPS",

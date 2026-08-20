@@ -391,3 +391,7 @@
 2026-08-19 13:06:51  topic='How Lagoons Form Behind Reefs'  exit=0  slot='evening'  duration=557s  attempts=3
 2026-08-20 04:03:54  topic='How The Alps Were Pushed Upward'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-20 04:02:33  topic='How The Everglades Filters Water'  exit=1  slot='morning'  duration=163s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-20 04:21:52  topic='How The Everglades Filters Water'  exit=1  slot='morning'  attempt=1/4  quality_deferred='RuntimeError: Script is unsalvageable: title is question-led; use a curious declarative statement'
+2026-08-20 04:22:15  topic='How Victoria Falls Creates Mist'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-20 04:23:29  topic='How humpback whales use bubble nets to concentrate fish'  exit=1  slot='morning'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-20 04:21:24  topic='Why Snowflakes Have Six Sides'  exit=1  slot='morning'  duration=144s  critical_failure=true  reason='critical technical failure exit=1'
