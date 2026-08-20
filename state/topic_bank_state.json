@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-20T13:21:22Z",
+  "updated_at": "2026-08-20T19:11:08Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -169,15 +169,15 @@
     },
     {
       "topic": "How Dolphins Use Sound to Hunt",
-      "status": "qualified",
-      "success_count": 0,
+      "status": "proven",
+      "success_count": 1,
       "failure_count": 0,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-20T10:10:58Z",
+      "last_attempt_at": "2026-08-20T19:11:08Z",
       "last_qualified_at": "2026-08-20T10:10:58Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/bbcc0cce4ad878efc3af.json",
-      "last_success_at": "",
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-20T19:11:08Z",
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
