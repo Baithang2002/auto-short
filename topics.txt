@@ -1,70 +1,161 @@
-# Wonders of Nature - conservative stock-provider daily topic pool
+# Animal Kingdom - daily topic pool
 # One topic per line. Lines starting with # are ignored.
-# These topics use literal, common search terms with broad Pexels/Pixabay
-# inventory and Wikimedia supporting imagery. The live source-coverage
-# qualification gate remains authoritative before any topic is published.
+# Animal-only channel: mind-blowing facts about animals
+# Focus: short, punchy topics with strong visual appeal
 
-# --- Wildlife with common, visually literal search terms ---
-how bees pollinate flowers
-how butterflies emerge from a chrysalis
-how frogs live near ponds
-how birds build nests
-how penguins move across snow
+# --- Mammals ---
+how dolphins use sound to hunt
+how wolves hunt in packs
+how cheetahs run so fast
+how elephants never forget paths
 how bears catch fish in rivers
-how elephants walk through grasslands
-how dolphins swim in the ocean
-how turtles move along a beach
-how horses run across open fields
-how dogs swim in water
-how cats climb trees
-how rabbits move through grass
-how deer move through forests
-how wolves move through snow
-how fish swim in clear water
-how owls fly at night
-how hummingbirds feed from flowers
-how crabs move along the beach
-how spiders build webs
+how cats always land on their feet
+how dogs hear sounds humans cant
+how bats fly in total darkness
+how arctic foxes survive winter
+how koalas sleep 22 hours a day
+how sloths move so slowly on purpose
+how hedgehogs roll into a ball
+how otters hold hands while sleeping
+how raccoons wash their food
+how squirrels find buried nuts
+how camels survive the desert
+how elephants communicate through the ground
+how giraffes bend down to drink
+how hippos secrete red sunscreen
+how pandas eat bamboo all day
+how meerkats stand guard
+how mongooses fight cobras
+how rabbits hear in every direction
+how deer shed their antlers every year
+how whales hold their breath for hours
+how seals dive so deep
+how dolphins sleep with one eye open
+how elephants mourn their dead
+how orcas hunt in teams
+how lemurs survive Madagascar
 
-# --- Water, coast, and common landscapes ---
-how waves move across the ocean
-how waterfalls flow over rocks
-how rivers move through forests
-how streams flow over stones
-how rain fills a lake
-how clouds form over mountains
-how fog moves through a valley
-how snow falls in a forest
-how ice melts on a lake
-how beaches change with waves
+# --- Birds ---
+how hummingbirds hover in midair
+how owls fly almost silently
+how eagles see prey from miles away
+how flamingos stand on one leg
+how penguins survive antarctica
+how birds navigate thousands of miles
+how woodpeckers dont get headaches
+how pelicans scoop fish in their beaks
+how ostriches run faster than horses
+how peacocks grow their feathers
+how kingfishers dive into water
+how parrots live so long
+how penguins find their mates in crowds
+how swans stay with one partner
+how vultures find dead animals from the air
+how pigeons find their way home
+how storks stand still for hours
+how albatrosses fly for years without landing
+how falcons dive at 200 mph
+how toucans regulate their body temperature
+how kiwis smell underground
+how flamingos turn pink from shrimp
+how birds survive winter storms
+how ravens solve puzzles
+how crows use tools
+
+# --- Marine Life ---
+how octopuses change color
+how sharks sense electricity
+how jellyfish survive without a brain
+how sea turtles find their birth beach
+how dolphins use bubbles to hunt
+how whales sing across oceans
+how clownfish survive anemone stings
+how starfish regrow lost arms
+how seahorses carry their babies
+how crabs walk sideways
+how cuttlefish hypnotize prey
+how mantis shrimp punch so hard
+how lobster blood is blue
+how eels generate electricity
 how coral reefs grow underwater
-how kelp moves in ocean water
-how mangrove trees grow near water
-how sunlight reflects on the ocean
-how rainbows form after rain
+how penguins swim through waves
+how seals hold their breath for 2 hours
+how barracudas accelerate so fast
+how manta rays filter feed
+how anglerfish use light to hunt
+how nautilus survived 500 million years
+how sea otters use rocks as tools
+how dolphins recognize themselves in mirrors
+how whales create bubble nets
+how octopuses escape through tiny holes
 
-# --- Plants, forests, and earth science ---
-how forests grow in sunlight
-how flowers open in the morning
-how seeds grow into plants
-how leaves change color
-how moss grows on rocks
-how mushrooms grow in forests
-how bamboo grows quickly
-how trees move in the wind
-how sand dunes move in the wind
-how mountains form
-how caves form in rock
-how volcanoes erupt
-how lava cools into rock
-how geysers send water into the air
-how glaciers move across valleys
+# --- Insects & Arachnids ---
+how ants build underground cities
+how bees make honey
+how spiders spin strong silk
+how butterflies emerge from chrysalis
+how fireflies glow at night
+how bees communicate through dance
+how ants carry 50 times their weight
+how caterpillars turn into butterflies
+how dragonflies catch prey in flight
+how moths find mates in the dark
+how bees sense electric fields
+how ants farm fungus underground
+how wasps build paper nests
+how beetles survive being stepped on
+how mantises pray and hunt
+how cicadas emerge after 17 years
+how termites build towering mounds
+how flies dodge swatters
+how mosquitoes find you in the dark
+how centipedes hunt with poison
+how ladybugs warn predators with color
+how dung beetles navigate by stars
+how bees regulate hive temperature
+how ants form living bridges
+how spiders survive winter
 
-# --- Weather and sky ---
-how thunderstorms form
-how lightning crosses the sky
-how wind moves through clouds
-how sunsets turn the sky orange
-how stars appear at night
-how the moon changes shape
-how the northern lights appear
+# --- Reptiles & Amphibians ---
+how chameleons change color
+how snakes smell with their tongues
+how frogs survive the dry season
+how crocodiles wait underwater for hours
+how geckos stick to walls
+how turtles find the ocean after hatching
+how Komodo dragons hunt with bacteria
+how lizards detach their tails
+how tortoises live over 100 years
+how snakes see heat signatures
+how salamanders regrow limbs
+how toads poison predators
+how iguanas dive from cliffs
+how crocodiles regulate their temperature
+how pythons swallow prey whole
+how chameleons shoot their tongues
+how frogs freeze and thaw in winter
+how sea turtles navigate by magnetic fields
+how snakes climb trees
+how lizards communicate through push-ups
+
+# --- Animal Superpowers ---
+how cats always land on their feet
+how woodpeckers dont get brain damage
+how tardigrades survive in space
+how bears hibernate without muscle loss
+how sharks heal wounds in days
+how elephants detect earthquakes
+how bats survive rabies
+how naked mole rats dont get cancer
+how hummingbirds reverse time while flying
+how penguins survive freezing water
+how owls see in total darkness
+how dolphins heal themselves
+how sea cucumbers eject their organs
+how antifreeze fish survive under ice
+how camels cool their brains
+how elephants never get lost
+how octopuses have three hearts
+how tardigrades survive radiation
+how snakes digest bones
+how bees fly despite being too heavy
