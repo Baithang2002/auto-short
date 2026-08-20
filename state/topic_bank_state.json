@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-19T13:16:08Z",
+  "updated_at": "2026-08-20T04:03:54Z",
   "records": [
     {
       "topic": "How A Lunar Eclipse Turns the Moon Red",
@@ -1731,16 +1731,16 @@
       "topic": "How The Alps Were Pushed Upward",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-05T15:03:07Z",
+      "last_attempt_at": "2026-08-20T04:03:54Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-05T15:03:07Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
-      "quarantine_until": "2026-08-19T15:03:07Z"
+      "last_failure_at": "2026-08-20T04:03:54Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-03T04:03:54Z"
     },
     {
       "topic": "How The Amazon Rainforest Makes Rain",

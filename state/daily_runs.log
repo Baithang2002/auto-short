@@ -389,3 +389,5 @@
 2026-08-19 13:07:44  topic='Why The Sky Turns Red at Sunset'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-19 13:10:38  topic='How Islands Form From Volcanoes'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-19 13:06:51  topic='How Lagoons Form Behind Reefs'  exit=0  slot='evening'  duration=557s  attempts=3
+2026-08-20 04:03:54  topic='How The Alps Were Pushed Upward'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-20 04:02:33  topic='How The Everglades Filters Water'  exit=1  slot='morning'  duration=163s  critical_failure=true  reason='critical technical failure exit=1'
