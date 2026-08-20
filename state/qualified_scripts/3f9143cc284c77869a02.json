@@ -1,0 +1,94 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "Nature's Original Paper Architects",
+  "description": "Discover the incredible process of how wasps engineer their paper homes.",
+  "instagram_caption": "Long before human papermaking, wasps were already master architects. 🏗️🐝 Discover how they turn wood fibers into sophisticated, hexagonal cities. #NatureIsAmazing #WaspNest #Entomology #TheWildMechanics",
+  "hashtags": [
+    "#shorts",
+    "#engineering",
+    "#architecture",
+    "#infrastructure",
+    "#insects",
+    "#wasps"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Long before humans ever invented papermaking, these insects were already master architects building sophisticated cities out of thin air.",
+      "broll": "Close-up of wasp nest",
+      "broll_queries": [
+        "Close-up of wasp nest",
+        "macro shot wasp nest surface",
+        "wasp colony hanging from tree",
+        "wasp building nest detail"
+      ]
+    },
+    {
+      "beat_role": "setup",
+      "beat_importance": 9,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "The process begins as the queen scrapes weathered wood fibers with her mandibles, mixing them with her saliva to create a malleable pulp that hardens like paper.",
+      "broll": "Wasp scraping wood fibers",
+      "broll_queries": [
+        "Wasp scraping wood fibers",
+        "wasp chewing on wood",
+        "wasp in natural environment",
+        "wasp mandibles close up"
+      ]
+    },
+    {
+      "beat_role": "escalation",
+      "beat_importance": 8,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "She shapes this paste into perfectly hexagonal cells—a geometry that maximizes structural strength while using the absolute minimum amount of material.",
+      "broll": "Wasp constructing hexagonal cells",
+      "broll_queries": [
+        "Wasp constructing hexagonal cells",
+        "wasp building honeycomb cells",
+        "wasp nest architecture",
+        "wasp nest hexagonal pattern"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "Finally, she wraps the colony in an insulated papery envelope, locking in warmth to keep the developing brood safe from the outside world.",
+      "broll": "Wasp nest envelope construction",
+      "broll_queries": [
+        "Wasp nest envelope construction",
+        "wasp covering nest shell",
+        "wasp nest in tree canopy",
+        "wasp nest exterior detail"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "These complex structures are waiting to be noticed in the quiet corners of your own backyard. Subscribe to The Wild Mechanics for more.",
+      "broll": "Wasp nest in garden",
+      "broll_queries": [
+        "Wasp nest in garden",
+        "wasp nest under house eaves",
+        "backyard garden wide shot",
+        "wasp flying near nest"
+      ]
+    }
+  ],
+  "niche": "How Wasps Build Paper Nests"
+}

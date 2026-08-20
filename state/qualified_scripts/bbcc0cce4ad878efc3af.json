@@ -1,0 +1,86 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "Dolphins Use Sonic Blasts To Hunt",
+  "description": "Discover the incredible way dolphins hunt in complete darkness using focused sound waves. This biological sonar does more than just see, it physically disables prey.",
+  "instagram_caption": "Dolphins have a hidden superpower that turns sound into a weapon. Follow The Wild Mechanics for more secrets of the deep.",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#dolphins",
+    "#marinelife",
+    "#oceanlife",
+    "#animalbehavior",
+    "#underwater",
+    "#predator",
+    "#deepsea",
+    "#oceanography",
+    "#wildlifephotography"
+  ],
+  "music_mood": "mysterious",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "In the pitch-black depths of the ocean, a dolphin's eyes are useless, yet it never misses a meal. How does it track and capture lightning-fast prey when it cannot see a thing?",
+      "broll": "dolphin swimming through murky water",
+      "broll_queries": [
+        "dolphin swimming through murky water",
+        "dolphin hunting in murky water fast motion",
+        "dolphin swimming through dark deep ocean",
+        "close up of dolphin eye scanning"
+      ]
+    },
+    {
+      "beat_role": "discovery",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "But there is a secondary secret. Dolphins emit a focused, high-intensity bang of sound that acts like a physical hammer to stun and disorient their prey.",
+      "broll": "dolphin emitting focused acoustic pulse",
+      "broll_queries": [
+        "dolphin emitting focused acoustic pulse",
+        "dolphin opening mouth underwater",
+        "dolphin school of fish hunting",
+        "close up of dolphin acoustic melon"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": true,
+      "narration": "In a fraction of a second, that sonic pulse hits the fish, rendering them momentarily immobile and creating an effortless catch in the deep.",
+      "broll": "fish frozen in water stunned",
+      "broll_queries": [
+        "fish frozen in water stunned",
+        "fish swimming erratic close up",
+        "dolphin catching fish motion",
+        "dolphins feeding frenzy"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "The ocean is full of hidden biological superpowers just like this one. Follow The Wild Mechanics for more.",
+      "broll": "dolphin swimming away into blue",
+      "broll_queries": [
+        "dolphin swimming away into blue",
+        "dolphin swimming away wide shot",
+        "ocean surface light rays",
+        "underwater marine life wide shot"
+      ]
+    }
+  ],
+  "niche": "How Dolphins Use Sound to Hunt"
+}
