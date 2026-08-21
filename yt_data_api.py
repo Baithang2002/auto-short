@@ -392,7 +392,7 @@ def upload_youtube_via_api(
         media = MediaFileUpload(
             str(video_path),
             mimetype="video/*",
-            chunksize=-1,           # upload in a single request (file is small)
+            chunksize=1024 * 1024,  # 1MB chunks: resilient on flaky connections
             resumable=True,
         )
         request = youtube.videos().insert(
@@ -405,7 +405,7 @@ def upload_youtube_via_api(
         print(f"    [YT API] Uploading {video_path.name} ({video_path.stat().st_size / 1024 / 1024:.1f} MB)...")
         response = None
         while response is None:
-            status, response = request.next_chunk()
+            status, response = request.next_chunk(num_retries=10)
             if status:
                 print(f"    [YT API] Progress: {int(status.progress() * 100)}%")
 
