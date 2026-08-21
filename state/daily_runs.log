@@ -398,3 +398,4 @@
 2026-08-20 13:12:21  topic='How Bees Regulate Hive Temperature'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-20 13:09:40  topic='How Wasps Build Paper Nests'  exit=0  slot='evening'  duration=702s  attempts=2
 2026-08-20 19:06:52  topic='How Dolphins Use Sound to Hunt'  exit=0  slot='manual'  duration=256s  attempts=1
+2026-08-21 04:05:12  topic='How Vultures Find Dead Animals from the Air'  exit=1  slot='morning'  duration=59s  critical_failure=true  reason='critical technical failure exit=1'
