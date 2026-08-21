@@ -399,3 +399,7 @@
 2026-08-20 13:09:40  topic='How Wasps Build Paper Nests'  exit=0  slot='evening'  duration=702s  attempts=2
 2026-08-20 19:06:52  topic='How Dolphins Use Sound to Hunt'  exit=0  slot='manual'  duration=256s  attempts=1
 2026-08-21 04:05:12  topic='How Vultures Find Dead Animals from the Air'  exit=1  slot='morning'  duration=59s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-21 04:24:09  topic='How Vultures Find Dead Animals from the Air'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
+2026-08-21 04:25:02  topic='How Cats Always Land on Their Feet'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-21 04:26:59  topic='How Eagles See Prey from Miles Away'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-21 04:23:15  topic='How Falcons Dive at 200 MPH'  exit=1  slot='morning'  duration=244s  critical_failure=true  reason='critical technical failure exit=1'

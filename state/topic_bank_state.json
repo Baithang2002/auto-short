@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-20T19:11:08Z",
+  "updated_at": "2026-08-21T04:26:59Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -123,6 +123,21 @@
       "quarantine_until": "2026-08-10T07:37:36Z"
     },
     {
+      "topic": "How Cats Always Land on Their Feet",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T04:25:02Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T04:25:02Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-04T04:25:02Z"
+    },
+    {
       "topic": "How chameleons shift color through microscopic skin structures",
       "status": "quarantined",
       "success_count": 0,
@@ -196,6 +211,21 @@
       "last_failure_at": "2026-08-20T10:06:23Z",
       "last_failure_reason": "scene coverage 3/5 (60%) is below required 4/5 (67%)",
       "quarantine_until": "2026-09-03T10:06:23Z"
+    },
+    {
+      "topic": "How Eagles See Prey from Miles Away",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T04:26:59Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T04:26:59Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-04T04:26:59Z"
     },
     {
       "topic": "How Frogs Survive the Dry Season",
@@ -376,6 +406,21 @@
       "last_failure_at": "2026-08-20T10:10:06Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-09-03T10:10:06Z"
+    },
+    {
+      "topic": "How Vultures Find Dead Animals from the Air",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T04:24:09Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T04:24:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-04T04:24:09Z"
     },
     {
       "topic": "How Wasps Build Paper Nests",
