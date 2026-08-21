@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-21T04:26:59Z",
+  "updated_at": "2026-08-21T10:12:01Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -16,6 +16,21 @@
       "last_failure_at": "2026-08-03T15:31:42Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-17T15:31:42Z"
+    },
+    {
+      "topic": "How Anglerfish Use Light to Hunt",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:12:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:12:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-04T10:12:01Z"
     },
     {
       "topic": "How Ants Build Underground Cities",
@@ -153,6 +168,21 @@
       "quarantine_until": "2026-08-29T13:18:11Z"
     },
     {
+      "topic": "How cheetahs reach 70 mph with specialized body mechanics",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:05:43Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:05:43Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
+      "quarantine_until": "2026-09-04T10:05:43Z"
+    },
+    {
       "topic": "How Cheetahs Run So Fast",
       "status": "quarantined",
       "success_count": 0,
@@ -181,6 +211,21 @@
       "last_failure_at": "2026-08-07T02:33:17Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
       "quarantine_until": "2026-08-21T02:33:17Z"
+    },
+    {
+      "topic": "How Crocodiles Regulate Their Temperature",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:06:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:06:36Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/4 (25%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-04T10:06:36Z"
     },
     {
       "topic": "How Dolphins Use Sound to Hunt",
@@ -318,6 +363,21 @@
       "quarantine_until": "2026-08-28T05:20:54Z"
     },
     {
+      "topic": "How Sea Turtles Navigate by Magnetic Fields",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:07:36Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:07:36Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-04T10:07:36Z"
+    },
+    {
       "topic": "How Seahorses Carry Their Babies",
       "status": "quarantined",
       "success_count": 0,
@@ -361,6 +421,21 @@
       "last_failure_at": "2026-08-01T06:11:41Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-15T06:11:41Z"
+    },
+    {
+      "topic": "How Termites Build Towering Mounds",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:09:11Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:09:11Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-04T10:09:11Z"
     },
     {
       "topic": "How the Northern Lights Are Created",
@@ -451,6 +526,21 @@
       "last_failure_at": "2026-08-20T10:11:21Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-09-03T10:11:21Z"
+    },
+    {
+      "topic": "How Wolves Hunt in Packs",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-21T10:10:13Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-21T10:10:13Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-04T10:10:13Z"
     },
     {
       "topic": "Why Volcanoes Create New Land",
