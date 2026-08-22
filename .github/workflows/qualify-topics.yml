@@ -50,10 +50,6 @@ jobs:
           SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
-          VECTEEZY_API_KEY: ${{ secrets.VECTEEZY_API_KEY }}
-          VECTEEZY_ACCOUNT_ID: ${{ secrets.VECTEEZY_ACCOUNT_ID }}
-          EUROPEANA_API_KEY: ${{ secrets.EUROPEANA_API_KEY }}
-          EUROPEANA_API_URL: "https://api.europeana.eu/record/v2/search.json"
           DEFAULT_NICHE: "hidden science behind nature, Earth, animals, oceans, weather, and space"
           AUTO_VIDEO_SOURCE_COVERAGE_ENFORCE: "true"
           AUTO_VIDEO_SOURCE_COVERAGE_SUPPORTING_SCORE_RATIO: "0.65"
@@ -78,7 +74,7 @@ jobs:
             echo "No supported vision secret is configured (Gemini or Groq)."
             exit 2
           fi
-          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$VECTEEZY_API_KEY" ]; then
+          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ]; then
             echo "No keyed stock-video provider is configured."
             exit 2
           fi

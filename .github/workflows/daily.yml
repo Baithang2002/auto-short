@@ -93,13 +93,9 @@ jobs:
           AUDIOLAB_MODEL:      ${{ vars.AUDIOLAB_MODEL }}
           SPEECHIFY_API_KEY:   ${{ secrets.SPEECHIFY_API_KEY }}
 
-          # Stock sources
+          # Stock sources (Vecteezy removed: 402 Payment Required; Europeana removed: 401 invalid key)
           PEXELS_API_KEY:      ${{ secrets.PEXELS_API_KEY }}
           PIXABAY_API_KEY:     ${{ secrets.PIXABAY_API_KEY }}
-          VECTEEZY_API_KEY:    ${{ secrets.VECTEEZY_API_KEY }}
-          VECTEEZY_ACCOUNT_ID: ${{ secrets.VECTEEZY_ACCOUNT_ID }}
-          EUROPEANA_API_KEY:   ${{ secrets.EUROPEANA_API_KEY }}
-          EUROPEANA_API_URL:   "https://api.europeana.eu/record/v2/search.json"
           NOAA_USER_AGENT:     "auto-short/1.0, vincentreang23@gmail.com"
           POLLINATIONS_ENABLED: ${{ vars.POLLINATIONS_ENABLED }}
           POLLINATIONS_IMAGE_URL: "https://image.pollinations.ai/prompt"
@@ -166,7 +162,7 @@ jobs:
             echo "No supported vision secret is configured (Gemini or Groq)."
             exit 2
           fi
-          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ] && [ -z "$VECTEEZY_API_KEY" ]; then
+          if [ -z "$PEXELS_API_KEY" ] && [ -z "$PIXABAY_API_KEY" ]; then
             echo "No keyed stock-video provider is configured."
             exit 2
           fi
