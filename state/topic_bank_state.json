@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-22T04:21:30Z",
+  "updated_at": "2026-08-22T10:02:37Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -31,6 +31,21 @@
       "last_failure_at": "2026-08-21T10:12:01Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
       "quarantine_until": "2026-09-04T10:12:01Z"
+    },
+    {
+      "topic": "How Antifreeze Fish Survive Under Ice",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T09:57:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T09:57:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/6 (17%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-09-05T09:57:03Z"
     },
     {
       "topic": "How Ants Build Underground Cities",
@@ -184,33 +199,33 @@
     },
     {
       "topic": "How Cheetahs Run So Fast",
-      "status": "quarantined",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:03Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-22T10:01:04Z",
+      "last_qualified_at": "2026-08-22T10:01:04Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/f38cf2a4ed779b459aaf.json",
       "last_success_at": "",
       "last_failure_at": "2026-07-31T15:09:03Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:03Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
-      "topic": "how coral reefs grow underwater",
-      "status": "quarantined",
+      "topic": "How Coral Reefs Grow Underwater",
+      "status": "qualified",
       "success_count": 0,
       "failure_count": 1,
-      "qualification_count": 0,
-      "last_attempt_at": "2026-08-07T02:33:17Z",
-      "last_qualified_at": "",
-      "last_coverage_ratio": null,
-      "qualified_script_path": "",
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-22T10:02:01Z",
+      "last_qualified_at": "2026-08-22T10:02:01Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/991591657f549450b131.json",
       "last_success_at": "",
       "last_failure_at": "2026-08-07T02:33:17Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
-      "quarantine_until": "2026-08-21T02:33:17Z"
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Crocodiles Regulate Their Temperature",
@@ -318,6 +333,51 @@
       "quarantine_until": "2026-08-14T16:57:33Z"
     },
     {
+      "topic": "How Jellyfish Survive Without a Brain",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T10:02:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T10:02:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-05T10:02:37Z"
+    },
+    {
+      "topic": "How leafcutter ants build underground cities with farming chambers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T09:59:46Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T09:59:46Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
+      "quarantine_until": "2026-09-05T09:59:46Z"
+    },
+    {
+      "topic": "How mantis shrimp punch with the force of a bullet to crack shells",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T10:02:17Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T10:02:17Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-09-05T10:02:17Z"
+    },
+    {
       "topic": "How Ostriches Run Faster Than Horses",
       "status": "quarantined",
       "success_count": 0,
@@ -421,6 +481,21 @@
       "last_failure_at": "2026-08-21T10:07:36Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
       "quarantine_until": "2026-09-04T10:07:36Z"
+    },
+    {
+      "topic": "How sea turtles navigate thousands of miles using Earth's magnetic field",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T09:58:04Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T09:58:04Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-09-05T09:58:04Z"
     },
     {
       "topic": "How Seahorses Carry Their Babies",
