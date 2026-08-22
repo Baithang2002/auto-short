@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-22T04:01:05Z",
+  "updated_at": "2026-08-22T04:21:30Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -336,16 +336,31 @@
       "topic": "How Owls Fly Almost Silently",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:23Z",
+      "last_attempt_at": "2026-08-22T04:19:18Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:23Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:23Z"
+      "last_failure_at": "2026-08-22T04:19:18Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-05T04:19:18Z"
+    },
+    {
+      "topic": "How Peacocks Grow Their Feathers",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T04:21:30Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-22T04:21:30Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-05T04:21:30Z"
     },
     {
       "topic": "How Penguins Survive Antarctica",

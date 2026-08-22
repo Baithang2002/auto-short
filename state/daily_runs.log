@@ -408,3 +408,6 @@
 2026-08-21 13:30:30  topic='How Ostriches Run Faster Than Horses'  exit=1  slot='evening'  duration=64s  critical_failure=true  reason='critical technical failure exit=1'
 2026-08-22 04:01:05  topic='How Ostriches Run Faster Than Horses'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-22 03:59:40  topic='How Owls Fly Almost Silently'  exit=1  slot='morning'  duration=110s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-22 04:19:18  topic='How Owls Fly Almost Silently'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-22 04:21:30  topic='How Peacocks Grow Their Feathers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-22 04:17:35  topic='How Pigeons Find Their Way Home'  exit=1  slot='morning'  duration=261s  critical_failure=true  reason='critical technical failure exit=1'
