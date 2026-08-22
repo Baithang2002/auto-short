@@ -411,3 +411,6 @@
 2026-08-22 04:19:18  topic='How Owls Fly Almost Silently'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-22 04:21:30  topic='How Peacocks Grow Their Feathers'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-22 04:17:35  topic='How Pigeons Find Their Way Home'  exit=1  slot='morning'  duration=261s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-22 13:00:45  topic='How Coral Reefs Grow Underwater'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-22 13:01:59  topic='How Cheetahs Run So Fast'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-22 12:58:54  topic='How Clownfish Survive Anemone Stings'  exit=0  slot='evening'  duration=424s  attempts=3

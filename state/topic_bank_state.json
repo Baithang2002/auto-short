@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-22T10:02:37Z",
+  "updated_at": "2026-08-22T13:05:58Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -199,33 +199,48 @@
     },
     {
       "topic": "How Cheetahs Run So Fast",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-22T10:01:04Z",
+      "last_attempt_at": "2026-08-22T13:01:59Z",
       "last_qualified_at": "2026-08-22T10:01:04Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/f38cf2a4ed779b459aaf.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:03Z",
+      "last_failure_at": "2026-08-22T13:01:59Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-05T13:01:59Z"
+    },
+    {
+      "topic": "How Clownfish Survive Anemone Stings",
+      "status": "proven",
+      "success_count": 1,
+      "failure_count": 0,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-22T13:05:58Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "2026-08-22T13:05:58Z",
+      "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
     },
     {
       "topic": "How Coral Reefs Grow Underwater",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-22T10:02:01Z",
+      "last_attempt_at": "2026-08-22T13:00:45Z",
       "last_qualified_at": "2026-08-22T10:02:01Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/991591657f549450b131.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-07T02:33:17Z",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-22T13:00:45Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-05T13:00:45Z"
     },
     {
       "topic": "How Crocodiles Regulate Their Temperature",
