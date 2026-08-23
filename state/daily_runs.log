@@ -424,3 +424,7 @@
 2026-08-23 13:01:03  topic='How Hedgehogs Roll Into a Ball'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-23 13:01:34  topic='How Meerkats Stand Guard'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-23 13:00:30  topic='How Mongooses Fight Cobras'  exit=1  slot='evening'  duration=78s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-23 13:19:49  topic='How Mongooses Fight Cobras'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-23 13:20:09  topic='How Pandas Eat Bamboo All Day'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-23 13:20:28  topic='How Pigeons Find Their Way Home'  exit=1  slot='evening'  attempt=3/4  quality_deferred='scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-23 13:20:49  topic='How Rabbits Hear in Every Direction'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
