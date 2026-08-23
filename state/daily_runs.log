@@ -421,3 +421,6 @@
 2026-08-23 04:24:01  topic='How Elephants Mourn Their Dead'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
 2026-08-23 04:24:29  topic='How Elephants Never Forget Paths'  exit=1  slot='morning'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-23 04:24:57  topic='How Giraffes Bend Down to Drink'  exit=1  slot='morning'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-23 13:01:03  topic='How Hedgehogs Roll Into a Ball'  exit=1  slot='evening'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-23 13:01:34  topic='How Meerkats Stand Guard'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-23 13:00:30  topic='How Mongooses Fight Cobras'  exit=1  slot='evening'  duration=78s  critical_failure=true  reason='critical technical failure exit=1'

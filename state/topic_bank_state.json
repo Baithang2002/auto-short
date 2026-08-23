@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-23T10:02:34Z",
+  "updated_at": "2026-08-23T13:01:34Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -423,6 +423,21 @@
       "quarantine_until": "2026-09-06T04:24:57Z"
     },
     {
+      "topic": "How Hedgehogs Roll Into a Ball",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T13:01:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T13:01:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-06T13:01:03Z"
+    },
+    {
       "topic": "How Hippos Secrete Red Sunscreen",
       "status": "quarantined",
       "success_count": 0,
@@ -496,6 +511,21 @@
       "last_failure_at": "2026-08-22T10:02:17Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
       "quarantine_until": "2026-09-05T10:02:17Z"
+    },
+    {
+      "topic": "How Meerkats Stand Guard",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T13:01:34Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T13:01:34Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-06T13:01:34Z"
     },
     {
       "topic": "How Ostriches Run Faster Than Horses",
