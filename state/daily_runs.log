@@ -414,3 +414,6 @@
 2026-08-22 13:00:45  topic='How Coral Reefs Grow Underwater'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-22 13:01:59  topic='How Cheetahs Run So Fast'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-22 12:58:54  topic='How Clownfish Survive Anemone Stings'  exit=0  slot='evening'  duration=424s  attempts=3
+2026-08-23 04:05:33  topic='How Hippos Secrete Red Sunscreen'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-23 04:09:13  topic='How Bats Fly in Total Darkness'  exit=1  slot='morning'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-23 04:04:56  topic='How Elephants Communicate Through the Ground'  exit=1  slot='morning'  duration=301s  critical_failure=true  reason='critical technical failure exit=1'
