@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-23T04:09:13Z",
+  "updated_at": "2026-08-23T04:24:57Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -303,6 +303,51 @@
       "quarantine_until": "2026-09-04T04:26:59Z"
     },
     {
+      "topic": "How Elephants Communicate Through the Ground",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T04:23:22Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T04:23:22Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-06T04:23:22Z"
+    },
+    {
+      "topic": "How Elephants Mourn Their Dead",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T04:24:01Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T04:24:01Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-06T04:24:01Z"
+    },
+    {
+      "topic": "How Elephants Never Forget Paths",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T04:24:29Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T04:24:29Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-06T04:24:29Z"
+    },
+    {
       "topic": "How Falcons Dive at 200 MPH",
       "status": "quarantined",
       "success_count": 0,
@@ -331,6 +376,21 @@
       "last_failure_at": "2026-07-31T06:26:38Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-14T06:26:38Z"
+    },
+    {
+      "topic": "How Giraffes Bend Down to Drink",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T04:24:57Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T04:24:57Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-06T04:24:57Z"
     },
     {
       "topic": "How Hippos Secrete Red Sunscreen",
