@@ -1,0 +1,96 @@
+{
+  "story_complexity": "simple",
+  "category_id": "28",
+  "title": "Penguins Use Secret Bubble Armor to Survive Deadly Waves",
+  "description": "Discover how penguins use rigid wings and a coat of micro-bubbles to slice through violent surf completely unharmed.",
+  "instagram_caption": "Think waves can stop a penguin? 🌊 Think again! These flightless birds use natural engineering—including a secret coat of micro-bubbles—to slice through the ocean's most violent surf. Subscribe to The Wild Mechanics for more incredible nature physics! 🐧✨\n\n#penguins #oceanlife #marinescience #naturelovers #physicsofnature #thewildmechanics",
+  "hashtags": [
+    "#shorts",
+    "#ocean",
+    "#oceanscience",
+    "#marinelife",
+    "#penguins",
+    "#natureengineering",
+    "#oceanphysics",
+    "#thewildmechanics"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "A crushing wall of ocean surf slams into the coast with shattering force, yet a tiny penguin dives directly into the impact zone.",
+      "broll": "heavy ocean waves crashing",
+      "broll_queries": [
+        "heavy ocean waves crashing",
+        "close up massive ocean wave crashing shore",
+        "wide shot stormy sea waves breaking",
+        "slow motion wave impact on coastal rocks"
+      ]
+    },
+    {
+      "beat_role": "context",
+      "beat_importance": 7,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "To feed, these flightless birds must cross this violent shoreline boundary every single day, risking their lives to reach the open ocean.",
+      "broll": "penguins walking on beach",
+      "broll_queries": [
+        "penguins walking on beach",
+        "close up penguin walking rocky shore",
+        "group of penguins waddling towards rough sea",
+        "penguins standing on shoreline looking at waves"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Using their rigid wings as hydrofoils, they deploy their ultimate weapon: a coat of micro-bubbles that slashes underwater drag.",
+      "broll": "penguin swimming underwater fast",
+      "broll_queries": [
+        "penguin swimming underwater fast",
+        "close up penguin swimming fast underwater bubbles",
+        "penguin underwater gliding through ocean stream",
+        "macro view of penguin feathers releasing air bubbles"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 9,
+      "beat_can_merge": true,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Wrapped in this cloud of air, the penguin effortlessly bursts through the back of the wave, completely unharmed.",
+      "broll": "penguin leaping out of wave",
+      "broll_queries": [
+        "penguin leaping out of wave",
+        "slow motion penguin jumping out of water wave",
+        "penguin emerging from surf underwater to air",
+        "penguin leaping out of ocean surface"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 5,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Nature's brilliant engineering turns a deadly barrier into a perfect slipstream. Subscribe to The Wild Mechanics for more.",
+      "broll": "penguin swimming peacefully",
+      "broll_queries": [
+        "penguin swimming peacefully",
+        "penguin swimming gracefully in calm ocean water",
+        "wide shot penguins swimming underwater sunset",
+        "underwater camera following swimming penguin"
+      ]
+    }
+  ],
+  "niche": "How Penguins Swim Through Waves"
+}

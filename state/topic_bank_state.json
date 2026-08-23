@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-23T04:24:57Z",
+  "updated_at": "2026-08-23T10:02:34Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -258,6 +258,21 @@
       "quarantine_until": "2026-09-04T10:06:36Z"
     },
     {
+      "topic": "How Dogs Hear Sounds Humans Cant",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T09:59:04Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T09:59:04Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 1/5 (20%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-06T09:59:04Z"
+    },
+    {
       "topic": "How Dolphins Use Sound to Hunt",
       "status": "proven",
       "success_count": 1,
@@ -376,6 +391,21 @@
       "last_failure_at": "2026-07-31T06:26:38Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 50% is below required 67%",
       "quarantine_until": "2026-08-14T06:26:38Z"
+    },
+    {
+      "topic": "How geckos stick to walls using millions of microscopic hair-like structures",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T09:58:08Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T09:58:08Z",
+      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
+      "quarantine_until": "2026-09-06T09:58:08Z"
     },
     {
       "topic": "How Giraffes Bend Down to Drink",
@@ -528,6 +558,21 @@
       "quarantine_until": "2026-08-27T05:23:54Z"
     },
     {
+      "topic": "How Penguins Swim Through Waves",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-23T10:00:05Z",
+      "last_qualified_at": "2026-08-23T10:00:05Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/1ebbb9f7703779581e0a.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Roman Aqueducts Changed Civilization",
       "status": "quarantined",
       "success_count": 0,
@@ -576,16 +621,16 @@
       "topic": "How sea turtles navigate thousands of miles using Earth's magnetic field",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-22T09:58:04Z",
+      "last_attempt_at": "2026-08-23T09:57:57Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-22T09:58:04Z",
+      "last_failure_at": "2026-08-23T09:57:57Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-09-05T09:58:04Z"
+      "quarantine_until": "2026-09-06T09:57:57Z"
     },
     {
       "topic": "How Seahorses Carry Their Babies",
@@ -631,6 +676,21 @@
       "last_failure_at": "2026-08-01T06:11:41Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-15T06:11:41Z"
+    },
+    {
+      "topic": "How Tardigrades Survive in Space",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T10:02:34Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T10:02:34Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-06T10:02:34Z"
     },
     {
       "topic": "How Termites Build Towering Mounds",
@@ -751,6 +811,21 @@
       "last_failure_at": "2026-08-21T10:10:13Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
       "quarantine_until": "2026-09-04T10:10:13Z"
+    },
+    {
+      "topic": "How Woodpeckers Dont Get Brain Damage",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-23T10:01:54Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-23T10:01:54Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-06T10:01:54Z"
     },
     {
       "topic": "Why Volcanoes Create New Land",
