@@ -446,3 +446,7 @@
 2026-08-24 16:55:12  topic='How Fireflies Glow at Night'  exit=1  slot='manual'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-24 16:55:56  topic='How Lobster Blood Is Blue'  exit=1  slot='manual'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-24 17:00:40  topic='How Bees Sense Electric Fields'  exit=1  slot='manual'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 17:14:03  topic='How Moths Find Mates in the Dark'  exit=1  slot='manual'  attempt=1/4  quality_deferred='post-render publish quality gate deferred topic'
+2026-08-24 17:14:31  topic='How Beetles Survive Being Stepped On'  exit=1  slot='manual'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
+2026-08-24 17:18:16  topic='How Seahorses Carry Their Babies'  exit=1  slot='manual'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 17:21:27  topic='How Spiders Spin Strong Silk'  exit=1  slot='manual'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

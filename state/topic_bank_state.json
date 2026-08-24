@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T17:00:40Z",
+  "updated_at": "2026-08-24T17:21:27Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -166,6 +166,21 @@
       "last_failure_at": "2026-08-24T17:00:40Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-09-07T17:00:40Z"
+    },
+    {
+      "topic": "How Beetles Survive Being Stepped On",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T17:14:31Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T17:14:31Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-07T17:14:31Z"
     },
     {
       "topic": "How Camels Survive the Desert",
@@ -648,6 +663,21 @@
       "quarantine_until": "2026-09-06T13:19:49Z"
     },
     {
+      "topic": "How Moths Find Mates in the Dark",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T17:14:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T17:14:03Z",
+      "last_failure_reason": "post-render publish quality gate deferred topic",
+      "quarantine_until": "2026-09-07T17:14:03Z"
+    },
+    {
       "topic": "How Octopuses Escape Through Tiny Holes",
       "status": "quarantined",
       "success_count": 0,
@@ -891,16 +921,16 @@
       "topic": "How Seahorses Carry Their Babies",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:37Z",
+      "last_attempt_at": "2026-08-24T17:18:16Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:37Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:37Z"
+      "last_failure_at": "2026-08-24T17:18:16Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T17:18:16Z"
     },
     {
       "topic": "How Sloths Move So Slowly on Purpose",
@@ -921,16 +951,16 @@
       "topic": "How Spiders Spin Strong Silk",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 1,
+      "failure_count": 2,
       "qualification_count": 0,
-      "last_attempt_at": "2026-07-31T15:09:49Z",
+      "last_attempt_at": "2026-08-24T17:21:27Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-07-31T15:09:49Z",
-      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
-      "quarantine_until": "2026-08-14T15:09:49Z"
+      "last_failure_at": "2026-08-24T17:21:27Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T17:21:27Z"
     },
     {
       "topic": "How Squirrels Find Buried Nuts",
