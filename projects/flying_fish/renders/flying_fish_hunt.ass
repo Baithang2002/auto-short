@@ -1,0 +1,22 @@
+[Script Info]
+Title: BBC The Hunt - Flying Fish Escape
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Header,Impact,48,&H00FFFFFF,&H0000E6FF,&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
+Style: Subtitle,Impact,64,&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,280,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:01:52.00,Header,,0,0,0,,{\c&H0000E6FF&}ESCAPE FROM THE DEEP{\c&H00FFFFFF&}  |  FLYING FISH
+Dialogue: 0,0:00:01.00,0:00:07.50,Subtitle,,0,0,0,,THEIR COVER BLOWN,\nESCAPE SEEMS {\c&H0000E6FF&}IMPOSSIBLE{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:16.00,0:00:20.50,Subtitle,,0,0,0,,BUT THESE PARTICULAR FISH\nHAVE A {\c&H0000E6FF&}UNIQUE ABILITY{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:33.80,0:00:36.50,Subtitle,,0,0,0,,THEY'RE {\c&H0000E6FF&}FLYING FISH{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:58.00,0:01:04.00,Subtitle,,0,0,0,,WITH THE NEXT THRUST FROM THEIR TAILS,\nTHE FLYING FISH {\c&H0000E6FF&}GET AIRBORNE{\c&H00FFFFFF&} ONCE MORE.
+Dialogue: 0,0:01:12.00,0:01:16.50,Subtitle,,0,0,0,,WITH A GOOD WIND,\nTHEY CAN GLIDE FOR {\c&H0000E6FF&}HUNDREDS OF METERS{\c&H00FFFFFF&}.
+Dialogue: 0,0:01:33.50,0:01:38.50,Subtitle,,0,0,0,,BUT THIS IS JUST WHAT THE\n{\c&H0000E6FF&}FRIGATE BIRDS{\c&H00FFFFFF&} HAVE BEEN WAITING FOR.
+Dialogue: 0,0:01:41.00,0:01:52.00,Subtitle,,0,0,0,,WHEN FRIGATES JOIN THE HUNT, THE FLYING FISH\nARE CAUGHT BETWEEN {\c&H0000E6FF&}THE DEVIL AND THE DEEP BLUE SEA{\c&H00FFFFFF&}.

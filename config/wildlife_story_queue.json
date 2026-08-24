@@ -1,0 +1,41 @@
+{
+  "current_index": 0,
+  "stories": [
+    {
+      "id": "flying_fish_hunt",
+      "animal": "Flying Fish",
+      "title": "Escape From The Deep | Flying Fish #shorts #wildlife #nature",
+      "description": "Gliding above the ocean at 30mph, flying fish must escape predators from both the water and the sky. Narrated by Sir David Attenborough (BBC The Hunt).\n\n#wildlife #animals #documentary #ocean #shorts",
+      "source_url": "https://www.youtube.com/watch?v=bk7McNUjWgw",
+      "start": 0.0,
+      "duration": 112.0,
+      "header_banner": "ESCAPE FROM THE DEEP | FLYING FISH",
+      "ass_file": "projects/flying_fish/renders/flying_fish_hunt.ass",
+      "tags": ["shorts", "wildlife", "ocean", "flying fish", "nature", "predators"]
+    },
+    {
+      "id": "jaguar_caiman_hunt",
+      "animal": "Jaguar",
+      "title": "Scarface: The Crocodile Hunter | Jaguar #shorts #wildlife #nature",
+      "description": "Scarface, a 100kg male jaguar, stalks caimans in the Pantanal river. The top apex predator of South America in a clash of titans.\n\n#jaguar #wildlife #predators #animals #nature #shorts",
+      "source_url": "assets/documentaries/jaguar/jaguar_doc_source_01.mp4",
+      "start": 0.0,
+      "duration": 96.0,
+      "header_banner": "SCARFACE | THE CROCODILE HUNTER",
+      "ass_file": "projects/jaguar/renders/scarface_caiman_hunt.ass",
+      "tags": ["shorts", "jaguar", "wildlife", "predators", "nature", "pantanal"]
+    },
+    {
+      "id": "cheetah_malaika_hunt",
+      "animal": "Cheetah",
+      "title": "Malaika's Impossible Hunt | Cheetah #shorts #wildlife #nature",
+      "description": "Malaika the cheetah mother must make a kill nearly every day to feed her 4 cubs in the Maasai Mara. BBC The Hunt Ep 1.\n\n#cheetah #wildlife #safari #nature #animals #shorts",
+      "source_url": "assets/documentaries/cheetah/cheetah_doc_source_01.mp4",
+      "start": 0.0,
+      "duration": 95.0,
+      "header_banner": "MALAIKA'S HUNT | MOTHER CHEETAH",
+      "ass_file": "projects/cheetah/renders/cheetah_malaika.ass",
+      "tags": ["shorts", "cheetah", "wildlife", "safari", "nature", "animals"]
+    }
+  ]
+}

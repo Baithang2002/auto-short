@@ -1,0 +1,24 @@
+[Script Info]
+Title: Scarface the Jaguar - Caiman Hunt Master (0:00 to 1:36)
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Header,Impact,50,&H00FFFFFF,&H0000E6FF,&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
+Style: Subtitle,Impact,64,&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,280,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:01:36.00,Header,,0,0,0,,{\c&H0000E6FF&}SCARFACE{\c&H00FFFFFF&}  |  THE CROCODILE HUNTER
+Dialogue: 0,0:00:02.50,0:00:07.80,Subtitle,,0,0,0,,ALONG THE TANGLED EDGE OF A BRAZILIAN RIVER,\NA {\c&H0000E6FF&}HUNTER STALKS{\c&H00FFFFFF&} THE SHADOWS.
+Dialogue: 0,0:00:11.60,0:00:16.20,Subtitle,,0,0,0,,HE IS A {\c&H0000E6FF&}JAGUAR{\c&H00FFFFFF&},\NA MALE IN HIS PRIME.
+Dialogue: 0,0:00:18.30,0:00:24.30,Subtitle,,0,0,0,,THOSE WHO KNOW HIM, CALL HIM {\c&H0000E6FF&}SCARFACE{\c&H00FFFFFF&} —\NFROM A WOUND EARNED CLAWING TO SUPREMACY.
+Dialogue: 0,0:00:28.10,0:00:31.00,Subtitle,,0,0,0,,HIS TERRITORY CRAWLS WITH {\c&H0000E6FF&}MONSTERS{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:32.20,0:00:38.20,Subtitle,,0,0,0,,{\c&H0000E6FF&}CAIMANS{\c&H00FFFFFF&} — COUSINS OF THE CROCODILE,\NWAITING TO GRAB ANYTHING NEAR THE WATER.
+Dialogue: 0,0:00:40.10,0:00:47.60,Subtitle,,0,0,0,,BUT IT'S {\c&H0000E6FF&}SCARFACE THEY FEAR{\c&H00FFFFFF&}...\NWHERE LAND ENDS, HIS HUNTING GROUND BEGINS.
+Dialogue: 0,0:00:48.50,0:00:54.00,Subtitle,,0,0,0,,{\c&H0000E6FF&}*THE AMBUSH IN THE RIVER*{\c&H00FFFFFF&}
+Dialogue: 0,0:01:27.60,0:01:32.80,Subtitle,,0,0,0,,HE IS THE {\c&H0000E6FF&}TOP PREDATOR{\c&H00FFFFFF&} IN A LAND OF PREDATORS,\NTHE BEST OF THE BEST.
+Dialogue: 0,0:01:33.90,0:01:36.00,Subtitle,,0,0,0,,BUT EVERY MEAL IS A {\c&H0000E6FF&}BATTLE{\c&H00FFFFFF&}.
