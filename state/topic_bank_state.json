@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T13:42:20Z",
+  "updated_at": "2026-08-24T14:27:42Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -1021,6 +1021,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How Whales Create Bubble Nets",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T14:27:42Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T14:27:42Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
+      "quarantine_until": "2026-09-07T14:27:42Z"
     },
     {
       "topic": "How Whales Sing Across Oceans",
