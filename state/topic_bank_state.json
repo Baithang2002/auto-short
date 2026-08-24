@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T13:14:45Z",
+  "updated_at": "2026-08-24T13:42:20Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -106,6 +106,21 @@
       "last_failure_at": "",
       "last_failure_reason": "",
       "quarantine_until": ""
+    },
+    {
+      "topic": "How Bees Communicate Through Dance",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T13:42:20Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T13:42:20Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T13:42:20Z"
     },
     {
       "topic": "How Bees Make Honey",
@@ -571,6 +586,21 @@
       "last_failure_at": "2026-08-23T13:19:49Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
       "quarantine_until": "2026-09-06T13:19:49Z"
+    },
+    {
+      "topic": "How Octopuses Escape Through Tiny Holes",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T13:36:23Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T13:36:23Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)",
+      "quarantine_until": "2026-09-07T13:36:23Z"
     },
     {
       "topic": "How Ostriches Run Faster Than Horses",
