@@ -1,0 +1,79 @@
+{
+  "story_complexity": "simple",
+  "category_id": "15",
+  "title": "The Bizarre Biology Behind How Deer Shed Their Antlers",
+  "description": "Discover the incredible biological process behind how deer shed their massive antlers every winter.",
+  "instagram_caption": "Did you know deer shed their antlers every single year? 🦌 This mind-blowing biological process involves a drop in testosterone and specialized bone-eating cells that help snap the solid bone clean off. Nature is wild! \n\n#wildlife #deer #nature #science #outdoors",
+  "hashtags": [
+    "#shorts",
+    "#wildlife",
+    "#animals",
+    "#wildanimals",
+    "#deerantlers",
+    "#thewildmechanics"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Imagine shaking your head so hard that your own skull bones snap off and fly into the dirt. Every winter, male deer do exactly this to rid themselves of their heavy headwear.",
+      "broll": "male deer shaking head",
+      "broll_queries": [
+        "male deer shaking head",
+        "close up male deer shaking head",
+        "buck in winter forest wide shot",
+        "deer antlers close up detail"
+      ]
+    },
+    {
+      "beat_role": "climax",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "With a sudden, violent shake or a quick bump against a branch, the heavy antlers snap clean off, leaving the deer instantly lighter and completely pain-free.",
+      "broll": "antler falling to ground",
+      "broll_queries": [
+        "antler falling to ground",
+        "deer antler falling on forest floor close up",
+        "buck shaking off antlers in woods wide",
+        "shed antler lying on snow detail"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false,
+      "narration": "The small wounds heal over in just a few days, while the discarded antlers on the forest floor become a vital, nutrient-rich buffet for forest rodents.",
+      "broll": "squirrel gnawing on antler",
+      "broll_queries": [
+        "squirrel gnawing on antler",
+        "squirrel gnawing on shed antler close up",
+        "forest floor winter wide angle",
+        "mouse chewing bone detail"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 6,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "Keep your eyes on the ground next time you walk the woods to find one of these hidden treasures. Subscribe to The Wild Mechanics for more.",
+      "broll": "hiker finding deer antler",
+      "broll_queries": [
+        "hiker finding deer antler",
+        "hiker picking up shed antler close up",
+        "person walking in winter forest wide shot",
+        "holding deer antler close up detail"
+      ]
+    }
+  ],
+  "niche": "How Deer Shed Their Antlers Every Year"
+}

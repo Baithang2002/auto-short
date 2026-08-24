@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T04:31:03Z",
+  "updated_at": "2026-08-24T10:33:08Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -258,6 +258,21 @@
       "quarantine_until": "2026-09-04T10:06:36Z"
     },
     {
+      "topic": "How Deer Shed Their Antlers Every Year",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-24T10:32:04Z",
+      "last_qualified_at": "2026-08-24T10:32:04Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/bda3ccbc2f5dabd97338.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Dogs Hear Sounds Humans Cant",
       "status": "quarantined",
       "success_count": 0,
@@ -481,6 +496,21 @@
       "last_failure_at": "2026-08-22T10:02:37Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates",
       "quarantine_until": "2026-09-05T10:02:37Z"
+    },
+    {
+      "topic": "How Koalas Sleep 22 Hours a Day",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-24T10:27:05Z",
+      "last_qualified_at": "2026-08-24T10:27:05Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/3067610127811b6e4e64.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How leafcutter ants build underground cities with farming chambers",
@@ -708,6 +738,21 @@
       "quarantine_until": "2026-08-24T13:50:01Z"
     },
     {
+      "topic": "How Sea Otters Use Rocks as Tools",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-24T10:29:24Z",
+      "last_qualified_at": "2026-08-24T10:29:24Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/449bc8fbd3a302edef19.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
+    },
+    {
       "topic": "How Sea Turtles Find Their Birth Beach",
       "status": "quarantined",
       "success_count": 0,
@@ -741,16 +786,16 @@
       "topic": "How sea turtles navigate thousands of miles using Earth's magnetic field",
       "status": "quarantined",
       "success_count": 0,
-      "failure_count": 2,
+      "failure_count": 3,
       "qualification_count": 0,
-      "last_attempt_at": "2026-08-23T09:57:57Z",
+      "last_attempt_at": "2026-08-24T10:24:30Z",
       "last_qualified_at": "",
       "last_coverage_ratio": null,
       "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "2026-08-23T09:57:57Z",
-      "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: downloaded candidates did not verify the required entity and action",
-      "quarantine_until": "2026-09-06T09:57:57Z"
+      "last_failure_at": "2026-08-24T10:24:30Z",
+      "last_failure_reason": "main_reveal: downloaded candidates did not verify the required entity and action",
+      "quarantine_until": "2026-09-07T10:24:30Z"
     },
     {
       "topic": "How Seahorses Carry Their Babies",
@@ -766,6 +811,21 @@
       "last_failure_at": "2026-07-31T15:09:37Z",
       "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0% is below required 67%",
       "quarantine_until": "2026-08-14T15:09:37Z"
+    },
+    {
+      "topic": "How Sloths Move So Slowly on Purpose",
+      "status": "qualified",
+      "success_count": 0,
+      "failure_count": 0,
+      "qualification_count": 1,
+      "last_attempt_at": "2026-08-24T10:33:08Z",
+      "last_qualified_at": "2026-08-24T10:33:08Z",
+      "last_coverage_ratio": 1.0,
+      "qualified_script_path": "state/qualified_scripts/f1f03e418cbe806987a6.json",
+      "last_success_at": "",
+      "last_failure_at": "",
+      "last_failure_reason": "",
+      "quarantine_until": ""
     },
     {
       "topic": "How Spiders Spin Strong Silk",

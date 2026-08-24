@@ -1,0 +1,96 @@
+{
+  "story_complexity": "simple",
+  "category_id": "27",
+  "title": "Koalas Sleep to Survive Daily Poison",
+  "description": "Discover the shocking evolutionary reason why koalas sleep for 22 hours a day—it is a brutal fight for survival against toxic leaves.",
+  "instagram_caption": "Think koalas are just lazy? 🐨 Think again. That cute sleep is actually a daily battle to process lethal poison. Discover the extreme evolutionary trade-off behind their 22-hour nap cycle! #animals #wildlife #nature #koala #science",
+  "hashtags": [
+    "#shorts",
+    "#nature",
+    "#naturalworld",
+    "#planetearth",
+    "#koala",
+    "#survival",
+    "#naturefacts",
+    "#evolution"
+  ],
+  "music_mood": "inspiring",
+  "segments": [
+    {
+      "beat_role": "hook",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "A koala asleep in a tree isn't just resting. It is locked in a silent, desperate battle to survive a dose of daily poison.",
+      "broll": "sleeping koala in eucalyptus tree",
+      "broll_queries": [
+        "sleeping koala in eucalyptus tree",
+        "close up sleeping koala",
+        "koala sleeping high in eucalyptus tree",
+        "koala nose close up breathing slowly"
+      ]
+    },
+    {
+      "beat_role": "discovery",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "But neutralizing these toxic eucalyptus leaves requires massive energy, from a food source that offers virtually zero calories in return.",
+      "broll": "koala eating eucalyptus leaves",
+      "broll_queries": [
+        "koala eating eucalyptus leaves",
+        "koala chewing on green leaf",
+        "koala reaching for eucalyptus leaf forest",
+        "macro shot chewing leaf animal"
+      ]
+    },
+    {
+      "beat_role": "turning_point",
+      "beat_importance": 9,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "To prevent starvation, the koala makes a drastic trade-off: shutting down its body and brain to conserve every drop of energy.",
+      "broll": "curled up sleeping koala",
+      "broll_queries": [
+        "curled up sleeping koala",
+        "koala sleeping curled in branch",
+        "australian bushland wind blowing trees",
+        "koala head tucked in fur sleeping"
+      ]
+    },
+    {
+      "beat_role": "resolution",
+      "beat_importance": 10,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "This twenty-two-hour sleep cycle is actually an evolutionary masterstroke, turning a toxic wasteland into an exclusive home.",
+      "broll": "koala looking at camera peaceful",
+      "broll_queries": [
+        "koala looking at camera peaceful",
+        "koala looking directly into camera",
+        "koala hugging tree trunk high up",
+        "close up koala eyes open"
+      ]
+    },
+    {
+      "beat_role": "conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": false,
+      "beat_can_remove": false,
+      "critical_asset_dependency": false,
+      "narration": "To discover more incredible survival secrets, subscribe to The Wild Mechanics.",
+      "broll": "vibrant green forest sun rays",
+      "broll_queries": [
+        "vibrant green forest sun rays",
+        "sunbeams shining through forest canopy",
+        "beautiful green wilderness aerial view",
+        "sun light rays through eucalyptus forest"
+      ]
+    }
+  ],
+  "niche": "How Koalas Sleep 22 Hours a Day"
+}
