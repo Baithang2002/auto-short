@@ -269,11 +269,53 @@ def _write_story_report() -> Path:
         return OUT_DIR / "story_report.json"
 
 
+class _GeminiRateLimiter:
+    """Thread-safe rate limiter for Gemini API calls.
+
+    Enforces a minimum interval between calls to keep the pipeline within
+    the free-tier RPM budget (15 RPM for Google AI Studio).  Configurable
+    via ``GEMINI_MIN_INTERVAL_SEC`` (default 5 s -> 12 RPM).
+    """
+
+    def __init__(self):
+        import threading as _threading
+        self._lock = _threading.Lock()
+        self._last_call: float = 0.0
+        self._min_interval: float = float(
+            os.environ.get("GEMINI_MIN_INTERVAL_SEC", "5")
+        )
+
+    def _throttle(self):
+        import time as _time
+        with self._lock:
+            now = _time.monotonic()
+            wait = self._min_interval - (now - self._last_call)
+            if wait > 0:
+                _time.sleep(wait)
+            self._last_call = _time.monotonic()
+
+    def generate_content(self, model, contents, **kwargs):
+        """Rate-limited proxy for ``client.models.generate_content``."""
+        self._throttle()
+        return self._client.models.generate_content(
+            model=model, contents=contents, **kwargs
+        )
+
+    def __getattr__(self, name):
+        # Delegate everything else (e.g. .models) to the real client.
+        return getattr(self._client, name)
+
+
+_gemini_rate_limiter = _GeminiRateLimiter()
+
+
 def _get_gemini_client():
     global _GEMINI_CLIENT
     if _GEMINI_CLIENT is None and GEMINI_API_KEY:
         from google import genai
-        _GEMINI_CLIENT = genai.Client(api_key=GEMINI_API_KEY)
+        _raw_client = genai.Client(api_key=GEMINI_API_KEY)
+        _gemini_rate_limiter._client = _raw_client
+        _GEMINI_CLIENT = _gemini_rate_limiter
     return _GEMINI_CLIENT
 
 
@@ -757,16 +799,23 @@ def _llm_provider_registry() -> ProviderRegistry:
 
 def generate_script_raw(prompt):
     """Try configured LLM providers in fallback order.
-    The first non-None response wins."""
+    The first non-None response wins.  Also tracks which provider succeeded
+    in ``_LAST_LLM_PROVIDER`` so callers can select provider-tailored prompts."""
+    global _LAST_LLM_PROVIDER
     registry = _llm_provider_registry()
     try:
-        result = registry.execute(
+        def _call(provider):
+            result = provider.generate_text(prompt)
+            return result.value, result.provider
+
+        value, provider_name = registry.execute(
             "llm",
-            lambda provider: provider.generate_text(prompt).value,
+            _call,
             profile=APP_CONFIG.render_profile.name,
             feature="script_json",
         )
-        return result
+        _LAST_LLM_PROVIDER = provider_name
+        return value
     except Exception as e:
         raise RuntimeError(
             "All script providers failed across all model variants. "
@@ -807,6 +856,33 @@ def finalize_story_length(niche, data, critical_asset_plan=None, profile: Format
     return estimated, True
 
 
+def _build_writer_prompt(niche, beats, critical_visuals, critical_lock_rules, profile):
+    """Select the writer prompt variant for the last successful LLM provider.
+
+    SambaNova / open-weight models respond better to front-loaded mandatory
+    rules, explicit JSON schema, and step-by-step structure.  Gemini already
+    follows the standard prompt well, so only SambaNova gets a variant.
+    """
+    if _LAST_LLM_PROVIDER == "sambanova":
+        return story_planning.build_writer_prompt_sambanova(
+            niche, beats, critical_visuals, critical_lock_rules, profile
+        )
+    return story_planning.build_writer_prompt(
+        niche, beats, critical_visuals, critical_lock_rules, profile
+    )
+
+
+def _build_single_pass_prompt(niche, critical_visuals, critical_lock_rules, profile):
+    """Select the single-pass prompt variant for the last successful LLM provider."""
+    if _LAST_LLM_PROVIDER == "sambanova":
+        return story_planning.build_single_pass_prompt_sambanova(
+            niche, critical_visuals, critical_lock_rules, profile
+        )
+    return story_planning.build_single_pass_prompt(
+        niche, critical_visuals, critical_lock_rules, profile
+    )
+
+
 def generate_script(niche, critical_asset_plan=None, profile: FormatProfile = _FORMAT_PROFILE):
     """Write the complete story for ``niche``.
 
@@ -834,12 +910,12 @@ def generate_script(niche, critical_asset_plan=None, profile: FormatProfile = _F
         planner_plan = _plan_story(niche, critical_visuals, critical_lock_rules, profile)
 
     if planner_plan and planner_plan.get("beats"):
-        prompt = story_planning.build_writer_prompt(
+        prompt = _build_writer_prompt(
             niche, planner_plan["beats"], critical_visuals, critical_lock_rules, profile
         )
         writer_context = f"story for {niche!r}"
     else:
-        prompt = story_planning.build_single_pass_prompt(
+        prompt = _build_single_pass_prompt(
             niche, critical_visuals, critical_lock_rules, profile
         )
         writer_context = f"single-pass story for {niche!r}"
@@ -1591,6 +1667,11 @@ def _find_manual_input_clip(idx, local_media, intent=None):
 # Per-run circuit breaker: first Gemini 429 trips this flag. Subsequent calls
 # skip Gemini entirely instead of burning more quota and retrying.
 _GEMINI_QUOTA_DEAD = False
+
+# Tracks the last LLM provider that successfully returned a response.
+# Used to select provider-tailored prompts (e.g. SambaNova needs more
+# explicit structure than Gemini).
+_LAST_LLM_PROVIDER: str | None = None
 
 
 def smart_match_media(keyword, narration, local_media, idx, used_set, hybrid=False, threshold=0.5):

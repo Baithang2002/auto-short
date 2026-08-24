@@ -105,8 +105,13 @@ def _yt_clip_vision_verifier_for(entity: str | None, constraints: Sequence[str] 
                 data=Path(frame_path).read_bytes(), mime_type="image/jpeg"
             ))
         client = genai.Client(api_key=api_key)
+        # Respect the global Gemini rate limit so yt_clip verification
+        # calls don't exhaust the free-tier RPM budget.
+        import time as _time
+        _min_interval = float(os.environ.get("GEMINI_MIN_INTERVAL_SEC", "5"))
         failures = []
         for model in models:
+            _time.sleep(_min_interval)
             try:
                 response = client.models.generate_content(
                     model=model,

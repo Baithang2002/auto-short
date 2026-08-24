@@ -424,6 +424,146 @@ Rules:
 """
 
 
+def build_writer_prompt_sambanova(
+    niche: str,
+    beats: list[dict[str, Any]],
+    critical_visuals: str,
+    critical_lock_rules: str,
+    profile: FormatProfile,
+) -> str:
+    """Writer prompt optimised for SambaNova / open-weight models.
+
+    These models respond better to explicit step-by-step instructions,
+    front-loaded mandatory rules, and concrete examples.
+    """
+    beat_lines = []
+    for index, beat in enumerate(beats, start=1):
+        beat_lines.append(
+            f"- Beat {index}: role={beat.get('role')}; purpose: {beat.get('purpose', '')} "
+            f"(importance {beat.get('importance', 5)}/10, "
+            f"can_merge={str(beat.get('can_merge', True)).lower()}, "
+            f"can_remove={str(beat.get('can_remove', True)).lower()}, "
+            f"critical_asset_dependency={str(beat.get('critical_asset_dependency', False)).lower()})"
+        )
+    beat_plan = "\n".join(beat_lines)
+    return f"""You are scripting a high-retention vertical documentary about: "{niche}".
+
+===== CRITICAL RULES (违反任何一条 = REJECTED) =====
+1. LAST segment MUST have beat_role = "conclusion_cta".
+2. LAST segment narration MUST end with the EXACT sentence: "Subscribe to The Wild Mechanics for more."
+3. title MUST be a declarative statement (NOT a question). 5-8 words. No "?" character. No "#shorts". No academic label.
+   GOOD: "The Hidden Cost of Coral Bleaching"  BAD: "What Happens When Coral Dies?"
+4. Return ONLY the raw JSON object. No markdown fences, no preamble, no explanation.
+5. Each segment narration >= {profile.narration_words_per_segment_min} words. Complete sentences only.
+6. broll_queries MUST have exactly 4 items per segment.
+
+===== STORY PLAN (follow this beat order exactly) =====
+{beat_plan}
+
+===== CONFIRMED CRITICAL VISUALS =====
+{critical_visuals}
+
+===== STYLE =====
+- Cinematic nature documentary tone. Simple spoken words. Natural pauses.
+- One connected short film: opening -> need -> tension -> action -> stakes -> reveal -> payoff.
+- Keep science inside the action. Never invent claims.
+- First segment opens on a concrete problem/danger/mystery. broll must promise motion.
+
+===== JSON SCHEMA (return exactly this shape) =====
+{{
+  "title": "5-8 word declarative statement about the topic",
+  "description": "2-3 sentence hook + value",
+  "instagram_caption": "1-2 sentence caption",
+  "music_mood": "mysterious | inspiring | dramatic | warm | curious | urgent",
+  "hashtags": ["#tag1", "#tag2"],
+  "segments": [
+    {{
+      "narration": "one or two spoken sentences",
+      "broll": "3-5 word stock search term",
+      "broll_queries": ["query1", "query2", "query3", "query4"],
+      "beat_role": "hook | context | setup | discovery | conflict | escalation | turning_point | climax | resolution | interesting_fact | conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": true,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false
+    }}
+  ]
+}}
+
+===== RULES =====
+- One segment per beat (or merged pair). Never invent beats.
+- STRICT broll ALIGNMENT: broll and broll_queries MUST match the narration subject and action.
+- 10-15 lowercase hashtags. No #shorts.
+- Narration: plain spoken English, no emojis, no stage directions.
+- broll: concrete nouns a stock service would have.
+{critical_lock_rules}
+"""
+
+
+def build_single_pass_prompt_sambanova(
+    niche: str,
+    critical_visuals: str,
+    critical_lock_rules: str,
+    profile: FormatProfile,
+) -> str:
+    """Single-pass writer prompt optimised for SambaNova / open-weight models.
+    """
+    return f"""You are scripting a high-retention vertical documentary about: "{niche}".
+
+===== CRITICAL RULES (违反任何一条 = REJECTED) =====
+1. LAST segment MUST have beat_role = "conclusion_cta".
+2. LAST segment narration MUST end with the EXACT sentence: "Subscribe to The Wild Mechanics for more."
+3. title MUST be a declarative statement (NOT a question). 5-8 words. No "?" character. No "#shorts". No academic label.
+   GOOD: "The Hidden Cost of Coral Bleaching"  BAD: "What Happens When Coral Dies?"
+4. Return ONLY the raw JSON object. No markdown fences, no preamble, no explanation.
+5. Each segment narration >= {profile.narration_words_per_segment_min} words. Complete sentences only.
+6. broll_queries MUST have exactly 4 items per segment.
+7. FIRST segment beat_role = "hook". LAST segment beat_role = "conclusion_cta".
+
+===== STORY LENGTH =====
+Write 6-15 segments as the story needs. Platform ceiling is about {profile.max_duration_sec} seconds.
+Do NOT compress or pad to hit any duration.
+
+===== CONFIRMED CRITICAL VISUALS =====
+{critical_visuals}
+
+===== STYLE =====
+- Cinematic nature documentary tone. Simple spoken words. Natural pauses.
+- One connected short film: opening -> need -> tension -> action -> stakes -> reveal -> payoff.
+- Keep science inside the action. Never invent claims.
+- First segment opens on a concrete problem/danger/mystery. broll must promise motion.
+
+===== JSON SCHEMA (return exactly this shape) =====
+{{
+  "title": "5-8 word declarative statement about the topic",
+  "description": "2-3 sentence hook + value",
+  "instagram_caption": "1-2 sentence caption",
+  "music_mood": "mysterious | inspiring | dramatic | warm | curious | urgent",
+  "hashtags": ["#tag1", "#tag2"],
+  "segments": [
+    {{
+      "narration": "one or two spoken sentences",
+      "broll": "3-5 word stock search term",
+      "broll_queries": ["query1", "query2", "query3", "query4"],
+      "beat_role": "hook | context | setup | discovery | conflict | escalation | turning_point | climax | resolution | interesting_fact | conclusion_cta",
+      "beat_importance": 7,
+      "beat_can_merge": true,
+      "beat_can_remove": true,
+      "critical_asset_dependency": false
+    }}
+  ]
+}}
+
+===== RULES =====
+- One segment per beat. Never invent beats.
+- STRICT broll ALIGNMENT: broll and broll_queries MUST match the narration subject and action.
+- 10-15 lowercase hashtags. No #shorts.
+- Narration: plain spoken English, no emojis, no stage directions.
+- broll: concrete nouns a stock service would have.
+{critical_lock_rules}
+"""
+
+
 def build_trim_prompt(
     niche: str,
     script: dict[str, Any],
