@@ -431,3 +431,6 @@
 2026-08-24 04:10:03  topic='How Raccoons Wash Their Food'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-24 04:10:34  topic='How Ravens Solve Puzzles'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-24 04:09:38  topic='How Squirrels Find Buried Nuts'  exit=1  slot='morning'  duration=67s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-24 04:30:28  topic='How Squirrels Find Buried Nuts'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 04:31:03  topic='How Storks Stand Still for Hours'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
+2026-08-24 04:28:56  topic='How Spiders Spin Strong Silk'  exit=1  slot='morning'  duration=143s  critical_failure=true  reason='critical technical failure exit=1'

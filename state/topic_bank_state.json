@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T04:10:34Z",
+  "updated_at": "2026-08-24T04:31:03Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -783,6 +783,21 @@
       "quarantine_until": "2026-08-14T15:09:49Z"
     },
     {
+      "topic": "How Squirrels Find Buried Nuts",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T04:30:28Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T04:30:28Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T04:30:28Z"
+    },
+    {
       "topic": "How Starfish Regrow Lost Arms",
       "status": "quarantined",
       "success_count": 0,
@@ -796,6 +811,21 @@
       "last_failure_at": "2026-08-01T06:11:41Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-08-15T06:11:41Z"
+    },
+    {
+      "topic": "How Storks Stand Still for Hours",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T04:31:03Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T04:31:03Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)",
+      "quarantine_until": "2026-09-07T04:31:03Z"
     },
     {
       "topic": "How Tardigrades Survive in Space",
