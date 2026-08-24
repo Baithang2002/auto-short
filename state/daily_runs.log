@@ -442,3 +442,7 @@
 2026-08-24 13:35:45  topic='How Whales Create Bubble Nets'  exit=1  slot='evening'  duration=407s  critical_failure=true  reason='critical technical failure exit=1'
 2026-08-24 14:27:42  topic='How Whales Create Bubble Nets'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates'
 2026-08-24 14:26:41  topic='How Crabs Walk Sideways'  exit=1  slot='manual'  duration=80s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-24 16:53:09  topic='How Crabs Walk Sideways'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-24 16:55:12  topic='How Fireflies Glow at Night'  exit=1  slot='manual'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 16:55:56  topic='How Lobster Blood Is Blue'  exit=1  slot='manual'  attempt=3/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-24 17:00:40  topic='How Bees Sense Electric Fields'  exit=1  slot='manual'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'

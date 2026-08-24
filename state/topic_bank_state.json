@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T14:27:42Z",
+  "updated_at": "2026-08-24T17:00:40Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -153,6 +153,21 @@
       "quarantine_until": "2026-09-03T13:12:21Z"
     },
     {
+      "topic": "How Bees Sense Electric Fields",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T17:00:40Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T17:00:40Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T17:00:40Z"
+    },
+    {
       "topic": "How Camels Survive the Desert",
       "status": "quarantined",
       "success_count": 0,
@@ -256,6 +271,21 @@
       "last_failure_at": "2026-08-22T13:00:45Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-09-05T13:00:45Z"
+    },
+    {
+      "topic": "How Crabs Walk Sideways",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T16:53:09Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T16:53:09Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-07T16:53:09Z"
     },
     {
       "topic": "How Crocodiles Regulate Their Temperature",
@@ -408,6 +438,21 @@
       "quarantine_until": "2026-09-04T13:31:08Z"
     },
     {
+      "topic": "How Fireflies Glow at Night",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T16:55:12Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T16:55:12Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T16:55:12Z"
+    },
+    {
       "topic": "How Frogs Survive the Dry Season",
       "status": "quarantined",
       "success_count": 0,
@@ -541,6 +586,21 @@
       "last_failure_at": "2026-08-22T09:59:46Z",
       "last_failure_reason": "hook: downloaded candidates did not verify the required entity and action; main_reveal: authentic candidates were found but none passed intent/evidence scoring",
       "quarantine_until": "2026-09-05T09:59:46Z"
+    },
+    {
+      "topic": "How Lobster Blood Is Blue",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-24T16:55:56Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-24T16:55:56Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-07T16:55:56Z"
     },
     {
       "topic": "How mantis shrimp punch with the force of a bullet to crack shells",
