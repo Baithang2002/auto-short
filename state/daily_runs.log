@@ -434,3 +434,6 @@
 2026-08-24 04:30:28  topic='How Squirrels Find Buried Nuts'  exit=1  slot='morning'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-24 04:31:03  topic='How Storks Stand Still for Hours'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/6 (0%) is below required 5/6 (67%)'
 2026-08-24 04:28:56  topic='How Spiders Spin Strong Silk'  exit=1  slot='morning'  duration=143s  critical_failure=true  reason='critical technical failure exit=1'
+2026-08-24 13:13:35  topic='How Sea Otters Use Rocks as Tools'  exit=1  slot='evening'  attempt=1/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 13:14:45  topic='How Sloths Move So Slowly on Purpose'  exit=1  slot='evening'  attempt=2/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-24 13:11:30  topic='How Octopuses Escape Through Tiny Holes'  exit=1  slot='evening'  duration=220s  critical_failure=true  reason='critical technical failure exit=1'

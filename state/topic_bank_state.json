@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T10:33:08Z",
+  "updated_at": "2026-08-24T13:14:45Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -739,18 +739,18 @@
     },
     {
       "topic": "How Sea Otters Use Rocks as Tools",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-24T10:29:24Z",
+      "last_attempt_at": "2026-08-24T13:13:35Z",
       "last_qualified_at": "2026-08-24T10:29:24Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/449bc8fbd3a302edef19.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-24T13:13:35Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T13:13:35Z"
     },
     {
       "topic": "How Sea Turtles Find Their Birth Beach",
@@ -814,18 +814,18 @@
     },
     {
       "topic": "How Sloths Move So Slowly on Purpose",
-      "status": "qualified",
+      "status": "quarantined",
       "success_count": 0,
-      "failure_count": 0,
+      "failure_count": 1,
       "qualification_count": 1,
-      "last_attempt_at": "2026-08-24T10:33:08Z",
+      "last_attempt_at": "2026-08-24T13:14:45Z",
       "last_qualified_at": "2026-08-24T10:33:08Z",
       "last_coverage_ratio": 1.0,
-      "qualified_script_path": "state/qualified_scripts/f1f03e418cbe806987a6.json",
+      "qualified_script_path": "",
       "last_success_at": "",
-      "last_failure_at": "",
-      "last_failure_reason": "",
-      "quarantine_until": ""
+      "last_failure_at": "2026-08-24T13:14:45Z",
+      "last_failure_reason": "verified media gate rejected planned scene media",
+      "quarantine_until": "2026-09-07T13:14:45Z"
     },
     {
       "topic": "How Spiders Spin Strong Silk",
