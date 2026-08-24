@@ -428,3 +428,6 @@
 2026-08-23 13:20:09  topic='How Pandas Eat Bamboo All Day'  exit=1  slot='evening'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
 2026-08-23 13:20:28  topic='How Pigeons Find Their Way Home'  exit=1  slot='evening'  attempt=3/4  quality_deferred='scene coverage 2/4 (50%) is below required 3/4 (67%)'
 2026-08-23 13:20:49  topic='How Rabbits Hear in Every Direction'  exit=1  slot='evening'  attempt=4/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/5 (0%) is below required 4/5 (67%)'
+2026-08-24 04:10:03  topic='How Raccoons Wash Their Food'  exit=1  slot='morning'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-24 04:10:34  topic='How Ravens Solve Puzzles'  exit=1  slot='morning'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-24 04:09:38  topic='How Squirrels Find Buried Nuts'  exit=1  slot='morning'  duration=67s  critical_failure=true  reason='critical technical failure exit=1'
