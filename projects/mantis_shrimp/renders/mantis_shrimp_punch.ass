@@ -1,0 +1,55 @@
+[Script Info]
+Title: BULLET PUNCH | MANTIS SHRIMP
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Header,Impact,48,&H00FFFFFF,&H0000E6FF,&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
+Style: Subtitle,Impact,64,&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,520,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,9:59:59.00,Header,,0,0,0,,{\c&H0000E6FF&}BULLET PUNCH{\c&H00FFFFFF&}  |  MANTIS SHRIMP
+Dialogue: 0,0:00:00.44,0:00:02.06,Subtitle,,0,0,0,,THE {\c&H0000E6FF&}MANTIS{\c&H00FFFFFF&} {\c&H0000E6FF&}SHRIMP{\c&H00FFFFFF&} IS
+Dialogue: 0,0:00:02.06,0:00:03.44,Subtitle,,0,0,0,,A TRUE {\c&H0000E6FF&}HEAVY{\c&H00FFFFFF&} HITTER.
+Dialogue: 0,0:00:03.80,0:00:05.78,Subtitle,,0,0,0,,TAKE THIS ONE. SHE'S
+Dialogue: 0,0:00:05.78,0:00:06.91,Subtitle,,0,0,0,,ABOUT TO DEVOUR THIS
+Dialogue: 0,0:00:06.96,0:00:08.24,Subtitle,,0,0,0,,SNAIL, BUT SHE'S GOT
+Dialogue: 0,0:00:08.24,0:00:08.89,Subtitle,,0,0,0,,TO CRACK IT OPEN
+Dialogue: 0,0:00:08.94,0:00:10.58,Subtitle,,0,0,0,,FIRST, SO SHE CAREFULLY
+Dialogue: 0,0:00:10.58,0:00:14.86,Subtitle,,0,0,0,,POSITIONS IT. THEN… DAMN!
+Dialogue: 0,0:00:14.86,0:00:16.20,Subtitle,,0,0,0,,SHE PUNCHES IT WITH
+Dialogue: 0,0:00:16.20,0:00:16.89,Subtitle,,0,0,0,,THE {\c&H0000E6FF&}SPEED{\c&H00FFFFFF&} OF A
+Dialogue: 0,0:00:16.94,0:00:21.58,Subtitle,,0,0,0,,22 -HOLLIVER {\c&H0000E6FF&}BULLET.{\c&H00FFFFFF&} IT'S
+Dialogue: 0,0:00:21.58,0:00:22.84,Subtitle,,0,0,0,,THE {\c&H0000E6FF&}FASTEST{\c&H00FFFFFF&} {\c&H0000E6FF&}ATTACK{\c&H00FFFFFF&} IN
+Dialogue: 0,0:00:22.84,0:00:24.98,Subtitle,,0,0,0,,THE ANIMAL KINGDOM. THAT'S
+Dialogue: 0,0:00:24.98,0:00:25.93,Subtitle,,0,0,0,,ONE KIND OF {\c&H0000E6FF&}MANTIS{\c&H00FFFFFF&}
+Dialogue: 0,0:00:25.98,0:00:27.28,Subtitle,,0,0,0,,{\c&H0000E6FF&}SHRIMP,{\c&H00FFFFFF&} KNOWN AS A
+Dialogue: 0,0:00:27.28,0:00:29.76,Subtitle,,0,0,0,,{\c&H0000E6FF&}SMASHER.{\c&H00FFFFFF&} HERE'S THE OTHER.
+Dialogue: 0,0:00:30.08,0:00:31.09,Subtitle,,0,0,0,,THIS ONE'S CALLED A
+Dialogue: 0,0:00:31.14,0:00:33.36,Subtitle,,0,0,0,,SPIRROR. BURIED UP TO
+Dialogue: 0,0:00:33.36,0:00:34.76,Subtitle,,0,0,0,,HIS EYEBALLS, HE WATCHES
+Dialogue: 0,0:00:34.76,0:00:40.72,Subtitle,,0,0,0,,AND WAITS. THEN… HE'S
+Dialogue: 0,0:00:40.72,0:00:41.53,Subtitle,,0,0,0,,PREY ON A SERRATED
+Dialogue: 0,0:00:41.58,0:00:43.28,Subtitle,,0,0,0,,BLADE WITH BLINDING {\c&H0000E6FF&}SPEED{\c&H00FFFFFF&}
+Dialogue: 0,0:00:43.28,0:00:44.76,Subtitle,,0,0,0,,AND DRAGGING IT BENEATH
+Dialogue: 0,0:00:44.76,0:00:48.74,Subtitle,,0,0,0,,THE SAND. WHAT MAKES
+Dialogue: 0,0:00:48.74,0:00:49.89,Subtitle,,0,0,0,,THESE TWO SO AMAZING
+Dialogue: 0,0:00:49.94,0:00:51.68,Subtitle,,0,0,0,,ISN'T JUST THEIR {\c&H0000E6FF&}SPEED.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:52.28,0:00:55.16,Subtitle,,0,0,0,,IT'S THEIR EYES. SEE
+Dialogue: 0,0:00:55.16,0:00:58.60,Subtitle,,0,0,0,,THOSE BLACK SPOTS? THEY'RE
+Dialogue: 0,0:00:58.60,0:01:00.12,Subtitle,,0,0,0,,LIKE OUR {\c&H0000E6FF&}PUPILS,{\c&H00FFFFFF&} WHERE
+Dialogue: 0,0:01:00.12,0:01:01.17,Subtitle,,0,0,0,,THE LIGHT ENTERS THE
+Dialogue: 0,0:01:01.22,0:01:02.82,Subtitle,,0,0,0,,EYE. WE HUMANS HAVE
+Dialogue: 0,0:01:02.82,0:01:04.02,Subtitle,,0,0,0,,ONE IN EACH EYE.
+Dialogue: 0,0:01:04.10,0:01:04.95,Subtitle,,0,0,0,,EACH SENDS AN IMAGE
+Dialogue: 0,0:01:05.00,0:01:06.01,Subtitle,,0,0,0,,TO THE BRAIN AND
+Dialogue: 0,0:01:06.06,0:01:08.58,Subtitle,,0,0,0,,VOILA! DEPTH PERCEPTION. THE
+Dialogue: 0,0:01:08.58,0:01:10.24,Subtitle,,0,0,0,,{\c&H0000E6FF&}MANTIS{\c&H00FFFFFF&} {\c&H0000E6FF&}SHRIMP{\c&H00FFFFFF&} HAS {\c&H0000E6FF&}SIX{\c&H00FFFFFF&}
+Dialogue: 0,0:01:10.24,0:01:11.80,Subtitle,,0,0,0,,OF THEM. OUR VISION,
+Dialogue: 0,0:01:12.10,0:01:14.38,Subtitle,,0,0,0,,BINOCULAR. HIS VISION, HEX
+Dialogue: 0,0:01:14.38,0:01:17.32,Subtitle,,0,0,0,,-NOCULAR. FOR WHEN {\c&H0000E6FF&}ACCURACY{\c&H00FFFFFF&}
+Dialogue: 0,0:01:17.32,0:01:18.52,Subtitle,,0,0,0,,COUNTS.
