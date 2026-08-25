@@ -52,7 +52,7 @@ ScaledBorderAndShadow: yes
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
 Style: Header,{font_name},48,{text_color},{keyword_color},&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
-Style: Subtitle,{font_name},{font_size},{text_color},{keyword_color},&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,280,1
+Style: Subtitle,{font_name},{font_size},{text_color},{keyword_color},&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,520,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
