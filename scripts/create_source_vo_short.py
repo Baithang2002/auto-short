@@ -6,6 +6,7 @@ High-Retention Source-VO Wildlife Documentary Shorts Production Engine.
 Transforms BBC / National Geographic 16:9 documentary footage into viral 9:16 vertical shorts:
 - Ghost-Blur 4:5 / 9:16 aspect ratio with cinematic blurred background
 - Anti-Content-ID color grading (eq=saturation=1.12:contrast=1.04:brightness=-0.02)
+- Anti-Content-ID horizontal flip (hflip)
 - Anti-Content-ID audio frequency & acoustic fingerprint scrambler
 - Elevated kinetic ASS subtitles with safe-zone positioning (MarginV=520)
 - EBU R128 integrated loudness normalization (-14 LUFS)
@@ -80,12 +81,12 @@ def render_source_vo_short(
     source_video: str | Path,
     output_video: str | Path,
     start_time: float = 0.0,
-    duration: float = 60.0,
+    duration: float = 58.0,
     ass_subtitle_path: Optional[str | Path] = None,
     framing: str = "ghost-4-5",
     title_banner: Optional[str] = None,
     events: Optional[list[dict[str, Any]]] = None,
-    hflip: bool = False,
+    hflip: bool = True,
 ) -> Path:
     """Renders the 9:16 vertical short from raw documentary source with anti-Content-ID protections."""
     source_path = Path(source_video).resolve()
@@ -99,12 +100,12 @@ def render_source_vo_short(
         ass_subtitle_path = temp_ass
 
     # 2. Visual Filtergraph with Anti-Content-ID color grade & framing
-    flip_filter = ",hflip" if hflip else ""
+    flip_prefix = "hflip," if hflip else ""
 
     if framing in ["ghost-4-5", "4:5", "ghost-blur"]:
         # 4:5 aspect ratio (1080x1350) centered over blurred 9:16 background
         vf_base = (
-            f"[0:v]{flip_filter}split=2[bg][fg];"
+            f"[0:v]{flip_prefix}split=2[bg][fg];"
             "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.08:saturation=1.15[bgblur];"
             "[fg]scale=-1:1350,crop=1080:1350:(iw-1080)/2:0,eq=saturation=1.12:contrast=1.04:brightness=-0.02[fg45];"
             "[bgblur][fg45]overlay=0:285"
@@ -112,13 +113,13 @@ def render_source_vo_short(
     elif framing in ["ghost-16-9", "blurred-fill"]:
         # Full 16:9 centered over blurred 9:16 background
         vf_base = (
-            f"[0:v]{flip_filter}split=2[bg][fg];"
+            f"[0:v]{flip_prefix}split=2[bg][fg];"
             "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.08:saturation=1.15[bgblur];"
             "[fg]scale=1080:-1,eq=saturation=1.12:contrast=1.04:brightness=-0.02[fgscaled];"
             "[bgblur][fgscaled]overlay=0:(1920-H)/2"
         )
     else:  # fullbleed center-crop (9:16)
-        vf_base = f"[0:v]{flip_filter}scale=-1:1920,crop=1080:1920:(iw-1080)/2:0,eq=saturation=1.12:contrast=1.04:brightness=-0.02"
+        vf_base = f"[0:v]{flip_prefix}scale=-1:1920,crop=1080:1920:(iw-1080)/2:0,eq=saturation=1.12:contrast=1.04:brightness=-0.02"
 
     if ass_subtitle_path and Path(ass_subtitle_path).exists():
         ass_str = str(Path(ass_subtitle_path).resolve()).replace("\\", "/")
@@ -147,7 +148,7 @@ def render_source_vo_short(
         str(output_path),
     ]
 
-    print(f"[OpenMontage] Executing render for {output_path.name}...")
+    print(f"[OpenMontage] Executing render for {output_path.name} (hflip={hflip}, duration={duration}s)...")
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
         print("[FFmpeg STDOUT]", res.stdout)
@@ -163,11 +164,12 @@ def main():
     parser.add_argument("--source", type=str, required=True, help="Path to master documentary video")
     parser.add_argument("--output", type=str, default=None, help="Output MP4 file path")
     parser.add_argument("--start", type=str, default="0.0", help="Start time (e.g. 10.0 or 01:15)")
-    parser.add_argument("--duration", type=str, default="60.0", help="Duration in seconds")
+    parser.add_argument("--duration", type=str, default="58.0", help="Duration in seconds (<=58s recommended for Shorts)")
     parser.add_argument("--framing", choices=["fullbleed", "ghost-4-5", "4:5", "ghost-blur", "ghost-16-9", "blurred-fill"], default="ghost-4-5")
     parser.add_argument("--ass", type=str, default=None, help="Path to ASS subtitle file")
     parser.add_argument("--title", type=str, default=None, help="Top hook title banner")
-    parser.add_argument("--hflip", action="store_true", help="Apply horizontal flip")
+    parser.add_argument("--hflip", action="store_true", default=True, help="Apply horizontal flip")
+    parser.add_argument("--no-hflip", dest="hflip", action="store_false", help="Disable horizontal flip")
 
     args = parser.parse_args()
     source_p = Path(args.source)

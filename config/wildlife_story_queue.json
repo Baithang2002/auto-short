@@ -1,5 +1,5 @@
 {
-  "current_index": 1,
+  "current_index": 0,
   "stories": [
     {
       "id": "flying_fish_hunt",
@@ -8,17 +8,10 @@
       "description": "Gliding above the ocean at 30mph, flying fish must escape predators from both the water and the sky. Narrated by Sir David Attenborough (BBC The Hunt).\n\n#wildlife #animals #documentary #ocean #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/flying_fish_doc_source_01.mp4",
       "start": 0.0,
-      "duration": 112.0,
+      "duration": 58.0,
       "header_banner": "ESCAPE FROM THE DEEP | FLYING FISH",
       "ass_file": "projects/flying_fish/renders/flying_fish_hunt.ass",
-      "tags": [
-        "shorts",
-        "wildlife",
-        "ocean",
-        "flying fish",
-        "nature",
-        "predators"
-      ]
+      "tags": ["shorts", "wildlife", "ocean", "flying fish", "nature", "predators"]
     },
     {
       "id": "jaguar_caiman_hunt",
@@ -27,17 +20,10 @@
       "description": "Scarface, a 100kg male jaguar, stalks caimans in the Pantanal river. The top apex predator of South America in a clash of titans.\n\n#jaguar #wildlife #predators #animals #nature #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/jaguar_hunt_source_01.mp4",
       "start": 0.0,
-      "duration": 96.0,
+      "duration": 58.0,
       "header_banner": "SCARFACE | THE CROCODILE HUNTER",
       "ass_file": "projects/jaguar/renders/scarface_caiman_hunt.ass",
-      "tags": [
-        "shorts",
-        "jaguar",
-        "wildlife",
-        "predators",
-        "nature",
-        "pantanal"
-      ]
+      "tags": ["shorts", "jaguar", "wildlife", "predators", "nature", "pantanal"]
     },
     {
       "id": "cheetah_malaika_hunt",
@@ -46,17 +32,10 @@
       "description": "Malaika the cheetah mother must make a kill nearly every day to feed her 4 cubs in the Maasai Mara. BBC The Hunt Ep 1.\n\n#cheetah #wildlife #safari #nature #animals #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/cheetah_hunt_source_01.mp4",
       "start": 0.0,
-      "duration": 95.0,
+      "duration": 58.0,
       "header_banner": "MALAIKA'S HUNT | MOTHER CHEETAH",
       "ass_file": "projects/cheetah/renders/cheetah_malaika.ass",
-      "tags": [
-        "shorts",
-        "cheetah",
-        "wildlife",
-        "safari",
-        "nature",
-        "animals"
-      ]
+      "tags": ["shorts", "cheetah", "wildlife", "safari", "nature", "animals"]
     },
     {
       "id": "wolf_yellowstone_hunt",
@@ -65,17 +44,10 @@
       "description": "Reintroduced into Yellowstone in 1995, the wolf pack altered the entire ecosystem. Living on the edge where every single day could be their last.\n\n#wolf #yellowstone #wildlife #nature #pack #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/wolf_doc_source_01.mp4",
       "start": 0.0,
-      "duration": 85.0,
+      "duration": 58.0,
       "header_banner": "RETURN OF THE APEX | YELLOWSTONE WOLVES",
       "ass_file": "projects/wolf/renders/wolf_yellowstone.ass",
-      "tags": [
-        "shorts",
-        "wolf",
-        "yellowstone",
-        "wildlife",
-        "nature",
-        "predators"
-      ]
+      "tags": ["shorts", "wolf", "yellowstone", "wildlife", "nature", "predators"]
     },
     {
       "id": "snow_leopard_cliff_hunt",
@@ -84,17 +56,10 @@
       "description": "High in the Himalayas, the elusive snow leopard stalks bharal across sheer vertical precipices. One misstep means certain death.\n\n#snowleopard #himalayas #wildlife #nature #bigcats #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/snow_leopard_source_01.mp4",
       "start": 0.0,
-      "duration": 88.0,
+      "duration": 58.0,
       "header_banner": "GHOST OF THE MOUNTAINS | SNOW LEOPARD",
       "ass_file": "projects/snow_leopard/renders/snow_leopard_cliff.ass",
-      "tags": [
-        "shorts",
-        "snowleopard",
-        "wildlife",
-        "mountains",
-        "nature",
-        "predators"
-      ]
+      "tags": ["shorts", "snowleopard", "wildlife", "mountains", "nature", "predators"]
     },
     {
       "id": "macaque_frozen_kingdom",
@@ -103,17 +68,10 @@
       "description": "In the sub-zero blizzards of the Japanese Alps, snow monkeys survive by soaking in volcanic thermal hot springs under strict troop hierarchy.\n\n#snowmonkeys #japan #wildlife #nature #macaque #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/macaque_doc_source_01.mp4",
       "start": 0.0,
-      "duration": 78.0,
+      "duration": 58.0,
       "header_banner": "THE FROZEN KINGDOM | SNOW MONKEYS",
       "ass_file": "projects/macaque/renders/macaque_snow_monkeys.ass",
-      "tags": [
-        "shorts",
-        "monkeys",
-        "japan",
-        "wildlife",
-        "nature",
-        "winter"
-      ]
+      "tags": ["shorts", "monkeys", "japan", "wildlife", "nature", "winter"]
     },
     {
       "id": "tiger_queen_hunt",
@@ -122,17 +80,10 @@
       "description": "Raj Bhera, the tigress ruler of Bandhavgarh, fights rival intruders to protect and feed her four cubs in the dense jungle.\n\n#tiger #bengaltiger #wildlife #nature #bigcats #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/tiger_doc_source_01.mp4",
       "start": 0.0,
-      "duration": 82.0,
+      "duration": 58.0,
       "header_banner": "QUEEN OF THE JUNGLE | BENGAL TIGER",
       "ass_file": "projects/tiger/renders/tiger_queen.ass",
-      "tags": [
-        "shorts",
-        "tiger",
-        "bengaltiger",
-        "wildlife",
-        "nature",
-        "bigcats"
-      ]
+      "tags": ["shorts", "tiger", "bengaltiger", "wildlife", "nature", "bigcats"]
     }
   ]
 }
