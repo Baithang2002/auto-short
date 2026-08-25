@@ -139,9 +139,27 @@ def main():
         })
         if up_res.success:
             video_url = up_res.data.get("video_url")
-            print(f"✅ Published: {video_url}")
+            print(f"✅ Published to YouTube: {video_url}")
         else:
             print(f"⚠️ YouTube upload warning: {up_res.error}")
+
+        # Optional Upload to Facebook Reels
+        try:
+            from tools.publishers.facebook_uploader import FacebookReelsUploader
+            fb = FacebookReelsUploader()
+            if fb.is_configured():
+                print("\n📱 Uploading to Facebook Reels via Meta Graph API...")
+                fb_res = fb.upload_reel(
+                    video_path=str(output_mp4),
+                    title=story.get("title", ""),
+                    description=story.get("description", "")
+                )
+                if fb_res:
+                    print(f"✅ Published to Facebook Reels: {fb_res.get('fb_url')}")
+            else:
+                print("\n[FB_UPLOADER] Facebook credentials not set in secrets; skipping FB Reels.")
+        except Exception as fb_err:
+            print(f"⚠️ Facebook upload warning: {fb_err}")
 
     # 4. Dispatch Discord / Telegram Notification
     if args.notify:
