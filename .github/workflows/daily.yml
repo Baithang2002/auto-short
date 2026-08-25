@@ -1,17 +1,11 @@
 name: Daily Shorts Publish
 
 on:
-  schedule:
-    # Cron is UTC. GitHub Actions on free tier sometimes skips :00/:30 minute
-    # slots during high load. :17 and :47 are notoriously more reliable.
-    - cron: '17 3 * * *'     # morning primary  - 08:47 IST (03:17 UTC)
-    - cron: '47 3 * * *'     # morning backup   - 09:17 IST (03:47 UTC) - runs only if morning primary missed
-    - cron: '17 12 * * *'    # evening primary  - 17:47 IST (12:17 UTC)
-    - cron: '47 12 * * *'    # evening backup   - 18:17 IST (12:47 UTC) - runs only if evening primary missed
-  workflow_dispatch:       # also allow manual trigger from the Actions tab
+  # DEPRECATED: Scheduled triggers disabled in favor of daily_wildlife_short.yml
+  workflow_dispatch:       # manual trigger only if needed
     inputs:
       topic:
-        description: 'Render-only topic override (leave blank on main for the production rotation)'
+        description: 'Render-only topic override'
         required: false
         default: ''
 
