@@ -1,0 +1,38 @@
+[Script Info]
+Title: Iguana Master 112s Subtitles
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Impact,52,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,2,0,1,5,2,2,40,40,500,1
+Style: Header,Impact,42,&H0000D7FF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,2,0,1,4,2,8,40,40,180,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:01:52.00,Header,,0,0,0,,THE ESCAPE | IGUANA VS RACER SNAKES
+Dialogue: 0,0:00:06.86,0:00:08.78,Default,,0,0,0,,A {\c&H0000FFFF&}SNAKE'S{\c&H00FFFFFF&} {\c&H0000FFFF&}EYES{\c&H00FFFFFF&} AREN'T
+Dialogue: 0,0:00:08.78,0:00:11.02,Default,,0,0,0,,VERY GOOD, BUT THEY
+Dialogue: 0,0:00:11.02,0:00:12.20,Default,,0,0,0,,CAN DETECT {\c&H0000FFFF&}MOVEMENT.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:14.39,0:00:15.62,Default,,0,0,0,,SO IF THE HATCHLING
+Dialogue: 0,0:00:15.62,0:00:17.08,Default,,0,0,0,,KEEPS ITS NERVE, IT
+Dialogue: 0,0:00:17.08,0:00:18.62,Default,,0,0,0,,MAY JUST {\c&H0000FFFF&}AVOID{\c&H00FFFFFF&} {\c&H0000FFFF&}DETECTION.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:19.90,0:00:21.42,Default,,0,0,0,,SUDDENLY, {\c&H0000FFFF&}DOZENS{\c&H00FFFFFF&} OF {\c&H0000FFFF&}RACER{\c&H00FFFFFF&}
+Dialogue: 0,0:00:21.42,0:00:22.48,Default,,0,0,0,,{\c&H0000FFFF&}SNAKES{\c&H00FFFFFF&} {\c&H0000FFFF&}EMERGE{\c&H00FFFFFF&} FROM THE
+Dialogue: 0,0:00:22.48,0:00:22.82,Default,,0,0,0,,{\c&H0000FFFF&}ROCKS.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:31.70,0:00:32.90,Default,,0,0,0,,THE HATCHLING MAKES A
+Dialogue: 0,0:00:32.90,0:00:33.72,Default,,0,0,0,,{\c&H0000FFFF&}RUN{\c&H00FFFFFF&} FOR IT, BUT
+Dialogue: 0,0:00:33.72,0:00:34.90,Default,,0,0,0,,THE {\c&H0000FFFF&}AMBUSH{\c&H00FFFFFF&} IS {\c&H0000FFFF&}EVERYWHERE.{\c&H00FFFFFF&}
+Dialogue: 0,0:00:47.78,0:00:49.06,Default,,0,0,0,,{\c&H0000FFFF&}TRAPPED{\c&H00FFFFFF&} IN A {\c&H0000FFFF&}VENOMOUS{\c&H00FFFFFF&}
+Dialogue: 0,0:00:49.06,0:00:50.38,Default,,0,0,0,,KNOT, BUT IT {\c&H0000FFFF&}BREAKS{\c&H00FFFFFF&}
+Dialogue: 0,0:00:50.38,0:00:50.86,Default,,0,0,0,,{\c&H0000FFFF&}FREE.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:01.48,0:01:03.22,Default,,0,0,0,,AN {\c&H0000FFFF&}IMPOSSIBLE{\c&H00FFFFFF&} {\c&H0000FFFF&}LEAP{\c&H00FFFFFF&} OVER
+Dialogue: 0,0:01:03.22,0:01:03.96,Default,,0,0,0,,THE {\c&H0000FFFF&}SNAKE{\c&H00FFFFFF&} {\c&H0000FFFF&}PIT.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:15.74,0:01:17.52,Default,,0,0,0,,{\c&H0000FFFF&}DODGING{\c&H00FFFFFF&} {\c&H0000FFFF&}LETHAL{\c&H00FFFFFF&} {\c&H0000FFFF&}STRIKES{\c&H00FFFFFF&} MID
+Dialogue: 0,0:01:17.52,0:01:18.84,Default,,0,0,0,,-AIR, IT {\c&H0000FFFF&}SCRAMBLES{\c&H00FFFFFF&} UP
+Dialogue: 0,0:01:18.84,0:01:19.78,Default,,0,0,0,,THE {\c&H0000FFFF&}VOLCANIC{\c&H00FFFFFF&} {\c&H0000FFFF&}CLIFF.{\c&H00FFFFFF&}
+Dialogue: 0,0:01:33.96,0:01:35.74,Default,,0,0,0,,AGAINST {\c&H0000FFFF&}IMPOSSIBLE{\c&H00FFFFFF&} {\c&H0000FFFF&}ODDS,{\c&H00FFFFFF&} A
+Dialogue: 0,0:01:35.74,0:01:36.98,Default,,0,0,0,,NEW ONE MERIDIAN LINE
+Dialogue: 0,0:01:36.98,0:01:38.54,Default,,0,0,0,,ACHIEVES THE {\c&H0000FFFF&}ULTIMATE{\c&H00FFFFFF&} {\c&H0000FFFF&}ESCAPE.{\c&H00FFFFFF&}
