@@ -9,7 +9,17 @@ import time
 from pathlib import Path
 from typing import Optional, Dict, Any
 
-from tools.base_tool import BaseTool, ToolResult
+try:
+    from tools.base_tool import BaseTool, ToolResult
+except ImportError:
+    class ToolResult:
+        def __init__(self, success: bool, data: Any = None, error: Optional[str] = None):
+            self.success = success
+            self.data = data or {}
+            self.error = error
+
+    class BaseTool:
+        pass
 
 
 class YouTubeUploader(BaseTool):
