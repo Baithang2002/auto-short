@@ -1,10 +1,12 @@
 """
 documentary_source_downloader.py
 Automated 1080p/4K Documentary Video Downloader for OpenMontage.
+Supports GitHub Actions / Datacenter runners with iOS player client fallback.
 """
 
 import json
 import subprocess
+import urllib.request
 import sys
 from pathlib import Path
 from typing import Any, Optional
@@ -33,33 +35,54 @@ class DocumentarySourceDownloader:
         if not force and target_file.exists() and target_file.stat().st_size > 5_000_000:
             return target_file
 
-        cmd = [
+        # Strategy 1: iOS client extractor (bypasses datacenter bot check)
+        cmd_ios = [
             "yt-dlp",
             "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
             "--merge-output-format", "mp4",
             "--no-playlist",
             "--no-warnings",
-            "--extractor-args", "youtube:player_client=android,web",
+            "--extractor-args", "youtube:player_client=ios",
             "-o", str(target_file),
             url,
         ]
 
-        print(f"[DOWNLOADER] Running: {' '.join(cmd)}")
-        res = subprocess.run(cmd, capture_output=True, text=True)
-        if res.returncode != 0 or not target_file.exists():
-            print(f"[DOWNLOADER ERROR STDOUT]: {res.stdout}")
-            print(f"[DOWNLOADER ERROR STDERR]: {res.stderr}")
-            # Fallback attempt with generic best
-            fallback_cmd = [
-                "yt-dlp",
-                "-f", "best",
-                "--merge-output-format", "mp4",
-                "-o", str(target_file),
-                url,
-            ]
-            res_fb = subprocess.run(fallback_cmd, capture_output=True, text=True)
-            if res_fb.returncode != 0 or not target_file.exists():
-                raise RuntimeError(f"Failed to download source video from {url}: {res_fb.stderr}")
+        print(f"[DOWNLOADER] Attempting iOS client download...")
+        res = subprocess.run(cmd_ios, capture_output=True, text=True)
+        if target_file.exists() and target_file.stat().st_size > 500_000:
+            print(f"[DOWNLOADER] Success via iOS client: {target_file} ({target_file.stat().st_size} bytes)")
+            return target_file
 
-        print(f"[DOWNLOADER] Successfully downloaded {target_file} ({target_file.stat().st_size} bytes)")
-        return target_file
+        # Strategy 2: MWeb / Android Embedded client
+        print(f"[DOWNLOADER] Attempting MWeb client fallback...")
+        cmd_mweb = [
+            "yt-dlp",
+            "-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best",
+            "--merge-output-format", "mp4",
+            "--no-playlist",
+            "--no-warnings",
+            "--extractor-args", "youtube:player_client=mweb,android_embedded",
+            "-o", str(target_file),
+            url,
+        ]
+        res_mweb = subprocess.run(cmd_mweb, capture_output=True, text=True)
+        if target_file.exists() and target_file.stat().st_size > 500_000:
+            print(f"[DOWNLOADER] Success via MWeb: {target_file} ({target_file.stat().st_size} bytes)")
+            return target_file
+
+        # Strategy 3: Generic fallback
+        print(f"[DOWNLOADER] Attempting generic fallback...")
+        cmd_generic = [
+            "yt-dlp",
+            "-f", "best",
+            "--merge-output-format", "mp4",
+            "--no-playlist",
+            "-o", str(target_file),
+            url,
+        ]
+        res_generic = subprocess.run(cmd_generic, capture_output=True, text=True)
+        if target_file.exists() and target_file.stat().st_size > 500_000:
+            print(f"[DOWNLOADER] Success via generic: {target_file} ({target_file.stat().st_size} bytes)")
+            return target_file
+
+        raise RuntimeError(f"All download strategies failed for {url}. Last error: {res_generic.stderr or res.stderr}")
