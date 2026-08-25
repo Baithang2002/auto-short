@@ -93,37 +93,41 @@ def main():
         )
     print(f"✅ Source footage ready: {source_path}")
 
-    # 2. Render Output
-    output_dir = ROOT_DIR / "projects" / story.get("id") / "renders"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    output_mp4 = output_dir / f"{story.get('id')}_ghost_4_5.mp4"
+    # 2. Render Output or Passthrough
+    if story.get("passthrough"):
+        print(f"\n⚡ Direct master passthrough enabled: {source_path.name}")
+        output_mp4 = source_path
+    else:
+        output_dir = ROOT_DIR / "projects" / story.get("id") / "renders"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_mp4 = output_dir / f"{story.get('id')}_ghost_4_5.mp4"
 
-    ass_path = ROOT_DIR / story.get("ass_file")
-    if not ass_path.exists():
-        print(f"[ERROR] ASS subtitle file missing: {ass_path}")
-        sys.exit(1)
+        ass_path = ROOT_DIR / story.get("ass_file")
+        if not ass_path.exists():
+            print(f"[ERROR] ASS subtitle file missing: {ass_path}")
+            sys.exit(1)
 
-    print(f"\n⚡ Rendering 4:5 Ghost Blur Short: {output_mp4.name}...")
-    render_cmd = [
-        sys.executable,
-        str(ROOT_DIR / "scripts" / "create_source_vo_short.py"),
-        "--source", str(source_path),
-        "--start", str(story.get("start", 0.0)),
-        "--duration", str(story.get("duration", 60.0)),
-        "--ass", str(ass_path),
-        "--framing", "ghost-4-5",
-        "--output", str(output_mp4),
-    ]
-    res = subprocess.run(render_cmd, capture_output=True, text=True)
-    if res.returncode != 0 or not output_mp4.exists():
-        print(f"[ERROR] Render failed with exit code {res.returncode}")
-        print("--- STDOUT ---")
-        print(res.stdout)
-        print("--- STDERR ---")
-        print(res.stderr)
-        sys.exit(1)
+        print(f"\n⚡ Rendering 4:5 Ghost Blur Short: {output_mp4.name}...")
+        render_cmd = [
+            sys.executable,
+            str(ROOT_DIR / "scripts" / "create_source_vo_short.py"),
+            "--source", str(source_path),
+            "--start", str(story.get("start", 0.0)),
+            "--duration", str(story.get("duration", 60.0)),
+            "--ass", str(ass_path),
+            "--framing", "ghost-4-5",
+            "--output", str(output_mp4),
+        ]
+        res = subprocess.run(render_cmd, capture_output=True, text=True)
+        if res.returncode != 0 or not output_mp4.exists():
+            print(f"[ERROR] Render failed with exit code {res.returncode}")
+            print("--- STDOUT ---")
+            print(res.stdout)
+            print("--- STDERR ---")
+            print(res.stderr)
+            sys.exit(1)
 
-    print(f"🎉 Render complete! Output file size: {round(output_mp4.stat().st_size / (1024*1024), 2)} MB")
+        print(f"🎉 Render complete! Output file size: {round(output_mp4.stat().st_size / (1024*1024), 2)} MB")
 
     # 3. Optional Upload to YouTube
     video_url = None
