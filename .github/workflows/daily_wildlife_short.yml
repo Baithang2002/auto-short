@@ -24,10 +24,12 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install FFmpeg, Libass & Fonts
+      - name: Install FFmpeg, Libass, Fonts & Deno
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg libass-dev fonts-liberation fonts-dejavu-core fontconfig
+          sudo apt-get install -y ffmpeg libass-dev fonts-liberation fonts-dejavu-core fontconfig curl
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
 
       - name: Install Dependencies
         run: |
