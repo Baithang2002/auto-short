@@ -116,7 +116,11 @@ def main():
     ]
     res = subprocess.run(render_cmd, capture_output=True, text=True)
     if res.returncode != 0 or not output_mp4.exists():
-        print(f"[ERROR] Render failed: {res.stderr}")
+        print(f"[ERROR] Render failed with exit code {res.returncode}")
+        print("--- STDOUT ---")
+        print(res.stdout)
+        print("--- STDERR ---")
+        print(res.stderr)
         sys.exit(1)
 
     print(f"🎉 Render complete! Output file size: {round(output_mp4.stat().st_size / (1024*1024), 2)} MB")

@@ -24,10 +24,10 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install FFmpeg & Libass
+      - name: Install FFmpeg, Libass & Fonts
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg libass-dev
+          sudo apt-get install -y ffmpeg libass-dev fonts-liberation fonts-dejavu-core fontconfig
 
       - name: Install Dependencies
         run: |

@@ -80,7 +80,7 @@ def render_source_vo_short(
     start_time: float = 0.0,
     duration: float = 60.0,
     ass_subtitle_path: Optional[str | Path] = None,
-    framing: str = "fullbleed",  # 'fullbleed' or 'blurred-fill'
+    framing: str = "ghost-4-5",  # 'ghost-4-5', 'fullbleed', or 'ghost-16-9'
     title_banner: Optional[str] = None,
     events: Optional[list[dict[str, Any]]] = None,
 ) -> Path:
@@ -96,7 +96,7 @@ def render_source_vo_short(
         ass_subtitle_path = temp_ass
 
     # 2. Build FFmpeg Filtergraph
-    if framing == "ghost-4-5" or framing == "4:5" or framing == "ghost-blur":
+    if framing in ["ghost-4-5", "4:5", "ghost-blur"]:
         # 4:5 aspect ratio (1080x1350) centered over blurred 9:16 background
         vf_base = (
             "[0:v]split=2[bg][fg];"
@@ -104,7 +104,7 @@ def render_source_vo_short(
             "[fg]scale=-1:1350,crop=1080:1350:(iw-1080)/2:0[fg45];"
             "[bgblur][fg45]overlay=0:285"
         )
-    elif framing == "ghost-16-9" or framing == "blurred-fill":
+    elif framing in ["ghost-16-9", "blurred-fill"]:
         # Full 16:9 centered over blurred 9:16 background
         vf_base = (
             "[0:v]split=2[bg][fg];"
@@ -115,11 +115,10 @@ def render_source_vo_short(
     else:  # fullbleed center-crop (9:16)
         vf_base = "[0:v]scale=-1:1920,crop=1080:1920:(iw-1080)/2:0"
 
-    if ass_subtitle_path:
+    if ass_subtitle_path and Path(ass_subtitle_path).exists():
         ass_str = str(Path(ass_subtitle_path).resolve()).replace("\\", "/")
-        # Escape colon for FFmpeg filter parameter syntax
-        ass_escaped = ass_str.replace(":", "\\:")
-        filter_complex = f"{vf_base},ass=filename='{ass_escaped}'[v]"
+        ass_escaped = ass_str.replace(":", "\\:").replace("'", "\\'")
+        filter_complex = f"{vf_base},ass='{ass_escaped}'[v]"
     else:
         filter_complex = f"{vf_base}[v]"
 
@@ -143,8 +142,9 @@ def render_source_vo_short(
     print(f"[OpenMontage] Executing render for {output_path.name}...")
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
-        print("[FFmpeg Error]", res.stderr[-800:])
-        raise RuntimeError(f"FFmpeg render failed with exit code {res.returncode}")
+        print("[FFmpeg STDOUT]", res.stdout)
+        print("[FFmpeg STDERR]", res.stderr)
+        raise RuntimeError(f"FFmpeg render failed with exit code {res.returncode}: {res.stderr[-500:]}")
 
     print(f"[OpenMontage] Render complete: {output_path} ({os.path.getsize(output_path)} bytes)")
     return output_path
@@ -173,7 +173,7 @@ def main():
     if args.output:
         out_path = Path(args.output)
     else:
-        out_path = Path(f"projects/{source_path.stem}/renders/{source_path.stem}_source_vo.mp4")
+        out_path = source_path.parent / f"{source_path.stem}_short_ghost_4_5.mp4"
 
     render_source_vo_short(
         source_video=source_path,
