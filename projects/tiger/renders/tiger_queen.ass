@@ -1,0 +1,23 @@
+[Script Info]
+Title: {\c&H0000E6FF&}QUEEN OF THE JUNGLE{\c&H00FFFFFF&}  |  BENGAL TIGER
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Header,Impact,48,&H00FFFFFF,&H0000E6FF,&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
+Style: Subtitle,Impact,64,&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,520,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,9:59:59.00,Header,,0,0,0,,{\c&H0000E6FF&}QUEEN OF THE JUNGLE{\c&H00FFFFFF&}  |  BENGAL TIGER
+Dialogue: 0,0:00:00.50,0:00:07.00,Subtitle,,0,0,0,,RAJ BHERA: THE {\c&H0000E6FF&}TIGER QUEEN{\c&H00FFFFFF&}
+OF BANDHAVGARH.
+Dialogue: 0,0:00:08.00,0:00:16.00,Subtitle,,0,0,0,,SHE RULES THE RICHEST TERRITORY,
+BUT {\c&H0000E6FF&}RIVALS ARE CLOSING IN{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:22.00,0:00:32.00,Subtitle,,0,0,0,,TO FEED HER FOUR NEW CUBS,
+SHE MUST FACE THE {\c&H0000E6FF&}DEADLIEST PREY{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:40.00,0:00:52.00,Subtitle,,0,0,0,,AN APEX PREDATOR'S FIGHT
+TO {\c&H0000E6FF&}DEFEND HER DYNASTY{\c&H00FFFFFF&}.

@@ -36,6 +36,54 @@
       "header_banner": "MALAIKA'S HUNT | MOTHER CHEETAH",
       "ass_file": "projects/cheetah/renders/cheetah_malaika.ass",
       "tags": ["shorts", "cheetah", "wildlife", "safari", "nature", "animals"]
+    },
+    {
+      "id": "wolf_yellowstone_hunt",
+      "animal": "Yellowstone Wolf",
+      "title": "Return of the Apex Hunter | Yellowstone Wolves #shorts #wildlife #nature",
+      "description": "Reintroduced into Yellowstone in 1995, the wolf pack altered the entire ecosystem. Living on the edge where every single day could be their last.\n\n#wolf #yellowstone #wildlife #nature #pack #shorts",
+      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/wolf_doc_source_01.mp4",
+      "start": 0.0,
+      "duration": 85.0,
+      "header_banner": "RETURN OF THE APEX | YELLOWSTONE WOLVES",
+      "ass_file": "projects/wolf/renders/wolf_yellowstone.ass",
+      "tags": ["shorts", "wolf", "yellowstone", "wildlife", "nature", "predators"]
+    },
+    {
+      "id": "snow_leopard_cliff_hunt",
+      "animal": "Snow Leopard",
+      "title": "Ghost of the Mountains | Snow Leopard Cliff Hunt #shorts #wildlife #nature",
+      "description": "High in the Himalayas, the elusive snow leopard stalks bharal across sheer vertical precipices. One misstep means certain death.\n\n#snowleopard #himalayas #wildlife #nature #bigcats #shorts",
+      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/snow_leopard_source_01.mp4",
+      "start": 0.0,
+      "duration": 88.0,
+      "header_banner": "GHOST OF THE MOUNTAINS | SNOW LEOPARD",
+      "ass_file": "projects/snow_leopard/renders/snow_leopard_cliff.ass",
+      "tags": ["shorts", "snowleopard", "wildlife", "mountains", "nature", "predators"]
+    },
+    {
+      "id": "macaque_frozen_kingdom",
+      "animal": "Japanese Macaque",
+      "title": "The Frozen Kingdom | Japanese Snow Monkeys #shorts #wildlife #nature",
+      "description": "In the sub-zero blizzards of the Japanese Alps, snow monkeys survive by soaking in volcanic thermal hot springs under strict troop hierarchy.\n\n#snowmonkeys #japan #wildlife #nature #macaque #shorts",
+      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/macaque_doc_source_01.mp4",
+      "start": 0.0,
+      "duration": 78.0,
+      "header_banner": "THE FROZEN KINGDOM | SNOW MONKEYS",
+      "ass_file": "projects/macaque/renders/macaque_snow_monkeys.ass",
+      "tags": ["shorts", "monkeys", "japan", "wildlife", "nature", "winter"]
+    },
+    {
+      "id": "tiger_queen_hunt",
+      "animal": "Bengal Tiger",
+      "title": "The Tiger Queen | Bengal Tiger Hunt #shorts #wildlife #nature",
+      "description": "Raj Bhera, the tigress ruler of Bandhavgarh, fights rival intruders to protect and feed her four cubs in the dense jungle.\n\n#tiger #bengaltiger #wildlife #nature #bigcats #shorts",
+      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/tiger_doc_source_01.mp4",
+      "start": 0.0,
+      "duration": 82.0,
+      "header_banner": "QUEEN OF THE JUNGLE | BENGAL TIGER",
+      "ass_file": "projects/tiger/renders/tiger_queen.ass",
+      "tags": ["shorts", "tiger", "bengaltiger", "wildlife", "nature", "bigcats"]
     }
   ]
 }

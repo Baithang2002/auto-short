@@ -1,0 +1,25 @@
+[Script Info]
+Title: {\c&H0000E6FF&}RETURN OF THE APEX{\c&H00FFFFFF&}  |  YELLOWSTONE WOLVES
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Header,Impact,48,&H00FFFFFF,&H0000E6FF,&H00000000,&H80000000,0,0,0,0,100,100,1.5,0,1,3.5,2,8,40,40,160,1
+Style: Subtitle,Impact,64,&H00FFFFFF,&H0000E6FF,&H00000000,&H90000000,0,0,0,0,100,100,1.2,0,1,4.5,2.5,2,60,60,520,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,9:59:59.00,Header,,0,0,0,,{\c&H0000E6FF&}RETURN OF THE APEX{\c&H00FFFFFF&}  |  YELLOWSTONE WOLVES
+Dialogue: 0,0:00:00.50,0:00:06.00,Subtitle,,0,0,0,,WOLVES REPRESENT {\c&H0000E6FF&}PURE WILDNESS{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:07.00,0:00:15.00,Subtitle,,0,0,0,,WE GOT RID OF WOLVES TO {\c&H0000E6FF&}CIVILIZE THE CONTINENT{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:21.00,0:00:27.00,Subtitle,,0,0,0,,THERE WAS A HUGE RISK TO {\c&H0000E6FF&}BRING THEM BACK{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:27.00,0:00:35.00,Subtitle,,0,0,0,,THE WOLVES RETURNED IN {\c&H0000E6FF&}JANUARY 1995{\c&H00FFFFFF&}.
+Dialogue: 0,0:00:58.00,0:01:05.00,Subtitle,,0,0,0,,EVERYTHING THAT WOLVES DO,
+{\c&H0000E6FF&}YOU WITNESS HERE{\c&H00FFFFFF&}.
+Dialogue: 0,0:01:10.00,0:01:18.00,Subtitle,,0,0,0,,THEY LIVE EVERY DAY WITHOUT KNOWING
+IF THEY'LL {\c&H0000E6FF&}SURVIVE THE NEXT{\c&H00FFFFFF&}.
+Dialogue: 0,0:01:18.00,0:01:25.00,Subtitle,,0,0,0,,EVERY SINGLE DAY TO THEM
+IS {\c&H0000E6FF&}THEIR LAST{\c&H00FFFFFF&}.

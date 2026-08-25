@@ -1,25 +1,27 @@
-#!/usr/bin/env python3
-"""Source-VO Short Generator (ANIMAL WILD / BBC Earth style).
-
-Creates high-engagement 9:16 vertical Shorts using authentic documentary
-source footage + master narration audio (Sir David Attenborough style),
-with stylized kinetic ASS subtitles, top hook banner, and mobile-optimized
-loudness mastering.
 """
+create_source_vo_short.py
+========================
+High-Retention Source-VO Wildlife Documentary Shorts Production Engine.
 
-from __future__ import annotations
+Transforms BBC / National Geographic 16:9 documentary footage into viral 9:16 vertical shorts:
+- Ghost-Blur 4:5 / 9:16 aspect ratio with cinematic blurred background
+- Anti-Content-ID color grading (eq=saturation=1.12:contrast=1.04:brightness=-0.02)
+- Anti-Content-ID audio frequency & acoustic fingerprint scrambler
+- Elevated kinetic ASS subtitles with safe-zone positioning (MarginV=520)
+- EBU R128 integrated loudness normalization (-14 LUFS)
+"""
 
 import argparse
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any, Optional
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
-def parse_time(val: str | float) -> float:
-    """Parse timestamp string (e.g. '01:15' or '75.0') to seconds."""
+
+def parse_time_to_seconds(val: str | float) -> float:
     if isinstance(val, (int, float)):
         return float(val)
     val_str = str(val).strip()
@@ -80,11 +82,12 @@ def render_source_vo_short(
     start_time: float = 0.0,
     duration: float = 60.0,
     ass_subtitle_path: Optional[str | Path] = None,
-    framing: str = "ghost-4-5",  # 'ghost-4-5', 'fullbleed', or 'ghost-16-9'
+    framing: str = "ghost-4-5",
     title_banner: Optional[str] = None,
     events: Optional[list[dict[str, Any]]] = None,
+    hflip: bool = False,
 ) -> Path:
-    """Renders the 9:16 vertical short from raw documentary source."""
+    """Renders the 9:16 vertical short from raw documentary source with anti-Content-ID protections."""
     source_path = Path(source_video).resolve()
     output_path = Path(output_video).resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,25 +98,27 @@ def render_source_vo_short(
         generate_ass_subtitles(events, temp_ass, title_banner=title_banner)
         ass_subtitle_path = temp_ass
 
-    # 2. Build FFmpeg Filtergraph
+    # 2. Visual Filtergraph with Anti-Content-ID color grade & framing
+    flip_filter = ",hflip" if hflip else ""
+
     if framing in ["ghost-4-5", "4:5", "ghost-blur"]:
         # 4:5 aspect ratio (1080x1350) centered over blurred 9:16 background
         vf_base = (
-            "[0:v]split=2[bg][fg];"
-            "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.06:saturation=1.15[bgblur];"
-            "[fg]scale=-1:1350,crop=1080:1350:(iw-1080)/2:0[fg45];"
+            f"[0:v]{flip_filter}split=2[bg][fg];"
+            "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.08:saturation=1.15[bgblur];"
+            "[fg]scale=-1:1350,crop=1080:1350:(iw-1080)/2:0,eq=saturation=1.12:contrast=1.04:brightness=-0.02[fg45];"
             "[bgblur][fg45]overlay=0:285"
         )
     elif framing in ["ghost-16-9", "blurred-fill"]:
         # Full 16:9 centered over blurred 9:16 background
         vf_base = (
-            "[0:v]split=2[bg][fg];"
-            "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.06:saturation=1.15[bgblur];"
-            "[fg]scale=1080:-1[fgscaled];"
+            f"[0:v]{flip_filter}split=2[bg][fg];"
+            "[bg]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,boxblur=30:5,eq=brightness=-0.08:saturation=1.15[bgblur];"
+            "[fg]scale=1080:-1,eq=saturation=1.12:contrast=1.04:brightness=-0.02[fgscaled];"
             "[bgblur][fgscaled]overlay=0:(1920-H)/2"
         )
     else:  # fullbleed center-crop (9:16)
-        vf_base = "[0:v]scale=-1:1920,crop=1080:1920:(iw-1080)/2:0"
+        vf_base = f"[0:v]{flip_filter}scale=-1:1920,crop=1080:1920:(iw-1080)/2:0,eq=saturation=1.12:contrast=1.04:brightness=-0.02"
 
     if ass_subtitle_path and Path(ass_subtitle_path).exists():
         ass_str = str(Path(ass_subtitle_path).resolve()).replace("\\", "/")
@@ -121,6 +126,9 @@ def render_source_vo_short(
         filter_complex = f"{vf_base},ass='{ass_escaped}'[v]"
     else:
         filter_complex = f"{vf_base}[v]"
+
+    # Anti-Content-ID acoustic fingerprint scrambler + EBU R128 loudness
+    audio_filter = "asetrate=44100*1.02,atempo=0.98,highpass=f=60,lowpass=f=16000,loudnorm=I=-14:TP=-1.5:LRA=11"
 
     cmd = [
         "ffmpeg", "-y",
@@ -135,7 +143,7 @@ def render_source_vo_short(
         "-crf", "20",
         "-c:a", "aac",
         "-b:a", "192k",
-        "-af", "loudnorm=I=-14:TP=-1.5:LRA=11",
+        "-af", audio_filter,
         str(output_path),
     ]
 
@@ -158,31 +166,32 @@ def main():
     parser.add_argument("--duration", type=str, default="60.0", help="Duration in seconds")
     parser.add_argument("--framing", choices=["fullbleed", "ghost-4-5", "4:5", "ghost-blur", "ghost-16-9", "blurred-fill"], default="ghost-4-5")
     parser.add_argument("--ass", type=str, default=None, help="Path to ASS subtitle file")
-    parser.add_argument("--title", type=str, default=None, help="Top banner hook text")
+    parser.add_argument("--title", type=str, default=None, help="Top hook title banner")
+    parser.add_argument("--hflip", action="store_true", help="Apply horizontal flip")
 
     args = parser.parse_args()
+    source_p = Path(args.source)
+    if not source_p.exists():
+        print(f"Error: Source video '{source_p}' does not exist.")
+        exit(1)
 
-    start_s = parse_time(args.start)
-    duration_s = parse_time(args.duration)
-
-    source_path = Path(args.source)
-    if not source_path.exists():
-        print(f"Error: Source video '{source_path}' does not exist.")
-        sys.exit(1)
+    start_sec = parse_time_to_seconds(args.start)
+    dur_sec = parse_time_to_seconds(args.duration)
 
     if args.output:
-        out_path = Path(args.output)
+        out_p = Path(args.output)
     else:
-        out_path = source_path.parent / f"{source_path.stem}_short_ghost_4_5.mp4"
+        out_p = ROOT_DIR / "renders" / f"{source_p.stem}_ghost_4_5.mp4"
 
     render_source_vo_short(
-        source_video=source_path,
-        output_video=out_path,
-        start_time=start_s,
-        duration=duration_s,
+        source_video=source_p,
+        output_video=out_p,
+        start_time=start_sec,
+        duration=dur_sec,
         ass_subtitle_path=args.ass,
         framing=args.framing,
         title_banner=args.title,
+        hflip=args.hflip,
     )
 
 
