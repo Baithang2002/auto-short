@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-08-24T17:21:27Z",
+  "updated_at": "2026-08-25T05:27:37Z",
   "records": [
     {
       "topic": "How an octopus changes color and texture to disappear on the seafloor",
@@ -466,6 +466,21 @@
       "last_failure_at": "2026-08-24T16:55:12Z",
       "last_failure_reason": "verified media gate rejected planned scene media",
       "quarantine_until": "2026-09-07T16:55:12Z"
+    },
+    {
+      "topic": "How Flies Dodge Swatters",
+      "status": "quarantined",
+      "success_count": 0,
+      "failure_count": 1,
+      "qualification_count": 0,
+      "last_attempt_at": "2026-08-25T05:27:37Z",
+      "last_qualified_at": "",
+      "last_coverage_ratio": null,
+      "qualified_script_path": "",
+      "last_success_at": "",
+      "last_failure_at": "2026-08-25T05:27:37Z",
+      "last_failure_reason": "critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)",
+      "quarantine_until": "2026-09-08T05:27:37Z"
     },
     {
       "topic": "How Frogs Survive the Dry Season",

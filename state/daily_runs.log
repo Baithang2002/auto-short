@@ -450,3 +450,5 @@
 2026-08-24 17:14:31  topic='How Beetles Survive Being Stepped On'  exit=1  slot='manual'  attempt=2/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 2/4 (50%) is below required 3/4 (67%)'
 2026-08-24 17:18:16  topic='How Seahorses Carry Their Babies'  exit=1  slot='manual'  attempt=3/4  quality_deferred='verified media gate rejected planned scene media'
 2026-08-24 17:21:27  topic='How Spiders Spin Strong Silk'  exit=1  slot='manual'  attempt=4/4  quality_deferred='verified media gate rejected planned scene media'
+2026-08-25 05:27:38  topic='How Flies Dodge Swatters'  exit=1  slot='manual'  attempt=1/4  quality_deferred='critical scenes lack acceptable authentic-media candidates; scene coverage 0/4 (0%) is below required 3/4 (67%)'
+2026-08-25 05:26:58  topic='How Mosquitoes Find You in the Dark'  exit=1  slot='manual'  duration=52s  critical_failure=true  reason='critical technical failure exit=1'
