@@ -1,5 +1,5 @@
 {
-  "current_index": 1,
+  "current_index": 2,
   "stories": [
     {
       "id": "flying_fish_hunt",
@@ -11,7 +11,14 @@
       "duration": 112.0,
       "header_banner": "ESCAPE FROM THE DEEP | FLYING FISH",
       "ass_file": "projects/flying_fish/renders/flying_fish_hunt.ass",
-      "tags": ["shorts", "wildlife", "ocean", "flying fish", "nature", "predators"]
+      "tags": [
+        "shorts",
+        "wildlife",
+        "ocean",
+        "flying fish",
+        "nature",
+        "predators"
+      ]
     },
     {
       "id": "glass_frog_transparency",
@@ -23,7 +30,14 @@
       "duration": 100.0,
       "header_banner": "THE INVISIBLE FROG | GLASS FROG",
       "ass_file": "projects/glass_frog/renders/glass_frog_transparency.ass",
-      "tags": ["shorts", "glassfrog", "wildlife", "nature", "animals", "camouflage"]
+      "tags": [
+        "shorts",
+        "glassfrog",
+        "wildlife",
+        "nature",
+        "animals",
+        "camouflage"
+      ]
     },
     {
       "id": "butcher_bird_spikes",
@@ -35,7 +49,14 @@
       "duration": 81.0,
       "header_banner": "DESERT BUTCHER | SHRIKE BIRD",
       "ass_file": "projects/butcher_bird/renders/butcher_bird_spikes.ass",
-      "tags": ["shorts", "birds", "wildlife", "nature", "animals", "desert"]
+      "tags": [
+        "shorts",
+        "birds",
+        "wildlife",
+        "nature",
+        "animals",
+        "desert"
+      ]
     },
     {
       "id": "jaguar_caiman_hunt",
@@ -47,7 +68,14 @@
       "duration": 58.0,
       "header_banner": "SCARFACE | THE CROCODILE HUNTER",
       "ass_file": "projects/jaguar/renders/scarface_caiman_hunt.ass",
-      "tags": ["shorts", "jaguar", "wildlife", "predators", "nature", "pantanal"]
+      "tags": [
+        "shorts",
+        "jaguar",
+        "wildlife",
+        "predators",
+        "nature",
+        "pantanal"
+      ]
     },
     {
       "id": "cheetah_malaika_hunt",
@@ -59,7 +87,14 @@
       "duration": 58.0,
       "header_banner": "MALAIKA'S HUNT | MOTHER CHEETAH",
       "ass_file": "projects/cheetah/renders/cheetah_malaika.ass",
-      "tags": ["shorts", "cheetah", "wildlife", "safari", "nature", "animals"]
+      "tags": [
+        "shorts",
+        "cheetah",
+        "wildlife",
+        "safari",
+        "nature",
+        "animals"
+      ]
     },
     {
       "id": "wolf_yellowstone_hunt",
@@ -71,7 +106,14 @@
       "duration": 58.0,
       "header_banner": "RETURN OF THE APEX | YELLOWSTONE WOLVES",
       "ass_file": "projects/wolf/renders/wolf_yellowstone.ass",
-      "tags": ["shorts", "wolf", "yellowstone", "wildlife", "nature", "predators"]
+      "tags": [
+        "shorts",
+        "wolf",
+        "yellowstone",
+        "wildlife",
+        "nature",
+        "predators"
+      ]
     },
     {
       "id": "snow_leopard_cliff_hunt",
@@ -83,7 +125,14 @@
       "duration": 58.0,
       "header_banner": "GHOST OF THE MOUNTAINS | SNOW LEOPARD",
       "ass_file": "projects/snow_leopard/renders/snow_leopard_cliff.ass",
-      "tags": ["shorts", "snowleopard", "wildlife", "mountains", "nature", "predators"]
+      "tags": [
+        "shorts",
+        "snowleopard",
+        "wildlife",
+        "mountains",
+        "nature",
+        "predators"
+      ]
     },
     {
       "id": "macaque_frozen_kingdom",
@@ -95,7 +144,14 @@
       "duration": 58.0,
       "header_banner": "THE FROZEN KINGDOM | SNOW MONKEYS",
       "ass_file": "projects/macaque/renders/macaque_snow_monkeys.ass",
-      "tags": ["shorts", "monkeys", "japan", "wildlife", "nature", "winter"]
+      "tags": [
+        "shorts",
+        "monkeys",
+        "japan",
+        "wildlife",
+        "nature",
+        "winter"
+      ]
     },
     {
       "id": "tiger_queen_hunt",
@@ -107,7 +163,14 @@
       "duration": 58.0,
       "header_banner": "QUEEN OF THE JUNGLE | BENGAL TIGER",
       "ass_file": "projects/tiger/renders/tiger_queen.ass",
-      "tags": ["shorts", "tiger", "bengaltiger", "wildlife", "nature", "bigcats"]
+      "tags": [
+        "shorts",
+        "tiger",
+        "bengaltiger",
+        "wildlife",
+        "nature",
+        "bigcats"
+      ]
     }
   ]
 }
