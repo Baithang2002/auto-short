@@ -1,124 +1,6 @@
 {
-  "current_index": 5,
+  "current_index": 0,
   "stories": [
-    {
-      "id": "dolphins_ocean_hunt",
-      "animal": "Dolphins & Humpback Whales",
-      "title": "Team Dolphins vs Giant Bait Ball | Frozen Planet II #shorts #wildlife #nature",
-      "description": "Dolphins coordinate a massive ocean hunt against a giant bait ball, before giant humpback whales arrive. Narrated by Sir David Attenborough (BBC Frozen Planet II).\n\n#dolphins #whales #ocean #frozenplanet #wildlife #nature #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/gentoo_raw.mp4",
-      "start": 0.0,
-      "duration": 120.0,
-      "passthrough": true,
-      "tags": [
-        "shorts",
-        "dolphins",
-        "whales",
-        "ocean",
-        "frozenplanet",
-        "wildlife",
-        "nature",
-        "davidattenborough",
-        "hunt"
-      ]
-    },
-    {
-      "id": "iguana_snakes_escape",
-      "animal": "Marine Iguana",
-      "title": "The Great Escape | Iguana vs Racer Snakes #shorts #wildlife #nature",
-      "description": "A newborn marine iguana faces an army of racer snakes in the most legendary chase in wildlife history. Narrated by Sir David Attenborough (BBC Planet Earth II).\n\n#iguana #snakes #planetearth #wildlife #nature #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/iguana_snakes_raw.mp4",
-      "start": 10.0,
-      "duration": 112.0,
-      "header_banner": "THE ESCAPE | IGUANA VS RACER SNAKES",
-      "ass_file": "projects/iguana/master_render/iguana_master_112s.ass",
-      "tags": [
-        "shorts",
-        "iguana",
-        "snakes",
-        "planetearth",
-        "wildlife",
-        "nature",
-        "davidattenborough",
-        "chase"
-      ]
-    },
-    {
-      "id": "mantis_shrimp_punch",
-      "animal": "Mantis Shrimp",
-      "title": "Bullet Punch | Mantis Shrimp #shorts #wildlife #nature",
-      "description": "Striking with the speed of a .22 caliber bullet, the mantis shrimp delivers the fastest attack in the animal kingdom. Produced by PBS / KQED Deep Look.\n\n#mantisshrimp #wildlife #ocean #nature #predator #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/mantis_shrimp_raw.mp4",
-      "start": 13.5,
-      "duration": 78.0,
-      "header_banner": "BULLET PUNCH | MANTIS SHRIMP",
-      "ass_file": "projects/mantis_shrimp/renders/mantis_shrimp_punch.ass",
-      "tags": [
-        "shorts",
-        "mantisshrimp",
-        "ocean",
-        "wildlife",
-        "nature",
-        "predator",
-        "deeplook"
-      ]
-    },
-    {
-      "id": "flying_fish_hunt",
-      "animal": "Flying Fish",
-      "title": "Escape From The Deep | Flying Fish #shorts #wildlife #nature",
-      "description": "Gliding above the ocean at 30mph, flying fish must escape predators from both the water and the sky. Narrated by Sir David Attenborough (BBC The Hunt).\n\n#wildlife #animals #documentary #ocean #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/flying_fish_doc_source_01.mp4",
-      "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "ESCAPE FROM THE DEEP | FLYING FISH",
-      "ass_file": "projects/flying_fish/renders/flying_fish_hunt.ass",
-      "tags": [
-        "shorts",
-        "wildlife",
-        "ocean",
-        "flying fish",
-        "nature",
-        "predators"
-      ]
-    },
-    {
-      "id": "glass_frog_transparency",
-      "animal": "Poison Dart Frog",
-      "title": "Daddy Daycare | Poison Dart Frog #shorts #wildlife #nature",
-      "description": "A dedicated poison dart frog father carries his tadpoles one by one up towering jungle canopy trees to save their lives.\n\n#frog #wildlife #nature #animals #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/poison_frog_comic_60s.mp4",
-      "start": 0.0,
-      "duration": 60.0,
-      "passthrough": true,
-      "tags": [
-        "shorts",
-        "frog",
-        "wildlife",
-        "nature",
-        "animals",
-        "father"
-      ]
-    },
-    {
-      "id": "butcher_bird_spikes",
-      "animal": "Shrike Bird",
-      "title": "The Desert Butcher | Shrike Bird #shorts #wildlife #nature",
-      "description": "A small songbird with a gruesome strategy: impaling its prey on desert thorns like a butcher's hook to feed its chicks and store food.\n\n#birds #wildlife #nature #animals #predator #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/butcher_bird_source_01.mp4",
-      "start": 0.0,
-      "duration": 81.0,
-      "header_banner": "DESERT BUTCHER | SHRIKE BIRD",
-      "ass_file": "projects/butcher_bird/renders/butcher_bird_spikes.ass",
-      "tags": [
-        "shorts",
-        "birds",
-        "wildlife",
-        "nature",
-        "animals",
-        "desert"
-      ]
-    },
     {
       "id": "jaguar_caiman_hunt",
       "animal": "Jaguar",
@@ -144,7 +26,7 @@
       "description": "Malaika the cheetah mother must make a kill nearly every day to feed her 4 cubs in the Maasai Mara. BBC The Hunt Ep 1.\n\n#cheetah #wildlife #safari #nature #animals #shorts",
       "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/cheetah_hunt_source_01.mp4",
       "start": 0.0,
-      "duration": 58.0,
+      "duration": 60.0,
       "header_banner": "MALAIKA'S HUNT | MOTHER CHEETAH",
       "ass_file": "projects/cheetah/renders/cheetah_malaika.ass",
       "tags": [
@@ -154,82 +36,6 @@
         "safari",
         "nature",
         "animals"
-      ]
-    },
-    {
-      "id": "wolf_yellowstone_hunt",
-      "animal": "Yellowstone Wolf",
-      "title": "Return of the Apex Hunter | Yellowstone Wolves #shorts #wildlife #nature",
-      "description": "Reintroduced into Yellowstone in 1995, the wolf pack altered the entire ecosystem. Living on the edge where every single day could be their last.\n\n#wolf #yellowstone #wildlife #nature #pack #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/wolf_doc_source_01.mp4",
-      "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "RETURN OF THE APEX | YELLOWSTONE WOLVES",
-      "ass_file": "projects/wolf/renders/wolf_yellowstone.ass",
-      "tags": [
-        "shorts",
-        "wolf",
-        "yellowstone",
-        "wildlife",
-        "nature",
-        "predators"
-      ]
-    },
-    {
-      "id": "snow_leopard_cliff_hunt",
-      "animal": "Snow Leopard",
-      "title": "Ghost of the Mountains | Snow Leopard Cliff Hunt #shorts #wildlife #nature",
-      "description": "High in the Himalayas, the elusive snow leopard stalks bharal across sheer vertical precipices. One misstep means certain death.\n\n#snowleopard #himalayas #wildlife #nature #bigcats #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/snow_leopard_source_01.mp4",
-      "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "GHOST OF THE MOUNTAINS | SNOW LEOPARD",
-      "ass_file": "projects/snow_leopard/renders/snow_leopard_cliff.ass",
-      "tags": [
-        "shorts",
-        "snowleopard",
-        "wildlife",
-        "mountains",
-        "nature",
-        "predators"
-      ]
-    },
-    {
-      "id": "macaque_frozen_kingdom",
-      "animal": "Japanese Macaque",
-      "title": "The Frozen Kingdom | Japanese Snow Monkeys #shorts #wildlife #nature",
-      "description": "In the sub-zero blizzards of the Japanese Alps, snow monkeys survive by soaking in volcanic thermal hot springs under strict troop hierarchy.\n\n#snowmonkeys #japan #wildlife #nature #macaque #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/macaque_doc_source_01.mp4",
-      "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "THE FROZEN KINGDOM | SNOW MONKEYS",
-      "ass_file": "projects/macaque/renders/macaque_snow_monkeys.ass",
-      "tags": [
-        "shorts",
-        "monkeys",
-        "japan",
-        "wildlife",
-        "nature",
-        "winter"
-      ]
-    },
-    {
-      "id": "tiger_queen_hunt",
-      "animal": "Bengal Tiger",
-      "title": "The Tiger Queen | Bengal Tiger Hunt #shorts #wildlife #nature",
-      "description": "Raj Bhera, the tigress ruler of Bandhavgarh, fights rival intruders to protect and feed her four cubs in the dense jungle.\n\n#tiger #bengaltiger #wildlife #nature #bigcats #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/tiger_doc_source_01.mp4",
-      "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "QUEEN OF THE JUNGLE | BENGAL TIGER",
-      "ass_file": "projects/tiger/renders/tiger_queen.ass",
-      "tags": [
-        "shorts",
-        "tiger",
-        "bengaltiger",
-        "wildlife",
-        "nature",
-        "bigcats"
       ]
     }
   ]
