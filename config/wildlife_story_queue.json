@@ -84,21 +84,20 @@
     },
     {
       "id": "glass_frog_transparency",
-      "animal": "Glass Frog",
-      "title": "The Invisible Frog | Glass Frog Disappears #shorts #wildlife #nature",
-      "description": "In the tropical rainforests, the glass frog has mastered the art of invisibility through translucent skin and edge diffusion.\n\n#glassfrog #wildlife #nature #animals #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/glass_frog_16x9_master.mp4",
+      "animal": "Poison Dart Frog",
+      "title": "Daddy Daycare | Poison Dart Frog #shorts #wildlife #nature",
+      "description": "A dedicated poison dart frog father carries his tadpoles one by one up towering jungle canopy trees to save their lives.\n\n#frog #wildlife #nature #animals #shorts",
+      "source_url": "projects/experiment-comic-frog/renders/final_60s.mp4",
       "start": 0.0,
-      "duration": 100.0,
-      "header_banner": "THE INVISIBLE FROG | GLASS FROG",
-      "ass_file": "projects/glass_frog/renders/glass_frog_transparency.ass",
+      "duration": 60.0,
+      "passthrough": true,
       "tags": [
         "shorts",
-        "glassfrog",
+        "frog",
         "wildlife",
         "nature",
         "animals",
-        "camouflage"
+        "father"
       ]
     },
     {
@@ -125,11 +124,10 @@
       "animal": "Jaguar",
       "title": "Scarface: The Crocodile Hunter | Jaguar #shorts #wildlife #nature",
       "description": "Scarface, a 100kg male jaguar, stalks caimans in the Pantanal river. The top apex predator of South America in a clash of titans.\n\n#jaguar #wildlife #predators #animals #nature #shorts",
-      "source_url": "https://github.com/Baithang2002/auto-short/releases/download/v1.0-assets/jaguar_hunt_source_01.mp4",
+      "source_url": "projects/experiment-comic-jaguar/renders/final_60s.mp4",
       "start": 0.0,
-      "duration": 58.0,
-      "header_banner": "SCARFACE | THE CROCODILE HUNTER",
-      "ass_file": "projects/jaguar/renders/scarface_caiman_hunt.ass",
+      "duration": 60.0,
+      "passthrough": true,
       "tags": [
         "shorts",
         "jaguar",
