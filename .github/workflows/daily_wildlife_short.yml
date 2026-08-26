@@ -1,11 +1,12 @@
 name: Daily Autonomous Wildlife Short
 
 on:
-  schedule:
-    - cron: '30 6 * * *'   # Slot 1: 06:30 UTC (12:00 PM IST / 8:30 AM CET)
-    - cron: '30 13 * * *'  # Slot 2: 13:30 UTC (7:00 PM IST / 9:30 AM EST)
-    - cron: '30 20 * * *'  # Slot 3: 20:30 UTC (2:00 AM IST / 4:30 PM EST)
-  workflow_dispatch:      # Allows manual trigger at any time
+  # PAUSED FOR USER REVIEW: Scheduled triggers paused until remaining videos are reviewed.
+  # schedule:
+  #   - cron: '30 6 * * *'   # Slot 1: 06:30 UTC
+  #   - cron: '30 13 * * *'  # Slot 2: 13:30 UTC
+  #   - cron: '30 20 * * *'  # Slot 3: 20:30 UTC
+  workflow_dispatch:      # Manual trigger only
 
 permissions:
   contents: write
