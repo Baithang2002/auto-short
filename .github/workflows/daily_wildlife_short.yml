@@ -29,14 +29,14 @@ jobs:
       - name: Install FFmpeg, Libass, Fonts & Deno
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg libass-dev fonts-liberation fonts-dejavu-core fontconfig curl
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg libass-dev fonts-liberation fonts-dejavu-core fontconfig curl
           curl -fsSL https://deno.land/install.sh | sh
           echo "$HOME/.deno/bin" >> $GITHUB_PATH
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install yt-dlp google-api-python-client google-auth-oauthlib faster-whisper
+          pip install requests yt-dlp google-api-python-client google-auth-oauthlib faster-whisper
 
       - name: Execute Daily Short & Publish to YouTube
         env:
