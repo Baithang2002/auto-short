@@ -1,9 +1,0 @@
-name: Dump Hex
-on: workflow_dispatch
-jobs:
-  dump:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo -n "${{ secrets.PEXELS_API_KEY }}" | od -An -tx1 | tr -d ' \n' > /tmp/hex.txt && cat /tmp/hex.txt && echo && wc -c < /tmp/hex.txt
-      - run: echo -n "${{ secrets.PIXABAY_API_KEY }}" | od -An -tx1 | tr -d ' \n' > /tmp/hex2.txt && cat /tmp/hex2.txt && echo && wc -c < /tmp/hex2.txt
-      - run: echo -n "${{ secrets.GEMINI_API_KEY }}" | od -An -tx1 | tr -d ' \n' > /tmp/hex3.txt && cat /tmp/hex3.txt && echo && wc -c < /tmp/hex3.txt
